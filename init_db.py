@@ -1,19 +1,15 @@
 import json
 import sqlite3
-
 with open("dofura_monstres.json", "r", encoding="utf-8") as f:
     monstres = json.load(f)
-
 conn = sqlite3.connect("dofura.db")
 cur = conn.cursor()
-
 cur.executescript("""
 DROP TABLE IF EXISTS monstres;
 DROP TABLE IF EXISTS grades;
 DROP TABLE IF EXISTS drops;
 DROP TABLE IF EXISTS sorts;
 DROP TABLE IF EXISTS zones;
-
 CREATE TABLE monstres (
     id INTEGER PRIMARY KEY,
     nom TEXT,
@@ -21,9 +17,9 @@ CREATE TABLE monstres (
     famille TEXT,
     agression INTEGER,
     tacle INTEGER,
-    fuite INTEGER
+    fuite INTEGER,
+    image_url TEXT
 );
-
 CREATE TABLE grades (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     monstre_id INTEGER,
@@ -40,36 +36,31 @@ CREATE TABLE grades (
     res_eau INTEGER,
     res_air INTEGER
 );
-
 CREATE TABLE drops (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     monstre_id INTEGER,
     nom TEXT,
     pourcentage REAL
 );
-
 CREATE TABLE sorts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     monstre_id INTEGER,
     nom TEXT
 );
-
 CREATE TABLE zones (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     monstre_id INTEGER,
     nom TEXT
 );
 """)
-
 def safe_int(val):
     if isinstance(val, dict):
         return list(val.values())[0] if val else None
     return val
-
 for m in monstres:
     cur.execute("""
-        INSERT OR REPLACE INTO monstres (id, nom, race, famille, agression, tacle, fuite)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO monstres (id, nom, race, famille, agression, tacle, fuite, image_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         m.get("id"),
         m.get("nom"),
@@ -77,9 +68,9 @@ for m in monstres:
         m.get("famille"),
         safe_int(m.get("agression")),
         safe_int(m.get("tacle")),
-        safe_int(m.get("fuite"))
+        safe_int(m.get("fuite")),
+        m.get("image_url")
     ))
-
     for g in m.get("grades", []):
         cur.execute("""
             INSERT INTO grades (monstre_id, niveau, pv, pa, pm, xp, esquive_pa, esquive_pm,
@@ -100,26 +91,21 @@ for m in monstres:
             safe_int(g.get("res_eau")),
             safe_int(g.get("res_air"))
         ))
-
     for d in m.get("drops", []):
         cur.execute("""
             INSERT INTO drops (monstre_id, nom, pourcentage)
             VALUES (?, ?, ?)
         """, (m.get("id"), d.get("nom"), d.get("pourcentage")))
-
     for s in m.get("sorts", []):
         cur.execute("""
             INSERT INTO sorts (monstre_id, nom)
             VALUES (?, ?)
         """, (m.get("id"), s.get("nom")))
-
     for z in m.get("zones", []):
         cur.execute("""
             INSERT INTO zones (monstre_id, nom)
             VALUES (?, ?)
         """, (m.get("id"), z.get("nom")))
-
 conn.commit()
 conn.close()
-
-print("Base de données créée avec succès !")
+print("Base de donnees creee avec succes !")
