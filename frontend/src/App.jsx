@@ -164,7 +164,7 @@ function MonstrePage({ monstre, onBack }) {
         <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, padding: "16px 20px", marginBottom: 10, display: "flex", alignItems: "flex-start", gap: 20 }}>
 
           {/* IMAGE */}
-          <div style={{ width: 100, height: 100, background: C.bg, border: `0.5px solid ${C.border}`, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 100, height: 100, background: "#f0ebe0", border: `0.5px solid ${C.border}`, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             {monstre.image_url ? (
               <img src={monstre.image_url} alt={monstre.nom} style={{ width: 90, height: 90, objectFit: "contain" }} />
             ) : (
