@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
+import uvicorn
+import os
 
 app = FastAPI()
 
@@ -33,26 +35,19 @@ def liste_monstres(search: str = ""):
 def detail_monstre(monstre_id: int):
     conn = get_db()
     cur = conn.cursor()
-
     cur.execute("SELECT * FROM monstres WHERE id = ?", (monstre_id,))
     monstre = cur.fetchone()
     if not monstre:
         return {"erreur": "Monstre introuvable"}
-
     cur.execute("SELECT * FROM grades WHERE monstre_id = ? ORDER BY niveau", (monstre_id,))
     grades = cur.fetchall()
-
     cur.execute("SELECT * FROM drops WHERE monstre_id = ?", (monstre_id,))
     drops = cur.fetchall()
-
     cur.execute("SELECT * FROM sorts WHERE monstre_id = ?", (monstre_id,))
     sorts = cur.fetchall()
-
     cur.execute("SELECT * FROM zones WHERE monstre_id = ?", (monstre_id,))
     zones = cur.fetchall()
-
     conn.close()
-
     return {
         **dict(monstre),
         "grades": [dict(g) for g in grades],
@@ -60,5 +55,7 @@ def detail_monstre(monstre_id: int):
         "sorts": [dict(s) for s in sorts],
         "zones": [dict(z) for z in zones],
     }
-with open('Procfile', 'w') as f:
-    f.write('web: python main.py')
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
