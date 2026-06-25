@@ -60,3 +60,5 @@ def detail_monstre(monstre_id: int):
         "sorts": [dict(s) for s in sorts],
         "zones": [dict(z) for z in zones],
     }
+with open('Procfile', 'w') as f:
+    f.write('web: python main.py')
