@@ -1,0 +1,227 @@
+[
+  {
+    "nom": "Larve Bleue",
+    "url": "https://duffus.fr/monstre/31",
+    "famille": "Larves",
+    "zones": [
+      "Port de Madrestam",
+      "Côte d'Asse",
+      "Prairies d'Astrub"
+    ],
+    "stats": {
+      "PV": "90",
+      "PA": "5",
+      "PM": "2",
+      "Tacle": "6",
+      "Fuite": "6",
+      "Esquive PA": "4",
+      "Esquive PM": "4",
+      "XP": "2 112 XP"
+    },
+    "sorts": [
+      "Postillon Handicapant",
+      "Bulle de Protection"
+    ],
+    "drops": [
+      {
+        "item": "Œil de Larve bleue",
+        "taux": "100%"
+      },
+      {
+        "item": "Oueille",
+        "taux": "100%"
+      },
+      {
+        "item": "Morceau de larve",
+        "taux": "100%"
+      },
+      {
+        "item": "Pollenectar",
+        "taux": "100%"
+      },
+      {
+        "item": "Grappe d'Œufs de larve",
+        "taux": "100%"
+      },
+      {
+        "item": "Viande Hachée",
+        "taux": "55%"
+      },
+      {
+        "item": "Peau de Larve Bleue",
+        "taux": "55%"
+      },
+      {
+        "item": "Fragment d'anomalie",
+        "taux": "1%–20%"
+      },
+      {
+        "item": "Fil de Soie",
+        "taux": "9.24%"
+      },
+      {
+        "item": "Œuf de Larve Dorée",
+        "taux": "9.24%"
+      },
+      {
+        "item": "Cervelle de larve",
+        "taux": "6%"
+      },
+      {
+        "item": "Sachet de Poudre Temporelle",
+        "taux": "1%"
+      },
+      {
+        "item": "Larvamulette",
+        "taux": "1%"
+      },
+      {
+        "item": "Larvabottes",
+        "taux": "1%"
+      },
+      {
+        "item": "Larvasac",
+        "taux": "1%"
+      },
+      {
+        "item": "Larvacoiffe",
+        "taux": "1%"
+      },
+      {
+        "item": "Baguette Larvesque",
+        "taux": "1%"
+      },
+      {
+        "item": "Collertue",
+        "taux": "1%"
+      },
+      {
+        "item": "Libottes",
+        "taux": "1%"
+      }
+    ],
+    "source": "duffus.fr"
+  },
+  {
+    "nom": "Larve Verte",
+    "url": "https://duffus.fr/monstre/34",
+    "famille": "Larves",
+    "zones": [
+      "Port de Madrestam",
+      "Côte d'Asse",
+      "Prairies d'Astrub"
+    ],
+    "stats": {
+      "PV": "90",
+      "PA": "5",
+      "PM": "3",
+      "Tacle": "6",
+      "Fuite": "6",
+      "Esquive PA": "4",
+      "Esquive PM": "4",
+      "XP": "2 112 XP"
+    },
+    "sorts": [
+      "Postillon Aveuglant",
+      "Corps Spongieux"
+    ],
+    "drops": [
+      {
+        "item": "Oueille",
+        "taux": "100%"
+      },
+      {
+        "item": "Morceau de larve",
+        "taux": "100%"
+      },
+      {
+        "item": "Pollenectar",
+        "taux": "100%"
+      },
+      {
+        "item": "Peau de Larve Verte",
+        "taux": "55%"
+      },
+      {
+        "item": "Viande Faisandée",
+        "taux": "55%"
+      },
+      {
+        "item": "Fragment d'anomalie",
+        "taux": "1%–20%"
+      },
+      {
+        "item": "Fil de Soie",
+        "taux": "9.24%"
+      },
+      {
+        "item": "Œuf de Larve Dorée",
+        "taux": "9.24%"
+      },
+      {
+        "item": "Cervelle de larve",
+        "taux": "6%"
+      },
+      {
+        "item": "Sachet de Poudre Temporelle",
+        "taux": "1%"
+      },
+      {
+        "item": "Larvamulette",
+        "taux": "1%"
+      },
+      {
+        "item": "Larvabottes",
+        "taux": "1%"
+      },
+      {
+        "item": "Larvasac",
+        "taux": "1%"
+      },
+      {
+        "item": "Larvacoiffe",
+        "taux": "1%"
+      },
+      {
+        "item": "Baguette Larvesque",
+        "taux": "1%"
+      },
+      {
+        "item": "Collertue",
+        "taux": "1%"
+      },
+      {
+        "item": "Libottes",
+        "taux": "1%"
+      }
+    ],
+    "source": "duffus.fr"
+  },
+  {
+    "nom": "Bouftou",
+    "url": "https://duffus.fr/monstre/36",
+    "famille": "Invocations de monstre",
+    "zones": [],
+    "stats": {
+      "PV": "29",
+      "PA": "5",
+      "PM": "2",
+      "Tacle": "9",
+      "Fuite": "9",
+      "Esquive PA": "6",
+      "Esquive PM": "6",
+      "XP": "0 XP"
+    },
+    "sorts": [
+      "Contusion",
+      "Morsure du Bouftou"
+    ],
+    "drops": [
+      {
+        "item": "Fragment d'anomalie",
+        "taux": "1%–20%"
+      }
+    ],
+    "source": "duffus.fr"
+  }
+]
