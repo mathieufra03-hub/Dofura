@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 
-const API = "http://127.0.0.1:8000"
+const API = "https://web-production-53f2b.up.railway.app"
 
 const ELEM = [
   { key: "res_neutre", dot: "#B4B2A9" },
