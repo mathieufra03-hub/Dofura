@@ -1,24 +1,14 @@
+contenu = r'''
 import { useState, useEffect } from "react"
 
 const API = "https://web-production-53f2b.up.railway.app"
 
 const ELEM = [
-  { key: "res_neutre", label: "Neutre", dot: "#B4B2A9", icon: "/assets/icons/elements/neutral.webp" },
-  { key: "res_terre",  label: "Terre",  dot: "#639922", icon: "/assets/icons/elements/earth.webp" },
-  { key: "res_feu",    label: "Feu",    dot: "#D85A30", icon: "/assets/icons/elements/fire.webp" },
-  { key: "res_eau",    label: "Eau",    dot: "#378ADD", icon: "/assets/icons/elements/water.webp" },
-  { key: "res_air",    label: "Air",    dot: "#1D9E75", icon: "/assets/icons/elements/air.webp" },
-]
-
-const STATS = [
-  { label: "PV",     key: "pv",        icon: "/assets/icons/stats/health.webp",   fromGrade: true },
-  { label: "PA",     key: "pa",        icon: "/assets/icons/stats/ap.webp",       fromGrade: true },
-  { label: "PM",     key: "pm",        icon: "/assets/icons/stats/mp.webp",       fromGrade: true },
-  { label: "XP",     key: "xp",        icon: "/assets/icons/stats/experience.webp", fromGrade: true, format: true },
-  { label: "Tacle",  key: "tacle",     icon: "/assets/icons/stats/tackle.webp",   fromGrade: false },
-  { label: "Fuite",  key: "fuite",     icon: "/assets/icons/stats/evasion.webp",  fromGrade: false },
-  { label: "Esq.PA", key: "esquive_pa",icon: "/assets/icons/stats/dodge_ap.webp", fromGrade: true },
-  { label: "Esq.PM", key: "esquive_pm",icon: "/assets/icons/stats/dodge_mp.webp", fromGrade: true },
+  { key: "res_neutre", label: "Neutre", dot: "#B4B2A9" },
+  { key: "res_terre",  label: "Terre",  dot: "#639922" },
+  { key: "res_feu",    label: "Feu",    dot: "#D85A30" },
+  { key: "res_eau",    label: "Eau",    dot: "#378ADD" },
+  { key: "res_air",    label: "Air",    dot: "#1D9E75" },
 ]
 
 const C = {
@@ -175,9 +165,9 @@ function MonstrePage({ monstre, onBack }) {
         <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, padding: "16px 20px", marginBottom: 10, display: "flex", alignItems: "flex-start", gap: 20 }}>
 
           {/* IMAGE */}
-          <div style={{ width: 100, height: 100, background: "#f0ebe0", border: `0.5px solid ${C.border}`, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 100, height: 100, background: C.bg, border: `0.5px solid ${C.border}`, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             {monstre.image_url ? (
-              <img src={monstre.image_url} alt={monstre.nom} style={{ width: 88, height: 88, objectFit: "contain" }} />
+              <img src={monstre.image_url} alt={monstre.nom} style={{ width: 90, height: 90, objectFit: "contain" }} />
             ) : (
               <span style={{ fontSize: 40 }}>👾</span>
             )}
@@ -205,31 +195,35 @@ function MonstrePage({ monstre, onBack }) {
               ))}
             </div>
 
-            {/* STATS AVEC ICONES */}
+            {/* STATS */}
             {g && (
               <>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5, marginBottom: 5 }}>
-                  {STATS.map(({ label, key, icon, fromGrade, format }) => {
-                    const val = fromGrade ? g[key] : monstre[key]
-                    const display = format ? (val?.toLocaleString("fr-FR") ?? "—") : (val ?? "—")
-                    return (
-                      <div key={key} style={{ display: "flex", alignItems: "center", gap: 6, background: C.bg, border: `0.5px solid ${C.border}`, borderRadius: 6, padding: "5px 10px", fontFamily: "sans-serif" }}>
-                        <img src={icon} alt={label} style={{ width: 18, height: 18, objectFit: "contain", flexShrink: 0 }} />
-                        <span style={{ fontSize: 11, color: C.muted }}>{label}</span>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: C.text, marginLeft: "auto" }}>{display}</span>
-                      </div>
-                    )
-                  })}
+                  {[
+                    ["❤ PV",      g.pv],
+                    ["⚡ PA",      g.pa],
+                    ["👟 PM",      g.pm],
+                    ["✨ XP",      g.xp?.toLocaleString("fr-FR")],
+                    ["🥾 Tacle",   monstre.tacle],
+                    ["🚪 Fuite",   monstre.fuite],
+                    ["🛡 Esq.PA",  g.esquive_pa],
+                    ["🛡 Esq.PM",  g.esquive_pm],
+                  ].map(([label, val], i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, border: `0.5px solid ${C.border}`, borderRadius: 6, padding: "5px 10px", fontFamily: "sans-serif" }}>
+                      <span style={{ fontSize: 11, color: C.muted }}>{label}</span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{val}</span>
+                    </div>
+                  ))}
                 </div>
 
-                {/* RESISTANCES AVEC ICONES */}
+                {/* RESISTANCES */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
                   {ELEM.map(e => {
                     const v = g[e.key]
                     const color = v < 0 ? C.red : v === 0 ? C.muted : C.green
                     return (
                       <div key={e.key} style={{ background: C.bg, border: `0.5px solid ${C.border}`, borderRadius: 6, padding: "5px 6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
-                        <img src={e.icon} alt={e.label} style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: e.dot, flexShrink: 0, display: "inline-block" }}></span>
                         <span style={{ fontSize: 12, fontWeight: 500, color, fontFamily: "sans-serif" }}>{v > 0 ? "+" : ""}{v}%</span>
                       </div>
                     )
@@ -302,3 +296,9 @@ export default function App() {
     </div>
   )
 }
+'''
+
+with open(r"C:\Users\mathi\Documents\dofura\frontend\src\App.jsx", "w", encoding="utf-8") as f:
+    f.write(contenu.strip())
+
+print("App.jsx écrit avec succès !")
