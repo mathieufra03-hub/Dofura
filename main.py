@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 import uvicorn
 import os
+import subprocess
+subprocess.run(["python", "init_db.py"])
 
 app = FastAPI()
 
