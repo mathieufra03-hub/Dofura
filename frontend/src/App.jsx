@@ -3,11 +3,11 @@ import { useState, useEffect } from "react"
 const API = "https://web-production-53f2b.up.railway.app"
 
 const ELEM = [
-  { key: "res_neutre", dot: "#B4B2A9" },
-  { key: "res_terre",  dot: "#639922" },
-  { key: "res_feu",    dot: "#D85A30" },
-  { key: "res_eau",    dot: "#378ADD" },
-  { key: "res_air",    dot: "#1D9E75" },
+  { key: "res_neutre", label: "Neutre", dot: "#B4B2A9" },
+  { key: "res_terre",  label: "Terre",  dot: "#639922" },
+  { key: "res_feu",    label: "Feu",    dot: "#D85A30" },
+  { key: "res_eau",    label: "Eau",    dot: "#378ADD" },
+  { key: "res_air",    label: "Air",    dot: "#1D9E75" },
 ]
 
 const C = {
@@ -36,7 +36,7 @@ function Navbar({ onHome }) {
             {n}
           </span>
         ))}
-        <span style={{ background: C.gold, color: "#0f0a04", padding: "3px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Aujourd'hui</span>
+        <span style={{ background: C.gold, color: "#0f0a04", padding: "3px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Aujourd\'hui</span>
       </div>
     </nav>
   )
@@ -72,14 +72,14 @@ function Hero({ onSelect }) {
         Encyclopédie complète — Dofus 3.x
       </div>
       <h1 style={{ fontSize: 52, fontWeight: 700, color: "#fff", fontFamily: "Georgia, serif", lineHeight: 1.15, marginBottom: 20, textTransform: "uppercase" }}>
-        Tout l'univers <span style={{ color: C.gold }}>Dofus</span>,<br />en un seul endroit.
+        Tout l\'univers <span style={{ color: C.gold }}>Dofus</span>,<br />en un seul endroit.
       </h1>
       <p style={{ color: C.muted, fontSize: 16, fontFamily: "sans-serif", marginBottom: 36, lineHeight: 1.7 }}>
         Monstres, quêtes, items, classes, succès — fusionnés depuis<br />les meilleures sources. Toujours à jour.
       </p>
 
       <div style={{ maxWidth: 620, margin: "0 auto 20px", position: "relative" }}>
-        <div style={{ display: "flex", background: "#fff", borderRadius: resultats.length > 0 ? "8px 8px 0 0" : 8, overflow: "hidden", border: "2px solid #fff" }}>
+        <div style={{ display: "flex", background: "#fff", borderRadius: resultats.length > 0 ? "8px 8px 0 0" : 8, overflow:"hidden", border: "2px solid #fff" }}>
           <span style={{ padding: "0 14px", display: "flex", alignItems: "center", color: "#378ADD", fontSize: 18 }}>🔍</span>
           <input
             value={val}
@@ -99,9 +99,14 @@ function Hero({ onSelect }) {
                 style={{ padding: "10px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "0.5px solid #f0ebe0", fontFamily: "sans-serif" }}
                 onMouseEnter={e => e.currentTarget.style.background = "#faf5e8"}
                 onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
-                <div>
-                  <span style={{ fontWeight: 500, color: "#1a1208", fontSize: 14 }}>{m.nom}</span>
-                  <span style={{ fontSize: 12, color: "#888", marginLeft: 8 }}>{m.race}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {m.image_url && (
+                    <img src={m.image_url} alt={m.nom} style={{ width: 32, height: 32, objectFit: "contain" }} />
+                  )}
+                  <div>
+                    <span style={{ fontWeight: 500, color: "#1a1208", fontSize: 14 }}>{m.nom}</span>
+                    <span style={{ fontSize: 12, color: "#888", marginLeft: 8 }}>{m.race}</span>
+                  </div>
                 </div>
                 <span style={{ color: C.gold, fontSize: 12 }}>→</span>
               </div>
@@ -136,7 +141,7 @@ function Almanax() {
           </div>
         </div>
         <button style={{ background: C.gold, border: "none", color: "#0f0a04", fontWeight: 700, fontSize: 13, padding: "10px 20px", borderRadius: 6, cursor: "pointer", fontFamily: "sans-serif", whiteSpace: "nowrap" }}>
-          Voir l'Almanax →
+          Voir l\'Almanax →
         </button>
       </div>
     </div>
@@ -150,17 +155,27 @@ function MonstrePage({ monstre, onBack }) {
   return (
     <div style={{ background: "#f5f0e8", minHeight: "100vh", padding: "2rem" }}>
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
+
         <div style={{ fontSize: 12, color: "#888", marginBottom: 16, fontFamily: "sans-serif" }}>
           <span style={{ color: C.gold, cursor: "pointer" }} onClick={onBack}>← Retour</span>
-          {" › "}<span style={{ color: "#333" }}>{monstre.nom}</span>
         </div>
 
-        <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, padding: 16, marginBottom: 10, display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 16, alignItems: "start" }}>
-          <div style={{ width: 110, height: 110, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 54, flexShrink: 0 }}>🐾</div>
+        {/* HEADER MONSTRE */}
+        <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, padding: "16px 20px", marginBottom: 10, display: "flex", alignItems: "flex-start", gap: 20 }}>
 
-          <div>
+          {/* IMAGE */}
+          <div style={{ width: 100, height: 100, background: C.bg, border: `0.5px solid ${C.border}`, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            {monstre.image_url ? (
+              <img src={monstre.image_url} alt={monstre.nom} style={{ width: 90, height: 90, objectFit: "contain" }} />
+            ) : (
+              <span style={{ fontSize: 40 }}>👾</span>
+            )}
+          </div>
+
+          {/* NOM + TAGS */}
+          <div style={{ flex: 1 }}>
             <div style={{ fontSize: 22, fontWeight: 600, color: C.text, marginBottom: 8, fontFamily: "Georgia, serif" }}>{monstre.nom}</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
               <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 20, background: "#3d2e0e", color: C.gold, border: `0.5px solid #5a4418`, fontFamily: "sans-serif" }}>{monstre.race}</span>
               {monstre.zones.map((z, i) => (
                 <span key={i} style={{ fontSize: 11, padding: "2px 9px", borderRadius: 20, background: "#1e1a10", color: C.muted, border: `0.5px solid #3d3010`, fontFamily: "sans-serif" }}>{z.nom}</span>
@@ -169,35 +184,38 @@ function MonstrePage({ monstre, onBack }) {
                 <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 20, background: "#2a200a", color: C.gold, border: `0.5px solid #5a4418`, fontFamily: "sans-serif" }}>🏰 {monstre.famille}</span>
               )}
             </div>
-          </div>
 
-          <div style={{ minWidth: 220 }}>
-            <div style={{ display: "flex", gap: 5, marginBottom: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            {/* GRADES */}
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
               {monstre.grades.map((gr, i) => (
                 <button key={i} onClick={() => setGrade(i)} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 4, border: `0.5px solid ${C.border}`, background: grade === i ? C.gold : C.bg, color: grade === i ? "#0f0a04" : C.muted, cursor: "pointer", fontFamily: "sans-serif", fontWeight: grade === i ? 700 : 400 }}>
                   Niv. {gr.niveau}
                 </button>
               ))}
             </div>
+
+            {/* STATS */}
             {g && (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 5 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5, marginBottom: 5 }}>
                   {[
-                    ["❤️ PV", g.pv, false],
-                    ["⚡ Tacle", monstre.tacle, false],
-                    ["⭐ PA", g.pa, false],
-                    ["💨 Fuite", monstre.fuite, false],
-                    ["🔷 PM", g.pm, false],
-                    ["🛡️ Esq. PA", g.esquive_pa, false],
-                    ["✨ XP", g.xp?.toLocaleString("fr-FR"), true],
-                    ["🛡️ Esq. PM", g.esquive_pm, false],
-                  ].map(([label, val, isXp], i) => (
+                    ["❤ PV",      g.pv],
+                    ["⚡ PA",      g.pa],
+                    ["👟 PM",      g.pm],
+                    ["✨ XP",      g.xp?.toLocaleString("fr-FR")],
+                    ["🥾 Tacle",   monstre.tacle],
+                    ["🚪 Fuite",   monstre.fuite],
+                    ["🛡 Esq.PA",  g.esquive_pa],
+                    ["🛡 Esq.PM",  g.esquive_pm],
+                  ].map(([label, val], i) => (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, border: `0.5px solid ${C.border}`, borderRadius: 6, padding: "5px 10px", fontFamily: "sans-serif" }}>
-                      <span style={{ fontSize: 12, color: C.muted }}>{label}</span>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: isXp ? C.gold : C.text }}>{val}</span>
+                      <span style={{ fontSize: 11, color: C.muted }}>{label}</span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{val}</span>
                     </div>
                   ))}
                 </div>
+
+                {/* RESISTANCES */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
                   {ELEM.map(e => {
                     const v = g[e.key]
@@ -215,6 +233,7 @@ function MonstrePage({ monstre, onBack }) {
           </div>
         </div>
 
+        {/* SORTS */}
         <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden" }}>
           <div style={{ padding: "8px 14px", borderBottom: `0.5px solid ${C.border}`, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "1.5px", color: C.gold, fontFamily: "sans-serif" }}>Sorts</div>
           <div style={{ padding: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -227,6 +246,7 @@ function MonstrePage({ monstre, onBack }) {
           </div>
         </div>
 
+        {/* DROPS */}
         <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
           <div style={{ padding: "8px 14px", borderBottom: `0.5px solid ${C.border}`, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "1.5px", color: C.gold, fontFamily: "sans-serif" }}>Drops</div>
           <div style={{ padding: 14, display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -243,6 +263,7 @@ function MonstrePage({ monstre, onBack }) {
             })}
           </div>
         </div>
+
       </div>
     </div>
   )
