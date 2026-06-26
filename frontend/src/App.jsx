@@ -236,7 +236,7 @@ function SortDetail({ data }) {
 
   const badges = [
     { label: `${data.ap_cost ?? 0} PA`, color: C.cyan },
-    { label: `Portée ${portee}`, color: C.txt2 },
+    { label: portee === '0' ? 'Corps-à-corps' : `Portée ${portee}`, color: C.txt2 },
     { label: `Critique ${data.critical_hit_probability ?? 0}%`, color: C.gold },
   ]
   if (data.global_cooldown > 0)    badges.push({ label: `Relance ${data.global_cooldown}`, color: C.txt2 })
