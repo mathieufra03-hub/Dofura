@@ -45,7 +45,8 @@ CREATE TABLE drops (
 CREATE TABLE sorts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     monstre_id INTEGER,
-    nom TEXT
+    nom TEXT,
+    sort_id INTEGER
 );
 CREATE TABLE zones (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -98,9 +99,9 @@ for m in monstres:
         """, (m.get("id"), d.get("nom"), d.get("pourcentage")))
     for s in m.get("sorts", []):
         cur.execute("""
-            INSERT INTO sorts (monstre_id, nom)
-            VALUES (?, ?)
-        """, (m.get("id"), s.get("nom")))
+            INSERT INTO sorts (monstre_id, nom, sort_id)
+            VALUES (?, ?, ?)
+        """, (m.get("id"), s.get("nom"), s.get("id")))
     for z in m.get("zones", []):
         cur.execute("""
             INSERT INTO zones (monstre_id, nom)

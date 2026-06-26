@@ -1,0 +1,1512 @@
+{
+  "4": {
+    "id": 4,
+    "description": "Téléporte sur la case ciblée",
+    "is_in_percent": false
+  },
+  "5": {
+    "id": 5,
+    "description": "Repousse de #1 case{{~ps}}",
+    "is_in_percent": false
+  },
+  "6": {
+    "id": 6,
+    "description": "Attire de #1 case{{~ps}}",
+    "is_in_percent": false
+  },
+  "8": {
+    "id": 8,
+    "description": "Échange de positions",
+    "is_in_percent": false
+  },
+  "9": {
+    "id": 9,
+    "description": "Esquive #1% des coups en reculant de #2 case(s)",
+    "is_in_percent": false
+  },
+  "50": {
+    "id": 50,
+    "description": "Porte la cible",
+    "is_in_percent": false
+  },
+  "51": {
+    "id": 51,
+    "description": "Lance une entité",
+    "is_in_percent": false
+  },
+  "77": {
+    "id": 77,
+    "description": "Vole #1{{~1~2 à }}#2 PM",
+    "is_in_percent": false
+  },
+  "78": {
+    "id": 78,
+    "description": "Rembourse #1{{~1~2 à }}#2 PM",
+    "is_in_percent": false
+  },
+  "79": {
+    "id": 79,
+    "description": "#3% soigné de x#2, sinon dégâts subis x#1",
+    "is_in_percent": false
+  },
+  "81": {
+    "id": 81,
+    "description": "#1{{~1~2 à }}#2 soins",
+    "is_in_percent": false
+  },
+  "82": {
+    "id": 82,
+    "description": "#1{{~1~2 à }}#2 vol de vie Neutre (fixe)",
+    "is_in_percent": false
+  },
+  "84": {
+    "id": 84,
+    "description": "Vole #1{{~1~2 à }}#2 PA",
+    "is_in_percent": false
+  },
+  "85": {
+    "id": 85,
+    "description": "Dommages Eau : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV du lanceur",
+    "is_in_percent": false
+  },
+  "86": {
+    "id": 86,
+    "description": "Dommages Terre : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV du lanceur",
+    "is_in_percent": false
+  },
+  "87": {
+    "id": 87,
+    "description": "Dommages Air : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV du lanceur",
+    "is_in_percent": false
+  },
+  "88": {
+    "id": 88,
+    "description": "Dommages Feu : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV du lanceur",
+    "is_in_percent": false
+  },
+  "89": {
+    "id": 89,
+    "description": "Dommages Neutre : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV du lanceur",
+    "is_in_percent": false
+  },
+  "90": {
+    "id": 90,
+    "description": "Transfère #1{{~1~2 à }}#2% des PV",
+    "is_in_percent": true
+  },
+  "91": {
+    "id": 91,
+    "description": "#1{{~1~2 à }}#2 vol Eau",
+    "is_in_percent": false
+  },
+  "92": {
+    "id": 92,
+    "description": "#1{{~1~2 à }}#2 vol Terre",
+    "is_in_percent": false
+  },
+  "93": {
+    "id": 93,
+    "description": "#1{{~1~2 à }}#2 vol Air",
+    "is_in_percent": false
+  },
+  "94": {
+    "id": 94,
+    "description": "#1{{~1~2 à }}#2 vol Feu",
+    "is_in_percent": false
+  },
+  "95": {
+    "id": 95,
+    "description": "#1{{~1~2 à }}#2 vol Neutre",
+    "is_in_percent": false
+  },
+  "96": {
+    "id": 96,
+    "description": "#1{{~1~2 à }}#2 dommages Eau",
+    "is_in_percent": false
+  },
+  "97": {
+    "id": 97,
+    "description": "#1{{~1~2 à }}#2 dommages Terre",
+    "is_in_percent": false
+  },
+  "98": {
+    "id": 98,
+    "description": "#1{{~1~2 à }}#2 dommages Air",
+    "is_in_percent": false
+  },
+  "99": {
+    "id": 99,
+    "description": "#1{{~1~2 à }}#2 dommages Feu",
+    "is_in_percent": false
+  },
+  "100": {
+    "id": 100,
+    "description": "#1{{~1~2 à }}#2 dommages Neutre",
+    "is_in_percent": false
+  },
+  "105": {
+    "id": 105,
+    "description": "-#1{{~1~2 à }}#2 dommages reçus",
+    "is_in_percent": false
+  },
+  "106": {
+    "id": 106,
+    "description": "Renvoie un sort",
+    "is_in_percent": false
+  },
+  "107": {
+    "id": 107,
+    "description": "#1{{~1~2 à }}#2 Dommages Renvoyés",
+    "is_in_percent": false
+  },
+  "108": {
+    "id": 108,
+    "description": "#1{{~1~2 à }}#2 soins Feu",
+    "is_in_percent": false
+  },
+  "111": {
+    "id": 111,
+    "description": "#1{{~1~2 à }}#2 PA",
+    "is_in_percent": false
+  },
+  "112": {
+    "id": 112,
+    "description": "#1{{~1~2 à }}#2 Dommage{{~ps}}{{~zs}}",
+    "is_in_percent": false
+  },
+  "115": {
+    "id": 115,
+    "description": "#1{{~1~2 à }}#2% Critique",
+    "is_in_percent": true
+  },
+  "116": {
+    "id": 116,
+    "description": "-#1{{~1~2 à -}}#2 Portée",
+    "is_in_percent": false
+  },
+  "117": {
+    "id": 117,
+    "description": "#1{{~1~2 à }}#2 Portée",
+    "is_in_percent": false
+  },
+  "118": {
+    "id": 118,
+    "description": "#1{{~1~2 à }}#2 Force",
+    "is_in_percent": false
+  },
+  "119": {
+    "id": 119,
+    "description": "#1{{~1~2 à }}#2 Agilité",
+    "is_in_percent": false
+  },
+  "120": {
+    "id": 120,
+    "description": "Rembourse #1{{~1~2 à }}#2 PA",
+    "is_in_percent": false
+  },
+  "123": {
+    "id": 123,
+    "description": "#1{{~1~2 à }}#2 Chance",
+    "is_in_percent": false
+  },
+  "124": {
+    "id": 124,
+    "description": "#1{{~1~2 à }}#2 Sagesse",
+    "is_in_percent": false
+  },
+  "125": {
+    "id": 125,
+    "description": "#1{{~1~2 à }}#2 Vitalité",
+    "is_in_percent": false
+  },
+  "126": {
+    "id": 126,
+    "description": "#1{{~1~2 à }}#2 Intelligence",
+    "is_in_percent": false
+  },
+  "128": {
+    "id": 128,
+    "description": "#1{{~1~2 à }}#2 PM",
+    "is_in_percent": false
+  },
+  "130": {
+    "id": 130,
+    "description": "Vole #1{{~1~2 à }}#2 Kamas",
+    "is_in_percent": false
+  },
+  "132": {
+    "id": 132,
+    "description": "Enlève les envoûtements",
+    "is_in_percent": false
+  },
+  "136": {
+    "id": 136,
+    "description": "+#1{{~1~2 à }}#2 Portée (lanceur)",
+    "is_in_percent": false
+  },
+  "138": {
+    "id": 138,
+    "description": "#1{{~1~2 à }}#2 Puissance",
+    "is_in_percent": false
+  },
+  "140": {
+    "id": 140,
+    "description": "Tour annulé",
+    "is_in_percent": false
+  },
+  "141": {
+    "id": 141,
+    "description": "Tue la cible",
+    "is_in_percent": false
+  },
+  "143": {
+    "id": 143,
+    "description": "#1{{~1~2 à }}#2 Soins",
+    "is_in_percent": false
+  },
+  "144": {
+    "id": 144,
+    "description": "#1{{~1~2 à }}#2 dommages Neutre (fixe)",
+    "is_in_percent": false
+  },
+  "145": {
+    "id": 145,
+    "description": "-#1{{~1~2 à -}}#2 Dommage{{~ps}}{{~zs}}",
+    "is_in_percent": false
+  },
+  "149": {
+    "id": 149,
+    "description": "Change l'apparence",
+    "is_in_percent": false
+  },
+  "150": {
+    "id": 150,
+    "description": "Rend la cible invisible",
+    "is_in_percent": false
+  },
+  "152": {
+    "id": 152,
+    "description": "-#1{{~1~2 à -}}#2 Chance",
+    "is_in_percent": false
+  },
+  "153": {
+    "id": 153,
+    "description": "-#1{{~1~2 à -}}#2 Vitalité",
+    "is_in_percent": false
+  },
+  "154": {
+    "id": 154,
+    "description": "-#1{{~1~2 à -}}#2 Agilité",
+    "is_in_percent": false
+  },
+  "155": {
+    "id": 155,
+    "description": "-#1{{~1~2 à -}}#2 Intelligence",
+    "is_in_percent": false
+  },
+  "156": {
+    "id": 156,
+    "description": "-#1{{~1~2 à -}}#2 Sagesse",
+    "is_in_percent": false
+  },
+  "157": {
+    "id": 157,
+    "description": "-#1{{~1~2 à -}}#2 Force",
+    "is_in_percent": false
+  },
+  "160": {
+    "id": 160,
+    "description": "#1{{~1~2 à }}#2 Esquive PA",
+    "is_in_percent": false
+  },
+  "161": {
+    "id": 161,
+    "description": "#1{{~1~2 à }}#2 Esquive PM",
+    "is_in_percent": false
+  },
+  "162": {
+    "id": 162,
+    "description": "-#1{{~1~2 à -}}#2 Esquive PA",
+    "is_in_percent": false
+  },
+  "163": {
+    "id": 163,
+    "description": "-#1{{~1~2 à -}}#2 Esquive PM",
+    "is_in_percent": false
+  },
+  "168": {
+    "id": 168,
+    "description": "-#1{{~1~2 à -}}#2 PA",
+    "is_in_percent": false
+  },
+  "169": {
+    "id": 169,
+    "description": "-#1{{~1~2 à -}}#2 PM",
+    "is_in_percent": false
+  },
+  "171": {
+    "id": 171,
+    "description": "-#1{{~1~2 à -}}#2% Critique",
+    "is_in_percent": true
+  },
+  "178": {
+    "id": 178,
+    "description": "#1{{~1~2 à }}#2 Soin{{~ps}}{{~zs}}",
+    "is_in_percent": false
+  },
+  "179": {
+    "id": 179,
+    "description": "-#1{{~1~2 à -}}#2 Soin{{~ps}}{{~zs}}",
+    "is_in_percent": false
+  },
+  "180": {
+    "id": 180,
+    "description": "Invoque un double du lanceur",
+    "is_in_percent": false
+  },
+  "181": {
+    "id": 181,
+    "description": "Invoque : #1",
+    "is_in_percent": false
+  },
+  "182": {
+    "id": 182,
+    "description": "#1{{~1~2 à }}#2 Invocation{{~ps}}{{~zs}}",
+    "is_in_percent": false
+  },
+  "186": {
+    "id": 186,
+    "description": "-#1{{~1~2 à -}}#2 Puissance",
+    "is_in_percent": false
+  },
+  "202": {
+    "id": 202,
+    "description": "Dévoile les entités invisibles",
+    "is_in_percent": false
+  },
+  "210": {
+    "id": 210,
+    "description": "#1{{~1~2 à }}#2% Résistance Terre",
+    "is_in_percent": true
+  },
+  "211": {
+    "id": 211,
+    "description": "#1{{~1~2 à }}#2% Résistance Eau",
+    "is_in_percent": true
+  },
+  "212": {
+    "id": 212,
+    "description": "#1{{~1~2 à }}#2% Résistance Air",
+    "is_in_percent": true
+  },
+  "213": {
+    "id": 213,
+    "description": "#1{{~1~2 à }}#2% Résistance Feu",
+    "is_in_percent": true
+  },
+  "214": {
+    "id": 214,
+    "description": "#1{{~1~2 à }}#2% Résistance Neutre",
+    "is_in_percent": true
+  },
+  "215": {
+    "id": 215,
+    "description": "-#1{{~1~2 à -}}#2% Résistance Terre",
+    "is_in_percent": true
+  },
+  "216": {
+    "id": 216,
+    "description": "-#1{{~1~2 à -}}#2% Résistance Eau",
+    "is_in_percent": true
+  },
+  "217": {
+    "id": 217,
+    "description": "-#1{{~1~2 à -}}#2% Résistance Air",
+    "is_in_percent": true
+  },
+  "218": {
+    "id": 218,
+    "description": "-#1{{~1~2 à -}}#2% Résistance Feu",
+    "is_in_percent": true
+  },
+  "219": {
+    "id": 219,
+    "description": "-#1{{~1~2 à -}}#2% Résistance Neutre",
+    "is_in_percent": true
+  },
+  "220": {
+    "id": 220,
+    "description": "#1{{~1~2 à }}#2 Dommages Renvoyés",
+    "is_in_percent": false
+  },
+  "240": {
+    "id": 240,
+    "description": "#1{{~1~2 à }}#2 Résistance{{~ps}}{{~zs}} Terre",
+    "is_in_percent": false
+  },
+  "241": {
+    "id": 241,
+    "description": "#1{{~1~2 à }}#2 Résistance{{~ps}}{{~zs}} Eau",
+    "is_in_percent": false
+  },
+  "242": {
+    "id": 242,
+    "description": "#1{{~1~2 à }}#2 Résistance{{~ps}}{{~zs}} Air",
+    "is_in_percent": false
+  },
+  "243": {
+    "id": 243,
+    "description": "#1{{~1~2 à }}#2 Résistance{{~ps}}{{~zs}} Feu",
+    "is_in_percent": false
+  },
+  "244": {
+    "id": 244,
+    "description": "#1{{~1~2 à }}#2 Résistance{{~ps}}{{~zs}} Neutre",
+    "is_in_percent": false
+  },
+  "246": {
+    "id": 246,
+    "description": "-#1{{~1~2 à -}}#2 Résistance{{~ps}}{{~zs}} Eau",
+    "is_in_percent": false
+  },
+  "248": {
+    "id": 248,
+    "description": "-#1{{~1~2 à -}}#2 Résistance{{~ps}}{{~zs}} Feu",
+    "is_in_percent": false
+  },
+  "265": {
+    "id": 265,
+    "description": "-#1{{~1~2 à }}#2 dommages reçus",
+    "is_in_percent": false
+  },
+  "266": {
+    "id": 266,
+    "description": "Vole #1{{~1~2 à -}}#2 Chance",
+    "is_in_percent": false
+  },
+  "267": {
+    "id": 267,
+    "description": "Vole #1{{~1~2 à -}}#2 Vitalité",
+    "is_in_percent": false
+  },
+  "268": {
+    "id": 268,
+    "description": "Vole #1{{~1~2 à -}}#2 Agilité",
+    "is_in_percent": false
+  },
+  "269": {
+    "id": 269,
+    "description": "Vole #1{{~1~2 à -}}#2 Intelligence",
+    "is_in_percent": false
+  },
+  "271": {
+    "id": 271,
+    "description": "Vole #1{{~1~2 à -}}#2 Force",
+    "is_in_percent": false
+  },
+  "275": {
+    "id": 275,
+    "description": "Dommages Eau : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV manquants du lanceur",
+    "is_in_percent": false
+  },
+  "276": {
+    "id": 276,
+    "description": "Dommages Terre : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV manquants du lanceur",
+    "is_in_percent": false
+  },
+  "277": {
+    "id": 277,
+    "description": "Dommages Air : #1{{~1~2 à }}#2% <sprite name=\"erosion\">PV manquants du lanceur",
+    "is_in_percent": false
+  },
+  "278": {
+    "id": 278,
+    "description": "Dommages Feu : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV manquants du lanceur",
+    "is_in_percent": false
+  },
+  "279": {
+    "id": 279,
+    "description": "Dommages Neutre : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV manquants du lanceur",
+    "is_in_percent": false
+  },
+  "280": {
+    "id": 280,
+    "description": "#1 : +#3 Portée minimale",
+    "is_in_percent": false
+  },
+  "281": {
+    "id": 281,
+    "description": "#1 : +#3 Portée maximale",
+    "is_in_percent": false
+  },
+  "283": {
+    "id": 283,
+    "description": "#1 : +#3 Dommages",
+    "is_in_percent": false
+  },
+  "284": {
+    "id": 284,
+    "description": "#1 : +#3 Soins",
+    "is_in_percent": false
+  },
+  "285": {
+    "id": 285,
+    "description": "#1 : -#3 PA",
+    "is_in_percent": false
+  },
+  "286": {
+    "id": 286,
+    "description": "#1 : -#3 de relance",
+    "is_in_percent": false
+  },
+  "287": {
+    "id": 287,
+    "description": "#1 : +#3% Critique",
+    "is_in_percent": false
+  },
+  "289": {
+    "id": 289,
+    "description": "#1 : ligne de vue désactivée",
+    "is_in_percent": false
+  },
+  "290": {
+    "id": 290,
+    "description": "#1 : +#3 lancer(s) par tour",
+    "is_in_percent": false
+  },
+  "291": {
+    "id": 291,
+    "description": "#1 : +#3 lancer(s) par cible",
+    "is_in_percent": false
+  },
+  "293": {
+    "id": 293,
+    "description": "#1 : +#3 dégâts de base",
+    "is_in_percent": false
+  },
+  "296": {
+    "id": 296,
+    "description": "#1 : +#3 PA",
+    "is_in_percent": false
+  },
+  "320": {
+    "id": 320,
+    "description": "Vole #1{{~1~2 à }}#2 Portée",
+    "is_in_percent": false
+  },
+  "333": {
+    "id": 333,
+    "description": "Change une couleur",
+    "is_in_percent": false
+  },
+  "335": {
+    "id": 335,
+    "description": "Change l'apparence",
+    "is_in_percent": false
+  },
+  "400": {
+    "id": 400,
+    "description": "Pose un piège",
+    "is_in_percent": false
+  },
+  "401": {
+    "id": 401,
+    "description": "Pose un glyphe de début de tour",
+    "is_in_percent": false
+  },
+  "402": {
+    "id": 402,
+    "description": "Pose un glyphe de fin de tour",
+    "is_in_percent": false
+  },
+  "405": {
+    "id": 405,
+    "description": "Tue la cible et remplace par l'invocation : #1",
+    "is_in_percent": false
+  },
+  "406": {
+    "id": 406,
+    "description": "Enlève les effets du sort #2",
+    "is_in_percent": false
+  },
+  "410": {
+    "id": 410,
+    "description": "#1{{~1~2 à }}#2 Retrait PA",
+    "is_in_percent": false
+  },
+  "411": {
+    "id": 411,
+    "description": "-#1{{~1~2 à -}}#2 Retrait PA",
+    "is_in_percent": false
+  },
+  "412": {
+    "id": 412,
+    "description": "#1{{~1~2 à }}#2 Retrait PM",
+    "is_in_percent": false
+  },
+  "413": {
+    "id": 413,
+    "description": "-#1{{~1~2 à -}}#2 Retrait PM",
+    "is_in_percent": false
+  },
+  "414": {
+    "id": 414,
+    "description": "#1{{~1~2 à }}#2 Dommage{{~ps}}{{~zs}} Poussée",
+    "is_in_percent": false
+  },
+  "415": {
+    "id": 415,
+    "description": "-#1{{~1~2 à -}}#2 Dommage{{~ps}}{{~zs}} Poussée",
+    "is_in_percent": false
+  },
+  "416": {
+    "id": 416,
+    "description": "#1{{~1~2 à }}#2 Résistance{{~ps}}{{~zs}} Poussée",
+    "is_in_percent": false
+  },
+  "417": {
+    "id": 417,
+    "description": "-#1{{~1~2 à -}}#2 Résistance{{~ps}}{{~zs}} Poussée",
+    "is_in_percent": false
+  },
+  "418": {
+    "id": 418,
+    "description": "#1{{~1~2 à }}#2 Dommage{{~ps}}{{~zs}} Critiques",
+    "is_in_percent": false
+  },
+  "419": {
+    "id": 419,
+    "description": "-#1{{~1~2 à -}}#2 Dommage{{~ps}}{{~zs}} Critiques",
+    "is_in_percent": false
+  },
+  "420": {
+    "id": 420,
+    "description": "#1{{~1~2 à }}#2 Résistance{{~ps}}{{~zs}} Critiques",
+    "is_in_percent": false
+  },
+  "421": {
+    "id": 421,
+    "description": "-#1{{~1~2 à -}}#2 Résistance{{~ps}}{{~zs}} Critiques",
+    "is_in_percent": false
+  },
+  "440": {
+    "id": 440,
+    "description": "Vole #1{{~1~2 à }}#2 PA",
+    "is_in_percent": false
+  },
+  "441": {
+    "id": 441,
+    "description": "Vole #1{{~1~2 à }}#2 PM",
+    "is_in_percent": false
+  },
+  "666": {
+    "id": 666,
+    "description": "Pas d'effet supplémentaire",
+    "is_in_percent": false
+  },
+  "667": {
+    "id": 667,
+    "description": "Combat annulé",
+    "is_in_percent": false
+  },
+  "671": {
+    "id": 671,
+    "description": "Dommages Neutre : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV du lanceur (fixe)",
+    "is_in_percent": false
+  },
+  "672": {
+    "id": 672,
+    "description": "Dommages Neutre : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> du milieu des PV du lanceur",
+    "is_in_percent": false
+  },
+  "752": {
+    "id": 752,
+    "description": "#1{{~1~2 à }}#2 Fuite",
+    "is_in_percent": false
+  },
+  "753": {
+    "id": 753,
+    "description": "#1{{~1~2 à }}#2 Tacle",
+    "is_in_percent": false
+  },
+  "754": {
+    "id": 754,
+    "description": "-#1{{~1~2 à -}}#2 Fuite",
+    "is_in_percent": false
+  },
+  "755": {
+    "id": 755,
+    "description": "-#1{{~1~2 à -}}#2 Tacle",
+    "is_in_percent": false
+  },
+  "765": {
+    "id": 765,
+    "description": "Intercepte les dommages",
+    "is_in_percent": false
+  },
+  "771": {
+    "id": 771,
+    "description": "Confusion horaire : #1{{~1~2 à }}#2 Pi/2",
+    "is_in_percent": false
+  },
+  "776": {
+    "id": 776,
+    "description": "#1{{~1~2 à }}#2% Érosion",
+    "is_in_percent": true
+  },
+  "780": {
+    "id": 780,
+    "description": "Invoque le dernier allié mort avec #1{{~1~2 à }}#2 % de ses PV",
+    "is_in_percent": false
+  },
+  "781": {
+    "id": 781,
+    "description": "Minimise les effets aléatoires de la cible",
+    "is_in_percent": false
+  },
+  "782": {
+    "id": 782,
+    "description": "Maximise les effets aléatoires sur la cible",
+    "is_in_percent": false
+  },
+  "783": {
+    "id": 783,
+    "description": "Pousse jusqu'à la case visée",
+    "is_in_percent": false
+  },
+  "784": {
+    "id": 784,
+    "description": "Téléporte à la position de début de combat",
+    "is_in_percent": false
+  },
+  "786": {
+    "id": 786,
+    "description": "Soin sur l'attaquant : #1% des dommages",
+    "is_in_percent": false
+  },
+  "788": {
+    "id": 788,
+    "description": "Châtiment de #2 #1 sur #3 <sprite name=\"tour\">",
+    "is_in_percent": false
+  },
+  "792": {
+    "id": 792,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "793": {
+    "id": 793,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "950": {
+    "id": 950,
+    "description": "État #3",
+    "is_in_percent": false
+  },
+  "951": {
+    "id": 951,
+    "description": "Enlève l'état #3",
+    "is_in_percent": false
+  },
+  "952": {
+    "id": 952,
+    "description": "Désactive l'état #3",
+    "is_in_percent": false
+  },
+  "1008": {
+    "id": 1008,
+    "description": "Invoque : #1",
+    "is_in_percent": false
+  },
+  "1009": {
+    "id": 1009,
+    "description": "Déclenche une bombe",
+    "is_in_percent": false
+  },
+  "1011": {
+    "id": 1011,
+    "description": "Invoque : #1",
+    "is_in_percent": false
+  },
+  "1012": {
+    "id": 1012,
+    "description": "#1{{~1~2 à }}#2 dommages Neutre (% <sprite name=\"PM\">PM restants)",
+    "is_in_percent": false
+  },
+  "1013": {
+    "id": 1013,
+    "description": "#1{{~1~2 à }}#2 dommages Air (% <sprite name=\"PM\">PM restants)",
+    "is_in_percent": false
+  },
+  "1014": {
+    "id": 1014,
+    "description": "#1{{~1~2 à }}#2 dommages Eau (% <sprite name=\"PM\">PM restants)",
+    "is_in_percent": false
+  },
+  "1015": {
+    "id": 1015,
+    "description": "#1{{~1~2 à }}#2 dommages Feu (% <sprite name=\"PM\">PM restants)",
+    "is_in_percent": false
+  },
+  "1016": {
+    "id": 1016,
+    "description": "#1{{~1~2 à }}#2 dommages Terre (% <sprite name=\"PM\">PM restants)",
+    "is_in_percent": false
+  },
+  "1017": {
+    "id": 1017,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "1018": {
+    "id": 1018,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "1019": {
+    "id": 1019,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "1020": {
+    "id": 1020,
+    "description": "Bouclier : #1{{~1~2 à }}#2% du niveau",
+    "is_in_percent": false
+  },
+  "1021": {
+    "id": 1021,
+    "description": "Repousse de #1 case{{~ps}} (forcé)",
+    "is_in_percent": false
+  },
+  "1022": {
+    "id": 1022,
+    "description": "Attire de #1 case{{~ps}} (forcé)",
+    "is_in_percent": false
+  },
+  "1023": {
+    "id": 1023,
+    "description": "Échange de positions (forcé)",
+    "is_in_percent": false
+  },
+  "1024": {
+    "id": 1024,
+    "description": "Crée des illusions",
+    "is_in_percent": false
+  },
+  "1026": {
+    "id": 1026,
+    "description": "Déclenche les glyphes",
+    "is_in_percent": false
+  },
+  "1027": {
+    "id": 1027,
+    "description": "#1{{~1~2 à }}#2% Dommages Combo",
+    "is_in_percent": true
+  },
+  "1031": {
+    "id": 1031,
+    "description": "Termine le tour",
+    "is_in_percent": false
+  },
+  "1033": {
+    "id": 1033,
+    "description": "-#1{{~1~2 à -}}#2% Vitalité",
+    "is_in_percent": true
+  },
+  "1034": {
+    "id": 1034,
+    "description": "Invoque le dernier allié mort avec #1{{~1~2 à }}#2 % de ses PV",
+    "is_in_percent": false
+  },
+  "1036": {
+    "id": 1036,
+    "description": "#1 : -#3 <sprite name=\"tour\"> de relance",
+    "is_in_percent": false
+  },
+  "1039": {
+    "id": 1039,
+    "description": "Bouclier : #1{{~1~2 à }}#2% des PV max",
+    "is_in_percent": false
+  },
+  "1040": {
+    "id": 1040,
+    "description": "#1{{~1~2 à }}#2 Bouclier",
+    "is_in_percent": false
+  },
+  "1041": {
+    "id": 1041,
+    "description": "Recule de #1 case{{~ps}}",
+    "is_in_percent": false
+  },
+  "1042": {
+    "id": 1042,
+    "description": "Avance de #1 case{{~ps}}",
+    "is_in_percent": false
+  },
+  "1043": {
+    "id": 1043,
+    "description": "Attire jusqu'à la case visée",
+    "is_in_percent": false
+  },
+  "1044": {
+    "id": 1044,
+    "description": "Immunité : #1",
+    "is_in_percent": false
+  },
+  "1045": {
+    "id": 1045,
+    "description": "#1 : relance fixée à #3 <sprite name=\"tour\">",
+    "is_in_percent": false
+  },
+  "1047": {
+    "id": 1047,
+    "description": "-#1{{~1~2 à -}}#2 PV",
+    "is_in_percent": false
+  },
+  "1048": {
+    "id": 1048,
+    "description": "-#1{{~1~2 à -}}#2% PV",
+    "is_in_percent": true
+  },
+  "1054": {
+    "id": 1054,
+    "description": "#1{{~1~2 à }}#2 Puissance Sorts",
+    "is_in_percent": false
+  },
+  "1060": {
+    "id": 1060,
+    "description": "Taille : #1{{~1~2 à }}#2",
+    "is_in_percent": false
+  },
+  "1061": {
+    "id": 1061,
+    "description": "Partage les dommages",
+    "is_in_percent": false
+  },
+  "1063": {
+    "id": 1063,
+    "description": "#1{{~1~2 à }}#2 dommages Terre (fixe)",
+    "is_in_percent": false
+  },
+  "1064": {
+    "id": 1064,
+    "description": "#1{{~1~2 à }}#2 dommages Air (fixe)",
+    "is_in_percent": false
+  },
+  "1065": {
+    "id": 1065,
+    "description": "#1{{~1~2 à }}#2 dommages Eau (fixe)",
+    "is_in_percent": false
+  },
+  "1066": {
+    "id": 1066,
+    "description": "#1{{~1~2 à }}#2 dommages Feu (fixe)",
+    "is_in_percent": false
+  },
+  "1067": {
+    "id": 1067,
+    "description": "Dommages Air : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV de la cible",
+    "is_in_percent": false
+  },
+  "1068": {
+    "id": 1068,
+    "description": "Dommages Eau : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV de la cible",
+    "is_in_percent": false
+  },
+  "1069": {
+    "id": 1069,
+    "description": "Dommages Feu : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV de la cible",
+    "is_in_percent": false
+  },
+  "1070": {
+    "id": 1070,
+    "description": "Dommages Terre : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV de la cible",
+    "is_in_percent": false
+  },
+  "1071": {
+    "id": 1071,
+    "description": "Dommages Neutre : #1{{~1~2 à }}#2% <sprite name=\"PV\"> PV de la cible",
+    "is_in_percent": false
+  },
+  "1075": {
+    "id": 1075,
+    "description": "Durée des effets : -#1{{~1~2 à -}}#2",
+    "is_in_percent": false
+  },
+  "1076": {
+    "id": 1076,
+    "description": "#1{{~1~2 à }}#2% Résistance",
+    "is_in_percent": true
+  },
+  "1077": {
+    "id": 1077,
+    "description": "-#1{{~1~2 à -}}#2% Résistance",
+    "is_in_percent": true
+  },
+  "1078": {
+    "id": 1078,
+    "description": "#1{{~1~2 à }}#2% Vitalité",
+    "is_in_percent": true
+  },
+  "1079": {
+    "id": 1079,
+    "description": "-#1{{~1~2 à -}}#2 PA",
+    "is_in_percent": false
+  },
+  "1080": {
+    "id": 1080,
+    "description": "-#1{{~1~2 à -}}#2 PM",
+    "is_in_percent": false
+  },
+  "1091": {
+    "id": 1091,
+    "description": "Pose un glyphe-aura",
+    "is_in_percent": false
+  },
+  "1092": {
+    "id": 1092,
+    "description": "Dommages Neutre : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés de la cible",
+    "is_in_percent": false
+  },
+  "1093": {
+    "id": 1093,
+    "description": "Dommages Air : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés de la cible",
+    "is_in_percent": false
+  },
+  "1094": {
+    "id": 1094,
+    "description": "Dommages Feu : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés de la cible",
+    "is_in_percent": false
+  },
+  "1095": {
+    "id": 1095,
+    "description": "Dommages Eau : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés de la cible",
+    "is_in_percent": false
+  },
+  "1096": {
+    "id": 1096,
+    "description": "Dommages Terre : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés de la cible",
+    "is_in_percent": false
+  },
+  "1097": {
+    "id": 1097,
+    "description": "Crée des illusions",
+    "is_in_percent": false
+  },
+  "1099": {
+    "id": 1099,
+    "description": "Téléporte à la position de début de tour",
+    "is_in_percent": false
+  },
+  "1100": {
+    "id": 1100,
+    "description": "Téléporte à la position précédente",
+    "is_in_percent": false
+  },
+  "1101": {
+    "id": 1101,
+    "description": "Téléporte ou échange de positions",
+    "is_in_percent": false
+  },
+  "1103": {
+    "id": 1103,
+    "description": "Repousse de #1 case{{~ps}} (sans dommages)",
+    "is_in_percent": false
+  },
+  "1104": {
+    "id": 1104,
+    "description": "Téléportation symétrique par rapport à la cible",
+    "is_in_percent": false
+  },
+  "1105": {
+    "id": 1105,
+    "description": "Téléportation symétrique par rapport au lanceur",
+    "is_in_percent": false
+  },
+  "1106": {
+    "id": 1106,
+    "description": "Téléportation symétrique",
+    "is_in_percent": false
+  },
+  "1109": {
+    "id": 1109,
+    "description": "Soin : #1{{~1~2 à }}#2% des PV max",
+    "is_in_percent": false
+  },
+  "1118": {
+    "id": 1118,
+    "description": "Dommages Neutre : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés du lanceur",
+    "is_in_percent": false
+  },
+  "1119": {
+    "id": 1119,
+    "description": "Dommages Air : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés du lanceur",
+    "is_in_percent": false
+  },
+  "1120": {
+    "id": 1120,
+    "description": "Dommages Feu : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés du lanceur",
+    "is_in_percent": false
+  },
+  "1121": {
+    "id": 1121,
+    "description": "Dommages Eau : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés du lanceur",
+    "is_in_percent": false
+  },
+  "1122": {
+    "id": 1122,
+    "description": "Dommages Terre : #1{{~1~2 à }}#2% <sprite name=\"erosion\"> PV érodés du lanceur",
+    "is_in_percent": false
+  },
+  "1123": {
+    "id": 1123,
+    "description": "Dommages : #1{{~1~2 à }}#2% des dommages initiaux subis",
+    "is_in_percent": false
+  },
+  "1131": {
+    "id": 1131,
+    "description": "#2 dommages Air pour #1 <sprite name=\"PA\"> PA utilisé",
+    "is_in_percent": false
+  },
+  "1132": {
+    "id": 1132,
+    "description": "#2 dommages Eau pour #1 <sprite name=\"PA\"> PA utilisé",
+    "is_in_percent": false
+  },
+  "1133": {
+    "id": 1133,
+    "description": "#2 dommages Feu pour #1 <sprite name=\"PA\"> PA utilisé",
+    "is_in_percent": false
+  },
+  "1134": {
+    "id": 1134,
+    "description": "#2 dommages Neutre pour #1 <sprite name=\"PA\"> PA utilisé",
+    "is_in_percent": false
+  },
+  "1135": {
+    "id": 1135,
+    "description": "#2 dommages Terre pour #1 <sprite name=\"PA\"> PA utilisé",
+    "is_in_percent": false
+  },
+  "1136": {
+    "id": 1136,
+    "description": "#2 dommages Air pour #1 <sprite name=\"PM\"> PM utilisé",
+    "is_in_percent": false
+  },
+  "1137": {
+    "id": 1137,
+    "description": "#2 dommages Eau pour #1 <sprite name=\"PM\"> PM utilisé",
+    "is_in_percent": false
+  },
+  "1138": {
+    "id": 1138,
+    "description": "#2 dommages Feu pour #1 <sprite name=\"PM\"> PM utilisé",
+    "is_in_percent": false
+  },
+  "1139": {
+    "id": 1139,
+    "description": "#2 dommages Neutre pour #1 <sprite name=\"PM\"> PM utilisé",
+    "is_in_percent": false
+  },
+  "1140": {
+    "id": 1140,
+    "description": "#2 dommages Terre pour #1 <sprite name=\"PM\"> PM utilisé",
+    "is_in_percent": false
+  },
+  "1159": {
+    "id": 1159,
+    "description": "Soins reçus x#1%",
+    "is_in_percent": false
+  },
+  "1160": {
+    "id": 1160,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "1163": {
+    "id": 1163,
+    "description": "Dommages subis x#1%",
+    "is_in_percent": true
+  },
+  "1164": {
+    "id": 1164,
+    "description": "Convertit les dommages subis en soins",
+    "is_in_percent": false
+  },
+  "1165": {
+    "id": 1165,
+    "description": "Pose un glyphe",
+    "is_in_percent": false
+  },
+  "1171": {
+    "id": 1171,
+    "description": "#1% Dommages finaux",
+    "is_in_percent": true
+  },
+  "1172": {
+    "id": 1172,
+    "description": "-#1% Dommages finaux",
+    "is_in_percent": true
+  },
+  "1181": {
+    "id": 1181,
+    "description": "Pose un portail (+#3% dommages, +#1% dommages par case d'éloignement entre 2 portails)",
+    "is_in_percent": false
+  },
+  "1182": {
+    "id": 1182,
+    "description": "Téléportail",
+    "is_in_percent": false
+  },
+  "1183": {
+    "id": 1183,
+    "description": "Désactive un portail",
+    "is_in_percent": false
+  },
+  "1189": {
+    "id": 1189,
+    "description": "Invoque un double du lanceur",
+    "is_in_percent": false
+  },
+  "1223": {
+    "id": 1223,
+    "description": "Dommages : #1{{~1~2 à }}#2% des dommages finaux subis",
+    "is_in_percent": false
+  },
+  "1406": {
+    "id": 1406,
+    "description": "Enlève les effets du rang #1 du sort #2",
+    "is_in_percent": false
+  },
+  "2017": {
+    "id": 2017,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "2018": {
+    "id": 2018,
+    "description": "Dissipe les glyphes",
+    "is_in_percent": false
+  },
+  "2019": {
+    "id": 2019,
+    "description": "Dissipe les pièges",
+    "is_in_percent": false
+  },
+  "2020": {
+    "id": 2020,
+    "description": "Soin : #1{{~1~2 à }}#2% des dommages subis",
+    "is_in_percent": false
+  },
+  "2022": {
+    "id": 2022,
+    "description": "Pose une rune",
+    "is_in_percent": false
+  },
+  "2023": {
+    "id": 2023,
+    "description": "Déclenche les runes",
+    "is_in_percent": false
+  },
+  "2024": {
+    "id": 2024,
+    "description": "Dissipe les runes",
+    "is_in_percent": false
+  },
+  "2027": {
+    "id": 2027,
+    "description": "Prend le contrôle de l'entité",
+    "is_in_percent": false
+  },
+  "2160": {
+    "id": 2160,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "2184": {
+    "id": 2184,
+    "description": "Suit le lanceur",
+    "is_in_percent": false
+  },
+  "2188": {
+    "id": 2188,
+    "description": "Change le comportement du monstre",
+    "is_in_percent": false
+  },
+  "2792": {
+    "id": 2792,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "2793": {
+    "id": 2793,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "2794": {
+    "id": 2794,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "2796": {
+    "id": 2796,
+    "description": "Tue la cible et remplace par l'invocation : #1",
+    "is_in_percent": false
+  },
+  "2800": {
+    "id": 2800,
+    "description": "#1{{~1~2 à }}#2% Dommages mêlée",
+    "is_in_percent": true
+  },
+  "2801": {
+    "id": 2801,
+    "description": "-#1{{~1~2 à -}}#2% Dommages mêlée",
+    "is_in_percent": true
+  },
+  "2802": {
+    "id": 2802,
+    "description": "-#1{{~1~2 à -}}#2% Résistance mêlée",
+    "is_in_percent": true
+  },
+  "2803": {
+    "id": 2803,
+    "description": "#1{{~1~2 à }}#2% Résistance mêlée",
+    "is_in_percent": true
+  },
+  "2804": {
+    "id": 2804,
+    "description": "#1{{~1~2 à }}#2% Dommages distance",
+    "is_in_percent": true
+  },
+  "2805": {
+    "id": 2805,
+    "description": "-#1{{~1~2 à -}}#2% Dommages distance",
+    "is_in_percent": true
+  },
+  "2806": {
+    "id": 2806,
+    "description": "-#1{{~1~2 à -}}#2% Résistance distance",
+    "is_in_percent": true
+  },
+  "2807": {
+    "id": 2807,
+    "description": "#1{{~1~2 à }}#2% Résistance distance",
+    "is_in_percent": true
+  },
+  "2812": {
+    "id": 2812,
+    "description": "#1{{~1~2 à }}#2% Dommages aux sorts",
+    "is_in_percent": true
+  },
+  "2813": {
+    "id": 2813,
+    "description": "-#1{{~1~2 à -}}#2% Dommages aux sorts",
+    "is_in_percent": true
+  },
+  "2815": {
+    "id": 2815,
+    "description": "#1{{~1~2 à }}#2% Résistance aux sorts",
+    "is_in_percent": true
+  },
+  "2822": {
+    "id": 2822,
+    "description": "#1{{~1~2 à }}#2 dommages du meilleur élément",
+    "is_in_percent": false
+  },
+  "2828": {
+    "id": 2828,
+    "description": "#1{{~1~2 à }}#2 vol du meilleur élément",
+    "is_in_percent": false
+  },
+  "2844": {
+    "id": 2844,
+    "description": "#1{{~1~2 à }}#2% Vitalité",
+    "is_in_percent": true
+  },
+  "2845": {
+    "id": 2845,
+    "description": "-#1{{~1~2 à -}}#2% Vitalité",
+    "is_in_percent": true
+  },
+  "2849": {
+    "id": 2849,
+    "description": "-#1{{~1~2 à -}}#2% PM",
+    "is_in_percent": true
+  },
+  "2853": {
+    "id": 2853,
+    "description": "-#1{{~1~2 à -}}#2% Fuite",
+    "is_in_percent": true
+  },
+  "2868": {
+    "id": 2868,
+    "description": "Taille : +#1{{~1~2 à }}#2%",
+    "is_in_percent": false
+  },
+  "2883": {
+    "id": 2883,
+    "description": "Durée du tour : #1 seconde{{~ps}}",
+    "is_in_percent": false
+  },
+  "2905": {
+    "id": 2905,
+    "description": "#1 : Portée maximale fixée à #3",
+    "is_in_percent": false
+  },
+  "2935": {
+    "id": 2935,
+    "description": "#1 : +#3 soins de base",
+    "is_in_percent": false
+  },
+  "2960": {
+    "id": 2960,
+    "description": "#1",
+    "is_in_percent": false
+  },
+  "2971": {
+    "id": 2971,
+    "description": "#1% Soins finaux",
+    "is_in_percent": true
+  },
+  "2973": {
+    "id": 2973,
+    "description": "Soin : #1{{~1~2 à }}#2% des dommages occasionnés",
+    "is_in_percent": false
+  },
+  "2998": {
+    "id": 2998,
+    "description": "#1{{~1~2 à }}#2 soins Eau",
+    "is_in_percent": false
+  },
+  "2999": {
+    "id": 2999,
+    "description": "#1{{~1~2 à }}#2 soins Air",
+    "is_in_percent": false
+  },
+  "3000": {
+    "id": 3000,
+    "description": "#1{{~1~2 à }}#2 soins Terre",
+    "is_in_percent": false
+  },
+  "3001": {
+    "id": 3001,
+    "description": "#1{{~1~2 à }}#2 soins Neutre",
+    "is_in_percent": false
+  },
+  "3002": {
+    "id": 3002,
+    "description": "#1{{~1~2 à }}#2 soins du meilleur élément",
+    "is_in_percent": false
+  },
+  "3792": {
+    "id": 3792,
+    "description": "",
+    "is_in_percent": false
+  },
+  "3793": {
+    "id": 3793,
+    "description": "",
+    "is_in_percent": false
+  }
+}
