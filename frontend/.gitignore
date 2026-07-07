@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Variables d'environnement (VITE_API_URL, futurs secrets) — .env.example reste suivi
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

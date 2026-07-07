@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 
-const API = "https://web-production-53f2b.up.railway.app"
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const STATS = [
   { key: "pv",         label: "PV",     icon: "/assets/icons/stats/health.webp"    },
