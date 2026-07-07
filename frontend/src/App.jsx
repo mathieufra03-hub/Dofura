@@ -188,12 +188,13 @@ function SortsPanel({ sorts }) {
   const [openId, setOpenId] = useState(null)
   const [sortData, setSortData] = useState({})
   const [loadingId, setLoadingId] = useState(null)
+  const [fetchTs, setFetchTs] = useState({})
 
   const toggle = (s) => {
     if (openId === s.sort_id) { setOpenId(null); return }
     setOpenId(s.sort_id)
-    if (sortData[s.sort_id]) return
     setLoadingId(s.sort_id)
+    setSortData(prev => { const n = {...prev}; delete n[s.sort_id]; return n })
     fetch(`${API}/sorts/${s.sort_id}`)
       .then(r=>r.json())
       .then(d=>{ setSortData(prev=>({...prev,[s.sort_id]:d})); setLoadingId(null) })
@@ -267,7 +268,7 @@ function SortDetail({ data }) {
             <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.prp2, marginBottom:8 }}>Effet</div>
             {data.effects.map((e,i) => (
               <div key={i} translate="no" style={{ fontSize:12, color:C.txt, padding:"3px 0", display:"flex", alignItems:"center", gap:6 }}>
-                <span style={{ color:C.prp2, fontSize:9, flexShrink:0 }}>◆</span> {e.texte}
+                <span style={{ color:C.prp2, fontSize:9, flexShrink:0 }}>◆</span> {e.texte ?? data.nom}
               </div>
             ))}
           </div>
@@ -275,7 +276,7 @@ function SortDetail({ data }) {
         {data.critical_effects?.length > 0 && (
           <div style={{ background:C.bg4, borderRadius:7, padding:"10px 12px" }}>
             <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.gold, marginBottom:8 }}>Effet critique</div>
-            {data.critical_effects.map((e,i) => (
+            {data.critical_effects.filter(e=>e.texte).map((e,i) => (
               <div key={i} translate="no" style={{ fontSize:12, color:C.txt, padding:"3px 0", display:"flex", alignItems:"center", gap:6 }}>
                 <span style={{ color:C.gold, fontSize:9, flexShrink:0 }}>◆</span> {e.texte}
               </div>

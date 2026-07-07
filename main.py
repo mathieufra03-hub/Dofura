@@ -54,6 +54,10 @@ def formater_effet(effet):
         desc = desc.replace("#2", "")
     desc = re.sub(r'<sprite[^>]*>', '', desc).strip()
 
+    # Si la description source était juste '#1', le texte final est un nombre brut — on le masque
+    if desc.strip().lstrip('-').isdigit():
+        desc = None
+
     return {
         "texte": desc,
         "valeur": valeur,
@@ -127,8 +131,8 @@ def detail_sort(sort_id: int):
         "global_cooldown": sort.get("global_cooldown"),
         "cast_in_line": sort.get("cast_in_line"),
         "cast_in_diagonal": sort.get("cast_in_diagonal"),
-        "effects": [formater_effet(e) for e in sort.get("effects", [])],
-        "critical_effects": [formater_effet(e) for e in sort.get("critical_effects", [])],
+        "effects": [f for e in sort.get("effects", []) if (f:=formater_effet(e))["texte"] is not None],
+        "critical_effects": [f for e in sort.get("critical_effects", []) if (f:=formater_effet(e))["texte"] is not None],
     }
 
 if __name__ == "__main__":

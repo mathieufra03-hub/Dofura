@@ -7,4 +7,4 @@ s = next((x for x in sorts if x["nom"] == "Bêlement"), None)
 with open("belement.json", "w", encoding="utf-8") as f:
     json.dump(s, f, indent=2, ensure_ascii=False)
 
-print("OK - ouvre belement.json")
+print("OK - ouvre belement.json") 
