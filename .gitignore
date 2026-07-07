@@ -1,5 +1,16 @@
 # Base de données
 dofura.db
+frontend/dofura.db
+
+# JSON regenerables (scraping / regeneres par des scripts)
+dofura_monstres.json
+dofura_sorts.json
+dofura_effects.json
+dofura_effets_speciaux.json
+audit_sorts.json
+
+# Backups locaux
+backups/
 
 # Python
 __pycache__/
