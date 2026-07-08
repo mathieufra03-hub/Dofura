@@ -34,7 +34,7 @@ const C = {
 const navLinks = ["Monstres", "Quêtes", "Objets", "Métiers", "Zones", "Almanax"]
 const quickChips = ["Bouftou", "Iop", "Dofus Turquoise", "Larves de Donjon", "Panoplie Kolosso"]
 
-function Navbar({ onHome }) {
+function Navbar({ onHome, onMonstres }) {
   return (
     <nav style={{ background:C.bg2, borderBottom:`0.5px solid ${C.bdr2}`, padding:"0 2rem", display:"flex", alignItems:"center", height:48, position:"sticky", top:0, zIndex:100 }}>
       <span onClick={onHome} style={{ fontFamily:"'Cinzel',serif", fontWeight:900, fontSize:17, background:"linear-gradient(90deg,#f0c040,#c478ff)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:"0.08em", marginRight:28, cursor:"pointer" }}>
@@ -42,7 +42,7 @@ function Navbar({ onHome }) {
       </span>
       <div style={{ display:"flex", gap:2, flex:1 }}>
         {navLinks.map(n => (
-          <span key={n} onClick={n === "Monstres" ? onHome : undefined}
+          <span key={n} onClick={n === "Monstres" ? onMonstres : undefined}
             style={{ fontSize:12, color:n==="Monstres"?C.cyan:C.txt2, padding:"6px 11px", borderRadius:6, cursor:"pointer", background:n==="Monstres"?C.cyanf:"transparent" }}
             onMouseEnter={e=>{e.currentTarget.style.color=C.cyan;e.currentTarget.style.background=C.cyanf}}
             onMouseLeave={e=>{e.currentTarget.style.color=n==="Monstres"?C.cyan:C.txt2;e.currentTarget.style.background=n==="Monstres"?C.cyanf:"transparent"}}
@@ -392,11 +392,180 @@ function MonstrePage({ id, onBack }) {
   )
 }
 
+const SANS_VALEUR = "__aucune__"
+const PAGE_SIZE = 48
+
+// Styles regroupes ici (plutot qu'eparpilles dans le JSX) pour que la
+// refonte graphique complete a venir (design actuel provisoire) n'ait
+// qu'un seul endroit a modifier pour cette page.
+const mp = {
+  page: { padding:"1.5rem 2rem", maxWidth:1100, margin:"0 auto" },
+  backBtn: { background:"transparent", border:`0.5px solid ${C.bdr2}`, borderRadius:6, padding:"5px 12px", fontSize:12, color:C.prp2, cursor:"pointer", marginBottom:20 },
+  filtreBar: { display:"flex", flexWrap:"wrap", gap:10, alignItems:"center", marginBottom:18 },
+  searchInput: { background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:8, padding:"8px 12px", fontSize:13, color:C.txt, outline:"none", minWidth:220 },
+  select: { background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:8, padding:"8px 12px", fontSize:13, color:C.txt, outline:"none", cursor:"pointer" },
+  resetBtn: { background:"transparent", border:`0.5px solid ${C.bdr2}`, borderRadius:8, padding:"8px 14px", fontSize:12, color:C.prp2, cursor:"pointer" },
+  compteur: { fontSize:12, color:C.txt3, marginLeft:"auto" },
+  grid: { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(150px, 1fr))", gap:12, marginBottom:20 },
+  card: { background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"12px 10px", textAlign:"center", cursor:"pointer" },
+  cardImg: { width:56, height:56, objectFit:"contain", marginBottom:8 },
+  cardImgVide: { width:56, height:56, background:C.bg3, borderRadius:8, margin:"0 auto 8px" },
+  cardNom: { fontSize:12, color:C.txt, fontWeight:500, marginBottom:3 },
+  cardFamille: { fontSize:10, color:C.txt3 },
+  pagination: { display:"flex", gap:8, alignItems:"center", justifyContent:"center", marginTop:8 },
+  pageBtn: (disabled) => ({ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:6, padding:"6px 12px", fontSize:12, color:disabled?C.txt3:C.cyan, cursor:disabled?"default":"pointer", opacity:disabled?0.5:1 }),
+  pageLabel: { fontSize:12, color:C.txt2 },
+  videEtat: { textAlign:"center", padding:"3rem 1rem", color:C.txt2, fontSize:13 },
+  comboboxWrap: { position:"relative" },
+  comboboxButton: (open) => ({ background:C.bg2, border:`0.5px solid ${open?C.cyan:C.bdr}`, borderRadius:8, padding:"8px 12px", fontSize:13, color:C.txt, cursor:"pointer", display:"flex", alignItems:"center", gap:6, minWidth:180, justifyContent:"space-between" }),
+  comboboxPanel: { position:"absolute", top:"calc(100% + 4px)", left:0, minWidth:240, background:C.bg2, border:`0.5px solid ${C.cyanb}`, borderRadius:8, zIndex:50, overflow:"hidden" },
+  comboboxInput: { width:"100%", boxSizing:"border-box", background:C.bg3, border:"none", borderBottom:`0.5px solid ${C.bdr}`, padding:"8px 12px", fontSize:12, color:C.txt, outline:"none" },
+  comboboxList: { maxHeight:240, overflowY:"auto" },
+  comboboxOption: (active) => ({ padding:"7px 12px", fontSize:12, color:active?C.cyan:C.txt2, background:active?C.cyanf:"transparent", cursor:"pointer" }),
+  comboboxEmpty: { padding:"10px 12px", fontSize:12, color:C.txt3 },
+}
+
+function ZoneCombobox({ zones, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [filtre, setFiltre] = useState("")
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  const label = value === "" ? "Toutes les zones" : value === SANS_VALEUR ? "Sans zone" : value
+  const zonesFiltrees = zones.filter(z => z.toLowerCase().includes(filtre.toLowerCase()))
+
+  const choisir = (v) => { onChange(v); setOpen(false); setFiltre("") }
+
+  return (
+    <div ref={ref} style={mp.comboboxWrap}>
+      <button type="button" onClick={()=>setOpen(o=>!o)} style={mp.comboboxButton(open)}>
+        {label} <span style={{ fontSize:10, opacity:0.6 }}>▾</span>
+      </button>
+      {open && (
+        <div style={mp.comboboxPanel}>
+          <input autoFocus value={filtre} onChange={e=>setFiltre(e.target.value)}
+            placeholder="Rechercher une zone..." style={mp.comboboxInput} />
+          <div style={mp.comboboxList}>
+            <div onClick={()=>choisir("")} style={mp.comboboxOption(value==="")}>Toutes les zones</div>
+            <div onClick={()=>choisir(SANS_VALEUR)} style={mp.comboboxOption(value===SANS_VALEUR)}>Sans zone</div>
+            {zonesFiltrees.map(z => (
+              <div key={z} onClick={()=>choisir(z)} style={mp.comboboxOption(value===z)}>{z}</div>
+            ))}
+            {zonesFiltrees.length === 0 && <div style={mp.comboboxEmpty}>Aucune zone ne correspond</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MonstresPage({ onSelect, onBack }) {
+  const [monstres, setMonstres] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
+  const [famille, setFamille] = useState("")
+  const [zone, setZone] = useState("")
+  const [familles, setFamilles] = useState([])
+  const [zones, setZones] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${API}/monstres/filtres`).then(r=>r.json()).then(d => {
+      setFamilles(d.familles); setZones(d.zones)
+    })
+  }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  useEffect(() => {
+    setLoading(true)
+    const params = new URLSearchParams({ search, famille, zone, page, page_size: PAGE_SIZE })
+    fetch(`${API}/monstres?${params}`)
+      .then(r=>r.json())
+      .then(d => { setMonstres(d.monstres); setTotal(d.total); setLoading(false) })
+      .catch(()=>setLoading(false))
+  }, [search, famille, zone, page])
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
+  const filtresActifs = search || famille || zone
+
+  const reinitialiser = () => {
+    setSearchInput(""); setSearch(""); setFamille(""); setZone(""); setPage(1)
+  }
+
+  return (
+    <div style={mp.page}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={mp.filtreBar}>
+        <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
+          placeholder="Rechercher un monstre..." style={mp.searchInput} />
+
+        <select value={famille} onChange={e=>{ setFamille(e.target.value); setPage(1) }} style={mp.select}>
+          <option value="">Toutes les familles</option>
+          <option value={SANS_VALEUR}>Sans famille</option>
+          {familles.map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+
+        <ZoneCombobox zones={zones} value={zone} onChange={(v)=>{ setZone(v); setPage(1) }} />
+
+        {filtresActifs && <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser</button>}
+
+        <span style={mp.compteur}>{total} monstre{total!==1?"s":""}</span>
+      </div>
+
+      {!loading && monstres.length === 0 ? (
+        <div style={mp.videEtat}>
+          Aucun monstre ne correspond à ces filtres.
+          {filtresActifs && <div style={{ marginTop:10 }}>
+            <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+          </div>}
+        </div>
+      ) : (
+        <div style={mp.grid}>
+          {monstres.map(m => (
+            <div key={m.id} onClick={()=>onSelect(m.id)} style={mp.card}
+              onMouseEnter={e=>e.currentTarget.style.borderColor=C.cyan}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=C.bdr}
+            >
+              {m.image_url
+                ? <img src={m.image_url} alt={m.nom} style={mp.cardImg} />
+                : <div style={mp.cardImgVide} />
+              }
+              <div style={mp.cardNom}>{m.nom}</div>
+              <div style={mp.cardFamille}>{m.famille || "—"}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={mp.pagination}>
+          <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+          <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+          <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function App() {
   const [query, setQuery]       = useState("")
   const [results, setResults]   = useState([])
   const [loading, setLoading]   = useState(false)
   const [selected, setSelected] = useState(null)
+  const [browsing, setBrowsing] = useState(false)
   const [almanax, setAlmanax]   = useState(null)
 
   useEffect(() => {
@@ -417,21 +586,24 @@ export default function App() {
       .then(r=>r.json()).then(setAlmanax).catch(()=>{})
   }, [])
 
-  const handleSelect = (id) => { setSelected(id); setQuery(""); setResults([]) }
-  const handleHome   = () => { setSelected(null); setQuery(""); setResults([]) }
+  const handleSelect  = (id) => { setSelected(id); setBrowsing(false); setQuery(""); setResults([]) }
+  const handleHome    = () => { setSelected(null); setBrowsing(false); setQuery(""); setResults([]) }
+  const handleBrowse   = () => { setSelected(null); setBrowsing(true); setQuery(""); setResults([]) }
 
   return (
     <div translate="no" style={{ minHeight:"100vh", background:C.bg, fontFamily:"sans-serif" }}>
       <div style={{ height:3, background:"linear-gradient(90deg,#9b4de0,#00d4ff,#f0c040,#c478ff,#00d4ff)", opacity:.7 }} />
-      <Navbar onHome={handleHome} />
+      <Navbar onHome={handleHome} onMonstres={handleBrowse} />
       <StatsBar />
       {selected ? (
         <MonstrePage id={selected} onBack={handleHome} />
+      ) : browsing ? (
+        <MonstresPage onSelect={handleSelect} onBack={handleHome} />
       ) : (
         <>
           <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelect} loading={loading} />
           <AlmanaxBanner data={almanax} />
-          <EncycloGrid onMonsters={handleHome} />
+          <EncycloGrid onMonsters={handleBrowse} />
         </>
       )}
     </div>
