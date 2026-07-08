@@ -59,6 +59,11 @@ def formater_effet(effet):
     # diceNum est en realite l'ID d'un sort dont le nom est le vrai libelle.
     if template.strip() in ("#1", "#2", "#1#2", ""):
         nom = EFFETS_SPECIAUX_DATA.get(str(dice_num))
+        if nom:
+            # Certains noms resolus contiennent encore une balise <sprite> brute
+            # copiee depuis la description Ankama d'origine.
+            nom = re.sub(r'<sprite[^>]*>', '', nom)
+            nom = re.sub(r'\s{2,}', ' ', nom).strip()
         return {
             "texte": nom,
             "valeur": str(dice_num),
