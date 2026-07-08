@@ -122,18 +122,61 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+SANS_VALEUR = "__aucune__"
+
 @app.get("/monstres")
-def liste_monstres(search: str = ""):
+def liste_monstres(search: str = "", famille: str = "", zone: str = "", page: int = 1, page_size: int = 48):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 200)
+
+    conditions = ["nom LIKE ?"]
+    params = [f"%{search}%"]
+
+    if famille == SANS_VALEUR:
+        conditions.append("(famille IS NULL OR famille = '')")
+    elif famille:
+        conditions.append("famille = ?")
+        params.append(famille)
+
+    if zone == SANS_VALEUR:
+        conditions.append("id NOT IN (SELECT monstre_id FROM zones)")
+    elif zone:
+        conditions.append("id IN (SELECT monstre_id FROM zones WHERE nom = ?)")
+        params.append(zone)
+
+    where_clause = " AND ".join(conditions)
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
+    cur.execute(f"SELECT COUNT(*) FROM monstres WHERE {where_clause}", params)
+    total = cur.fetchone()[0]
+
+    cur.execute(f"""
         SELECT * FROM monstres
-        WHERE nom LIKE ?
+        WHERE {where_clause}
         ORDER BY nom
-    """, (f"%{search}%",))
+        LIMIT ? OFFSET ?
+    """, params + [page_size, (page - 1) * page_size])
     rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "monstres": [dict(r) for r in rows],
+    }
+
+@app.get("/monstres/filtres")
+def filtres_monstres():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT famille FROM monstres WHERE famille IS NOT NULL AND famille != '' ORDER BY famille")
+    familles = [r[0] for r in cur.fetchall()]
+    cur.execute("SELECT DISTINCT nom FROM zones ORDER BY nom")
+    zones = [r[0] for r in cur.fetchall()]
+    conn.close()
+    return {"familles": familles, "zones": zones}
 
 @app.get("/monstres/{monstre_id}")
 def detail_monstre(monstre_id: int):

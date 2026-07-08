@@ -403,9 +403,9 @@ export default function App() {
     if (query.length < 2) { setResults([]); return }
     setLoading(true)
     const t = setTimeout(() => {
-      fetch(`${API}/monstres?search=${encodeURIComponent(query)}&limit=8`)
+      fetch(`${API}/monstres?search=${encodeURIComponent(query)}&page_size=8`)
         .then(r=>r.json())
-        .then(d=>{ setResults(d); setLoading(false) })
+        .then(d=>{ setResults(d.monstres); setLoading(false) })
         .catch(()=>setLoading(false))
     }, 250)
     return () => clearTimeout(t)
