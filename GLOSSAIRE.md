@@ -85,5 +85,13 @@
 
 **CORS** — le contrôle de sécurité du navigateur qui vérifie que le front a le droit de parler au back. *Ton erreur historique quand const API pointait vers localhost en prod, c'était ça.*
 
+**Pagination** — au lieu de renvoyer toutes les lignes d'un coup, l'API en renvoie un petit paquet ("page") à la fois, avec le nombre total pour savoir combien de pages restent. *`/monstres?page=2&page_size=48` : la 2e page de 48 monstres sur les 4 932.*
+
+**Sous-requête SQL (`IN (SELECT ...)` / `NOT IN (SELECT ...)`)** — une requête SQL imbriquée dans une autre, utilisée ici pour filtrer une table à partir d'une autre sans vraie jointure. *`id IN (SELECT monstre_id FROM zones WHERE nom = ?)` : tous les monstres présents dans une zone donnée.*
+
+**Debounce** — attendre que l'utilisateur arrête de taper avant de lancer une action (ex. une requête réseau), pour ne pas en envoyer une à chaque lettre tapée. *La recherche de la page Monstres attend 250ms sans frappe avant d'interroger le backend.*
+
+**Combobox** — un champ qui combine une liste déroulante et une recherche texte, utile quand la liste est trop longue pour un menu classique. *Le filtre zone (372 valeurs) : un `<select>` natif aurait été illisible, donc combobox maison avec un champ "Rechercher une zone...".*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*
