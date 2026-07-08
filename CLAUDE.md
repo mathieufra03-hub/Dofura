@@ -21,7 +21,7 @@
 - **Claude Code** = l'ouvrier : lancé dans le terminal intégré de VS Code (`claude` depuis la racine du projet). C'est lui qui lit, écrit et modifie les fichiers avec ses propres outils.
 - **Répartition :** Claude Code fait le travail, Popo observe dans VS Code et valide les plans.
 
-## 📜 LES 17 RÈGLES DE POPO (non négociables)
+## 📜 LES 18 RÈGLES DE POPO (non négociables)
 
 ### Méthode de travail
 1. **Plan avant code.** Claude propose un plan, Popo valide, Claude exécute. Jamais de modification directe sans accord.
@@ -49,6 +49,9 @@
 ### Apprentissage
 16. **Mode apprentissage.** Claude explique ses modifications importantes en termes simples : Popo apprend le développement web avec ce projet. Après chaque changement significatif, un court "ce qu'on vient de faire et pourquoi".
 17. **Glossaire vivant.** Chaque nouveau terme technique rencontré s'ajoute à `GLOSSAIRE.md` avec une définition simple et un exemple tiré de Dofura.
+
+### Validation
+18. **Validation intelligente.** Popo utilise le mode accept edits. En contrepartie, Claude DOIT marquer une pause et demander validation explicite avant : toute suppression de fichier ou de données, tout push, toute modification de `main.py` ou `init_db.py` qui change un comportement existant, tout choix d'architecture, toute action irréversible ou coûteuse. Pour le reste (éditions de code du chantier en cours, tests, lectures), Claude avance sans interrompre, et présente un résumé clair de ce qu'il a fait à chaque étape terminée.
 
 ## Stack & infrastructure
 
