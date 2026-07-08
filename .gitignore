@@ -2,12 +2,14 @@
 dofura.db
 frontend/dofura.db
 
-# JSON regenerables (scraping / regeneres par des scripts)
-dofura_monstres.json
-dofura_sorts.json
-dofura_effects.json
+# JSON generes par un script mais pas source pour Railway (safe hors Git)
 dofura_effets_speciaux.json
 audit_sorts.json
+
+# NOTE: dofura_monstres.json / dofura_sorts.json / dofura_effects.json restent
+# suivis en Git : Railway n'a pas de volume persistant (chantier #1), donc
+# le depot Git est leur seule source au deploiement. A revoir une fois le
+# volume Railway en place.
 
 # Backups locaux
 backups/
