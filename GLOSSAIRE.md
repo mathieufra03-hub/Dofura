@@ -69,13 +69,19 @@
 
 **.gitignore** — la liste des fichiers que Git doit ignorer (ne jamais envoyer sur GitHub). *C'est là qu'on mettra dofura.db pour la sortir du repo.*
 
-**README.md** — la page d'accueil du repo : c'est quoi le projet, comment le lancer. Pour les humains. *Le tien est vide, on le rédige au grand nettoyage.*
+**README.md** — la page d'accueil du repo : c'est quoi le projet, comment le lancer. Pour les humains. *Rédigé au grand nettoyage du 2026-07-08 : présentation, stack, lancement local, déploiement.*
 
-**Variable d'environnement** — un réglage stocké en dehors du code. Permet de changer une valeur sans toucher au code et de garder les secrets hors de GitHub. *VITE_API_URL contiendra l'adresse du backend : localhost en local, Railway en prod, automatiquement.*
+**Variable d'environnement** — un réglage stocké en dehors du code. Permet de changer une valeur sans toucher au code et de garder les secrets hors de GitHub. *VITE_API_URL contient l'adresse du backend : localhost en local (`.env.local`), Railway en prod. Côté Vercel, ça se règle dans Project Settings → Environment Variables — une valeur stockée sur le serveur de Vercel, pas dans le code, appliquée au prochain build.*
 
 **Déploiement** — publier ton code pour qu'il tourne sur internet. *Chez toi : git push → Railway (back) et Vercel (front) se mettent à jour seuls.*
 
-**Volume persistant** — un espace de stockage qui survit aux redéploiements. Sans lui, les fichiers du serveur sont effacés et recréés à chaque push. *Le coffre-fort à vérifier en priorité pour dofura.db.*
+**Volume persistant** — un espace de stockage qui survit aux redéploiements. Sans lui, les fichiers du serveur sont effacés et recréés à chaque push. *Vérifié absent sur Railway le 2026-07-08 — c'est pour ça que dofura_monstres.json/dofura_sorts.json/dofura_effects.json doivent rester dans Git en attendant : c'est leur seule source au déploiement.*
+
+**diff** — la différence entre deux versions d'un fichier : ce qui a été ajouté (en vert) et supprimé (en rouge). *`git diff` montre les lignes changées avant un commit.*
+
+**PATH** — la liste des dossiers où le système va chercher un programme quand tu tapes son nom dans le terminal. *Si `railway` répond "command not found", c'est que la CLI Railway n'est pas installée ou pas dans le PATH.*
+
+**`git rm --cached`** — retire un fichier du suivi Git SANS le supprimer du disque (contrairement à `git rm` tout court, ou à un `rm` classique). *Utilisé pour sortir dofura.db du dépôt tout en le gardant sur ton ordinateur.*
 
 **CORS** — le contrôle de sécurité du navigateur qui vérifie que le front a le droit de parler au back. *Ton erreur historique quand const API pointait vers localhost en prod, c'était ça.*
 

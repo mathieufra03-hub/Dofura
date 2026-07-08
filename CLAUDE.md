@@ -36,7 +36,7 @@
 8. **URL d'API en variable d'environnement** (`VITE_API_URL`). Plus de changer_api.py, plus d'oubli avant push.
 
 ### Protection des données
-9. **dofura.db et les JSON regénérables hors Git** (via .gitignore).
+9. **dofura.db hors Git** (régénéré à chaque démarrage par `init_db.py`, via `.gitignore`). **Exception : les JSON sources (`dofura_monstres.json`, `dofura_sorts.json`, `dofura_effects.json`) restent DANS Git** tant que Railway n'a pas de volume persistant (chantier #1) — le déploiement Railway build depuis GitHub, donc c'est actuellement leur seule source au démarrage. Voir piège #10. À revoir une fois le volume en place.
 10. **Backup de dofura.db avant tout script qui écrit dedans.** Une copie de fichier, c'est gratuit ; des semaines de scraping perdu, non.
 11. **Scraping avec pauses entre les requêtes.** Pour ne pas se faire bloquer par dofusdb ou Dofensive.
 12. **Jamais de mot de passe, clé API ou secret dans le code ou sur GitHub.** Variables d'environnement uniquement (onglet Variables de Railway).
@@ -83,6 +83,7 @@
 7. **AssetRipper :** abandonné (compression Unity propriétaire). Icônes = webp Dofensive uniquement. Ne pas retenter.
 8. **Chasse au trésor :** wrapper dofusdb.fr uniquement. Jamais de rebuild des 13 000+ indices.
 9. **Dofus 3.0 : les idoles sont supprimées** — ne jamais en parler (exception : quête du Dofus Turquoise).
+10. **JSON sources vs Git :** ne jamais sortir `dofura_monstres.json` / `dofura_sorts.json` / `dofura_effects.json` du suivi Git tant que le volume persistant Railway (chantier #1) n'existe pas — Railway build depuis GitHub, donc les retirer casse le déploiement (`init_db.py` plante sans `dofura_monstres.json`, `/sorts` renvoie du vide sans `dofura_sorts.json`). Seul `dofura.db` peut sortir du suivi sans risque, car régénéré à chaque démarrage. Erreur commise puis corrigée le 2026-07-08 pendant le grand nettoyage (chantier #2) — cf. règle 9 amendée.
 
 ## 📜 Leçons historiques (ancienne méthode chat + copier-coller)
 
@@ -114,12 +115,11 @@ Règle commune : règle 13 (ne jamais inventer) + validation Popo avant intégra
 ## Chantiers en cours / problèmes ouverts
 
 1. **Volume persistant Railway VÉRIFIÉ (2026-07-08) : absent.** Vue d'ensemble Railway → un seul service web, pas de volume attaché (clic droit propose "Attach Volume"). Acceptable pour l'instant car `dofura.db` est regénérable via `init_db.py` (pas de perte définitive en cas de redéploiement). **Volume OBLIGATOIRE avant la Phase 4 (comptes utilisateurs)** — sans ça, les données de progression des utilisateurs seraient perdues à chaque redéploiement.
-2. **Grand nettoyage du repo** (application des règles 5-9) : supprimer les ~25 scripts jetables de la racine, sortir dofura.db de Git, trancher sorts vs sorts_complet, clarifier src/ vs frontend/, mettre en place VITE_API_URL, supprimer changer_api.py et app_dump.txt.
+2. **Grand nettoyage du repo — FERMÉ (2026-07-08).** ~35 scripts jetables supprimés, outils réutilisables déplacés dans `scripts/`, `dofura_sorts_complet.json` supprimé (orphelin), `dofura.db` sorti du suivi Git (JSON sources restés en Git, voir règle 9 et piège #10), `src/` mort et `frontend/frontend/` résiduel supprimés, `VITE_API_URL` en place (code + Vercel), `changer_api.py`/`app_dump.txt` supprimés, README rédigé. Backup complet (local + Drive de Popo) fait avant toute suppression.
 3. **Effets spéciaux sorts** : certains `effect_id` (ex. 1160, 792, 793) ont `description: '#1'` — le `diceNum` est en réalité un ID de sort dont le `name.fr` est le vrai label. `scripts/fix_effets_speciaux.py` à finaliser via `api.dofusdb.fr/spell-levels`. Match par nom (`/spells?lang=fr&name=...`) à tester.
 4. **Filtres zone/famille** sur l'encyclopédie : à développer.
-5. **README.md** : vide, à rédiger (présentation + comment lancer le projet).
-6. **URL dofura.fr** : à acheter/configurer.
-7. **Phase 4 (anticipation) :** front et back sur deux domaines → cookies impossibles proprement → prévoir JWT dans le header `Authorization`.
+5. **URL dofura.fr** : à acheter/configurer.
+6. **Phase 4 (anticipation) :** front et back sur deux domaines → cookies impossibles proprement → prévoir JWT dans le header `Authorization`.
 
 ## Ressources
 
