@@ -64,7 +64,7 @@
 
 **Composants App.jsx :** Navbar, StatsBar, Hero, AlmanaxBanner, EncycloGrid, SortsPanel, SortDetail, MonstrePage
 
-**Data :** `dofura_monstres.json` (4 932 monstres fusionnés Dofensive + Dofusdb + Duffus) · `dofura_sorts.json` (8 019 sorts) · `dofura_effects.json` (302 effets) · icônes `.webp` locales dans `frontend/public/assets/icons/`
+**Data :** `dofura_monstres.json` (4 932 monstres fusionnés Dofensive + Dofusdb + Duffus) · `dofura_sorts.json` (8 019 sorts) · `dofura_effects.json` (302 effets) · `dofura_effets_speciaux.json` (1577 résolutions diceNum→nom pour les effets sans description propre, ex. invocations) · icônes `.webp` locales dans `frontend/public/assets/icons/`
 
 ## Charte graphique — Krosmoz Espace (validée, ne pas modifier sans accord)
 
@@ -116,7 +116,7 @@ Règle commune : règle 13 (ne jamais inventer) + validation Popo avant intégra
 
 1. **Volume persistant Railway VÉRIFIÉ (2026-07-08) : absent.** Vue d'ensemble Railway → un seul service web, pas de volume attaché (clic droit propose "Attach Volume"). Acceptable pour l'instant car `dofura.db` est regénérable via `init_db.py` (pas de perte définitive en cas de redéploiement). **Volume OBLIGATOIRE avant la Phase 4 (comptes utilisateurs)** — sans ça, les données de progression des utilisateurs seraient perdues à chaque redéploiement.
 2. **Grand nettoyage du repo — FERMÉ (2026-07-08).** ~35 scripts jetables supprimés, outils réutilisables déplacés dans `scripts/`, `dofura_sorts_complet.json` supprimé (orphelin), `dofura.db` sorti du suivi Git (JSON sources restés en Git, voir règle 9 et piège #10), `src/` mort et `frontend/frontend/` résiduel supprimés, `VITE_API_URL` en place (code + Vercel), `changer_api.py`/`app_dump.txt` supprimés, README rédigé. Backup complet (local + Drive de Popo) fait avant toute suppression.
-3. **Effets spéciaux sorts** : certains `effect_id` (ex. 1160, 792, 793) ont `description: '#1'` — le `diceNum` est en réalité un ID de sort dont le `name.fr` est le vrai label. `scripts/fix_effets_speciaux.py` à finaliser via `api.dofusdb.fr/spell-levels`. Match par nom (`/spells?lang=fr&name=...`) à tester. **Nouveau symptôme observé (2026-07-08) :** des descriptions affichent des marqueurs bruts non nettoyés type `{{~ps}}` / `{{~zs}}` (ex. "500 Dommage{{~ps}}{{~zs}}") — `formater_effet()` dans `main.py` ne nettoie actuellement que le motif `{{~1~2...}}`, pas celui-ci. Probablement des marqueurs pluriel/singulier Dofus à ajouter au même nettoyage.
+3. **Effets spéciaux sorts — FERMÉ (2026-07-08).** `dofura_effets_speciaux.json` complété (1577 résolutions diceNum→nom, 20 introuvables car contenu retiré du jeu) et branché dans `formater_effet()` : les effets `description: '#1'`/vide résolvent désormais le vrai nom du sort au lieu d'être masqués. Marqueurs `{{~ps}}`/`{{~zs}}` nettoyés avec vraie pluralisation (`{{~ps}}` → "s" si la valeur ou le max de la plage ≠ 1, filet de sécurité si non numérique). Testé sur Bêlement (non affecté, inchangé), Tornade (singulier "1 case") et Rage (plage "6 à 10 Dommages").
 4. **Filtres zone/famille** sur l'encyclopédie : à développer.
 5. **URL dofura.fr** : à acheter/configurer.
 6. **Phase 4 (anticipation) :** front et back sur deux domaines → cookies impossibles proprement → prévoir JWT dans le header `Authorization`.
