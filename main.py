@@ -94,7 +94,10 @@ def formater_effet(effet):
     else:
         desc = desc.replace("#2", "")
 
-    desc = re.sub(r'<sprite[^>]*>', '', desc).strip()
+    # Le retrait de la balise laisse l'espace qui l'entourait des deux cotes
+    # (ex. "1 <sprite name=\"PA\"> PA" -> "1  PA") : on les recollapse a un seul.
+    desc = re.sub(r'<sprite[^>]*>', '', desc)
+    desc = re.sub(r'\s{2,}', ' ', desc).strip()
 
     # "+" explicite pour les bonus dont le texte demarre par la valeur brute
     # (ex. "2 PM" -> "+2 PM"), symetrique du "-" deja integre par Ankama dans
