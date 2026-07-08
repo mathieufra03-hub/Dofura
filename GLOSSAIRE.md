@@ -93,5 +93,7 @@
 
 **Combobox** — un champ qui combine une liste déroulante et une recherche texte, utile quand la liste est trop longue pour un menu classique. *Le filtre zone (372 valeurs) : un `<select>` natif aurait été illisible, donc combobox maison avec un champ "Rechercher une zone...".*
 
+**Réponse périmée (race condition réseau)** — quand deux requêtes partent à la suite mais reviennent dans le désordre (la 2e revient avant la 1re), et que l'appli affiche bêtement la dernière REÇUE au lieu de la dernière ENVOYÉE. *Corrigé sur la page Monstres avec un numéro de requête : chaque fetch se compare à "suis-je toujours le dernier demandé ?" avant d'afficher son résultat.*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*
