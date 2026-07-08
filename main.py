@@ -42,7 +42,18 @@ def formater_effet(effet):
     dice_side = effet.get("diceSide", 0)
     duration = effet.get("duration", 0)
 
-    template = EFFECTS_DATA.get(effect_id, {}).get("description", f"Effet {effect_id}")
+    effect_def = EFFECTS_DATA.get(effect_id, {})
+    template = effect_def.get("description", f"Effet {effect_id}")
+
+    # Polarite issue des champs Ankama (characteristic_operator/boost), pas d'une
+    # supposition sur le texte : sert au "+" explicite ci-dessous et a la future
+    # coloration vert/rouge cote frontend.
+    if effect_def.get("boost") and effect_def.get("characteristic_operator") == "+":
+        polarite = "bonus"
+    elif effect_def.get("boost") and effect_def.get("characteristic_operator") == "-":
+        polarite = "malus"
+    else:
+        polarite = None
 
     # Certains effect_id (ex. invocation) n'ont pas de vraie description : le
     # diceNum est en realite l'ID d'un sort dont le nom est le vrai libelle.
@@ -53,6 +64,7 @@ def formater_effet(effet):
             "valeur": str(dice_num),
             "duration": duration,
             "effect_id": effect_id,
+            "polarite": polarite,
         }
 
     desc = template
@@ -84,8 +96,17 @@ def formater_effet(effet):
 
     desc = re.sub(r'<sprite[^>]*>', '', desc).strip()
 
+    # "+" explicite pour les bonus dont le texte demarre par la valeur brute
+    # (ex. "2 PM" -> "+2 PM"), symetrique du "-" deja integre par Ankama dans
+    # le texte des malus. Le garde-fou "#" absent exclut les rares templates
+    # a placeholders multiples (#3+) que ce formatage ne gere pas encore, et
+    # startswith(valeur) exclut les tournures verbales ("Vole 2 PM") qui n'ont
+    # pas besoin de signe.
+    if polarite == "bonus" and "#" not in desc and desc.startswith(str(dice_num)):
+        desc = "+" + desc
+
     # Si la description source était juste '#1', le texte final est un nombre brut — on le masque
-    if desc.strip().lstrip('-').isdigit():
+    if desc.strip().lstrip('-+').isdigit():
         desc = None
 
     return {
@@ -93,6 +114,7 @@ def formater_effet(effet):
         "valeur": valeur,
         "duration": duration,
         "effect_id": effect_id,
+        "polarite": polarite,
     }
 
 def get_db():
