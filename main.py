@@ -19,6 +19,7 @@ app.add_middleware(
 
 SORTS_DATA = {}
 EFFECTS_DATA = {}
+EFFETS_SPECIAUX_DATA = {}
 
 if os.path.exists("dofura_sorts.json"):
     with open("dofura_sorts.json", "r", encoding="utf-8") as f:
@@ -31,13 +32,41 @@ if os.path.exists("dofura_effects.json"):
         for k, v in raw.items():
             EFFECTS_DATA[int(k)] = v
 
+if os.path.exists("dofura_effets_speciaux.json"):
+    with open("dofura_effets_speciaux.json", "r", encoding="utf-8") as f:
+        EFFETS_SPECIAUX_DATA = json.load(f)
+
 def formater_effet(effet):
     effect_id = effet.get("effectId")
     dice_num = effet.get("diceNum", 0)
     dice_side = effet.get("diceSide", 0)
     duration = effet.get("duration", 0)
 
-    desc = EFFECTS_DATA.get(effect_id, {}).get("description", f"Effet {effect_id}")
+    template = EFFECTS_DATA.get(effect_id, {}).get("description", f"Effet {effect_id}")
+
+    # Certains effect_id (ex. invocation) n'ont pas de vraie description : le
+    # diceNum est en realite l'ID d'un sort dont le nom est le vrai libelle.
+    if template.strip() in ("#1", "#2", "#1#2", ""):
+        nom = EFFETS_SPECIAUX_DATA.get(str(dice_num))
+        return {
+            "texte": nom,
+            "valeur": str(dice_num),
+            "duration": duration,
+            "effect_id": effect_id,
+        }
+
+    desc = template
+
+    try:
+        dn, ds = int(dice_num), int(dice_side)
+        pluriel = (dn != 1) if (ds == 0 or dn == ds) else (ds > 1)
+    except (TypeError, ValueError):
+        pluriel = None  # valeur non numerique : filet de securite, pas de pluriel devine
+
+    # Nettoyage des marqueurs de pluriel AVANT le nettoyage generique de "}}"
+    # ci-dessous (qui sinon mange leur accolade fermante en premier).
+    desc = desc.replace("{{~ps}}", "s" if pluriel else "")
+    desc = desc.replace("{{~zs}}", "")
 
     if dice_side == 0 or dice_num == dice_side:
         valeur = str(dice_num)
@@ -52,6 +81,7 @@ def formater_effet(effet):
         desc = desc.replace("#2", str(dice_side))
     else:
         desc = desc.replace("#2", "")
+
     desc = re.sub(r'<sprite[^>]*>', '', desc).strip()
 
     # Si la description source était juste '#1', le texte final est un nombre brut — on le masque
