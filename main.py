@@ -125,6 +125,11 @@ def formater_effet(effet):
         "polarite": polarite,
     }
 
+def effet_visible(effet):
+    # Si Ankama marque un effet invisible partout (tooltip/UI de buff/log de
+    # combat), il n'est pas cense etre montre au joueur en jeu non plus.
+    return bool(effet.get("visibleInTooltip") or effet.get("visibleInBuffUi") or effet.get("visibleInFightLog"))
+
 def get_db():
     conn = sqlite3.connect("dofura.db")
     conn.row_factory = sqlite3.Row
@@ -275,8 +280,8 @@ def detail_sort(sort_id: int):
         "global_cooldown": sort.get("global_cooldown"),
         "cast_in_line": sort.get("cast_in_line"),
         "cast_in_diagonal": sort.get("cast_in_diagonal"),
-        "effects": [f for e in sort.get("effects", []) if (f:=formater_effet(e))["texte"] is not None],
-        "critical_effects": [f for e in sort.get("critical_effects", []) if (f:=formater_effet(e))["texte"] is not None],
+        "effects": [f for e in sort.get("effects", []) if effet_visible(e) and (f:=formater_effet(e))["texte"] is not None],
+        "critical_effects": [f for e in sort.get("critical_effects", []) if effet_visible(e) and (f:=formater_effet(e))["texte"] is not None],
     }
 
 if __name__ == "__main__":
