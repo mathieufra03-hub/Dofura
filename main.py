@@ -168,15 +168,56 @@ def liste_monstres(search: str = "", famille: str = "", zone: str = "", page: in
     }
 
 @app.get("/monstres/filtres")
-def filtres_monstres():
+def filtres_monstres(famille: str = "", zone: str = ""):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT DISTINCT famille FROM monstres WHERE famille IS NOT NULL AND famille != '' ORDER BY famille")
+
+    # Familles disponibles : filtrees par la zone active (jamais par la famille
+    # elle-meme, sinon la valeur selectionnee pourrait disparaitre de son propre menu).
+    zone_cond, zone_params = "", []
+    if zone == SANS_VALEUR:
+        zone_cond = "AND id NOT IN (SELECT monstre_id FROM zones)"
+    elif zone:
+        zone_cond = "AND id IN (SELECT monstre_id FROM zones WHERE nom = ?)"
+        zone_params = [zone]
+
+    cur.execute(f"""
+        SELECT DISTINCT famille FROM monstres
+        WHERE famille IS NOT NULL AND famille != '' {zone_cond}
+        ORDER BY famille
+    """, zone_params)
     familles = [r[0] for r in cur.fetchall()]
-    cur.execute("SELECT DISTINCT nom FROM zones ORDER BY nom")
+
+    cur.execute(f"""
+        SELECT COUNT(*) FROM monstres
+        WHERE (famille IS NULL OR famille = '') {zone_cond}
+    """, zone_params)
+    sans_famille = cur.fetchone()[0] > 0
+
+    # Zones disponibles : filtrees par la famille active (meme logique inverse).
+    famille_cond, famille_params = "", []
+    if famille == SANS_VALEUR:
+        famille_cond = "AND (famille IS NULL OR famille = '')"
+    elif famille:
+        famille_cond = "AND famille = ?"
+        famille_params = [famille]
+
+    cur.execute(f"""
+        SELECT DISTINCT z.nom FROM zones z
+        JOIN monstres m ON m.id = z.monstre_id
+        WHERE 1=1 {famille_cond}
+        ORDER BY z.nom
+    """, famille_params)
     zones = [r[0] for r in cur.fetchall()]
+
+    cur.execute(f"""
+        SELECT COUNT(*) FROM monstres
+        WHERE id NOT IN (SELECT monstre_id FROM zones) {famille_cond}
+    """, famille_params)
+    sans_zone = cur.fetchone()[0] > 0
+
     conn.close()
-    return {"familles": familles, "zones": zones}
+    return {"familles": familles, "sans_famille": sans_famille, "zones": zones, "sans_zone": sans_zone}
 
 @app.get("/monstres/{monstre_id}")
 def detail_monstre(monstre_id: int):

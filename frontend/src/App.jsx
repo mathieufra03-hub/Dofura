@@ -425,7 +425,7 @@ const mp = {
   comboboxEmpty: { padding:"10px 12px", fontSize:12, color:C.txt3 },
 }
 
-function ZoneCombobox({ zones, value, onChange }) {
+function ZoneCombobox({ zones, sansZoneDispo, value, onChange }) {
   const [open, setOpen] = useState(false)
   const [filtre, setFiltre] = useState("")
   const ref = useRef(null)
@@ -452,7 +452,7 @@ function ZoneCombobox({ zones, value, onChange }) {
             placeholder="Rechercher une zone..." style={mp.comboboxInput} />
           <div style={mp.comboboxList}>
             <div onClick={()=>choisir("")} style={mp.comboboxOption(value==="")}>Toutes les zones</div>
-            <div onClick={()=>choisir(SANS_VALEUR)} style={mp.comboboxOption(value===SANS_VALEUR)}>Sans zone</div>
+            {sansZoneDispo && <div onClick={()=>choisir(SANS_VALEUR)} style={mp.comboboxOption(value===SANS_VALEUR)}>Sans zone</div>}
             {zonesFiltrees.map(z => (
               <div key={z} onClick={()=>choisir(z)} style={mp.comboboxOption(value===z)}>{z}</div>
             ))}
@@ -474,26 +474,51 @@ function MonstresPage({ onSelect, onBack }) {
   const [zone, setZone] = useState("")
   const [familles, setFamilles] = useState([])
   const [zones, setZones] = useState([])
+  const [sansFamilleDispo, setSansFamilleDispo] = useState(true)
+  const [sansZoneDispo, setSansZoneDispo] = useState(true)
   const [loading, setLoading] = useState(true)
+  const filtresRequeteId = useRef(0)
 
+  // Filtres en cascade : les familles proposees dependent de la zone active
+  // (et vice versa), jamais de leur propre valeur — sinon la selection en
+  // cours pourrait disparaitre de son propre menu. Si la famille ou la zone
+  // choisie devient incompatible avec l'autre filtre, on la reinitialise
+  // plutot que de laisser le joueur sur une combinaison impossible.
   useEffect(() => {
-    fetch(`${API}/monstres/filtres`).then(r=>r.json()).then(d => {
+    const requeteId = ++filtresRequeteId.current
+    const params = new URLSearchParams()
+    if (famille) params.set("famille", famille)
+    if (zone) params.set("zone", zone)
+    fetch(`${API}/monstres/filtres?${params}`).then(r=>r.json()).then(d => {
+      if (requeteId !== filtresRequeteId.current) return // reponse perimee (filtre change entre-temps)
       setFamilles(d.familles); setZones(d.zones)
+      setSansFamilleDispo(d.sans_famille); setSansZoneDispo(d.sans_zone)
+
+      if (famille === SANS_VALEUR && !d.sans_famille) { setFamille(""); setPage(1) }
+      else if (famille && famille !== SANS_VALEUR && !d.familles.includes(famille)) { setFamille(""); setPage(1) }
+
+      if (zone === SANS_VALEUR && !d.sans_zone) { setZone(""); setPage(1) }
+      else if (zone && zone !== SANS_VALEUR && !d.zones.includes(zone)) { setZone(""); setPage(1) }
     })
-  }, [])
+  }, [famille, zone])
 
   useEffect(() => {
     const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
     return () => clearTimeout(t)
   }, [searchInput])
 
+  const monstresRequeteId = useRef(0)
   useEffect(() => {
+    const requeteId = ++monstresRequeteId.current
     setLoading(true)
     const params = new URLSearchParams({ search, famille, zone, page, page_size: PAGE_SIZE })
     fetch(`${API}/monstres?${params}`)
       .then(r=>r.json())
-      .then(d => { setMonstres(d.monstres); setTotal(d.total); setLoading(false) })
-      .catch(()=>setLoading(false))
+      .then(d => {
+        if (requeteId !== monstresRequeteId.current) return // reponse perimee (filtre change entre-temps)
+        setMonstres(d.monstres); setTotal(d.total); setLoading(false)
+      })
+      .catch(()=>{ if (requeteId === monstresRequeteId.current) setLoading(false) })
   }, [search, famille, zone, page])
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
@@ -513,11 +538,11 @@ function MonstresPage({ onSelect, onBack }) {
 
         <select value={famille} onChange={e=>{ setFamille(e.target.value); setPage(1) }} style={mp.select}>
           <option value="">Toutes les familles</option>
-          <option value={SANS_VALEUR}>Sans famille</option>
+          {sansFamilleDispo && <option value={SANS_VALEUR}>Sans famille</option>}
           {familles.map(f => <option key={f} value={f}>{f}</option>)}
         </select>
 
-        <ZoneCombobox zones={zones} value={zone} onChange={(v)=>{ setZone(v); setPage(1) }} />
+        <ZoneCombobox zones={zones} sansZoneDispo={sansZoneDispo} value={zone} onChange={(v)=>{ setZone(v); setPage(1) }} />
 
         {filtresActifs && <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser</button>}
 
