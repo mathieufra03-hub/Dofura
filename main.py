@@ -358,6 +358,16 @@ def formater_effet_objet(row):
         return {"texte": template.replace("#3", sort["nom"]), "valeur": str(dice_num),
                 "duration": 0, "effect_id": effect_id, "polarite": None}
 
+    # Contrairement aux sorts/monstres (diceNum toujours une magnitude
+    # positive, le signe ne vivant que dans le texte du template), les objets
+    # encodent le signe DANS le nombre brut (confirme sur 953+68 effets :
+    # les templates bonus n'ont jamais de from negatif, les templates malus
+    # jamais de from positif). Un template malus a deja son "-" en dur
+    # ("-#1...") : lui donner un diceNum deja negatif produirait "--100".
+    # On neutralise donc le signe cote objets, le template porte le sien.
+    dice_num_abs = abs(dice_num)
+    dice_side_abs = abs(row["dice_side"])
+
     # Les objets n'ont que 2 emplacements numeriques (from/to, ici diceNum/
     # diceSide) contre 3 pour les sorts/monstres (diceNum/diceSide/value).
     # Quand un template n'utilise QUE #3 (ex. "+#3 Points d'experience"),
@@ -368,13 +378,13 @@ def formater_effet_objet(row):
     if trois_seul:
         return formater_effet({
             "effectId": effect_id, "diceNum": 0, "diceSide": 0,
-            "value": dice_num, "duration": 0,
+            "value": dice_num_abs, "duration": 0,
         })
 
     return formater_effet({
         "effectId": effect_id,
-        "diceNum": dice_num,
-        "diceSide": row["dice_side"],
+        "diceNum": dice_num_abs,
+        "diceSide": dice_side_abs,
         "value": row["value"],
         "duration": 0,
     })

@@ -31,23 +31,28 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-const navLinks = ["Monstres", "Quêtes", "Objets", "Métiers", "Zones", "Almanax"]
+const navLinks = ["Monstres", "Quêtes", "Équipements", "Ressources", "Métiers", "Zones", "Almanax"]
+const NAV_LABEL_VERS_CIBLE = { "Monstres":"monstres", "Équipements":"equipement", "Ressources":"ressource" }
 const quickChips = ["Bouftou", "Iop", "Dofus Turquoise", "Larves de Donjon", "Panoplie Kolosso"]
 
-function Navbar({ onHome, onMonstres }) {
+function Navbar({ onHome, onNav, browsing }) {
   return (
     <nav style={{ background:C.bg2, borderBottom:`0.5px solid ${C.bdr2}`, padding:"0 2rem", display:"flex", alignItems:"center", height:48, position:"sticky", top:0, zIndex:100 }}>
       <span onClick={onHome} style={{ fontFamily:"'Cinzel',serif", fontWeight:900, fontSize:17, background:"linear-gradient(90deg,#f0c040,#c478ff)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:"0.08em", marginRight:28, cursor:"pointer" }}>
         · DOFURA ·
       </span>
       <div style={{ display:"flex", gap:2, flex:1 }}>
-        {navLinks.map(n => (
-          <span key={n} onClick={n === "Monstres" ? onMonstres : undefined}
-            style={{ fontSize:12, color:n==="Monstres"?C.cyan:C.txt2, padding:"6px 11px", borderRadius:6, cursor:"pointer", background:n==="Monstres"?C.cyanf:"transparent" }}
-            onMouseEnter={e=>{e.currentTarget.style.color=C.cyan;e.currentTarget.style.background=C.cyanf}}
-            onMouseLeave={e=>{e.currentTarget.style.color=n==="Monstres"?C.cyan:C.txt2;e.currentTarget.style.background=n==="Monstres"?C.cyanf:"transparent"}}
-          >{n}</span>
-        ))}
+        {navLinks.map(n => {
+          const cible = NAV_LABEL_VERS_CIBLE[n]
+          const actif = cible && browsing === cible
+          return (
+            <span key={n} onClick={cible ? () => onNav(cible) : undefined}
+              style={{ fontSize:12, color:actif?C.cyan:C.txt2, padding:"6px 11px", borderRadius:6, cursor:cible?"pointer":"default", background:actif?C.cyanf:"transparent" }}
+              onMouseEnter={e=>{if(cible){e.currentTarget.style.color=C.cyan;e.currentTarget.style.background=C.cyanf}}}
+              onMouseLeave={e=>{e.currentTarget.style.color=actif?C.cyan:C.txt2;e.currentTarget.style.background=actif?C.cyanf:"transparent"}}
+            >{n}</span>
+          )
+        })}
       </div>
       <div style={{ marginLeft:"auto", display:"flex", gap:8, alignItems:"center" }}>
         <div style={{ background:C.bg3, border:`0.5px solid ${C.cyanb}`, borderRadius:6, padding:"5px 11px", fontSize:12, color:C.txt3 }}>Ctrl K</div>
@@ -153,14 +158,15 @@ function AlmanaxBanner({ data }) {
   )
 }
 
-function EncycloGrid({ onMonsters }) {
+function EncycloGrid({ onNav }) {
   const items = [
-    { label:"Monstres",  count:"4 932",  action:onMonsters },
-    { label:"Quêtes",    count:"4 210",  action:null },
-    { label:"Objets",    count:"18 900", action:null },
-    { label:"Métiers",   count:"18",     action:null },
-    { label:"Zones",     count:"800+",   action:null },
-    { label:"Donjons",   count:"120+",   action:null },
+    { label:"Monstres",     count:"4 932",  action:()=>onNav("monstres") },
+    { label:"Quêtes",       count:"4 210",  action:null },
+    { label:"Équipements",  count:"3 826",  action:()=>onNav("equipement") },
+    { label:"Ressources",   count:"3 639",  action:()=>onNav("ressource") },
+    { label:"Métiers",      count:"18",     action:null },
+    { label:"Zones",        count:"800+",   action:null },
+    { label:"Donjons",      count:"120+",   action:null },
   ]
   return (
     <div style={{ padding:"18px 2rem 0" }}>
@@ -168,7 +174,7 @@ function EncycloGrid({ onMonsters }) {
         <span style={{ fontSize:13, fontWeight:500, color:C.txt }}>Encyclopédie</span>
         <span style={{ fontSize:11, color:C.txt3 }}>Tout voir →</span>
       </div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:8, marginBottom:18 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(120px, 1fr))", gap:8, marginBottom:18 }}>
         {items.map(it => (
           <div key={it.label} onClick={it.action||undefined}
             style={{ background:C.bg3, border:`0.5px solid ${C.bdr}`, borderRadius:8, padding:"14px 6px", textAlign:"center", cursor:it.action?"pointer":"default" }}
@@ -394,6 +400,12 @@ function MonstrePage({ id, onBack }) {
 
 const SANS_VALEUR = "__aucune__"
 const PAGE_SIZE = 48
+const TRANCHES_NIVEAU = [
+  { valeur:"1-50",   label:"Niveau 1 à 50" },
+  { valeur:"51-100", label:"Niveau 51 à 100" },
+  { valeur:"101-150",label:"Niveau 101 à 150" },
+  { valeur:"151-200",label:"Niveau 151 à 200" },
+]
 
 // Styles regroupes ici (plutot qu'eparpilles dans le JSX) pour que la
 // refonte graphique complete a venir (design actuel provisoire) n'ait
@@ -585,12 +597,218 @@ function MonstresPage({ onSelect, onBack }) {
   )
 }
 
+// Composant unique reutilise pour /equipements et /ressources (DRY) : seule
+// la prop "categorie" change le perimetre interroge cote backend, le reste
+// (titre, placeholder, textes) est parametre depuis le point d'appel plutot
+// que devine ici, pour eviter toute logique de grammaire fragile.
+function ObjetsPage({ categorie, titre, placeholder, videMessage, compteurSingulier, compteurPluriel, onSelect, onBack }) {
+  const [objets, setObjets] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
+  const [type, setType] = useState("")
+  const [trancheNiveau, setTrancheNiveau] = useState("")
+  const [types, setTypes] = useState([])
+  const [sansTypeDispo, setSansTypeDispo] = useState(false)
+  const [sansNiveauDispo, setSansNiveauDispo] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // Categorie fixee par la page (pas de cascade a double sens necessaire
+  // comme famille/zone) : les filtres ne dependent que d'elle, recharges au
+  // changement de categorie (navigation directe equipement <-> ressource).
+  useEffect(() => {
+    setSearchInput(""); setSearch(""); setType(""); setTrancheNiveau(""); setPage(1)
+    fetch(`${API}/objets/filtres?categorie=${categorie}`).then(r=>r.json()).then(d => {
+      setTypes(d.types); setSansTypeDispo(d.sans_type); setSansNiveauDispo(d.sans_niveau)
+    })
+  }, [categorie])
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  const objetsRequeteId = useRef(0)
+  useEffect(() => {
+    const requeteId = ++objetsRequeteId.current
+    setLoading(true)
+    const params = new URLSearchParams({ categorie, search, type, tranche_niveau: trancheNiveau, page, page_size: PAGE_SIZE })
+    fetch(`${API}/objets?${params}`)
+      .then(r=>r.json())
+      .then(d => {
+        if (requeteId !== objetsRequeteId.current) return
+        setObjets(d.objets); setTotal(d.total); setLoading(false)
+      })
+      .catch(()=>{ if (requeteId === objetsRequeteId.current) setLoading(false) })
+  }, [categorie, search, type, trancheNiveau, page])
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
+  const filtresActifs = search || type || trancheNiveau
+
+  const reinitialiser = () => {
+    setSearchInput(""); setSearch(""); setType(""); setTrancheNiveau(""); setPage(1)
+  }
+
+  return (
+    <div style={mp.page}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={mp.filtreBar}>
+        <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
+          placeholder={placeholder} style={mp.searchInput} />
+
+        <select value={type} onChange={e=>{ setType(e.target.value); setPage(1) }} style={mp.select}>
+          <option value="">Tous les types</option>
+          {sansTypeDispo && <option value={SANS_VALEUR}>Sans type</option>}
+          {types.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+
+        <select value={trancheNiveau} onChange={e=>{ setTrancheNiveau(e.target.value); setPage(1) }} style={mp.select}>
+          <option value="">Tous niveaux</option>
+          {TRANCHES_NIVEAU.map(tr => <option key={tr.valeur} value={tr.valeur}>{tr.label}</option>)}
+          {sansNiveauDispo && <option value={SANS_VALEUR}>Sans niveau</option>}
+        </select>
+
+        {filtresActifs && <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser</button>}
+
+        <span style={mp.compteur}>{total} {total!==1?compteurPluriel:compteurSingulier}</span>
+      </div>
+
+      {!loading && objets.length === 0 ? (
+        <div style={mp.videEtat}>
+          {videMessage}
+          {filtresActifs && <div style={{ marginTop:10 }}>
+            <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+          </div>}
+        </div>
+      ) : (
+        <div style={mp.grid}>
+          {objets.map(o => (
+            <div key={o.id} onClick={()=>onSelect(o.id)} style={mp.card}
+              onMouseEnter={e=>e.currentTarget.style.borderColor=C.cyan}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=C.bdr}
+            >
+              {o.img
+                ? <img src={o.img} alt={o.nom} style={mp.cardImg} />
+                : <div style={mp.cardImgVide} />
+              }
+              <div style={mp.cardNom}>{o.nom}</div>
+              <div style={mp.cardFamille}>Niv. {o.niveau} — {o.type_nom || "—"}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={mp.pagination}>
+          <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+          <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+          <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ObjetDetailPage({ id, onSelect, onBack }) {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    setData(null)
+    fetch(`${API}/objets/${id}`).then(r=>r.json()).then(setData)
+  }, [id])
+
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>{data.erreur}</div>
+
+  const couleurPolarite = (p) => p === "bonus" ? C.green : p === "malus" ? C.red : C.txt
+
+  const paliers = data.panoplie
+    ? Object.entries(data.panoplie.effets_par_palier).sort((a,b)=>Number(a[0])-Number(b[0]))
+    : []
+
+  return (
+    <div translate="no" style={{ padding:"1.5rem 2rem", maxWidth:900, margin:"0 auto" }}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", display:"grid", gridTemplateColumns:"100px 1fr", gap:20, marginBottom:16 }}>
+        <div style={{ display:"flex", justifyContent:"center", alignItems:"flex-start" }}>
+          {data.img
+            ? <img src={data.img} alt={data.nom} style={{ width:90, height:90, objectFit:"contain" }} />
+            : <div style={{ width:90, height:90, background:C.bg3, borderRadius:8 }} />
+          }
+        </div>
+        <div>
+          <h2 style={{ fontSize:20, fontWeight:500, color:C.gold2, marginBottom:4 }}>{data.nom}</h2>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
+            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>Niv. {data.niveau}</span>
+            {data.type_nom && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.type_nom}</span>}
+          </div>
+          {data.description && <p style={{ fontSize:12, color:C.txt2, lineHeight:1.5 }}>{data.description}</p>}
+        </div>
+      </div>
+
+      {data.effects?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Effets</div>
+          {data.effects.map((e,i) => (
+            <div key={i} style={{ fontSize:12, color:couleurPolarite(e.polarite), padding:"3px 0", display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ color:C.prp2, fontSize:9, flexShrink:0 }}>◆</span> {e.texte}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.recette?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Recette</div>
+          {data.recette.map((ing,i) => (
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0" }}>
+              {ing.img
+                ? <img src={ing.img} alt={ing.nom} style={{ width:24, height:24, objectFit:"contain" }} />
+                : <div style={{ width:24, height:24, background:C.bg4, borderRadius:4 }} />
+              }
+              <span style={{ fontSize:12, color:C.txt }}>{ing.nom || `Objet #${ing.ingredient_id}`}</span>
+              <span style={{ fontSize:12, color:C.gold, marginLeft:"auto" }}>x{ing.quantite}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.panoplie && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>{data.panoplie.nom}</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+            {data.panoplie.membres.map(m => (
+              <span key={m.id} onClick={()=>onSelect(m.id)}
+                style={{ fontSize:11, padding:"3px 9px", borderRadius:6, cursor:"pointer",
+                  background:m.id===data.id?C.cyanf:C.bg4, border:`0.5px solid ${m.id===data.id?C.cyan:C.bdr}`, color:m.id===data.id?C.cyan:C.txt2 }}>
+                {m.nom}
+              </span>
+            ))}
+          </div>
+          {paliers.map(([palier, effets]) => (
+            <div key={palier} style={{ marginBottom:8 }}>
+              <div style={{ fontSize:11, color:C.prp2, marginBottom:3 }}>{palier} pièce{Number(palier)>1?"s":""}</div>
+              {effets.map((e,i) => (
+                <div key={i} style={{ fontSize:12, color:couleurPolarite(e.polarite), paddingLeft:10 }}>{e.texte}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function App() {
   const [query, setQuery]       = useState("")
   const [results, setResults]   = useState([])
   const [loading, setLoading]   = useState(false)
-  const [selected, setSelected] = useState(null)
-  const [browsing, setBrowsing] = useState(false)
+  const [selectedMonstre, setSelectedMonstre] = useState(null)
+  const [selectedObjet, setSelectedObjet]     = useState(null)
+  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource"
   const [almanax, setAlmanax]   = useState(null)
 
   useEffect(() => {
@@ -611,24 +829,40 @@ export default function App() {
       .then(r=>r.json()).then(setAlmanax).catch(()=>{})
   }, [])
 
-  const handleSelect  = (id) => { setSelected(id); setBrowsing(false); setQuery(""); setResults([]) }
-  const handleHome    = () => { setSelected(null); setBrowsing(false); setQuery(""); setResults([]) }
-  const handleBrowse   = () => { setSelected(null); setBrowsing(true); setQuery(""); setResults([]) }
+  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setBrowsing(null); setQuery(""); setResults([]) }
+  const handleSelectMonstre = (id) => { resetNav(); setSelectedMonstre(id) }
+  const handleSelectObjet   = (id) => { resetNav(); setSelectedObjet(id) }
+  const handleHome          = () => { resetNav() }
+  const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
   return (
     <div translate="no" style={{ minHeight:"100vh", background:C.bg, fontFamily:"sans-serif" }}>
       <div style={{ height:3, background:"linear-gradient(90deg,#9b4de0,#00d4ff,#f0c040,#c478ff,#00d4ff)", opacity:.7 }} />
-      <Navbar onHome={handleHome} onMonstres={handleBrowse} />
+      <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} />
       <StatsBar />
-      {selected ? (
-        <MonstrePage id={selected} onBack={handleHome} />
-      ) : browsing ? (
-        <MonstresPage onSelect={handleSelect} onBack={handleHome} />
+      {selectedMonstre ? (
+        <MonstrePage id={selectedMonstre} onBack={handleHome} />
+      ) : selectedObjet ? (
+        <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onBack={handleHome} />
+      ) : browsing === "monstres" ? (
+        <MonstresPage onSelect={handleSelectMonstre} onBack={handleHome} />
+      ) : browsing === "equipement" ? (
+        <ObjetsPage categorie="equipement" titre="Équipements"
+          placeholder="Rechercher un équipement..."
+          videMessage="Aucun équipement ne correspond à ces filtres."
+          compteurSingulier="équipement" compteurPluriel="équipements"
+          onSelect={handleSelectObjet} onBack={handleHome} />
+      ) : browsing === "ressource" ? (
+        <ObjetsPage categorie="ressource" titre="Ressources"
+          placeholder="Rechercher une ressource..."
+          videMessage="Aucune ressource ne correspond à ces filtres."
+          compteurSingulier="ressource" compteurPluriel="ressources"
+          onSelect={handleSelectObjet} onBack={handleHome} />
       ) : (
         <>
-          <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelect} loading={loading} />
+          <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelectMonstre} loading={loading} />
           <AlmanaxBanner data={almanax} />
-          <EncycloGrid onMonsters={handleBrowse} />
+          <EncycloGrid onNav={handleNav} />
         </>
       )}
     </div>
