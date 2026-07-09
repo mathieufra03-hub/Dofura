@@ -99,5 +99,9 @@
 
 **Normalisation (base de données)** — ranger chaque donnée à un seul endroit (une fiche par item, un numéro de référence partout ailleurs) plutôt que de la recopier en entier à chaque usage. Évite qu'une même donnée dupliquée 300 fois devienne 300 versions à corriger si elle change. *Chantier #7 : une recette disait "ingrédient n°303, quantité 3" plutôt que de recopier la fiche complète de l'objet 303 à chaque recette qui l'utilise — sans ça, `dofura_recipes.json` pesait 244 Mo au lieu de 2 Mo.*
 
+**Composant paramétré (React)** — un seul composant qui change de comportement/affichage selon les props qu'on lui passe, plutôt que de copier-coller le composant pour chaque variante (principe DRY : "Don't Repeat Yourself"). *Chantier #8 : `ObjetsPage` sert à la fois pour `/equipements` et `/ressources` — seule la prop `categorie` change, le code de la grille/pagination/filtres est écrit une seule fois.*
+
+**Magnitude signée vs magnitude + signe séparé** — deux façons de stocker "combien" et "dans quel sens" (bonus ou malus). Soit le nombre porte déjà son signe (-100 = un malus de 100), soit le nombre est toujours positif et un texte à côté dit "c'est un malus". Mélanger les deux fait doubler le signe. *Chantier #8 : les sorts/monstres utilisent toujours un nombre positif + signe dans le texte, mais les objets stockent le signe directement dans le nombre — un item avait affiché "--100 Force" (deux fois le signe) avant qu'on harmonise les deux conventions.*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*
