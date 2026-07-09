@@ -31,8 +31,8 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-const navLinks = ["Monstres", "Quêtes", "Équipements", "Ressources", "Métiers", "Zones", "Donjons", "Almanax"]
-const NAV_LABEL_VERS_CIBLE = { "Monstres":"monstres", "Équipements":"equipement", "Ressources":"ressource", "Donjons":"donjon" }
+const navLinks = ["Monstres", "Quêtes", "Équipements", "Ressources", "Métiers", "Zones", "Donjons", "Panoplies", "Almanax"]
+const NAV_LABEL_VERS_CIBLE = { "Monstres":"monstres", "Équipements":"equipement", "Ressources":"ressource", "Donjons":"donjon", "Panoplies":"panoplie" }
 const quickChips = ["Bouftou", "Iop", "Dofus Turquoise", "Larves de Donjon", "Panoplie Kolosso"]
 
 function Navbar({ onHome, onNav, browsing }) {
@@ -167,6 +167,7 @@ function EncycloGrid({ onNav }) {
     { label:"Métiers",      count:"18",     action:null },
     { label:"Zones",        count:"800+",   action:null },
     { label:"Donjons",      count:"187",    action:()=>onNav("donjon") },
+    { label:"Panoplies",    count:"927",    action:()=>onNav("panoplie") },
   ]
   return (
     <div style={{ padding:"18px 2rem 0" }}>
@@ -726,7 +727,7 @@ function ObjetsPage({ categorie, titre, placeholder, videMessage, compteurSingul
   )
 }
 
-function ObjetDetailPage({ id, onSelect, onSelectDonjon, onBack }) {
+function ObjetDetailPage({ id, onSelect, onSelectDonjon, onSelectPanoplie, onBack }) {
   const [data, setData] = useState(null)
 
   useEffect(() => {
@@ -813,7 +814,10 @@ function ObjetDetailPage({ id, onSelect, onSelectDonjon, onBack }) {
 
       {data.panoplie && (
         <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
-          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>{data.panoplie.nom}</div>
+          <div onClick={()=>onSelectPanoplie(data.panoplie.id)}
+            style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.cyan, marginBottom:10, cursor:"pointer", width:"fit-content" }}>
+            {data.panoplie.nom}
+          </div>
           <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
             {data.panoplie.membres.map(m => (
               <span key={m.id} onClick={()=>onSelect(m.id)}
@@ -847,6 +851,184 @@ function ObjetDetailPage({ id, onSelect, onSelectDonjon, onBack }) {
             ))}
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function PanopliesPage({ onSelect, onBack }) {
+  const [panoplies, setPanoplies] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
+  const [type, setType] = useState("")
+  const [trancheNiveau, setTrancheNiveau] = useState("")
+  const [sansNiveauDispo, setSansNiveauDispo] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${API}/panoplies/filtres`).then(r=>r.json()).then(d => {
+      setSansNiveauDispo(d.sans_niveau)
+    })
+  }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  const panopliesRequeteId = useRef(0)
+  useEffect(() => {
+    const requeteId = ++panopliesRequeteId.current
+    setLoading(true)
+    const params = new URLSearchParams({ search, type, tranche_niveau: trancheNiveau, page, page_size: PAGE_SIZE })
+    fetch(`${API}/panoplies?${params}`)
+      .then(r=>r.json())
+      .then(d => {
+        if (requeteId !== panopliesRequeteId.current) return
+        setPanoplies(d.panoplies); setTotal(d.total); setLoading(false)
+      })
+      .catch(()=>{ if (requeteId === panopliesRequeteId.current) setLoading(false) })
+  }, [search, type, trancheNiveau, page])
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
+  const filtresActifs = search || type || trancheNiveau
+
+  const reinitialiser = () => {
+    setSearchInput(""); setSearch(""); setType(""); setTrancheNiveau(""); setPage(1)
+  }
+
+  return (
+    <div style={mp.page}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={mp.filtreBar}>
+        <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
+          placeholder="Rechercher une panoplie..." style={mp.searchInput} />
+
+        <select value={type} onChange={e=>{ setType(e.target.value); setPage(1) }} style={mp.select}>
+          <option value="">Toutes</option>
+          <option value="bonus">Avec bonus</option>
+          <option value="cosmetique">Cosmétiques</option>
+        </select>
+
+        <select value={trancheNiveau} onChange={e=>{ setTrancheNiveau(e.target.value); setPage(1) }} style={mp.select}>
+          <option value="">Tous niveaux</option>
+          {TRANCHES_NIVEAU.map(tr => <option key={tr.valeur} value={tr.valeur}>{tr.label}</option>)}
+          {sansNiveauDispo && <option value={SANS_VALEUR}>Sans niveau</option>}
+        </select>
+
+        {filtresActifs && <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser</button>}
+
+        <span style={mp.compteur}>{total} panoplie{total!==1?"s":""}</span>
+      </div>
+
+      {!loading && panoplies.length === 0 ? (
+        <div style={mp.videEtat}>
+          Aucune panoplie ne correspond à ces filtres.
+          {filtresActifs && <div style={{ marginTop:10 }}>
+            <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+          </div>}
+        </div>
+      ) : (
+        <div style={mp.grid}>
+          {panoplies.map(p => (
+            <div key={p.id} onClick={()=>onSelect(p.id)} style={mp.card}
+              onMouseEnter={e=>e.currentTarget.style.borderColor=C.cyan}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=C.bdr}
+            >
+              {p.img
+                ? <img src={p.img} alt={p.nom} style={mp.cardImg} />
+                : <div style={mp.cardImgVide} />
+              }
+              <div style={mp.cardNom}>{p.nom}</div>
+              <div style={mp.cardFamille}>
+                Niv. {p.niveau} — {p.nb_objets} pièce{p.nb_objets!==1?"s":""}{p.cosmetique?" · Cosmétique":""}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={mp.pagination}>
+          <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+          <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+          <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PanoplieDetailPage({ id, onSelectObjet, onBack }) {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    setData(null)
+    fetch(`${API}/panoplies/${id}`).then(r=>r.json()).then(setData)
+  }, [id])
+
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>{data.erreur}</div>
+
+  const couleurPolarite = (p) => p === "bonus" ? C.green : p === "malus" ? C.red : C.txt
+  const paliers = Object.entries(data.effets_par_palier).sort((a,b)=>Number(a[0])-Number(b[0]))
+
+  return (
+    <div translate="no" style={{ padding:"1.5rem 2rem", maxWidth:900, margin:"0 auto" }}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", display:"grid", gridTemplateColumns:"100px 1fr", gap:20, marginBottom:16 }}>
+        <div style={{ display:"flex", justifyContent:"center", alignItems:"flex-start" }}>
+          {data.img
+            ? <img src={data.img} alt={data.nom} style={{ width:90, height:90, objectFit:"contain" }} />
+            : <div style={{ width:90, height:90, background:C.bg3, borderRadius:8 }} />
+          }
+        </div>
+        <div>
+          <h2 style={{ fontSize:20, fontWeight:500, color:C.gold2, marginBottom:4 }}>{data.nom}</h2>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>Niv. {data.niveau}</span>
+            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.membres.length} pièce{data.membres.length!==1?"s":""}</span>
+            {data.cosmetique && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.goldf, border:`0.5px solid ${C.goldb}`, color:C.gold }}>Cosmétique</span>}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+        <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Objets de la panoplie</div>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+          {data.membres.map(m => (
+            <div key={m.id} onClick={()=>onSelectObjet(m.id)}
+              style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", borderRadius:6, cursor:"pointer",
+                background:C.bg4, border:`0.5px solid ${C.bdr}` }}
+            >
+              {m.img
+                ? <img src={m.img} alt={m.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                : <div style={{ width:22, height:22, background:C.bg3, borderRadius:4 }} />
+              }
+              <span style={{ fontSize:12, color:C.txt }}>{m.nom}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {paliers.length > 0 ? (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Bonus par palier</div>
+          {paliers.map(([palier, effets]) => (
+            <div key={palier} style={{ marginBottom:8 }}>
+              <div style={{ fontSize:11, color:C.prp2, marginBottom:3 }}>{palier} pièce{Number(palier)>1?"s":""}</div>
+              {effets.map((e,i) => (
+                <div key={i} style={{ fontSize:12, color:couleurPolarite(e.polarite), paddingLeft:10 }}>{e.texte}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontSize:12, color:C.txt3, padding:"8px 4px" }}>Panoplie cosmétique, sans bonus statistique.</div>
       )}
     </div>
   )
@@ -1082,10 +1264,11 @@ export default function App() {
   const [query, setQuery]       = useState("")
   const [results, setResults]   = useState([])
   const [loading, setLoading]   = useState(false)
-  const [selectedMonstre, setSelectedMonstre] = useState(null)
-  const [selectedObjet, setSelectedObjet]     = useState(null)
-  const [selectedDonjon, setSelectedDonjon]   = useState(null)
-  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon"
+  const [selectedMonstre, setSelectedMonstre]   = useState(null)
+  const [selectedObjet, setSelectedObjet]       = useState(null)
+  const [selectedDonjon, setSelectedDonjon]     = useState(null)
+  const [selectedPanoplie, setSelectedPanoplie] = useState(null)
+  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie"
   const [almanax, setAlmanax]   = useState(null)
 
   useEffect(() => {
@@ -1106,10 +1289,11 @@ export default function App() {
       .then(r=>r.json()).then(setAlmanax).catch(()=>{})
   }, [])
 
-  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setBrowsing(null); setQuery(""); setResults([]) }
-  const handleSelectMonstre = (id) => { resetNav(); setSelectedMonstre(id) }
-  const handleSelectObjet   = (id) => { resetNav(); setSelectedObjet(id) }
-  const handleSelectDonjon  = (id) => { resetNav(); setSelectedDonjon(id) }
+  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setBrowsing(null); setQuery(""); setResults([]) }
+  const handleSelectMonstre  = (id) => { resetNav(); setSelectedMonstre(id) }
+  const handleSelectObjet    = (id) => { resetNav(); setSelectedObjet(id) }
+  const handleSelectDonjon   = (id) => { resetNav(); setSelectedDonjon(id) }
+  const handleSelectPanoplie = (id) => { resetNav(); setSelectedPanoplie(id) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
@@ -1121,13 +1305,17 @@ export default function App() {
       {selectedMonstre ? (
         <MonstrePage id={selectedMonstre} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedObjet ? (
-        <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
+        <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} onBack={handleHome} />
       ) : selectedDonjon ? (
         <DonjonDetailPage id={selectedDonjon} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onBack={handleHome} />
+      ) : selectedPanoplie ? (
+        <PanoplieDetailPage id={selectedPanoplie} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : browsing === "monstres" ? (
         <MonstresPage onSelect={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "donjon" ? (
         <DonjonsPage onSelect={handleSelectDonjon} onBack={handleHome} />
+      ) : browsing === "panoplie" ? (
+        <PanopliesPage onSelect={handleSelectPanoplie} onBack={handleHome} />
       ) : browsing === "equipement" ? (
         <ObjetsPage categorie="equipement" titre="Équipements"
           placeholder="Rechercher un équipement..."

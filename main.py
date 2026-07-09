@@ -594,6 +594,99 @@ def detail_objet(objet_id: int):
         "donjons_requis": [{"id": d["id"], "nom": d["nom"], "quantite": d["quantite"]} for d in donjons_requis],
     }
 
+@app.get("/panoplies")
+def liste_panoplies(search: str = "", type: str = "", tranche_niveau: str = "",
+                     page: int = 1, page_size: int = 48):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 200)
+
+    conditions = ["p.nom LIKE ?"]
+    params = [f"%{search}%"]
+
+    if type == "cosmetique":
+        conditions.append("p.cosmetique = 1")
+    elif type == "bonus":
+        conditions.append("p.cosmetique = 0")
+
+    if tranche_niveau == SANS_VALEUR:
+        conditions.append("(p.niveau IS NULL OR p.niveau = 0)")
+    elif tranche_niveau in TRANCHES_NIVEAU:
+        borne_min, borne_max = TRANCHES_NIVEAU[tranche_niveau]
+        conditions.append("p.niveau BETWEEN ? AND ?")
+        params.extend([borne_min, borne_max])
+
+    where_clause = " AND ".join(conditions)
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(f"SELECT COUNT(*) FROM panoplies p WHERE {where_clause}", params)
+    total = cur.fetchone()[0]
+
+    cur.execute(f"""
+        SELECT p.id, p.nom, p.niveau, p.cosmetique, o.img,
+               (SELECT COUNT(*) FROM objets o2 WHERE o2.panoplie_id = p.id) AS nb_objets
+        FROM panoplies p
+        LEFT JOIN objets o ON o.id = p.image_objet_id
+        WHERE {where_clause}
+        ORDER BY p.nom
+        LIMIT ? OFFSET ?
+    """, params + [page_size, (page - 1) * page_size])
+    rows = cur.fetchall()
+    conn.close()
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "panoplies": [dict(r) for r in rows],
+    }
+
+@app.get("/panoplies/filtres")
+def filtres_panoplies():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM panoplies WHERE niveau IS NULL OR niveau = 0")
+    sans_niveau = cur.fetchone()[0] > 0
+    conn.close()
+    return {"sans_niveau": sans_niveau}
+
+@app.get("/panoplies/{panoplie_id}")
+def detail_panoplie(panoplie_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT p.*, o.img
+        FROM panoplies p
+        LEFT JOIN objets o ON o.id = p.image_objet_id
+        WHERE p.id = ?
+    """, (panoplie_id,))
+    panoplie = cur.fetchone()
+    if not panoplie:
+        conn.close()
+        return {"erreur": "Panoplie introuvable"}
+
+    cur.execute("SELECT id, nom, img, niveau, type_nom FROM objets WHERE panoplie_id = ? ORDER BY nom", (panoplie_id,))
+    membres = cur.fetchall()
+
+    cur.execute("SELECT * FROM panoplies_effets WHERE panoplie_id = ? ORDER BY palier", (panoplie_id,))
+    effets_paliers_bruts = cur.fetchall()
+    paliers = {}
+    for e in effets_paliers_bruts:
+        f = formater_effet_objet(e)
+        if f["texte"] is not None:
+            paliers.setdefault(e["palier"], []).append(f)
+
+    conn.close()
+    return {
+        "id": panoplie["id"],
+        "nom": panoplie["nom"],
+        "niveau": panoplie["niveau"],
+        "cosmetique": bool(panoplie["cosmetique"]),
+        "img": panoplie["img"],
+        "membres": [dict(m) for m in membres],
+        "effets_par_palier": paliers,
+    }
+
 @app.get("/donjons")
 def liste_donjons(search: str = "", zone: str = "", page: int = 1, page_size: int = 48):
     page = max(page, 1)

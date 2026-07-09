@@ -72,7 +72,9 @@ CREATE TABLE zones (
 CREATE TABLE panoplies (
     id INTEGER PRIMARY KEY,
     nom TEXT,
-    niveau INTEGER
+    niveau INTEGER,
+    cosmetique INTEGER,
+    image_objet_id INTEGER
 );
 CREATE TABLE objets (
     id INTEGER PRIMARY KEY,
@@ -196,9 +198,9 @@ for m in monstres:
 
 for p in item_sets:
     cur.execute("""
-        INSERT OR REPLACE INTO panoplies (id, nom, niveau)
-        VALUES (?, ?, ?)
-    """, (p.get("id"), p.get("nom"), p.get("level")))
+        INSERT OR REPLACE INTO panoplies (id, nom, niveau, cosmetique, image_objet_id)
+        VALUES (?, ?, ?, ?, ?)
+    """, (p.get("id"), p.get("nom"), p.get("level"), int(bool(p.get("cosmetique"))), p.get("image_objet_id")))
     for palier_idx, palier in enumerate(p.get("effects", [])):
         # palier_idx = nombre de pieces equipees (0 = quasi-toujours vide,
         # sauf 5 panoplies avec un bonus "toujours actif" atypique - garde

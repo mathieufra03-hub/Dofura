@@ -140,9 +140,18 @@ def nettoyer_recipes(recipes_bruts):
     return recipes
 
 
+# Doublon technique confirme cote source DofusDB : id 703 "Panoplie d'apparat
+# de Stroud" a le meme nom/niveau/item_ids que l'id 732, mais aucun objet ne
+# reference 703 comme item_set_id (les 2 objets pointent vers 732) -> fiche
+# fantome vide si affichee. Exclusion prouvee, pas une intuition (leçon 1).
+SETS_A_EXCLURE = {703}
+
+
 def nettoyer_item_sets(sets_bruts):
     sets_ = []
     for s in sets_bruts:
+        if s["id"] in SETS_A_EXCLURE:
+            continue
         item_ids = [it["id"] for it in s.get("items", [])]
         possible_par_palier = s.get("possibleEffects", [])
         effects_par_palier = []
@@ -155,6 +164,8 @@ def nettoyer_item_sets(sets_bruts):
             "level": s.get("level", 0),
             "item_ids": item_ids,
             "effects": effects_par_palier,
+            "cosmetique": int(bool(s.get("isCosmetic"))),
+            "image_objet_id": item_ids[0] if item_ids else None,
         })
     return sets_
 
