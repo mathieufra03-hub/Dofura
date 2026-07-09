@@ -79,7 +79,8 @@ CREATE TABLE objets (
     description TEXT,
     panoplie_id INTEGER,
     has_recipe INTEGER,
-    prix INTEGER
+    prix INTEGER,
+    legendaire INTEGER
 );
 CREATE TABLE objets_effets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -182,12 +183,13 @@ for p in item_sets:
 
 for it in items:
     cur.execute("""
-        INSERT OR REPLACE INTO objets (id, nom, img, niveau, type_nom, super_type_nom, description, panoplie_id, has_recipe, prix)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO objets (id, nom, img, niveau, type_nom, super_type_nom, description, panoplie_id, has_recipe, prix, legendaire)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         it.get("id"), it.get("nom"), it.get("img"), it.get("level"),
         it.get("type_nom"), it.get("super_type_nom"), it.get("description"),
-        it.get("item_set_id"), int(bool(it.get("has_recipe"))), it.get("price")
+        it.get("item_set_id"), int(bool(it.get("has_recipe"))), it.get("price"),
+        int(bool(it.get("legendaire")))
     ))
     for e in it.get("effects", []):
         cur.execute("""

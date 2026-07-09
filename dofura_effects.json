@@ -4192,5 +4192,14 @@
     "boost": false,
     "bonus_type": 0,
     "opposite_id": 0
+  },
+  "1175": {
+    "id": 1175,
+    "description": "#1",
+    "is_in_percent": false,
+    "characteristic_operator": "",
+    "boost": false,
+    "bonus_type": 0,
+    "opposite_id": 0
   }
 }

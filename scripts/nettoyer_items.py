@@ -60,6 +60,36 @@ def nettoyer_effets(effets_bruts, valeurs_par_cle=None):
     return resultat
 
 
+# effectId 1175 = "sort accorde par l'objet" (ex. legendaires, certains Dofus
+# et armes) : Ankama ne le duplique JAMAIS dans "effects", il n'existe que
+# dans "possibleEffects" (verifie sur 344 objets, chantier #8bis). Liste
+# volontairement restreinte a ce seul effectId confirme : possibleEffects
+# contient aussi des marqueurs internes (ex. "Echangeable", "Attitude") qui
+# ne sont pas des effets de jeu et ne doivent pas etre affiches.
+EFFECTS_A_RECUPERER_DE_POSSIBLE = {1175}
+
+
+def extraire_effets_manquants(effets_bruts, effets_possibles):
+    """possibleEffects utilise deja les noms diceNum/diceSide/value (contrairement
+    a effects qui utilise from/to) : pas besoin de renommage, juste un filtre."""
+    ids_deja_presents = {e.get("effectId") for e in effets_bruts}
+    manquants = []
+    for e in effets_possibles:
+        eid = e.get("effectId")
+        if eid in EFFECTS_A_RECUPERER_DE_POSSIBLE and eid not in ids_deja_presents:
+            visible = e.get("visibleInTooltip") or e.get("visibleInBuffUi") or e.get("visibleInFightLog")
+            if visible:
+                manquants.append({
+                    "effectId": eid,
+                    "diceNum": e.get("diceNum", 0),
+                    "diceSide": e.get("diceSide", 0),
+                    "value": e.get("value", 0),
+                    "elementId": e.get("elementId"),
+                    "characteristic": e.get("characteristic"),
+                })
+    return manquants
+
+
 def nettoyer_items(items_bruts, types_par_id):
     items = []
     for it in items_bruts:
@@ -70,7 +100,11 @@ def nettoyer_items(items_bruts, types_par_id):
         if not type_nom and type_id in types_par_id:
             type_nom = types_par_id[type_id]
 
-        valeurs_par_cle = index_value_par_cle(it.get("possibleEffects", []))
+        possible = it.get("possibleEffects", [])
+        valeurs_par_cle = index_value_par_cle(possible)
+        effets = nettoyer_effets(it.get("effects", []), valeurs_par_cle)
+        effets += extraire_effets_manquants(it.get("effects", []), possible)
+
         items.append({
             "id": it["id"],
             "nom": (it.get("name") or {}).get("fr", ""),
@@ -80,10 +114,11 @@ def nettoyer_items(items_bruts, types_par_id):
             "type_nom": type_nom,
             "super_type_nom": super_type_nom,
             "description": (it.get("description") or {}).get("fr", ""),
-            "effects": nettoyer_effets(it.get("effects", []), valeurs_par_cle),
+            "effects": effets,
             "item_set_id": it.get("itemSetId") if it.get("itemSetId", -1) != -1 else None,
             "has_recipe": bool(it.get("hasRecipe")),
             "price": it.get("price", 0),
+            "legendaire": bool(it.get("isLegendary")),
         })
     return items
 

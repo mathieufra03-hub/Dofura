@@ -101,6 +101,8 @@
 
 **Composant paramétré (React)** — un seul composant qui change de comportement/affichage selon les props qu'on lui passe, plutôt que de copier-coller le composant pour chaque variante (principe DRY : "Don't Repeat Yourself"). *Chantier #8 : `ObjetsPage` sert à la fois pour `/equipements` et `/ressources` — seule la prop `categorie` change, le code de la grille/pagination/filtres est écrit une seule fois.*
 
+**Audit brut vs nettoyé** — après tout script qui simplifie des données (retrait de champs jugés redondants, dédoublonnage...), comparer un compte de contrôle entre la version brute et la version nettoyée (ex. nombre d'effets par objet) pour détecter tout écart au lieu de supposer que rien n'a été perdu. *Chantier #8bis : un tel audit aurait révélé dès le chantier #7 que 344 objets perdaient un effet entier (le sort accordé par l'objet) au nettoyage — découvert seulement plus tard, sur signalement.*
+
 **Magnitude signée vs magnitude + signe séparé** — deux façons de stocker "combien" et "dans quel sens" (bonus ou malus). Soit le nombre porte déjà son signe (-100 = un malus de 100), soit le nombre est toujours positif et un texte à côté dit "c'est un malus". Mélanger les deux fait doubler le signe. *Chantier #8 : les sorts/monstres utilisent toujours un nombre positif + signe dans le texte, mais les objets stockent le signe directement dans le nombre — un item avait affiché "--100 Force" (deux fois le signe) avant qu'on harmonise les deux conventions.*
 
 ---

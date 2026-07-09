@@ -742,6 +742,7 @@ function ObjetDetailPage({ id, onSelect, onBack }) {
         <div>
           <h2 style={{ fontSize:20, fontWeight:500, color:C.gold2, marginBottom:4 }}>{data.nom}</h2>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
+            {data.legendaire ? <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.goldf, border:`0.5px solid ${C.goldb}`, color:C.gold2, fontWeight:500 }}>★ Légendaire</span> : null}
             <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>Niv. {data.niveau}</span>
             {data.type_nom && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.type_nom}</span>}
           </div>
