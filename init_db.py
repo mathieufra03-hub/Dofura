@@ -2,6 +2,12 @@ import json
 import sqlite3
 with open("dofura_monstres.json", "r", encoding="utf-8") as f:
     monstres = json.load(f)
+with open("dofura_items.json", "r", encoding="utf-8") as f:
+    items = json.load(f)
+with open("dofura_recipes.json", "r", encoding="utf-8") as f:
+    recipes = json.load(f)
+with open("dofura_item_sets.json", "r", encoding="utf-8") as f:
+    item_sets = json.load(f)
 conn = sqlite3.connect("dofura.db")
 cur = conn.cursor()
 cur.executescript("""
@@ -10,6 +16,11 @@ DROP TABLE IF EXISTS grades;
 DROP TABLE IF EXISTS drops;
 DROP TABLE IF EXISTS sorts;
 DROP TABLE IF EXISTS zones;
+DROP TABLE IF EXISTS objets;
+DROP TABLE IF EXISTS objets_effets;
+DROP TABLE IF EXISTS recettes;
+DROP TABLE IF EXISTS panoplies;
+DROP TABLE IF EXISTS panoplies_effets;
 CREATE TABLE monstres (
     id INTEGER PRIMARY KEY,
     nom TEXT,
@@ -52,6 +63,49 @@ CREATE TABLE zones (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     monstre_id INTEGER,
     nom TEXT
+);
+CREATE TABLE panoplies (
+    id INTEGER PRIMARY KEY,
+    nom TEXT,
+    niveau INTEGER
+);
+CREATE TABLE objets (
+    id INTEGER PRIMARY KEY,
+    nom TEXT,
+    img TEXT,
+    niveau INTEGER,
+    type_nom TEXT,
+    super_type_nom TEXT,
+    description TEXT,
+    panoplie_id INTEGER,
+    has_recipe INTEGER,
+    prix INTEGER
+);
+CREATE TABLE objets_effets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    objet_id INTEGER,
+    effect_id INTEGER,
+    dice_num INTEGER,
+    dice_side INTEGER,
+    element_id INTEGER,
+    characteristic INTEGER
+);
+CREATE TABLE recettes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    objet_id INTEGER,
+    ingredient_id INTEGER,
+    quantite INTEGER,
+    job_id INTEGER
+);
+CREATE TABLE panoplies_effets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    panoplie_id INTEGER,
+    palier INTEGER,
+    effect_id INTEGER,
+    dice_num INTEGER,
+    dice_side INTEGER,
+    element_id INTEGER,
+    characteristic INTEGER
 );
 """)
 def safe_int(val):
@@ -107,6 +161,43 @@ for m in monstres:
             INSERT INTO zones (monstre_id, nom)
             VALUES (?, ?)
         """, (m.get("id"), z.get("nom")))
+
+for p in item_sets:
+    cur.execute("""
+        INSERT OR REPLACE INTO panoplies (id, nom, niveau)
+        VALUES (?, ?, ?)
+    """, (p.get("id"), p.get("nom"), p.get("level")))
+    for palier_idx, palier in enumerate(p.get("effects", [])):
+        for e in palier:
+            cur.execute("""
+                INSERT INTO panoplies_effets (panoplie_id, palier, effect_id, dice_num, dice_side, element_id, characteristic)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (p.get("id"), palier_idx + 1, e.get("effectId"), e.get("diceNum"),
+                  e.get("diceSide"), e.get("elementId"), e.get("characteristic")))
+
+for it in items:
+    cur.execute("""
+        INSERT OR REPLACE INTO objets (id, nom, img, niveau, type_nom, super_type_nom, description, panoplie_id, has_recipe, prix)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        it.get("id"), it.get("nom"), it.get("img"), it.get("level"),
+        it.get("type_nom"), it.get("super_type_nom"), it.get("description"),
+        it.get("item_set_id"), int(bool(it.get("has_recipe"))), it.get("price")
+    ))
+    for e in it.get("effects", []):
+        cur.execute("""
+            INSERT INTO objets_effets (objet_id, effect_id, dice_num, dice_side, element_id, characteristic)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (it.get("id"), e.get("effectId"), e.get("diceNum"), e.get("diceSide"),
+              e.get("elementId"), e.get("characteristic")))
+
+for r in recipes:
+    for ing in r.get("ingredients", []):
+        cur.execute("""
+            INSERT INTO recettes (objet_id, ingredient_id, quantite, job_id)
+            VALUES (?, ?, ?, ?)
+        """, (r.get("result_id"), ing.get("item_id"), ing.get("quantite"), r.get("job_id")))
+
 conn.commit()
 conn.close()
 print("Base de donnees creee avec succes !")
