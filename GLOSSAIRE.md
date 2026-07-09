@@ -97,5 +97,7 @@
 
 **État (spell-state)** — un statut temporaire appliqué à un personnage en combat (buff ou debuff : "Affaibli", "Insoignable", "Pesanteur"...), distinct d'un sort. DofusDB les stocke dans une collection séparée (`api.dofusdb.fr/spell-states/{id}`) avec ses propres IDs — **qui se recoupent avec ceux des sorts sans rapport** (ex. l'ID 298 est à la fois le sort "Totem du Feu" ET l'état "Djim", deux choses différentes). *Chantier #6 : les templates "État #3" résolvent ce genre d'ID.*
 
+**Normalisation (base de données)** — ranger chaque donnée à un seul endroit (une fiche par item, un numéro de référence partout ailleurs) plutôt que de la recopier en entier à chaque usage. Évite qu'une même donnée dupliquée 300 fois devienne 300 versions à corriger si elle change. *Chantier #7 : une recette disait "ingrédient n°303, quantité 3" plutôt que de recopier la fiche complète de l'objet 303 à chaque recette qui l'utilise — sans ça, `dofura_recipes.json` pesait 244 Mo au lieu de 2 Mo.*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*
