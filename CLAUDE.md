@@ -23,12 +23,13 @@ Dofura vise à terme : **encyclopédie complète Dofus 3.0 + accompagnement du j
 **Retiré définitivement :** Simulateur de stuff · Commerce/HdV · Portails.
 
 **Roadmap révisée (2026-07-09, react-router reporté) :**
-1. Compléter l'encyclopédie : **Donjons ✅** → Classes → Zones → Panoplies
+1. Compléter l'encyclopédie : **Donjons ✅** → Panoplies → Zones (**version annuaire** : une page par zone listant monstres/donjons/tranche de niveau, assemblage depuis les tables existantes — pas de carte interactive à ce stade, voir point 7)
 2. react-router (socle SEO/partage, vraies URLs) — reporté, voir Chantiers futurs
 3. Compagnon de farm/craft (première brique d'accompagnement)
 4. Comptes utilisateurs (Phase 4 — nécessite le volume persistant Railway, voir chantiers en cours #1)
 5. Refonte graphique complète
 6. Lancement — **penser à retirer le `noindex` (voir Chantiers en cours) avant cette étape**
+7. **Carte interactive du monde** (référence : [dofus-map.com](https://dofus-map.com)) — maps assemblées + positions des ressources récoltables. Feature finale phare, projet majeur. **Prérequis avant tout code : mini-chantier d'étude de faisabilité données** — les positions de ressources existent-elles en structuré chez DofusDB pour Dofus 3/Unity ? Une session d'inspection pure, zéro code, avant d'engager quoi que ce soit.
 
 ## Environnement de travail
 
@@ -185,9 +186,10 @@ Règle commune : règle 13 (ne jamais inventer) + validation Popo avant intégra
 ## Chantiers futurs (pas encore commencés)
 
 1. **Refonte graphique complète du site (design actuel provisoire).** La charte Krosmoz Espace en place est fonctionnelle mais pas définitive — ne pas passer de temps à la peaufiner d'ici là. En attendant, tout nouveau composant doit grouper ses styles proprement (objet de styles centralisé, pas de valeurs magiques éparpillées inline) pour que ce restyling futur soit simple à faire.
-2. **Migration vers react-router** (vraies URLs, corrige le retour fiche→accueil au lieu de la grille filtrée — limite connue depuis le chantier #4 —, liens partageables). **Reporté le 2026-07-09** (décision Popo) : passe après l'encyclopédie (Donjons/Classes/Zones/Panoplies), pas avant.
+2. **Migration vers react-router** (vraies URLs, corrige le retour fiche→accueil au lieu de la grille filtrée — limite connue depuis le chantier #4 —, liens partageables). **Reporté le 2026-07-09** (décision Popo) : passe après l'encyclopédie (Donjons/Panoplies/Zones), pas avant.
 3. **Page Élevage/Montures.** Catégorie `super_type_nom = "Certificat de monture"` (267 objets : Dragodinde/Volkorne/Muldo) — vérifiée le 2026-07-09, c'est la bonne catégorie pour ça (pas "Certificat" tout court, qui ne contient que des objets de quête invisibles sans rapport).
 4. **Filtre "Légendaires" sur la page Équipements.** Colonne `legendaire` déjà en base depuis le chantier #8bis (25 objets), juste un filtre à brancher côté `/objets` + `/objets/filtres` sur le modèle des filtres existants.
+5. **Classes.** Retiré de la roadmap encyclopédie principale le 2026-07-09 (décision Popo) — utile seulement si un outil de build voit le jour un jour. Pas de valeur encyclopédique autonome suffisante pour justifier sa place dans l'ordre Donjons → Panoplies → Zones.
 
 ## Ressources
 
