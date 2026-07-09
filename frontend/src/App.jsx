@@ -32,7 +32,7 @@ const C = {
 }
 
 const navLinks = ["Monstres", "Quêtes", "Équipements", "Ressources", "Métiers", "Zones", "Donjons", "Panoplies", "Almanax"]
-const NAV_LABEL_VERS_CIBLE = { "Monstres":"monstres", "Équipements":"equipement", "Ressources":"ressource", "Donjons":"donjon", "Panoplies":"panoplie" }
+const NAV_LABEL_VERS_CIBLE = { "Monstres":"monstres", "Équipements":"equipement", "Ressources":"ressource", "Donjons":"donjon", "Panoplies":"panoplie", "Zones":"zone" }
 const quickChips = ["Bouftou", "Iop", "Dofus Turquoise", "Larves de Donjon", "Panoplie Kolosso"]
 
 function Navbar({ onHome, onNav, browsing }) {
@@ -165,7 +165,7 @@ function EncycloGrid({ onNav }) {
     { label:"Équipements",  count:"3 826",  action:()=>onNav("equipement") },
     { label:"Ressources",   count:"3 639",  action:()=>onNav("ressource") },
     { label:"Métiers",      count:"18",     action:null },
-    { label:"Zones",        count:"800+",   action:null },
+    { label:"Zones",        count:"372",    action:()=>onNav("zone") },
     { label:"Donjons",      count:"187",    action:()=>onNav("donjon") },
     { label:"Panoplies",    count:"927",    action:()=>onNav("panoplie") },
   ]
@@ -1260,6 +1260,239 @@ function DonjonDetailPage({ id, onSelectMonstre, onSelectObjet, onBack }) {
   )
 }
 
+function RegionsPage({ onSelect, onSelectSousZone, onBack }) {
+  const [regions, setRegions] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
+  const [sousZones, setSousZones] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  const regionsRequeteId = useRef(0)
+  useEffect(() => {
+    const requeteId = ++regionsRequeteId.current
+    setLoading(true)
+    const params = new URLSearchParams({ search, page, page_size: PAGE_SIZE })
+    fetch(`${API}/zones?${params}`)
+      .then(r=>r.json())
+      .then(d => {
+        if (requeteId !== regionsRequeteId.current) return
+        setRegions(d.regions); setTotal(d.total); setLoading(false)
+      })
+      .catch(()=>{ if (requeteId === regionsRequeteId.current) setLoading(false) })
+  }, [search, page])
+
+  // Recherche globale sous-zones (en plus du filtre sur la grille regions) :
+  // sans elle, les 2 sous-zones orphelines (sans region resolue, voir
+  // CLAUDE.md chantier Zones) seraient introuvables.
+  useEffect(() => {
+    if (!search) { setSousZones([]); return }
+    fetch(`${API}/sous-zones?search=${encodeURIComponent(search)}&limite=8`)
+      .then(r=>r.json())
+      .then(d => setSousZones(d.sous_zones))
+      .catch(()=>{})
+  }, [search])
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
+  const filtresActifs = !!search
+
+  const reinitialiser = () => { setSearchInput(""); setSearch(""); setPage(1) }
+
+  return (
+    <div style={mp.page}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={mp.filtreBar}>
+        <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
+          placeholder="Rechercher une région ou une sous-zone..." style={mp.searchInput} />
+
+        {filtresActifs && <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser</button>}
+
+        <span style={mp.compteur}>{total} région{total!==1?"s":""}</span>
+      </div>
+
+      {sousZones.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:18 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Sous-zones correspondantes</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+            {sousZones.map(z => (
+              <div key={z.nom} onClick={()=>onSelectSousZone(z.nom)}
+                style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", borderRadius:6, cursor:"pointer",
+                  background:C.bg4, border:`0.5px solid ${C.bdr}` }}>
+                {z.img
+                  ? <img src={z.img} alt={z.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                  : <div style={{ width:22, height:22, background:C.bg3, borderRadius:4 }} />
+                }
+                <span style={{ fontSize:12, color:C.txt }}>{z.nom}</span>
+                {z.area && <span style={{ fontSize:10, color:C.txt3 }}>({z.area})</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loading && regions.length === 0 ? (
+        <div style={mp.videEtat}>
+          Aucune région ne correspond à ces filtres.
+          {filtresActifs && <div style={{ marginTop:10 }}>
+            <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+          </div>}
+        </div>
+      ) : (
+        <div style={mp.grid}>
+          {regions.map(r => (
+            <div key={r.nom} onClick={()=>onSelect(r.nom)} style={mp.card}
+              onMouseEnter={e=>e.currentTarget.style.borderColor=C.cyan}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=C.bdr}
+            >
+              {r.img
+                ? <img src={r.img} alt={r.nom} style={mp.cardImg} />
+                : <div style={mp.cardImgVide} />
+              }
+              <div style={mp.cardNom}>{r.nom}</div>
+              <div style={mp.cardFamille}>{r.nb_sous_zones} sous-zone{r.nb_sous_zones!==1?"s":""} — {r.nb_donjons} donjon{r.nb_donjons!==1?"s":""}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={mp.pagination}>
+          <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+          <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+          <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RegionDetailPage({ nom, onSelectSousZone, onSelectDonjon, onBack }) {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    setData(null)
+    fetch(`${API}/zones/${encodeURIComponent(nom)}`).then(r=>r.json()).then(setData)
+  }, [nom])
+
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>{data.erreur}</div>
+
+  return (
+    <div translate="no" style={{ padding:"1.5rem 2rem", maxWidth:900, margin:"0 auto" }}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", display:"grid", gridTemplateColumns:"100px 1fr", gap:20, marginBottom:16 }}>
+        <div style={{ display:"flex", justifyContent:"center", alignItems:"flex-start" }}>
+          {data.img
+            ? <img src={data.img} alt={data.nom} style={{ width:90, height:90, objectFit:"contain" }} />
+            : <div style={{ width:90, height:90, background:C.bg3, borderRadius:8 }} />
+          }
+        </div>
+        <div>
+          <h2 style={{ fontSize:20, fontWeight:500, color:C.gold2, marginBottom:4 }}>{data.nom}</h2>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.sous_zones.length} sous-zone{data.sous_zones.length!==1?"s":""}</span>
+            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.donjons.length} donjon{data.donjons.length!==1?"s":""}</span>
+          </div>
+        </div>
+      </div>
+
+      {data.donjons.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Donjons</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            {data.donjons.map(d => (
+              <span key={d.id} onClick={()=>onSelectDonjon(d.id)}
+                style={{ fontSize:11, padding:"3px 9px", borderRadius:6, cursor:"pointer",
+                  background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>
+                {d.nom} <span style={{ color:C.txt3 }}>(niv. {d.niveau_min}-{d.niveau_optimal})</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+        <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Sous-zones</div>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+          {data.sous_zones.map(z => (
+            <div key={z.nom} onClick={()=>onSelectSousZone(z.nom)}
+              style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", borderRadius:6, cursor:"pointer",
+                background:C.bg4, border:`0.5px solid ${C.bdr}` }}>
+              {z.img
+                ? <img src={z.img} alt={z.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                : <div style={{ width:22, height:22, background:C.bg3, borderRadius:4 }} />
+              }
+              <span style={{ fontSize:12, color:C.txt }}>{z.nom}</span>
+              <span style={{ fontSize:11, color:C.txt3 }}>Niv. {z.niveau_min}-{z.niveau_max}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SousZoneDetailPage({ nom, onSelectRegion, onSelectMonstre, onBack }) {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    setData(null)
+    fetch(`${API}/sous-zones/${encodeURIComponent(nom)}`).then(r=>r.json()).then(setData)
+  }, [nom])
+
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>{data.erreur}</div>
+
+  return (
+    <div translate="no" style={{ padding:"1.5rem 2rem", maxWidth:900, margin:"0 auto" }}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", marginBottom:16 }}>
+        <h2 style={{ fontSize:20, fontWeight:500, color:C.gold2, marginBottom:4 }}>{data.nom}</h2>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+          {data.niveau_min != null && (
+            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>Niv. {data.niveau_min}-{data.niveau_max}</span>
+          )}
+          {data.area ? (
+            <span onClick={()=>onSelectRegion(data.area)}
+              style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.cyanf, border:`0.5px solid ${C.cyanb}`, color:C.cyan, cursor:"pointer" }}>
+              {data.area}
+            </span>
+          ) : (
+            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt3 }}>Région inconnue</span>
+          )}
+        </div>
+      </div>
+
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+        <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Monstres</div>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+          {data.monstres.map(m => (
+            <div key={m.id} onClick={()=>onSelectMonstre(m.id)}
+              style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", borderRadius:6, cursor:"pointer",
+                background:C.bg4, border:`0.5px solid ${C.bdr}` }}>
+              {m.img
+                ? <img src={m.img} alt={m.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                : <div style={{ width:22, height:22, background:C.bg3, borderRadius:4 }} />
+              }
+              <span style={{ fontSize:12, color:C.txt }}>{m.nom}</span>
+              <span style={{ fontSize:11, color:C.txt3 }}>Niv. {m.niveau_base}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [query, setQuery]       = useState("")
   const [results, setResults]   = useState([])
@@ -1268,7 +1501,9 @@ export default function App() {
   const [selectedObjet, setSelectedObjet]       = useState(null)
   const [selectedDonjon, setSelectedDonjon]     = useState(null)
   const [selectedPanoplie, setSelectedPanoplie] = useState(null)
-  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie"
+  const [selectedRegion, setSelectedRegion]     = useState(null)
+  const [selectedSousZone, setSelectedSousZone] = useState(null)
+  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone"
   const [almanax, setAlmanax]   = useState(null)
 
   useEffect(() => {
@@ -1289,11 +1524,13 @@ export default function App() {
       .then(r=>r.json()).then(setAlmanax).catch(()=>{})
   }, [])
 
-  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setBrowsing(null); setQuery(""); setResults([]) }
+  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setBrowsing(null); setQuery(""); setResults([]) }
   const handleSelectMonstre  = (id) => { resetNav(); setSelectedMonstre(id) }
   const handleSelectObjet    = (id) => { resetNav(); setSelectedObjet(id) }
   const handleSelectDonjon   = (id) => { resetNav(); setSelectedDonjon(id) }
   const handleSelectPanoplie = (id) => { resetNav(); setSelectedPanoplie(id) }
+  const handleSelectRegion   = (nom) => { resetNav(); setSelectedRegion(nom) }
+  const handleSelectSousZone = (nom) => { resetNav(); setSelectedSousZone(nom) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
@@ -1310,12 +1547,18 @@ export default function App() {
         <DonjonDetailPage id={selectedDonjon} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : selectedPanoplie ? (
         <PanoplieDetailPage id={selectedPanoplie} onSelectObjet={handleSelectObjet} onBack={handleHome} />
+      ) : selectedSousZone ? (
+        <SousZoneDetailPage nom={selectedSousZone} onSelectRegion={handleSelectRegion} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
+      ) : selectedRegion ? (
+        <RegionDetailPage nom={selectedRegion} onSelectSousZone={handleSelectSousZone} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : browsing === "monstres" ? (
         <MonstresPage onSelect={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "donjon" ? (
         <DonjonsPage onSelect={handleSelectDonjon} onBack={handleHome} />
       ) : browsing === "panoplie" ? (
         <PanopliesPage onSelect={handleSelectPanoplie} onBack={handleHome} />
+      ) : browsing === "zone" ? (
+        <RegionsPage onSelect={handleSelectRegion} onSelectSousZone={handleSelectSousZone} onBack={handleHome} />
       ) : browsing === "equipement" ? (
         <ObjetsPage categorie="equipement" titre="Équipements"
           placeholder="Rechercher un équipement..."

@@ -818,6 +818,151 @@ def detail_donjon(donjon_id: int):
         "guide": guide,
     }
 
+@app.get("/zones")
+def liste_regions(search: str = "", page: int = 1, page_size: int = 48):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 200)
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT COUNT(DISTINCT area) FROM zones_areas
+        WHERE area IS NOT NULL AND area LIKE ?
+    """, (f"%{search}%",))
+    total = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT za.area AS nom,
+               COUNT(DISTINCT za.nom) AS nb_sous_zones,
+               (SELECT COUNT(*) FROM donjons d WHERE d.zone = za.area) AS nb_donjons,
+               (SELECT m.image_url FROM monstres m
+                JOIN zones z2 ON z2.monstre_id = m.id
+                JOIN zones_areas za2 ON za2.nom = z2.nom
+                WHERE za2.area = za.area
+                ORDER BY m.nom LIMIT 1) AS img
+        FROM zones_areas za
+        WHERE za.area IS NOT NULL AND za.area LIKE ?
+        GROUP BY za.area
+        ORDER BY za.area
+        LIMIT ? OFFSET ?
+    """, (f"%{search}%", page_size, (page - 1) * page_size))
+    rows = cur.fetchall()
+    conn.close()
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "regions": [dict(r) for r in rows],
+    }
+
+@app.get("/sous-zones")
+def recherche_sous_zones(search: str = "", limite: int = 20):
+    limite = min(max(limite, 1), 50)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT za.nom, za.area,
+               (SELECT m.image_url FROM monstres m
+                JOIN zones z2 ON z2.monstre_id = m.id
+                WHERE z2.nom = za.nom
+                ORDER BY m.nom LIMIT 1) AS img
+        FROM zones_areas za
+        WHERE za.nom LIKE ?
+        ORDER BY za.nom
+        LIMIT ?
+    """, (f"%{search}%", limite))
+    rows = cur.fetchall()
+    conn.close()
+    return {"sous_zones": [dict(r) for r in rows]}
+
+@app.get("/zones/{region}")
+def detail_region(region: str):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM zones_areas WHERE area = ?", (region,))
+    if cur.fetchone()[0] == 0:
+        conn.close()
+        return {"erreur": "Région introuvable"}
+
+    cur.execute("""
+        SELECT id, nom, niveau_min, niveau_optimal, difficulte
+        FROM donjons WHERE zone = ? ORDER BY nom
+    """, (region,))
+    donjons_rows = cur.fetchall()
+
+    cur.execute("""
+        SELECT m.image_url FROM monstres m
+        JOIN zones z ON z.monstre_id = m.id
+        JOIN zones_areas za ON za.nom = z.nom
+        WHERE za.area = ?
+        ORDER BY m.nom LIMIT 1
+    """, (region,))
+    img_row = cur.fetchone()
+    img = img_row["image_url"] if img_row else None
+
+    cur.execute("""
+        SELECT za.nom,
+               COUNT(DISTINCT z.monstre_id) AS nb_monstres,
+               MIN(base.niveau_base) AS niveau_min,
+               MAX(base.niveau_base) AS niveau_max,
+               (SELECT m.image_url FROM monstres m
+                JOIN zones z2 ON z2.monstre_id = m.id
+                WHERE z2.nom = za.nom
+                ORDER BY m.nom LIMIT 1) AS img
+        FROM zones_areas za
+        JOIN zones z ON z.nom = za.nom
+        JOIN (SELECT monstre_id, MIN(niveau) AS niveau_base FROM grades GROUP BY monstre_id) base
+             ON base.monstre_id = z.monstre_id
+        WHERE za.area = ?
+        GROUP BY za.nom
+        ORDER BY za.nom
+    """, (region,))
+    sous_zones_rows = cur.fetchall()
+    conn.close()
+
+    return {
+        "nom": region,
+        "img": img,
+        "donjons": [dict(r) for r in donjons_rows],
+        "sous_zones": [dict(r) for r in sous_zones_rows],
+    }
+
+@app.get("/sous-zones/{nom}")
+def detail_sous_zone(nom: str):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT nom, area FROM zones_areas WHERE nom = ?", (nom,))
+    zone = cur.fetchone()
+    if not zone:
+        conn.close()
+        return {"erreur": "Zone introuvable"}
+
+    cur.execute("""
+        SELECT m.id, m.nom, m.image_url, base.niveau_base
+        FROM zones z
+        JOIN monstres m ON m.id = z.monstre_id
+        JOIN (SELECT monstre_id, MIN(niveau) AS niveau_base FROM grades GROUP BY monstre_id) base
+             ON base.monstre_id = m.id
+        WHERE z.nom = ?
+        ORDER BY m.nom
+    """, (nom,))
+    monstres_rows = cur.fetchall()
+    conn.close()
+
+    niveaux = [r["niveau_base"] for r in monstres_rows]
+
+    return {
+        "nom": zone["nom"],
+        "area": zone["area"],
+        "niveau_min": min(niveaux) if niveaux else None,
+        "niveau_max": max(niveaux) if niveaux else None,
+        "monstres": [
+            {"id": r["id"], "nom": r["nom"], "img": r["image_url"], "niveau_base": r["niveau_base"]}
+            for r in monstres_rows
+        ],
+    }
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

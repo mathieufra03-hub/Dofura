@@ -10,6 +10,8 @@ with open("dofura_item_sets.json", "r", encoding="utf-8") as f:
     item_sets = json.load(f)
 with open("dofura_donjons.json", "r", encoding="utf-8") as f:
     donjons = json.load(f)
+with open("dofura_zones_areas.json", "r", encoding="utf-8") as f:
+    zones_areas = json.load(f)
 conn = sqlite3.connect("dofura.db")
 cur = conn.cursor()
 cur.executescript("""
@@ -26,6 +28,7 @@ DROP TABLE IF EXISTS panoplies_effets;
 DROP TABLE IF EXISTS donjons;
 DROP TABLE IF EXISTS donjons_monstres;
 DROP TABLE IF EXISTS donjons_objets_requis;
+DROP TABLE IF EXISTS zones_areas;
 CREATE TABLE monstres (
     id INTEGER PRIMARY KEY,
     nom TEXT,
@@ -140,6 +143,10 @@ CREATE TABLE donjons_objets_requis (
     donjon_id INTEGER,
     objet_id INTEGER,
     quantite INTEGER
+);
+CREATE TABLE zones_areas (
+    nom TEXT PRIMARY KEY,
+    area TEXT
 );
 """)
 def safe_int(val):
@@ -260,6 +267,12 @@ for d in donjons:
             INSERT INTO donjons_objets_requis (donjon_id, objet_id, quantite)
             VALUES (?, ?, ?)
         """, (d.get("id"), o.get("id"), o.get("quantite")))
+
+for z in zones_areas:
+    cur.execute("""
+        INSERT OR REPLACE INTO zones_areas (nom, area)
+        VALUES (?, ?)
+    """, (z.get("nom"), z.get("area")))
 
 conn.commit()
 conn.close()
