@@ -21,6 +21,15 @@ with open("dofura_effects.json", "r", encoding="utf-8") as f:
 with open("dofura_effets_speciaux.json", "r", encoding="utf-8") as f:
     EFFETS_SPECIAUX_DATA = json.load(f)
 
+with open("dofura_etats_speciaux.json", "r", encoding="utf-8") as f:
+    ETATS_SPECIAUX_DATA = json.load(f)
+
+SORTS_DATA = {s["id"]: s for s in SORTS}
+
+EFFECTS_ETAT_VALEUR = {950, 951, 952}
+EFFECTS_ETAT_DICE = {788}
+EFFECTS_SORT_CONDITION = {280, 281, 283, 284, 285, 286, 287, 290, 291, 293, 296, 1036, 1045, 2905, 2935}
+
 with open("dofura_monstres.json", "r", encoding="utf-8") as f:
     MONSTRES = json.load(f)
 
@@ -39,6 +48,7 @@ def formater_effet(effet):
     effect_id = effet.get("effectId")
     dice_num = effet.get("diceNum", 0)
     dice_side = effet.get("diceSide", 0)
+    value_brut = effet.get("value", 0)
     duration = effet.get("duration", 0)
 
     effect_def = EFFECTS_DATA.get(effect_id, {})
@@ -60,6 +70,25 @@ def formater_effet(effet):
                 "effect_id": effect_id, "polarite": polarite}
 
     desc = template
+
+    remplacement_1 = remplacement_2 = remplacement_3 = None
+    introuvable = False
+    if effect_id in EFFECTS_ETAT_VALEUR:
+        remplacement_3 = ETATS_SPECIAUX_DATA.get(str(value_brut))
+        introuvable = remplacement_3 is None
+    elif effect_id in EFFECTS_ETAT_DICE:
+        remplacement_1 = ETATS_SPECIAUX_DATA.get(str(dice_num))
+        remplacement_2 = ETATS_SPECIAUX_DATA.get(str(dice_side))
+        introuvable = remplacement_1 is None or remplacement_2 is None
+    elif effect_id in EFFECTS_SORT_CONDITION:
+        sort = SORTS_DATA.get(dice_num)
+        remplacement_1 = sort.get("nom") if sort else None
+        introuvable = remplacement_1 is None
+
+    if introuvable:
+        return {"texte": None, "valeur": str(dice_num), "duration": duration,
+                "effect_id": effect_id, "polarite": polarite}
+
     try:
         dn, ds = int(dice_num), int(dice_side)
         pluriel = (dn != 1) if (ds == 0 or dn == ds) else (ds > 1)
@@ -77,11 +106,12 @@ def formater_effet(effet):
         desc = re.sub(r'\{\{~1~2\s*', ' ', desc)
         desc = re.sub(r'\}\}', '', desc)
 
-    desc = desc.replace("#1", str(dice_num))
+    desc = desc.replace("#1", remplacement_1 if remplacement_1 is not None else str(dice_num))
     if dice_side != 0:
-        desc = desc.replace("#2", str(dice_side))
+        desc = desc.replace("#2", remplacement_2 if remplacement_2 is not None else str(dice_side))
     else:
-        desc = desc.replace("#2", "")
+        desc = desc.replace("#2", remplacement_2 if remplacement_2 is not None else "")
+    desc = desc.replace("#3", remplacement_3 if remplacement_3 is not None else str(value_brut))
 
     desc = re.sub(r'<sprite[^>]*>', '', desc)
     desc = re.sub(r'\s{2,}', ' ', desc).strip()
