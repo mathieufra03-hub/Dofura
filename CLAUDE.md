@@ -51,7 +51,7 @@
 17. **Glossaire vivant.** Chaque nouveau terme technique rencontré s'ajoute à `GLOSSAIRE.md` avec une définition simple et un exemple tiré de Dofura.
 
 ### Validation
-18. **Validation intelligente.** Popo utilise le mode accept edits. En contrepartie, Claude DOIT marquer une pause et demander validation explicite avant : toute suppression de fichier ou de données, tout push, toute modification de `main.py` ou `init_db.py` qui change un comportement existant, tout choix d'architecture, toute action irréversible ou coûteuse. Pour le reste (éditions de code du chantier en cours, tests, lectures), Claude avance sans interrompre, et présente un résumé clair de ce qu'il a fait à chaque étape terminée.
+18. **Validation intelligente (révisée 2026-07-09).** Popo ne sait pas lire les commandes qu'on lui demande de valider — cliquer "accepter" sans comprendre ne protège de rien. La sécurité vit donc dans les règles ci-dessous et dans le jugement de Claude, pas dans des clics de validation systématiques. Claude avance sans interrompre sur : tout le travail du chantier en cours (code, tests, lectures, requêtes SQL), commit Git (systématique avant modification, règle 3), push Git, modification de `main.py`/`init_db.py`, choix d'architecture (documentés dans le plan validé en amont — règle 1 — mais pas re-validés à chaque micro-décision). Backup automatique de `dofura.db` avant tout script qui écrit dedans (règle 10) : fait sans demander, silencieusement. Claude marque une pause et demande validation explicite UNIQUEMENT avant : suppression de fichiers de données ou de backups, `git push --force`, `DROP TABLE` en dehors d'un `init_db.py` déjà validé, et toute autre action irréversible ou coûteuse (ex. achat, appel API payant). **Quand une validation est demandée, elle tient en une phrase simple, niveau débutant : ce que l'action fait concrètement et ce que Popo risque s'il valide.**
 
 ## Stack & infrastructure
 
@@ -141,6 +141,8 @@ Règle commune : règle 13 (ne jamais inventer) + validation Popo avant intégra
 ## Chantiers futurs (pas encore commencés)
 
 1. **Refonte graphique complète du site (design actuel provisoire).** La charte Krosmoz Espace en place est fonctionnelle mais pas définitive — ne pas passer de temps à la peaufiner d'ici là. En attendant, tout nouveau composant doit grouper ses styles proprement (objet de styles centralisé, pas de valeurs magiques éparpillées inline) pour que ce restyling futur soit simple à faire.
+2. **Migration vers react-router** (vraies URLs, corrige le retour fiche→accueil au lieu de la grille filtrée — limite connue depuis le chantier #4 —, liens partageables).
+3. **Page Élevage/Montures.** Catégorie `super_type_nom = "Certificat de monture"` (267 objets : Dragodinde/Volkorne/Muldo) — vérifiée le 2026-07-09, c'est la bonne catégorie pour ça (pas "Certificat" tout court, qui ne contient que des objets de quête invisibles sans rapport).
 
 ## Ressources
 
