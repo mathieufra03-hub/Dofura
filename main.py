@@ -379,18 +379,95 @@ def formater_effet_objet(row):
         "duration": 0,
     })
 
+# Perimetre verifie le 2026-07-09 (chantier Equipements/Ressources) : ces
+# valeurs de super_type_nom sont les seules a representer un objet que le
+# joueur porte reellement (slot d'equipement classique). Volontairement
+# exclu : Suiveur/Compagnon/Equipement de percepteur (mecaniques annexes,
+# pas un slot d'equipement joueur) — voir CLAUDE.md pour le detail.
+CATEGORIES_OBJETS = {
+    "equipement": ("Arme", "Amulette", "Anneau", "Bottes", "Ceinture", "Chapeau",
+                   "Cape", "Bouclier", "Dofus / Trophée / Prysmaradite", "Familier"),
+    "ressource": ("Ressource",),
+}
+
+TRANCHES_NIVEAU = {
+    "1-50": (1, 50), "51-100": (51, 100), "101-150": (101, 150), "151-200": (151, 200),
+}
+
 @app.get("/objets")
-def liste_objets(search: str = ""):
+def liste_objets(categorie: str = "equipement", search: str = "", type: str = "",
+                  tranche_niveau: str = "", page: int = 1, page_size: int = 48):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 200)
+    super_types = CATEGORIES_OBJETS.get(categorie, CATEGORIES_OBJETS["equipement"])
+
+    conditions = [f"super_type_nom IN ({','.join('?' for _ in super_types)})", "nom LIKE ?"]
+    params = list(super_types) + [f"%{search}%"]
+
+    if type == SANS_VALEUR:
+        conditions.append("(type_nom IS NULL OR type_nom = '')")
+    elif type:
+        conditions.append("type_nom = ?")
+        params.append(type)
+
+    if tranche_niveau == SANS_VALEUR:
+        conditions.append("(niveau IS NULL OR niveau = 0)")
+    elif tranche_niveau in TRANCHES_NIVEAU:
+        borne_min, borne_max = TRANCHES_NIVEAU[tranche_niveau]
+        conditions.append("niveau BETWEEN ? AND ?")
+        params.extend([borne_min, borne_max])
+
+    where_clause = " AND ".join(conditions)
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
+    cur.execute(f"SELECT COUNT(*) FROM objets WHERE {where_clause}", params)
+    total = cur.fetchone()[0]
+
+    cur.execute(f"""
         SELECT id, nom, img, niveau, type_nom FROM objets
-        WHERE nom LIKE ?
+        WHERE {where_clause}
         ORDER BY nom
-    """, (f"%{search}%",))
+        LIMIT ? OFFSET ?
+    """, params + [page_size, (page - 1) * page_size])
     rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "objets": [dict(r) for r in rows],
+    }
+
+@app.get("/objets/filtres")
+def filtres_objets(categorie: str = "equipement"):
+    super_types = CATEGORIES_OBJETS.get(categorie, CATEGORIES_OBJETS["equipement"])
+    placeholders = ",".join("?" for _ in super_types)
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(f"""
+        SELECT DISTINCT type_nom FROM objets
+        WHERE super_type_nom IN ({placeholders}) AND type_nom IS NOT NULL AND type_nom != ''
+        ORDER BY type_nom
+    """, super_types)
+    types = [r[0] for r in cur.fetchall()]
+
+    cur.execute(f"""
+        SELECT COUNT(*) FROM objets
+        WHERE super_type_nom IN ({placeholders}) AND (type_nom IS NULL OR type_nom = '')
+    """, super_types)
+    sans_type = cur.fetchone()[0] > 0
+
+    cur.execute(f"""
+        SELECT COUNT(*) FROM objets
+        WHERE super_type_nom IN ({placeholders}) AND (niveau IS NULL OR niveau = 0)
+    """, super_types)
+    sans_niveau = cur.fetchone()[0] > 0
+
+    conn.close()
+    return {"types": types, "sans_type": sans_type, "sans_niveau": sans_niveau}
 
 @app.get("/objets/{objet_id}")
 def detail_objet(objet_id: int):
