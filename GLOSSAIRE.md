@@ -105,5 +105,7 @@
 
 **Magnitude signée vs magnitude + signe séparé** — deux façons de stocker "combien" et "dans quel sens" (bonus ou malus). Soit le nombre porte déjà son signe (-100 = un malus de 100), soit le nombre est toujours positif et un texte à côté dit "c'est un malus". Mélanger les deux fait doubler le signe. *Chantier #8 : les sorts/monstres utilisent toujours un nombre positif + signe dans le texte, mais les objets stockent le signe directement dans le nombre — un item avait affiché "--100 Force" (deux fois le signe) avant qu'on harmonise les deux conventions.*
 
+**Clé composite** — une clé de stockage formée de PLUSIEURS valeurs collées ensemble plutôt qu'une seule, utile quand une seule valeur ne suffit pas à identifier une donnée de façon unique. *Chantier #8ter : un même sort peut être accordé à un grade différent selon l'objet qui le donne, donc `dofura_sorts_objets.json` utilise la clé `"{spell_id}_{grade}"` (ex. `"25293_2"`) plutôt que juste `spell_id`, qui aurait mélangé le contenu de plusieurs grades sous un seul sort.*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*

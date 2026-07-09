@@ -750,6 +750,25 @@ function ObjetDetailPage({ id, onSelect, onBack }) {
         </div>
       </div>
 
+      {data.sort_accorde && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Sort accordé</div>
+          <div style={{ fontSize:13, fontWeight:500, color:C.gold2, marginBottom:6 }}>{data.sort_accorde.nom}</div>
+          {data.sort_accorde.description && (
+            <p style={{ fontSize:12, color:C.txt2, lineHeight:1.5, whiteSpace:"pre-line" }}>{data.sort_accorde.description}</p>
+          )}
+          {data.sort_accorde.effects?.length > 0 && (
+            <div>
+              {data.sort_accorde.effects.map((e,i) => (
+                <div key={i} style={{ fontSize:12, color:couleurPolarite(e.polarite), padding:"3px 0", display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ color:C.prp2, fontSize:9, flexShrink:0 }}>◆</span> {e.texte}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {data.effects?.length > 0 && (
         <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
           <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Effets</div>

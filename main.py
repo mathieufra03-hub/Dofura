@@ -41,6 +41,14 @@ if os.path.exists("dofura_etats_speciaux.json"):
     with open("dofura_etats_speciaux.json", "r", encoding="utf-8") as f:
         ETATS_SPECIAUX_DATA = json.load(f)
 
+# Detail des sorts accordes par les objets (chantier #8ter) : cle "sortId_grade"
+# car un meme sort peut etre accorde a un grade different selon l'objet
+# (verifie sur 16 cas au chantier #8ter, une cle par seul sortId aurait ete fausse).
+SORTS_OBJETS_DATA = {}
+if os.path.exists("dofura_sorts_objets.json"):
+    with open("dofura_sorts_objets.json", "r", encoding="utf-8") as f:
+        SORTS_OBJETS_DATA = json.load(f)
+
 # Effets dont un placeholder brut (#1/#2/#3) est en realite un ID a resoudre,
 # pas un nombre (chantier #6) :
 # - EFFECTS_ETAT_VALEUR : "Etat #3"/"Enleve l'etat #3"/"Desactive l'etat #3",
@@ -492,6 +500,28 @@ def detail_objet(objet_id: int):
     cur.execute("SELECT * FROM objets_effets WHERE objet_id = ?", (objet_id,))
     effets_bruts = cur.fetchall()
 
+    # Sort accorde par l'objet (effect_id 1175, chantier #8ter) : sorti a part
+    # de la liste generique "effects" pour avoir sa propre section dediee
+    # (sinon le nom du sort apparaitrait deux fois).
+    effets_sort_accorde = [e for e in effets_bruts if e["effect_id"] == 1175]
+    effets_bruts = [e for e in effets_bruts if e["effect_id"] != 1175]
+
+    sort_accorde = None
+    if effets_sort_accorde:
+        e = effets_sort_accorde[0]
+        spell_id = e["dice_num"]
+        grade = e["dice_side"] or 1
+        detail = SORTS_OBJETS_DATA.get(f"{spell_id}_{grade}")
+        if detail:
+            sort_accorde = {
+                "nom": detail["nom"],
+                "description": detail["description"],
+                "effects": [
+                    f for eff in detail["effects"]
+                    if effet_visible(eff) and (f := formater_effet(eff))["texte"] is not None
+                ],
+            }
+
     cur.execute("""
         SELECT r.ingredient_id, r.quantite, r.job_id, o.nom AS ingredient_nom, o.img AS ingredient_img
         FROM recettes r
@@ -532,6 +562,7 @@ def detail_objet(objet_id: int):
         ],
         "job_id": ingredients[0]["job_id"] if ingredients else None,
         "panoplie": panoplie,
+        "sort_accorde": sort_accorde,
     }
 
 if __name__ == "__main__":
