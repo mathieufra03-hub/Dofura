@@ -28,7 +28,7 @@ SORTS_DATA = {s["id"]: s for s in SORTS}
 
 EFFECTS_ETAT_VALEUR = {950, 951, 952}
 EFFECTS_ETAT_DICE = {788}
-EFFECTS_SORT_CONDITION = {280, 281, 283, 284, 285, 286, 287, 290, 291, 293, 296, 1036, 1045, 2905, 2935}
+MOTIF_SORT_CONDITION = re.compile(r'^#1\s*:')
 
 with open("dofura_monstres.json", "r", encoding="utf-8") as f:
     MONSTRES = json.load(f)
@@ -80,7 +80,7 @@ def formater_effet(effet):
         remplacement_1 = ETATS_SPECIAUX_DATA.get(str(dice_num))
         remplacement_2 = ETATS_SPECIAUX_DATA.get(str(dice_side))
         introuvable = remplacement_1 is None or remplacement_2 is None
-    elif effect_id in EFFECTS_SORT_CONDITION:
+    elif MOTIF_SORT_CONDITION.match(template.strip()):
         sort = SORTS_DATA.get(dice_num)
         remplacement_1 = sort.get("nom") if sort else None
         introuvable = remplacement_1 is None

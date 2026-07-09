@@ -33,7 +33,8 @@ with open("dofura_sorts.json", "r", encoding="utf-8") as f:
 
 EFFECTS_ETAT_VALEUR = {950, 951, 952}
 EFFECTS_ETAT_DICE = {788}
-EFFECTS_SORT_CONDITION = {280, 281, 283, 284, 285, 286, 287, 290, 291, 293, 296, 1036, 1045, 2905, 2935}
+MOTIF_SORT_CONDITION = re.compile(r'^#1\s*:')
+EFFECTS_OBJET_SORT_3 = {604, 2864}
 
 
 def formater_effet(effet):
@@ -73,7 +74,7 @@ def formater_effet(effet):
         remplacement_1 = ETATS_SPECIAUX_DATA.get(str(dice_num))
         remplacement_2 = ETATS_SPECIAUX_DATA.get(str(dice_side))
         introuvable = remplacement_1 is None or remplacement_2 is None
-    elif effect_id in EFFECTS_SORT_CONDITION:
+    elif MOTIF_SORT_CONDITION.match(template.strip()):
         sort = SORTS_DATA.get(dice_num)
         remplacement_1 = sort.get("nom") if sort else None
         introuvable = remplacement_1 is None
@@ -112,11 +113,39 @@ def formater_effet(effet):
     if polarite == "bonus" and "#" not in desc and desc.startswith(str(dice_num)):
         desc = "+" + desc
 
-    if desc.strip().lstrip('-+').isdigit():
+    if "#" in desc:
+        desc = None
+    elif desc.strip().lstrip('-+').isdigit():
         desc = None
 
     return {"texte": desc, "valeur": valeur, "duration": duration,
             "effect_id": effect_id, "polarite": polarite}
+
+
+def formater_effet_objet(effet):
+    """Copie fidele de formater_effet_objet() dans main.py : les objets n'ont
+    que 2 emplacements numeriques (diceNum/diceSide, ex from/to) contre 3 pour
+    les sorts/monstres. Reroute #3-seul et resout les sorts accordes."""
+    effect_id = effet.get("effectId")
+    dice_num = effet.get("diceNum", 0)
+    template = EFFECTS_DATA.get(effect_id, {}).get("description", "")
+
+    if effect_id in EFFECTS_OBJET_SORT_3:
+        sort = SORTS_DATA.get(dice_num)
+        if not sort:
+            return {"texte": None, "valeur": str(dice_num), "duration": 0,
+                    "effect_id": effect_id, "polarite": None}
+        return {"texte": template.replace("#3", sort["nom"]), "valeur": str(dice_num),
+                "duration": 0, "effect_id": effect_id, "polarite": None}
+
+    trois_seul = "#3" in template and "#1" not in template and "#2" not in template
+    if trois_seul:
+        return formater_effet({"effectId": effect_id, "diceNum": 0, "diceSide": 0,
+                                "value": dice_num, "duration": 0})
+
+    return formater_effet({"effectId": effect_id, "diceNum": dice_num,
+                            "diceSide": effet.get("diceSide", 0),
+                            "value": effet.get("value", 0), "duration": 0})
 
 
 def classifier(texte):
@@ -164,7 +193,7 @@ total_effets = 0
 for it in ITEMS:
     for e in it.get("effects", []):
         total_effets += 1
-        resultat = formater_effet(e)
+        resultat = formater_effet_objet(e)
         cat = classifier(resultat["texte"])
         if cat is None:
             continue
@@ -176,12 +205,12 @@ for s in ITEM_SETS:
     for i, palier in enumerate(s.get("effects", [])):
         for e in palier:
             total_effets += 1
-            resultat = formater_effet(e)
+            resultat = formater_effet_objet(e)
             cat = classifier(resultat["texte"])
             if cat is None:
                 continue
             touches[cat].add(s["nom"])
-            PROBLEMES[cat].append({"origine": f"panoplie \"{s['nom']}\" (id {s['id']}, palier {i+1})",
+            PROBLEMES[cat].append({"origine": f"panoplie \"{s['nom']}\" (id {s['id']}, palier {i})",
                                     "texte": resultat["texte"], "effect_id": e.get("effectId")})
 
 lignes = []

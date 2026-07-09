@@ -35,18 +35,29 @@ def renommer_en_brut(fichier):
     return brut
 
 
-def nettoyer_effets(effets_bruts):
+def index_value_par_cle(effets_possibles):
+    """possibleEffects porte un champ 'value' absent de 'effects' (necessaire
+    pour les templates '#3' seul type '#1 : +#3 Portee maximale', ou #3 est
+    le vrai bonus). Cle (effectId, diceNum) car possibleEffects est un
+    sur-ensemble de effects (contient des variantes potentielles en plus)."""
+    return {(e.get("effectId"), e.get("diceNum")): e.get("value", 0) for e in effets_possibles}
+
+
+def nettoyer_effets(effets_bruts, valeurs_par_cle=None):
     """Renomme from/to en diceNum/diceSide pour reutiliser formater_effet()."""
-    return [
-        {
+    valeurs_par_cle = valeurs_par_cle or {}
+    resultat = []
+    for e in effets_bruts:
+        dice_num = e.get("from", 0)
+        resultat.append({
             "effectId": e.get("effectId"),
-            "diceNum": e.get("from", 0),
+            "diceNum": dice_num,
             "diceSide": e.get("to", 0),
+            "value": valeurs_par_cle.get((e.get("effectId"), dice_num), 0),
             "elementId": e.get("elementId"),
             "characteristic": e.get("characteristic"),
-        }
-        for e in effets_bruts
-    ]
+        })
+    return resultat
 
 
 def nettoyer_items(items_bruts, types_par_id):
@@ -59,6 +70,7 @@ def nettoyer_items(items_bruts, types_par_id):
         if not type_nom and type_id in types_par_id:
             type_nom = types_par_id[type_id]
 
+        valeurs_par_cle = index_value_par_cle(it.get("possibleEffects", []))
         items.append({
             "id": it["id"],
             "nom": (it.get("name") or {}).get("fr", ""),
@@ -68,7 +80,7 @@ def nettoyer_items(items_bruts, types_par_id):
             "type_nom": type_nom,
             "super_type_nom": super_type_nom,
             "description": (it.get("description") or {}).get("fr", ""),
-            "effects": nettoyer_effets(it.get("effects", [])),
+            "effects": nettoyer_effets(it.get("effects", []), valeurs_par_cle),
             "item_set_id": it.get("itemSetId") if it.get("itemSetId", -1) != -1 else None,
             "has_recipe": bool(it.get("hasRecipe")),
             "price": it.get("price", 0),
@@ -97,7 +109,11 @@ def nettoyer_item_sets(sets_bruts):
     sets_ = []
     for s in sets_bruts:
         item_ids = [it["id"] for it in s.get("items", [])]
-        effects_par_palier = [nettoyer_effets(palier) for palier in s.get("effects", [])]
+        possible_par_palier = s.get("possibleEffects", [])
+        effects_par_palier = []
+        for i, palier in enumerate(s.get("effects", [])):
+            valeurs_par_cle = index_value_par_cle(possible_par_palier[i]) if i < len(possible_par_palier) else {}
+            effects_par_palier.append(nettoyer_effets(palier, valeurs_par_cle))
         sets_.append({
             "id": s["id"],
             "nom": (s.get("name") or {}).get("fr", ""),

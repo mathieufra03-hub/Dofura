@@ -87,6 +87,7 @@ CREATE TABLE objets_effets (
     effect_id INTEGER,
     dice_num INTEGER,
     dice_side INTEGER,
+    value INTEGER,
     element_id INTEGER,
     characteristic INTEGER
 );
@@ -104,6 +105,7 @@ CREATE TABLE panoplies_effets (
     effect_id INTEGER,
     dice_num INTEGER,
     dice_side INTEGER,
+    value INTEGER,
     element_id INTEGER,
     characteristic INTEGER
 );
@@ -168,12 +170,15 @@ for p in item_sets:
         VALUES (?, ?, ?)
     """, (p.get("id"), p.get("nom"), p.get("level")))
     for palier_idx, palier in enumerate(p.get("effects", [])):
+        # palier_idx = nombre de pieces equipees (0 = quasi-toujours vide,
+        # sauf 5 panoplies avec un bonus "toujours actif" atypique - garde
+        # tel quel, pas de +1 : "palier N" == N pieces, pas invente.
         for e in palier:
             cur.execute("""
-                INSERT INTO panoplies_effets (panoplie_id, palier, effect_id, dice_num, dice_side, element_id, characteristic)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (p.get("id"), palier_idx + 1, e.get("effectId"), e.get("diceNum"),
-                  e.get("diceSide"), e.get("elementId"), e.get("characteristic")))
+                INSERT INTO panoplies_effets (panoplie_id, palier, effect_id, dice_num, dice_side, value, element_id, characteristic)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (p.get("id"), palier_idx, e.get("effectId"), e.get("diceNum"),
+                  e.get("diceSide"), e.get("value"), e.get("elementId"), e.get("characteristic")))
 
 for it in items:
     cur.execute("""
@@ -186,10 +191,10 @@ for it in items:
     ))
     for e in it.get("effects", []):
         cur.execute("""
-            INSERT INTO objets_effets (objet_id, effect_id, dice_num, dice_side, element_id, characteristic)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO objets_effets (objet_id, effect_id, dice_num, dice_side, value, element_id, characteristic)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (it.get("id"), e.get("effectId"), e.get("diceNum"), e.get("diceSide"),
-              e.get("elementId"), e.get("characteristic")))
+              e.get("value"), e.get("elementId"), e.get("characteristic")))
 
 for r in recipes:
     for ing in r.get("ingredients", []):

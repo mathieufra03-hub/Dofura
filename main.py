@@ -47,11 +47,15 @@ if os.path.exists("dofura_etats_speciaux.json"):
 #   le champ "value" est un ID d'etat (api.dofusdb.fr/spell-states/{id})
 # - EFFECTS_ETAT_DICE : "Chatiment de #2 #1 sur #3 tours", diceNum et diceSide
 #   sont aussi des IDs d'etat
-# - EFFECTS_SORT_CONDITION : "#1 : +#3 PA" et apparentes, diceNum est l'ID
-#   d'un sort du jeu (deja dans SORTS_DATA, pas besoin de resolution externe)
+# - motif structurel "#1 : ..." (regex ci-dessous, plutot qu'une liste figee
+#   d'effect_id) : diceNum est l'ID d'un sort du jeu (deja dans SORTS_DATA,
+#   pas besoin de resolution externe). Trouve initialement sur 15 effect_id
+#   cote sorts/monstres (chantier #6), mais motif general confirme sur les
+#   objets (chantier #7) qui en utilisent 5 de plus (ex. 289 "#1 : ligne de
+#   vue desactivee", sans #3) — une liste figee aurait rate ces variantes.
 EFFECTS_ETAT_VALEUR = {950, 951, 952}
 EFFECTS_ETAT_DICE = {788}
-EFFECTS_SORT_CONDITION = {280, 281, 283, 284, 285, 286, 287, 290, 291, 293, 296, 1036, 1045, 2905, 2935}
+MOTIF_SORT_CONDITION = re.compile(r'^#1\s*:')
 
 def formater_effet(effet):
     effect_id = effet.get("effectId")
@@ -104,7 +108,7 @@ def formater_effet(effet):
         remplacement_1 = ETATS_SPECIAUX_DATA.get(str(dice_num))
         remplacement_2 = ETATS_SPECIAUX_DATA.get(str(dice_side))
         introuvable = remplacement_1 is None or remplacement_2 is None
-    elif effect_id in EFFECTS_SORT_CONDITION:
+    elif MOTIF_SORT_CONDITION.match(template.strip()):
         sort = SORTS_DATA.get(dice_num)
         remplacement_1 = sort.get("nom") if sort else None
         introuvable = remplacement_1 is None
@@ -158,8 +162,15 @@ def formater_effet(effet):
     if polarite == "bonus" and "#" not in desc and desc.startswith(str(dice_num)):
         desc = "+" + desc
 
+    # Filet de securite general : un placeholder au-dela de #1/#2/#3 (ex.
+    # #4, jamais gere) laisserait un texte casse — on masque plutot que
+    # d'afficher un residu (trouve sur des objets : "Emballe par : #4",
+    # "Renommer la guilde : #4" referencent une donnee dynamique par
+    # instance de jeu, impossible a resoudre statiquement).
+    if "#" in desc:
+        desc = None
     # Si la description source était juste '#1', le texte final est un nombre brut — on le masque
-    if desc.strip().lstrip('-+').isdigit():
+    elif desc.strip().lstrip('-+').isdigit():
         desc = None
 
     return {
@@ -327,6 +338,113 @@ def detail_sort(sort_id: int):
         "cast_in_diagonal": sort.get("cast_in_diagonal"),
         "effects": [f for e in sort.get("effects", []) if effet_visible(e) and (f:=formater_effet(e))["texte"] is not None],
         "critical_effects": [f for e in sort.get("critical_effects", []) if effet_visible(e) and (f:=formater_effet(e))["texte"] is not None],
+    }
+
+# Templates a #3 seul (sans #1 ni #2) rencontres sur des objets/panoplies ou
+# #3 est en realite l'ID d'un sort accorde par l'objet, resolu via SORTS_DATA
+# comme EFFECTS_SORT_CONDITION (memes garde-fous : introuvable -> masque).
+EFFECTS_OBJET_SORT_3 = {604, 2864}
+
+def formater_effet_objet(row):
+    effect_id = row["effect_id"]
+    dice_num = row["dice_num"]  # = champ "from" cote objets
+    template = EFFECTS_DATA.get(effect_id, {}).get("description", "")
+
+    if effect_id in EFFECTS_OBJET_SORT_3:
+        sort = SORTS_DATA.get(dice_num)
+        if not sort:
+            return {"texte": None, "valeur": str(dice_num), "duration": 0,
+                    "effect_id": effect_id, "polarite": None}
+        return {"texte": template.replace("#3", sort["nom"]), "valeur": str(dice_num),
+                "duration": 0, "effect_id": effect_id, "polarite": None}
+
+    # Les objets n'ont que 2 emplacements numeriques (from/to, ici diceNum/
+    # diceSide) contre 3 pour les sorts/monstres (diceNum/diceSide/value).
+    # Quand un template n'utilise QUE #3 (ex. "+#3 Points d'experience"),
+    # c'est diceNum (from) qui porte la vraie valeur, pas "value" (absent
+    # des effets d'objets pour ce cas — value ne sert que pour la famille
+    # etat du chantier #6, jamais utilisee par les objets).
+    trois_seul = "#3" in template and "#1" not in template and "#2" not in template
+    if trois_seul:
+        return formater_effet({
+            "effectId": effect_id, "diceNum": 0, "diceSide": 0,
+            "value": dice_num, "duration": 0,
+        })
+
+    return formater_effet({
+        "effectId": effect_id,
+        "diceNum": dice_num,
+        "diceSide": row["dice_side"],
+        "value": row["value"],
+        "duration": 0,
+    })
+
+@app.get("/objets")
+def liste_objets(search: str = ""):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, nom, img, niveau, type_nom FROM objets
+        WHERE nom LIKE ?
+        ORDER BY nom
+    """, (f"%{search}%",))
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+@app.get("/objets/{objet_id}")
+def detail_objet(objet_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM objets WHERE id = ?", (objet_id,))
+    objet = cur.fetchone()
+    if not objet:
+        conn.close()
+        return {"erreur": "Objet introuvable"}
+
+    cur.execute("SELECT * FROM objets_effets WHERE objet_id = ?", (objet_id,))
+    effets_bruts = cur.fetchall()
+
+    cur.execute("""
+        SELECT r.ingredient_id, r.quantite, r.job_id, o.nom AS ingredient_nom, o.img AS ingredient_img
+        FROM recettes r
+        LEFT JOIN objets o ON o.id = r.ingredient_id
+        WHERE r.objet_id = ?
+    """, (objet_id,))
+    ingredients = cur.fetchall()
+
+    panoplie = None
+    if objet["panoplie_id"] is not None:
+        cur.execute("SELECT * FROM panoplies WHERE id = ?", (objet["panoplie_id"],))
+        p = cur.fetchone()
+        if p:
+            cur.execute("SELECT id, nom FROM objets WHERE panoplie_id = ?", (objet["panoplie_id"],))
+            membres = cur.fetchall()
+            cur.execute("SELECT * FROM panoplies_effets WHERE panoplie_id = ? ORDER BY palier", (objet["panoplie_id"],))
+            effets_paliers_bruts = cur.fetchall()
+            paliers = {}
+            for e in effets_paliers_bruts:
+                f = formater_effet_objet(e)
+                if f["texte"] is not None:
+                    paliers.setdefault(e["palier"], []).append(f)
+            panoplie = {
+                "id": p["id"],
+                "nom": p["nom"],
+                "niveau": p["niveau"],
+                "membres": [dict(m) for m in membres],
+                "effets_par_palier": paliers,
+            }
+
+    conn.close()
+    return {
+        **dict(objet),
+        "effects": [f for e in effets_bruts if (f := formater_effet_objet(e))["texte"] is not None],
+        "recette": [
+            {"ingredient_id": i["ingredient_id"], "quantite": i["quantite"], "nom": i["ingredient_nom"], "img": i["ingredient_img"]}
+            for i in ingredients
+        ],
+        "job_id": ingredients[0]["job_id"] if ingredients else None,
+        "panoplie": panoplie,
     }
 
 if __name__ == "__main__":
