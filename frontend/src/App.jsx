@@ -31,8 +31,8 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-const navLinks = ["Monstres", "Quêtes", "Équipements", "Ressources", "Métiers", "Zones", "Almanax"]
-const NAV_LABEL_VERS_CIBLE = { "Monstres":"monstres", "Équipements":"equipement", "Ressources":"ressource" }
+const navLinks = ["Monstres", "Quêtes", "Équipements", "Ressources", "Métiers", "Zones", "Donjons", "Almanax"]
+const NAV_LABEL_VERS_CIBLE = { "Monstres":"monstres", "Équipements":"equipement", "Ressources":"ressource", "Donjons":"donjon" }
 const quickChips = ["Bouftou", "Iop", "Dofus Turquoise", "Larves de Donjon", "Panoplie Kolosso"]
 
 function Navbar({ onHome, onNav, browsing }) {
@@ -166,7 +166,7 @@ function EncycloGrid({ onNav }) {
     { label:"Ressources",   count:"3 639",  action:()=>onNav("ressource") },
     { label:"Métiers",      count:"18",     action:null },
     { label:"Zones",        count:"800+",   action:null },
-    { label:"Donjons",      count:"120+",   action:null },
+    { label:"Donjons",      count:"187",    action:()=>onNav("donjon") },
   ]
   return (
     <div style={{ padding:"18px 2rem 0" }}>
@@ -294,7 +294,7 @@ function SortDetail({ data }) {
   )
 }
 
-function MonstrePage({ id, onBack }) {
+function MonstrePage({ id, onSelectDonjon, onBack }) {
   const [data, setData] = useState(null)
   const [gradeIdx, setGradeIdx] = useState(0)
 
@@ -382,7 +382,7 @@ function MonstrePage({ id, onBack }) {
       {data.sorts?.length > 0 && <SortsPanel sorts={data.sorts} />}
 
       {data.drops?.length > 0 && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
           <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Drops</div>
           <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
             {data.drops.map(d => (
@@ -390,6 +390,21 @@ function MonstrePage({ id, onBack }) {
                 <span style={{ fontSize:12, color:C.txt }}>{d.nom}</span>
                 <span style={{ fontSize:12, color:C.gold }}>{d.pourcentage}%</span>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.donjons?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Apparaît dans</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            {data.donjons.map(d => (
+              <span key={d.id} onClick={()=>onSelectDonjon(d.id)}
+                style={{ fontSize:11, padding:"3px 9px", borderRadius:6, cursor:"pointer",
+                  background:d.est_boss?C.goldf:C.bg4, border:`0.5px solid ${d.est_boss?C.goldb:C.bdr}`, color:d.est_boss?C.gold:C.txt2 }}>
+                {d.nom}{d.est_boss?" (Boss)":""}
+              </span>
             ))}
           </div>
         </div>
@@ -711,7 +726,7 @@ function ObjetsPage({ categorie, titre, placeholder, videMessage, compteurSingul
   )
 }
 
-function ObjetDetailPage({ id, onSelect, onBack }) {
+function ObjetDetailPage({ id, onSelect, onSelectDonjon, onBack }) {
   const [data, setData] = useState(null)
 
   useEffect(() => {
@@ -797,7 +812,7 @@ function ObjetDetailPage({ id, onSelect, onBack }) {
       )}
 
       {data.panoplie && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
           <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>{data.panoplie.nom}</div>
           <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
             {data.panoplie.membres.map(m => (
@@ -818,6 +833,247 @@ function ObjetDetailPage({ id, onSelect, onBack }) {
           ))}
         </div>
       )}
+
+      {data.donjons_requis?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Nécessaire pour</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            {data.donjons_requis.map(d => (
+              <span key={d.id} onClick={()=>onSelectDonjon(d.id)}
+                style={{ fontSize:11, padding:"3px 9px", borderRadius:6, cursor:"pointer",
+                  background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>
+                {d.nom}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const DIFFICULTE_ETOILES = (n) => "★".repeat(Math.max(n, 0)) + "☆".repeat(Math.max(4 - n, 0))
+
+function DonjonsPage({ onSelect, onBack }) {
+  const [donjons, setDonjons] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
+  const [zone, setZone] = useState("")
+  const [zones, setZones] = useState([])
+  const [sansZoneDispo, setSansZoneDispo] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${API}/donjons/filtres`).then(r=>r.json()).then(d => {
+      setZones(d.zones); setSansZoneDispo(d.sans_zone)
+    })
+  }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  const donjonsRequeteId = useRef(0)
+  useEffect(() => {
+    const requeteId = ++donjonsRequeteId.current
+    setLoading(true)
+    const params = new URLSearchParams({ search, zone, page, page_size: PAGE_SIZE })
+    fetch(`${API}/donjons?${params}`)
+      .then(r=>r.json())
+      .then(d => {
+        if (requeteId !== donjonsRequeteId.current) return
+        setDonjons(d.donjons); setTotal(d.total); setLoading(false)
+      })
+      .catch(()=>{ if (requeteId === donjonsRequeteId.current) setLoading(false) })
+  }, [search, zone, page])
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
+  const filtresActifs = search || zone
+
+  const reinitialiser = () => {
+    setSearchInput(""); setSearch(""); setZone(""); setPage(1)
+  }
+
+  return (
+    <div style={mp.page}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={mp.filtreBar}>
+        <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
+          placeholder="Rechercher un donjon..." style={mp.searchInput} />
+
+        <select value={zone} onChange={e=>{ setZone(e.target.value); setPage(1) }} style={mp.select}>
+          <option value="">Toutes les zones</option>
+          {sansZoneDispo && <option value={SANS_VALEUR}>Sans zone</option>}
+          {zones.map(z => <option key={z} value={z}>{z}</option>)}
+        </select>
+
+        {filtresActifs && <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser</button>}
+
+        <span style={mp.compteur}>{total} donjon{total!==1?"s":""}</span>
+      </div>
+
+      {!loading && donjons.length === 0 ? (
+        <div style={mp.videEtat}>
+          Aucun donjon ne correspond à ces filtres.
+          {filtresActifs && <div style={{ marginTop:10 }}>
+            <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+          </div>}
+        </div>
+      ) : (
+        <div style={mp.grid}>
+          {donjons.map(d => (
+            <div key={d.id} onClick={()=>onSelect(d.id)} style={mp.card}
+              onMouseEnter={e=>e.currentTarget.style.borderColor=C.cyan}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=C.bdr}
+            >
+              {d.boss_img
+                ? <img src={d.boss_img} alt={d.boss_nom} style={mp.cardImg} />
+                : <div style={mp.cardImgVide} />
+              }
+              <div style={mp.cardNom}>{d.nom}</div>
+              <div style={mp.cardFamille}>Niv. {d.niveau_min}-{d.niveau_optimal} — {d.zone || "—"}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={mp.pagination}>
+          <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+          <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+          <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DonjonDetailPage({ id, onSelectMonstre, onSelectObjet, onBack }) {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    setData(null)
+    fetch(`${API}/donjons/${id}`).then(r=>r.json()).then(setData)
+  }, [id])
+
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>{data.erreur}</div>
+
+  const acces = []
+  if (data.recherche_groupe) acces.push("Recherche de groupe")
+  if (data.disponible_hall) acces.push("Hall des Souvenirs")
+  if (data.disponible_trousseau) acces.push("Trousseau")
+
+  const aGuide = data.guide && (data.guide.mecaniques?.length > 0 || data.guide.salles?.length > 0 || data.guide.compo_conseillee)
+
+  return (
+    <div translate="no" style={{ padding:"1.5rem 2rem", maxWidth:900, margin:"0 auto" }}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", display:"grid", gridTemplateColumns:"100px 1fr", gap:20, marginBottom:16 }}>
+        <div style={{ display:"flex", justifyContent:"center", alignItems:"flex-start" }}>
+          {data.boss_principal?.img
+            ? <img src={data.boss_principal.img} alt={data.nom} style={{ width:90, height:90, objectFit:"contain" }} />
+            : <div style={{ width:90, height:90, background:C.bg3, borderRadius:8 }} />
+          }
+        </div>
+        <div>
+          <h2 style={{ fontSize:20, fontWeight:500, color:C.gold2, marginBottom:4 }}>{data.nom}</h2>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
+            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>Niv. {data.niveau_min}-{data.niveau_optimal}</span>
+            {data.zone && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.zone}</span>}
+            {data.difficulte > 0 && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.goldf, border:`0.5px solid ${C.goldb}`, color:C.gold }}>{DIFFICULTE_ETOILES(data.difficulte)}</span>}
+          </div>
+          {acces.length > 0 && <div style={{ fontSize:12, color:C.txt2 }}>Accès : {acces.join(" · ")}</div>}
+        </div>
+      </div>
+
+      {data.objets_requis?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Accès / Clé requise</div>
+          {data.objets_requis.map((o,i) => (
+            <div key={i} onClick={()=>o.id && onSelectObjet(o.id)} style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0", cursor:o.id?"pointer":"default" }}>
+              {o.img
+                ? <img src={o.img} alt={o.nom} style={{ width:24, height:24, objectFit:"contain" }} />
+                : <div style={{ width:24, height:24, background:C.bg4, borderRadius:4 }} />
+              }
+              <span style={{ fontSize:12, color:o.id?C.cyan:C.txt }}>{o.nom || `Objet #${o.id}`}</span>
+              <span style={{ fontSize:12, color:C.gold, marginLeft:"auto" }}>x{o.quantite}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {aGuide && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Guide du boss</div>
+          {data.guide.mecaniques?.length > 0 && (
+            <div style={{ marginBottom:10 }}>
+              {data.guide.mecaniques.map((m,i) => (
+                <div key={i} style={{ fontSize:12, color:C.txt, padding:"3px 0", display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ color:C.prp2, fontSize:9, flexShrink:0 }}>◆</span> {m}
+                </div>
+              ))}
+            </div>
+          )}
+          {data.guide.salles?.length > 0 && (
+            <div style={{ marginBottom:10 }}>
+              <div style={{ fontSize:11, color:C.prp2, marginBottom:4 }}>Monstres par salle</div>
+              {data.guide.salles.map((s,i) => (
+                <div key={i} style={{ fontSize:12, color:C.txt2, paddingLeft:10, marginBottom:2 }}>
+                  <span style={{ color:C.txt }}>{s.salle}</span> — {(s.monstres||[]).join(", ")}
+                </div>
+              ))}
+            </div>
+          )}
+          {data.guide.compo_conseillee && (
+            <div style={{ fontSize:12, color:C.txt2 }}>
+              <span style={{ color:C.prp2 }}>Composition conseillée : </span>{data.guide.compo_conseillee}
+            </div>
+          )}
+        </div>
+      )}
+
+      {data.monstres?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Monstres du donjon</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+            {data.monstres.map(m => (
+              <div key={m.id} onClick={()=>onSelectMonstre(m.id)}
+                style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", borderRadius:6, cursor:"pointer",
+                  background:m.est_boss?C.goldf:C.bg4, border:`0.5px solid ${m.est_boss?C.goldb:C.bdr}` }}
+              >
+                {m.img
+                  ? <img src={m.img} alt={m.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                  : <div style={{ width:22, height:22, background:C.bg3, borderRadius:4 }} />
+                }
+                <span style={{ fontSize:12, color:m.est_boss?C.gold:C.txt }}>{m.nom}{m.est_boss?" (Boss)":""}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.drops?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Drops</div>
+          {data.drops.map((d,i) => (
+            <div key={i} onClick={()=>d.objet_id && onSelectObjet(d.objet_id)}
+              style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0", cursor:d.objet_id?"pointer":"default" }}>
+              {d.img
+                ? <img src={d.img} alt={d.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                : <div style={{ width:22, height:22, background:C.bg4, borderRadius:4 }} />
+              }
+              <span style={{ fontSize:12, color:d.objet_id?C.cyan:C.txt }}>{d.nom}</span>
+              <span style={{ fontSize:11, color:C.txt3, marginLeft:"auto" }}>{d.pourcentage}%</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -828,7 +1084,8 @@ export default function App() {
   const [loading, setLoading]   = useState(false)
   const [selectedMonstre, setSelectedMonstre] = useState(null)
   const [selectedObjet, setSelectedObjet]     = useState(null)
-  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource"
+  const [selectedDonjon, setSelectedDonjon]   = useState(null)
+  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon"
   const [almanax, setAlmanax]   = useState(null)
 
   useEffect(() => {
@@ -849,9 +1106,10 @@ export default function App() {
       .then(r=>r.json()).then(setAlmanax).catch(()=>{})
   }, [])
 
-  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setBrowsing(null); setQuery(""); setResults([]) }
+  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setBrowsing(null); setQuery(""); setResults([]) }
   const handleSelectMonstre = (id) => { resetNav(); setSelectedMonstre(id) }
   const handleSelectObjet   = (id) => { resetNav(); setSelectedObjet(id) }
+  const handleSelectDonjon  = (id) => { resetNav(); setSelectedDonjon(id) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
@@ -861,11 +1119,15 @@ export default function App() {
       <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} />
       <StatsBar />
       {selectedMonstre ? (
-        <MonstrePage id={selectedMonstre} onBack={handleHome} />
+        <MonstrePage id={selectedMonstre} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedObjet ? (
-        <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onBack={handleHome} />
+        <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
+      ) : selectedDonjon ? (
+        <DonjonDetailPage id={selectedDonjon} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : browsing === "monstres" ? (
         <MonstresPage onSelect={handleSelectMonstre} onBack={handleHome} />
+      ) : browsing === "donjon" ? (
+        <DonjonsPage onSelect={handleSelectDonjon} onBack={handleHome} />
       ) : browsing === "equipement" ? (
         <ObjetsPage categorie="equipement" titre="Équipements"
           placeholder="Rechercher un équipement..."

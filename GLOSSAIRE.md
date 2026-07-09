@@ -107,5 +107,9 @@
 
 **Clé composite** — une clé de stockage formée de PLUSIEURS valeurs collées ensemble plutôt qu'une seule, utile quand une seule valeur ne suffit pas à identifier une donnée de façon unique. *Chantier #8ter : un même sort peut être accordé à un grade différent selon l'objet qui le donne, donc `dofura_sorts_objets.json` utilise la clé `"{spell_id}_{grade}"` (ex. `"25293_2"`) plutôt que juste `spell_id`, qui aurait mélangé le contenu de plusieurs grades sous un seul sort.*
 
+**Jointure par nom** — relier deux données par leur texte (ex. `"Cuir de Bouftou Royal" == "Cuir de Bouftou Royal"`) plutôt que par un identifiant numérique dédié. Ça marche dans l'immense majorité des cas mais n'est jamais garanti à 100% (accents, doublons de nom, source différente) — toujours prévoir un repli propre (afficher le texte seul, sans lien ni image) plutôt qu'un plantage si rien ne correspond. *Chantier Donjons : la table `drops` (sourcée Dofensive, un nom de texte) est reliée à la table `objets` (sourcée Dofusdb, chantier #7) par le nom, pour afficher l'image des drops d'un donjon — 2 items sur des dizaines n'ont pas trouvé de correspondance, affichés sans image plutôt que de bloquer toute la page.*
+
+**Table de jonction (junction table)** — une table qui ne sert qu'à relier deux autres tables entre elles quand une donnée peut avoir plusieurs liens (un donjon a plusieurs monstres, un monstre peut apparaître dans plusieurs donjons — impossible à ranger dans une seule colonne). *`donjons_monstres` relie `donjons` et `monstres`, avec en plus un drapeau `est_boss` pour savoir lequel est le boss principal.*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*

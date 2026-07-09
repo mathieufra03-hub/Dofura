@@ -8,6 +8,8 @@ with open("dofura_recipes.json", "r", encoding="utf-8") as f:
     recipes = json.load(f)
 with open("dofura_item_sets.json", "r", encoding="utf-8") as f:
     item_sets = json.load(f)
+with open("dofura_donjons.json", "r", encoding="utf-8") as f:
+    donjons = json.load(f)
 conn = sqlite3.connect("dofura.db")
 cur = conn.cursor()
 cur.executescript("""
@@ -21,6 +23,9 @@ DROP TABLE IF EXISTS objets_effets;
 DROP TABLE IF EXISTS recettes;
 DROP TABLE IF EXISTS panoplies;
 DROP TABLE IF EXISTS panoplies_effets;
+DROP TABLE IF EXISTS donjons;
+DROP TABLE IF EXISTS donjons_monstres;
+DROP TABLE IF EXISTS donjons_objets_requis;
 CREATE TABLE monstres (
     id INTEGER PRIMARY KEY,
     nom TEXT,
@@ -109,6 +114,30 @@ CREATE TABLE panoplies_effets (
     value INTEGER,
     element_id INTEGER,
     characteristic INTEGER
+);
+CREATE TABLE donjons (
+    id INTEGER PRIMARY KEY,
+    nom TEXT,
+    niveau_min INTEGER,
+    niveau_optimal INTEGER,
+    difficulte INTEGER,
+    zone TEXT,
+    recherche_groupe INTEGER,
+    disponible_hall INTEGER,
+    disponible_trousseau INTEGER,
+    boss_principal_id INTEGER
+);
+CREATE TABLE donjons_monstres (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    donjon_id INTEGER,
+    monstre_id INTEGER,
+    est_boss INTEGER
+);
+CREATE TABLE donjons_objets_requis (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    donjon_id INTEGER,
+    objet_id INTEGER,
+    quantite INTEGER
 );
 """)
 def safe_int(val):
@@ -204,6 +233,31 @@ for r in recipes:
             INSERT INTO recettes (objet_id, ingredient_id, quantite, job_id)
             VALUES (?, ?, ?, ?)
         """, (r.get("result_id"), ing.get("item_id"), ing.get("quantite"), r.get("job_id")))
+
+for d in donjons:
+    boss_ids = d.get("boss_ids", [])
+    monstre_ids = d.get("monstre_ids", [])
+    boss_principal_id = boss_ids[0] if boss_ids else (monstre_ids[0] if monstre_ids else None)
+    cur.execute("""
+        INSERT OR REPLACE INTO donjons (id, nom, niveau_min, niveau_optimal, difficulte, zone,
+                                         recherche_groupe, disponible_hall, disponible_trousseau, boss_principal_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        d.get("id"), d.get("nom"), d.get("niveau_min"), d.get("niveau_optimal"), d.get("difficulte"),
+        d.get("zone"), int(bool(d.get("recherche_groupe"))), int(bool(d.get("disponible_hall"))),
+        int(bool(d.get("disponible_trousseau"))), boss_principal_id
+    ))
+    boss_ids_set = set(boss_ids)
+    for monstre_id in monstre_ids:
+        cur.execute("""
+            INSERT INTO donjons_monstres (donjon_id, monstre_id, est_boss)
+            VALUES (?, ?, ?)
+        """, (d.get("id"), monstre_id, int(monstre_id in boss_ids_set)))
+    for o in d.get("objets_requis", []):
+        cur.execute("""
+            INSERT INTO donjons_objets_requis (donjon_id, objet_id, quantite)
+            VALUES (?, ?, ?)
+        """, (d.get("id"), o.get("id"), o.get("quantite")))
 
 conn.commit()
 conn.close()

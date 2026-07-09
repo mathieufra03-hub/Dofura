@@ -49,6 +49,16 @@ if os.path.exists("dofura_sorts_objets.json"):
     with open("dofura_sorts_objets.json", "r", encoding="utf-8") as f:
         SORTS_OBJETS_DATA = json.load(f)
 
+# Guides de boss des donjons (mecaniques/salles/composition conseillee),
+# cle "donjon_id" : contenu 100% editorial (jamais scrape ni invente),
+# rempli progressivement par Popo/Krag. Absent de la DB (regeneree a
+# chaque demarrage par init_db.py, voir regle 9) pour ne pas perdre ce
+# travail au prochain redeploiement.
+DONJONS_GUIDES_DATA = {}
+if os.path.exists("dofura_donjons_guides.json"):
+    with open("dofura_donjons_guides.json", "r", encoding="utf-8") as f:
+        DONJONS_GUIDES_DATA = json.load(f)
+
 # Effets dont un placeholder brut (#1/#2/#3) est en realite un ID a resoudre,
 # pas un nombre (chantier #6) :
 # - EFFECTS_ETAT_VALEUR : "Etat #3"/"Enleve l'etat #3"/"Desactive l'etat #3",
@@ -312,6 +322,14 @@ def detail_monstre(monstre_id: int):
     sorts = cur.fetchall()
     cur.execute("SELECT * FROM zones WHERE monstre_id = ?", (monstre_id,))
     zones = cur.fetchall()
+    cur.execute("""
+        SELECT d.id, d.nom, dm.est_boss
+        FROM donjons_monstres dm
+        JOIN donjons d ON d.id = dm.donjon_id
+        WHERE dm.monstre_id = ?
+        ORDER BY d.nom
+    """, (monstre_id,))
+    donjons = cur.fetchall()
     conn.close()
     return {
         **dict(monstre),
@@ -319,6 +337,7 @@ def detail_monstre(monstre_id: int):
         "drops": [dict(d) for d in drops],
         "sorts": [dict(s) for s in sorts],
         "zones": [dict(z) for z in zones],
+        "donjons": [{"id": d["id"], "nom": d["nom"], "est_boss": bool(d["est_boss"])} for d in donjons],
     }
 
 @app.get("/sorts/{sort_id}")
@@ -552,6 +571,15 @@ def detail_objet(objet_id: int):
                 "effets_par_palier": paliers,
             }
 
+    cur.execute("""
+        SELECT d.id, d.nom, dor.quantite
+        FROM donjons_objets_requis dor
+        JOIN donjons d ON d.id = dor.donjon_id
+        WHERE dor.objet_id = ?
+        ORDER BY d.nom
+    """, (objet_id,))
+    donjons_requis = cur.fetchall()
+
     conn.close()
     return {
         **dict(objet),
@@ -563,6 +591,138 @@ def detail_objet(objet_id: int):
         "job_id": ingredients[0]["job_id"] if ingredients else None,
         "panoplie": panoplie,
         "sort_accorde": sort_accorde,
+        "donjons_requis": [{"id": d["id"], "nom": d["nom"], "quantite": d["quantite"]} for d in donjons_requis],
+    }
+
+@app.get("/donjons")
+def liste_donjons(search: str = "", zone: str = "", page: int = 1, page_size: int = 48):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 200)
+
+    conditions = ["d.nom LIKE ?"]
+    params = [f"%{search}%"]
+
+    if zone == SANS_VALEUR:
+        conditions.append("(d.zone IS NULL OR d.zone = '')")
+    elif zone:
+        conditions.append("d.zone = ?")
+        params.append(zone)
+
+    where_clause = " AND ".join(conditions)
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(f"SELECT COUNT(*) FROM donjons d WHERE {where_clause}", params)
+    total = cur.fetchone()[0]
+
+    cur.execute(f"""
+        SELECT d.id, d.nom, d.niveau_min, d.niveau_optimal, d.difficulte, d.zone,
+               m.nom AS boss_nom, m.image_url AS boss_img
+        FROM donjons d
+        LEFT JOIN monstres m ON m.id = d.boss_principal_id
+        WHERE {where_clause}
+        ORDER BY d.nom
+        LIMIT ? OFFSET ?
+    """, params + [page_size, (page - 1) * page_size])
+    rows = cur.fetchall()
+    conn.close()
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "donjons": [dict(r) for r in rows],
+    }
+
+@app.get("/donjons/filtres")
+def filtres_donjons():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT zone FROM donjons WHERE zone IS NOT NULL AND zone != '' ORDER BY zone")
+    zones = [r[0] for r in cur.fetchall()]
+    cur.execute("SELECT COUNT(*) FROM donjons WHERE zone IS NULL OR zone = ''")
+    sans_zone = cur.fetchone()[0] > 0
+    conn.close()
+    return {"zones": zones, "sans_zone": sans_zone}
+
+@app.get("/donjons/{donjon_id}")
+def detail_donjon(donjon_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM donjons WHERE id = ?", (donjon_id,))
+    donjon = cur.fetchone()
+    if not donjon:
+        conn.close()
+        return {"erreur": "Donjon introuvable"}
+
+    cur.execute("""
+        SELECT dm.monstre_id, dm.est_boss, m.nom, m.image_url
+        FROM donjons_monstres dm
+        JOIN monstres m ON m.id = dm.monstre_id
+        WHERE dm.donjon_id = ?
+        ORDER BY dm.est_boss DESC, m.nom
+    """, (donjon_id,))
+    monstres_rows = cur.fetchall()
+
+    boss_principal = None
+    if donjon["boss_principal_id"] is not None:
+        cur.execute("SELECT id, nom, image_url FROM monstres WHERE id = ?", (donjon["boss_principal_id"],))
+        bp = cur.fetchone()
+        if bp:
+            boss_principal = {"id": bp["id"], "nom": bp["nom"], "img": bp["image_url"]}
+
+    cur.execute("""
+        SELECT dor.objet_id, dor.quantite, o.nom, o.img
+        FROM donjons_objets_requis dor
+        LEFT JOIN objets o ON o.id = dor.objet_id
+        WHERE dor.donjon_id = ?
+    """, (donjon_id,))
+    objets_requis_rows = cur.fetchall()
+
+    # Table de drops du donjon : agrege les drops (table existante, sourcee
+    # Dofensive, liee par NOM et non par ID) de tous les monstres du donjon.
+    # Jointure sur le nom vers objets pour l'image/le lien — pas garantie a
+    # 100% (pas de cle commune), repli propre (objet_id/img a None) sinon.
+    monstre_ids = [r["monstre_id"] for r in monstres_rows]
+    drops = []
+    if monstre_ids:
+        placeholders = ",".join("?" for _ in monstre_ids)
+        cur.execute(f"""
+            SELECT d.nom, MAX(d.pourcentage) AS pourcentage, o.id AS objet_id, o.img
+            FROM drops d
+            LEFT JOIN objets o ON o.nom = d.nom
+            WHERE d.monstre_id IN ({placeholders})
+            GROUP BY d.nom
+            ORDER BY pourcentage DESC
+        """, monstre_ids)
+        drops = [dict(r) for r in cur.fetchall()]
+
+    conn.close()
+
+    # Guide de boss (mecaniques/salles/composition) : contenu 100% editorial,
+    # jamais scrape. Absent tant que Popo/Krag ne l'a pas rempli -> section
+    # masquee cote frontend (pas de "a completer" qui ferait croire a du contenu).
+    guide_brut = DONJONS_GUIDES_DATA.get(str(donjon_id), {})
+    mecaniques = guide_brut.get("mecaniques", [])
+    salles = guide_brut.get("salles", [])
+    compo_conseillee = guide_brut.get("compo_conseillee", "")
+    guide = None
+    if mecaniques or salles or compo_conseillee:
+        guide = {"mecaniques": mecaniques, "salles": salles, "compo_conseillee": compo_conseillee}
+
+    return {
+        **dict(donjon),
+        "boss_principal": boss_principal,
+        "monstres": [
+            {"id": r["monstre_id"], "nom": r["nom"], "img": r["image_url"], "est_boss": bool(r["est_boss"])}
+            for r in monstres_rows
+        ],
+        "objets_requis": [
+            {"id": r["objet_id"], "nom": r["nom"], "img": r["img"], "quantite": r["quantite"]}
+            for r in objets_requis_rows
+        ],
+        "drops": drops,
+        "guide": guide,
     }
 
 if __name__ == "__main__":

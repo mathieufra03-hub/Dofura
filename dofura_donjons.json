@@ -1,0 +1,4915 @@
+[
+  {
+    "id": 1,
+    "nom": "Cour du Bouftou Royal",
+    "niveau_min": 20,
+    "niveau_optimal": 30,
+    "difficulte": 2,
+    "zone": "Astrub",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      147
+    ],
+    "monstre_ids": [
+      101,
+      134,
+      147,
+      148,
+      149,
+      4822
+    ],
+    "objets_requis": [
+      {
+        "id": 1568,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "nom": "Bibliothèque du Maître Corbac",
+    "niveau_min": 100,
+    "niveau_optimal": 110,
+    "difficulte": 3,
+    "zone": "Plaines de Cania",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      289
+    ],
+    "monstre_ids": [
+      289,
+      823,
+      824,
+      825,
+      4572,
+      4578,
+      4579,
+      4580
+    ],
+    "objets_requis": [
+      {
+        "id": 7926,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "nom": "Centre du Labyrinthe du Minotoror",
+    "niveau_min": 110,
+    "niveau_optimal": 120,
+    "difficulte": 2,
+    "zone": "Île du Minotoror",
+    "recherche_groupe": false,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      121
+    ],
+    "monstre_ids": [
+      121,
+      668,
+      827,
+      829,
+      830,
+      831,
+      832,
+      3740
+    ],
+    "objets_requis": [
+      {
+        "id": 7924,
+        "quantite": 1
+      },
+      {
+        "id": 8306,
+        "quantite": 1
+      },
+      {
+        "id": 8305,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "nom": "Antre du Dragon Cochon",
+    "niveau_min": 90,
+    "niveau_optimal": 100,
+    "difficulte": 2,
+    "zone": "Labyrinthe du Dragon Cochon",
+    "recherche_groupe": false,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      113
+    ],
+    "monstre_ids": [
+      113,
+      600,
+      601,
+      603,
+      3137,
+      3304
+    ],
+    "objets_requis": [
+      {
+        "id": 7511,
+        "quantite": 1
+      },
+      {
+        "id": 8320,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "nom": "Antre de Crocabulia",
+    "niveau_min": 110,
+    "niveau_optimal": 120,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      854
+    ],
+    "monstre_ids": [
+      853,
+      854,
+      855,
+      862,
+      5804,
+      5805
+    ],
+    "objets_requis": [
+      {
+        "id": 8342,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "nom": "Grange du Tournesol Affamé",
+    "niveau_min": 10,
+    "niveau_optimal": 20,
+    "difficulte": 2,
+    "zone": "Astrub",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      799
+    ],
+    "monstre_ids": [
+      48,
+      78,
+      79,
+      799,
+      4820,
+      4821
+    ],
+    "objets_requis": [
+      {
+        "id": 8143,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "nom": "Domaine Ancestral",
+    "niveau_min": 80,
+    "niveau_optimal": 90,
+    "difficulte": 3,
+    "zone": "Forêt des Abraknydes",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      173
+    ],
+    "monstre_ids": [
+      173,
+      253,
+      254,
+      651,
+      917
+    ],
+    "objets_requis": [
+      {
+        "id": 7557,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "nom": "Clairière du Chêne Mou",
+    "niveau_min": 130,
+    "niveau_optimal": 140,
+    "difficulte": 3,
+    "zone": "Forêt des Abraknydes",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      257
+    ],
+    "monstre_ids": [
+      257,
+      258,
+      260,
+      990,
+      991,
+      992
+    ],
+    "objets_requis": [
+      {
+        "id": 8436,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "nom": "Clos des Blops",
+    "niveau_min": 50,
+    "niveau_optimal": 60,
+    "difficulte": 1,
+    "zone": "Plaines de Cania",
+    "recherche_groupe": false,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1184,
+      1186,
+      1187,
+      1185
+    ],
+    "monstre_ids": [
+      273,
+      274,
+      275,
+      276,
+      1181,
+      1182,
+      1183,
+      1184,
+      1185,
+      1186,
+      1187
+    ],
+    "objets_requis": [
+      {
+        "id": 9248,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "nom": "Donjon des Bworks",
+    "niveau_min": 40,
+    "niveau_optimal": 50,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      792
+    ],
+    "monstre_ids": [
+      53,
+      74,
+      791,
+      792,
+      876,
+      2680
+    ],
+    "objets_requis": [
+      {
+        "id": 8135,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "nom": "Grotte du Bworker",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 2,
+    "zone": "Landes de Sidimote",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      478
+    ],
+    "monstre_ids": [
+      478,
+      479,
+      484,
+      485,
+      486,
+      487,
+      488
+    ],
+    "objets_requis": [
+      {
+        "id": 6884,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "nom": "Tanière du Meulou",
+    "niveau_min": 90,
+    "niveau_optimal": 100,
+    "difficulte": 4,
+    "zone": "Landes de Sidimote",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      232
+    ],
+    "monstre_ids": [
+      102,
+      232,
+      299,
+      4866,
+      4867,
+      4868,
+      4869
+    ],
+    "objets_requis": [
+      {
+        "id": 8156,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "nom": "Terrier du Wa Wabbit",
+    "niveau_min": 70,
+    "niveau_optimal": 80,
+    "difficulte": 2,
+    "zone": "Île des Wabbits",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3460
+    ],
+    "monstre_ids": [
+      181,
+      3460,
+      3461,
+      3462,
+      3463,
+      3474
+    ],
+    "objets_requis": [
+      {
+        "id": 14465,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "nom": "Pitons Rocheux des Craqueleurs",
+    "niveau_min": 60,
+    "niveau_optimal": 70,
+    "difficulte": 3,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      669
+    ],
+    "monstre_ids": [
+      106,
+      293,
+      483,
+      669,
+      826,
+      4570,
+      4573
+    ],
+    "objets_requis": [
+      {
+        "id": 7927,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "nom": "Château Ensablé",
+    "niveau_min": 10,
+    "niveau_optimal": 20,
+    "difficulte": 1,
+    "zone": "Astrub",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      928
+    ],
+    "monstre_ids": [
+      920,
+      921,
+      922,
+      923,
+      924,
+      928
+    ],
+    "objets_requis": [
+      {
+        "id": 8437,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "nom": "Donjon des Forgerons",
+    "niveau_min": 40,
+    "niveau_optimal": 50,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      252
+    ],
+    "monstre_ids": [
+      118,
+      119,
+      153,
+      155,
+      252
+    ],
+    "objets_requis": [
+      {
+        "id": 1569,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "nom": "Temple du Grand Ougah",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 3,
+    "zone": "Landes de Sidimote",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1159
+    ],
+    "monstre_ids": [
+      59,
+      1153,
+      1154,
+      1155,
+      1156,
+      1157,
+      1158,
+      1159,
+      1178
+    ],
+    "objets_requis": [
+      {
+        "id": 9247,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "nom": "Gelaxième Dimension",
+    "niveau_min": 50,
+    "niveau_optimal": 60,
+    "difficulte": 2,
+    "zone": "Gelaxième dimension",
+    "recherche_groupe": false,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      58,
+      430,
+      86,
+      85
+    ],
+    "monstre_ids": [
+      55,
+      56,
+      57,
+      58,
+      85,
+      86,
+      429,
+      430
+    ],
+    "objets_requis": [
+      {
+        "id": 996,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "nom": "Grotte Hesque",
+    "niveau_min": 40,
+    "niveau_optimal": 50,
+    "difficulte": 2,
+    "zone": "Île d'Otomaï",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1027
+    ],
+    "monstre_ids": [
+      1022,
+      1027,
+      1060,
+      1061,
+      1062,
+      1063,
+      1064,
+      1065,
+      1066,
+      1067
+    ],
+    "objets_requis": [
+      {
+        "id": 8917,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "nom": "Village Kanniboul",
+    "niveau_min": 50,
+    "niveau_optimal": 60,
+    "difficulte": 1,
+    "zone": "Île de Moon",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2960
+    ],
+    "monstre_ids": [
+      211,
+      212,
+      213,
+      214,
+      2960,
+      4151
+    ],
+    "objets_requis": [
+      {
+        "id": 11798,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "nom": "Canopée du Kimbo",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 4,
+    "zone": "Île d'Otomaï",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1045
+    ],
+    "monstre_ids": [
+      1020,
+      1043,
+      1044,
+      1045,
+      1046,
+      1047
+    ],
+    "objets_requis": [
+      {
+        "id": 8977,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "nom": "Caverne du Koulosse",
+    "niveau_min": 90,
+    "niveau_optimal": 100,
+    "difficulte": 3,
+    "zone": "Montagne des Koalaks",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      670
+    ],
+    "monstre_ids": [
+      670,
+      671,
+      746,
+      747,
+      748,
+      751,
+      752,
+      753,
+      754,
+      755,
+      763,
+      784
+    ],
+    "objets_requis": [
+      {
+        "id": 7908,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "nom": "Antre du Kralamoure Géant",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 4,
+    "zone": "Île d'Otomaï",
+    "recherche_groupe": false,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      423
+    ],
+    "monstre_ids": [
+      423,
+      1057,
+      1058,
+      1059,
+      1096
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 32,
+    "nom": "Nid du Kwakwa",
+    "niveau_min": 40,
+    "niveau_optimal": 50,
+    "difficulte": 3,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2995
+    ],
+    "monstre_ids": [
+      81,
+      83,
+      84,
+      235,
+      269,
+      270,
+      271,
+      272,
+      2995,
+      3281,
+      3282,
+      3283,
+      3284
+    ],
+    "objets_requis": [
+      {
+        "id": 12017,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "nom": "Donjon des Larves",
+    "niveau_min": 40,
+    "niveau_optimal": 50,
+    "difficulte": 1,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      457
+    ],
+    "monstre_ids": [
+      412,
+      413,
+      414,
+      456,
+      457,
+      3358,
+      3359
+    ],
+    "objets_requis": [
+      {
+        "id": 7425,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "nom": "Maison Fantôme",
+    "niveau_min": 30,
+    "niveau_optimal": 40,
+    "difficulte": 2,
+    "zone": "Foire du Trool",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2975
+    ],
+    "monstre_ids": [
+      111,
+      127,
+      154,
+      498,
+      2975,
+      3235
+    ],
+    "objets_requis": [
+      {
+        "id": 11799,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "nom": "Laboratoire de Brumen Tinctorias",
+    "niveau_min": 60,
+    "niveau_optimal": 70,
+    "difficulte": 1,
+    "zone": "Landes de Sidimote",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3100
+    ],
+    "monstre_ids": [
+      298,
+      299,
+      300,
+      301,
+      3096,
+      3100
+    ],
+    "objets_requis": [
+      {
+        "id": 12073,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "nom": "Donjon de Nowel",
+    "niveau_min": 40,
+    "niveau_optimal": 50,
+    "difficulte": 2,
+    "zone": "Île de Nowel",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1179
+    ],
+    "monstre_ids": [
+      849,
+      868,
+      896,
+      899,
+      901,
+      1179
+    ],
+    "objets_requis": [
+      {
+        "id": 12150,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "nom": "Caverne de Nowel",
+    "niveau_min": 100,
+    "niveau_optimal": 110,
+    "difficulte": 2,
+    "zone": "Île de Nowel",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1194
+    ],
+    "monstre_ids": [
+      840,
+      845,
+      867,
+      872,
+      891,
+      2622
+    ],
+    "objets_requis": [
+      {
+        "id": 12151,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "nom": "Maison du Papa Nowel",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 3,
+    "zone": "Île de Nowel",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      872
+    ],
+    "monstre_ids": [
+      839,
+      869,
+      906,
+      1194,
+      3107,
+      3108,
+      3109
+    ],
+    "objets_requis": [
+      {
+        "id": 12152,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "nom": "Cale de l'Arche d'Otomaï",
+    "niveau_min": 60,
+    "niveau_optimal": 70,
+    "difficulte": 3,
+    "zone": "Île d'Otomaï",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1051
+    ],
+    "monstre_ids": [
+      228,
+      229,
+      231,
+      1048,
+      1049,
+      1050,
+      1051
+    ],
+    "objets_requis": [
+      {
+        "id": 8971,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "nom": "Goulet du Rasboul",
+    "niveau_min": 100,
+    "niveau_optimal": 110,
+    "difficulte": 3,
+    "zone": "Île d'Otomaï",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1071
+    ],
+    "monstre_ids": [
+      1019,
+      1025,
+      1026,
+      1068,
+      1069,
+      1070,
+      1071
+    ],
+    "objets_requis": [
+      {
+        "id": 8972,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "nom": "Garde-manger du Rat Blanc",
+    "niveau_min": 100,
+    "niveau_optimal": 110,
+    "difficulte": 1,
+    "zone": "Bonta",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      940
+    ],
+    "monstre_ids": [
+      938,
+      940,
+      941,
+      942,
+      6743,
+      6744
+    ],
+    "objets_requis": [
+      {
+        "id": 8439,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "nom": "Sousouricière du Rat Noir",
+    "niveau_min": 100,
+    "niveau_optimal": 110,
+    "difficulte": 2,
+    "zone": "Brâkmar",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      939
+    ],
+    "monstre_ids": [
+      935,
+      936,
+      937,
+      939,
+      6739,
+      6742
+    ],
+    "objets_requis": [
+      {
+        "id": 8438,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "nom": "Repaire de Sphincter Cell",
+    "niveau_min": 140,
+    "niveau_optimal": 150,
+    "difficulte": 3,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      943
+    ],
+    "monstre_ids": [
+      939,
+      940,
+      943,
+      3345,
+      3346,
+      3347,
+      3348,
+      3349,
+      3350,
+      3351,
+      3352
+    ],
+    "objets_requis": [
+      {
+        "id": 12351,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "nom": "Donjon des Scarafeuilles",
+    "niveau_min": 30,
+    "niveau_optimal": 40,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      797
+    ],
+    "monstre_ids": [
+      194,
+      198,
+      240,
+      241,
+      795,
+      797,
+      798
+    ],
+    "objets_requis": [
+      {
+        "id": 8139,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "nom": "Repaire de Skeunk",
+    "niveau_min": 110,
+    "niveau_optimal": 120,
+    "difficulte": 3,
+    "zone": "Montagne des Koalaks",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      780
+    ],
+    "monstre_ids": [
+      673,
+      674,
+      675,
+      676,
+      677,
+      681,
+      744,
+      745,
+      749,
+      754,
+      756,
+      780,
+      783
+    ],
+    "objets_requis": [
+      {
+        "id": 8073,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "nom": "Donjon des Squelettes",
+    "niveau_min": 30,
+    "niveau_optimal": 40,
+    "difficulte": 1,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3238
+    ],
+    "monstre_ids": [
+      54,
+      108,
+      110,
+      396,
+      3238,
+      3240
+    ],
+    "objets_requis": [
+      {
+        "id": 1570,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "nom": "Donjon des Tofus",
+    "niveau_min": 30,
+    "niveau_optimal": 40,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      800
+    ],
+    "monstre_ids": [
+      98,
+      796,
+      800,
+      804,
+      806,
+      808,
+      4824,
+      5222,
+      5223,
+      5224
+    ],
+    "objets_requis": [
+      {
+        "id": 7918,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "nom": "Antre du Blop Multicolore Royal",
+    "niveau_min": 110,
+    "niveau_optimal": 120,
+    "difficulte": 3,
+    "zone": "Plaines de Cania",
+    "recherche_groupe": false,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1188
+    ],
+    "monstre_ids": [
+      1182,
+      1183,
+      1184,
+      1185,
+      1186,
+      1187,
+      1188
+    ],
+    "objets_requis": [
+      {
+        "id": 9254,
+        "quantite": 1
+      },
+      {
+        "id": 9248,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "nom": "Tofulailler Royal",
+    "niveau_min": 110,
+    "niveau_optimal": 120,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      382
+    ],
+    "monstre_ids": [
+      98,
+      382,
+      807,
+      3299,
+      3300,
+      3301,
+      3302,
+      5220,
+      5221
+    ],
+    "objets_requis": [
+      {
+        "id": 8142,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "nom": "Laboratoire du Tynril",
+    "niveau_min": 130,
+    "niveau_optimal": 140,
+    "difficulte": 3,
+    "zone": "Île d'Otomaï",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      1087,
+      1072,
+      1085,
+      1086
+    ],
+    "monstre_ids": [
+      1029,
+      1041,
+      1072,
+      1073,
+      1074,
+      1075,
+      1076,
+      1077,
+      1085,
+      1086,
+      1087
+    ],
+    "objets_requis": [
+      {
+        "id": 8975,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "nom": "Château du Wa Wabbit",
+    "niveau_min": 50,
+    "niveau_optimal": 60,
+    "difficulte": 3,
+    "zone": "Île des Wabbits",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      180
+    ],
+    "monstre_ids": [
+      64,
+      65,
+      68,
+      72,
+      96,
+      97,
+      99,
+      180
+    ],
+    "objets_requis": [
+      {
+        "id": 14464,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "nom": "Salle du Minotot",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 2,
+    "zone": "Île du Minotoror",
+    "recherche_groupe": false,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      827
+    ],
+    "monstre_ids": [
+      121,
+      668,
+      827,
+      829,
+      830,
+      831,
+      832,
+      3740
+    ],
+    "objets_requis": [
+      {
+        "id": 8307,
+        "quantite": 1
+      },
+      {
+        "id": 7924,
+        "quantite": 1
+      },
+      {
+        "id": 8306,
+        "quantite": 1
+      },
+      {
+        "id": 8305,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "nom": "Serre du Royalmouth",
+    "niveau_min": 110,
+    "niveau_optimal": 120,
+    "difficulte": 2,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2854
+    ],
+    "monstre_ids": [
+      2850,
+      2851,
+      2852,
+      2853,
+      2854
+    ],
+    "objets_requis": [
+      {
+        "id": 11174,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "nom": "Excavation du Mansot Royal",
+    "niveau_min": 130,
+    "niveau_optimal": 140,
+    "difficulte": 1,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2848
+    ],
+    "monstre_ids": [
+      2848,
+      2849,
+      2855,
+      2856,
+      2857,
+      2858
+    ],
+    "objets_requis": [
+      {
+        "id": 11175,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "nom": "Épave du Grolandais violent",
+    "niveau_min": 140,
+    "niveau_optimal": 150,
+    "difficulte": 1,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2877
+    ],
+    "monstre_ids": [
+      2874,
+      2875,
+      2876,
+      2877,
+      2878,
+      2880,
+      2881
+    ],
+    "objets_requis": [
+      {
+        "id": 11176,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "nom": "Hypogée de l'Obsidiantre",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 2,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2924
+    ],
+    "monstre_ids": [
+      2865,
+      2866,
+      2867,
+      2868,
+      2869,
+      2924
+    ],
+    "objets_requis": [
+      {
+        "id": 11177,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "nom": "Tanière Givrefoux",
+    "niveau_min": 160,
+    "niveau_optimal": 170,
+    "difficulte": 2,
+    "zone": "Île de Frigost",
+    "recherche_groupe": false,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2967,
+      3234
+    ],
+    "monstre_ids": [
+      2888,
+      2889,
+      2890,
+      2891,
+      2967,
+      2982,
+      3234
+    ],
+    "objets_requis": [
+      {
+        "id": 11178,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "nom": "Antre du Korriandre",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 3,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2968
+    ],
+    "monstre_ids": [
+      2895,
+      2896,
+      2897,
+      2898,
+      2900,
+      2968
+    ],
+    "objets_requis": [
+      {
+        "id": 11179,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "nom": "Cavernes du Kolosso",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 1,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2986,
+      2992
+    ],
+    "monstre_ids": [
+      2883,
+      2884,
+      2885,
+      2886,
+      2965,
+      2966,
+      2986,
+      2992
+    ],
+    "objets_requis": [
+      {
+        "id": 11180,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "nom": "Antichambre des Gloursons",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 3,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2864
+    ],
+    "monstre_ids": [
+      2861,
+      2862,
+      2863,
+      2864,
+      2987,
+      2988,
+      2989
+    ],
+    "objets_requis": [
+      {
+        "id": 11181,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "nom": "Donjon de la mine de Sakaï",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 2,
+    "zone": "Île de Sakaï",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      2942
+    ],
+    "monstre_ids": [
+      2932,
+      2933,
+      2934,
+      2935,
+      2936,
+      2937,
+      2942
+    ],
+    "objets_requis": [
+      {
+        "id": 8329,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 66,
+    "nom": "Potager d'Halouine",
+    "niveau_min": 90,
+    "niveau_optimal": 100,
+    "difficulte": 1,
+    "zone": "Forêt Maléfique",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3306
+    ],
+    "monstre_ids": [
+      3306,
+      3307,
+      3308,
+      3309,
+      3310,
+      3311
+    ],
+    "objets_requis": [
+      {
+        "id": 13333,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 67,
+    "nom": "Transporteur de Sylargh",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 1,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3409
+    ],
+    "monstre_ids": [
+      3404,
+      3405,
+      3406,
+      3407,
+      3408,
+      3409
+    ],
+    "objets_requis": [
+      {
+        "id": 14044,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 68,
+    "nom": "Salons privés de Klime",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 1,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3384
+    ],
+    "monstre_ids": [
+      3379,
+      3380,
+      3381,
+      3382,
+      3383,
+      3384
+    ],
+    "objets_requis": [
+      {
+        "id": 14045,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 69,
+    "nom": "Forgefroide de Missiz Frizz",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 2,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3391
+    ],
+    "monstre_ids": [
+      3385,
+      3386,
+      3387,
+      3389,
+      3390,
+      3391
+    ],
+    "objets_requis": [
+      {
+        "id": 14043,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 70,
+    "nom": "Laboratoire de Nileza",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 2,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3397
+    ],
+    "monstre_ids": [
+      3392,
+      3393,
+      3394,
+      3395,
+      3396,
+      3397
+    ],
+    "objets_requis": [
+      {
+        "id": 14046,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 71,
+    "nom": "Donjon du Comte Harebourg",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 4,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3416
+    ],
+    "monstre_ids": [
+      3384,
+      3391,
+      3397,
+      3409,
+      3410,
+      3411,
+      3412,
+      3414,
+      3415,
+      3416
+    ],
+    "objets_requis": [
+      {
+        "id": 14047,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 72,
+    "nom": "Théâtre de Dramak",
+    "niveau_min": 90,
+    "niveau_optimal": 100,
+    "difficulte": 5,
+    "zone": "Îlots de la mer d'Asse",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3476
+    ],
+    "monstre_ids": [
+      3476,
+      3482,
+      3484,
+      3485,
+      3486,
+      3487
+    ],
+    "objets_requis": [
+      {
+        "id": 14560,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 73,
+    "nom": "Aquadôme de Merkator",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 1,
+    "zone": "Baie de Sufokia",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3534
+    ],
+    "monstre_ids": [
+      3534,
+      3535,
+      3538,
+      3542,
+      3543,
+      3544
+    ],
+    "objets_requis": [
+      {
+        "id": 14870,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 74,
+    "nom": "Pyramide d'Ombre",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 2,
+    "zone": "Dimension Obscure",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3564
+    ],
+    "monstre_ids": [
+      3564,
+      3566,
+      3567,
+      3568,
+      3569,
+      3570
+    ],
+    "objets_requis": [
+      {
+        "id": 14935,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 75,
+    "nom": "Grotte de Kanigroula",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 4,
+    "zone": "Plaines de Cania",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3556
+    ],
+    "monstre_ids": [
+      3556,
+      3557,
+      3559,
+      3560,
+      3561,
+      3562
+    ],
+    "objets_requis": [
+      {
+        "id": 15093,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 76,
+    "nom": "Palais du roi Nidas",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 1,
+    "zone": "Enutrosor",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3648
+    ],
+    "monstre_ids": [
+      3648,
+      3653,
+      3654,
+      3655,
+      3656,
+      3657
+    ],
+    "objets_requis": [
+      {
+        "id": 15280,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 77,
+    "nom": "Fabrique de Malléfisk",
+    "niveau_min": 90,
+    "niveau_optimal": 100,
+    "difficulte": 2,
+    "zone": "Enutrosor",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3652
+    ],
+    "monstre_ids": [
+      3652,
+      3663,
+      3664,
+      3665,
+      3666,
+      3667
+    ],
+    "objets_requis": [
+      {
+        "id": 15278,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 79,
+    "nom": "Galerie du Phossile",
+    "niveau_min": 140,
+    "niveau_optimal": 150,
+    "difficulte": 2,
+    "zone": "Enutrosor",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3651
+    ],
+    "monstre_ids": [
+      3651,
+      3658,
+      3659,
+      3660,
+      3661,
+      3662
+    ],
+    "objets_requis": [
+      {
+        "id": 15279,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 80,
+    "nom": "Volière de la Haute Truche",
+    "niveau_min": 120,
+    "niveau_optimal": 130,
+    "difficulte": 4,
+    "zone": "Plaines de Cania",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3618
+    ],
+    "monstre_ids": [
+      3618,
+      3619,
+      3620,
+      3621,
+      3622,
+      3623
+    ],
+    "objets_requis": [
+      {
+        "id": 15162,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 81,
+    "nom": "Ring du Capitaine Ekarlatte",
+    "niveau_min": 120,
+    "niveau_optimal": 130,
+    "difficulte": 2,
+    "zone": "Srambad",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3753
+    ],
+    "monstre_ids": [
+      3730,
+      3731,
+      3732,
+      3733,
+      3734,
+      3753
+    ],
+    "objets_requis": [
+      {
+        "id": 15477,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 82,
+    "nom": "Cave du Toxoliath",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 3,
+    "zone": "Srambad",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3752
+    ],
+    "monstre_ids": [
+      3735,
+      3736,
+      3737,
+      3738,
+      3739,
+      3752
+    ],
+    "objets_requis": [
+      {
+        "id": 15476,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 83,
+    "nom": "Trône de la Cour Sombre",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Srambad",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3726
+    ],
+    "monstre_ids": [
+      3726,
+      3746,
+      3747,
+      3748,
+      3749,
+      3750
+    ],
+    "objets_requis": [
+      {
+        "id": 15475,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 84,
+    "nom": "Ventre de la Baleine",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 4,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3828
+    ],
+    "monstre_ids": [
+      3823,
+      3824,
+      3825,
+      3826,
+      3827,
+      3828
+    ],
+    "objets_requis": [
+      {
+        "id": 15690,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 85,
+    "nom": "Mégalithe de Fraktale",
+    "niveau_min": 110,
+    "niveau_optimal": 120,
+    "difficulte": 4,
+    "zone": "Xélorium",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3852
+    ],
+    "monstre_ids": [
+      3852,
+      3854,
+      3855,
+      3856,
+      3857,
+      3858
+    ],
+    "objets_requis": [
+      {
+        "id": 15806,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 86,
+    "nom": "Horologium de XLII",
+    "niveau_min": 160,
+    "niveau_optimal": 170,
+    "difficulte": 2,
+    "zone": "Xélorium",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3849
+    ],
+    "monstre_ids": [
+      3840,
+      3841,
+      3842,
+      3843,
+      3844,
+      3849
+    ],
+    "objets_requis": [
+      {
+        "id": 15807,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 87,
+    "nom": "Œil de Vortex",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 4,
+    "zone": "Xélorium",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      3835
+    ],
+    "monstre_ids": [
+      3834,
+      3835,
+      3836,
+      3837,
+      3838,
+      3839
+    ],
+    "objets_requis": [
+      {
+        "id": 15808,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 88,
+    "nom": "Cache de Kankreblath",
+    "niveau_min": 30,
+    "niveau_optimal": 40,
+    "difficulte": 3,
+    "zone": "Astrub",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3945
+    ],
+    "monstre_ids": [
+      3940,
+      3941,
+      3942,
+      3943,
+      3944,
+      3945
+    ],
+    "objets_requis": [
+      {
+        "id": 15991,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 89,
+    "nom": "Antre de la Reine Nyée",
+    "niveau_min": 80,
+    "niveau_optimal": 90,
+    "difficulte": 4,
+    "zone": "Forêt des Abraknydes",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      3996
+    ],
+    "monstre_ids": [
+      3991,
+      3992,
+      3993,
+      3994,
+      3995,
+      3996
+    ],
+    "objets_requis": [
+      {
+        "id": 16179,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 90,
+    "nom": "Crypte de Kardorim",
+    "niveau_min": 1,
+    "niveau_optimal": 10,
+    "difficulte": 1,
+    "zone": "Incarnam",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4051
+    ],
+    "monstre_ids": [
+      4046,
+      4047,
+      4048,
+      4049,
+      4050,
+      4051
+    ],
+    "objets_requis": [
+      {
+        "id": 8545,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 91,
+    "nom": "Bateau du Chouque",
+    "niveau_min": 80,
+    "niveau_optimal": 90,
+    "difficulte": 2,
+    "zone": "Île de Moon",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      230
+    ],
+    "monstre_ids": [
+      228,
+      229,
+      230,
+      231,
+      4160,
+      4161
+    ],
+    "objets_requis": [
+      {
+        "id": 17113,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 92,
+    "nom": "Arbre de Moon",
+    "niveau_min": 90,
+    "niveau_optimal": 100,
+    "difficulte": 3,
+    "zone": "Île de Moon",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      226
+    ],
+    "monstre_ids": [
+      215,
+      216,
+      217,
+      226,
+      4162,
+      4163
+    ],
+    "objets_requis": [
+      {
+        "id": 17112,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 93,
+    "nom": "Miausolée du Pounicheur",
+    "niveau_min": 100,
+    "niveau_optimal": 110,
+    "difficulte": 3,
+    "zone": "Ecaflipus",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      4278
+    ],
+    "monstre_ids": [
+      4278,
+      4291,
+      4292,
+      4293,
+      4294,
+      4295
+    ],
+    "objets_requis": [
+      {
+        "id": 17563,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 94,
+    "nom": "Plateau de Ush",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 3,
+    "zone": "Ecaflipus",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      4264
+    ],
+    "monstre_ids": [
+      4264,
+      4265,
+      4296,
+      4297,
+      4298,
+      4299,
+      4300
+    ],
+    "objets_requis": [
+      {
+        "id": 17564,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 95,
+    "nom": "Défi du Chalœil",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Ecaflipus",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      4263
+    ],
+    "monstre_ids": [
+      4263,
+      4283,
+      4284,
+      4285,
+      4286,
+      4287
+    ],
+    "objets_requis": [
+      {
+        "id": 17565,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 96,
+    "nom": "Temple Maudit d'Araknas",
+    "niveau_min": 176,
+    "niveau_optimal": 186,
+    "difficulte": 3,
+    "zone": "Landes de Sidimote",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      1195,
+      3516,
+      3517,
+      3518,
+      3519
+    ],
+    "objets_requis": [
+      {
+        "id": 17785,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 97,
+    "nom": "Vaisseau du Capitaine Meno",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 2,
+    "zone": "Profondeurs de Sufokia",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4460
+    ],
+    "monstre_ids": [
+      4455,
+      4456,
+      4457,
+      4458,
+      4459,
+      4460
+    ],
+    "objets_requis": [
+      {
+        "id": 18066,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 98,
+    "nom": "Temple de Koutoulou",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Profondeurs de Sufokia",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4453
+    ],
+    "monstre_ids": [
+      4448,
+      4449,
+      4450,
+      4451,
+      4452,
+      4453
+    ],
+    "objets_requis": [
+      {
+        "id": 18068,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "nom": "Palais de Dantinéa",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 1,
+    "zone": "Profondeurs de Sufokia",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4444
+    ],
+    "monstre_ids": [
+      4439,
+      4440,
+      4441,
+      4442,
+      4443,
+      4444
+    ],
+    "objets_requis": [
+      {
+        "id": 18067,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 100,
+    "nom": "Cimetière des Mastodontes",
+    "niveau_min": 70,
+    "niveau_optimal": 80,
+    "difficulte": 2,
+    "zone": "Saharach",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4621
+    ],
+    "monstre_ids": [
+      4615,
+      4616,
+      4617,
+      4619,
+      4620,
+      4621
+    ],
+    "objets_requis": [
+      {
+        "id": 18421,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 101,
+    "nom": "Caverne d'El Piko",
+    "niveau_min": 120,
+    "niveau_optimal": 130,
+    "difficulte": 1,
+    "zone": "Saharach",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4609
+    ],
+    "monstre_ids": [
+      4604,
+      4605,
+      4606,
+      4607,
+      4608,
+      4609
+    ],
+    "objets_requis": [
+      {
+        "id": 18422,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "nom": "Boyau du Père Ver",
+    "niveau_min": 160,
+    "niveau_optimal": 170,
+    "difficulte": 5,
+    "zone": "Saharach",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4726
+    ],
+    "monstre_ids": [
+      4726,
+      4727,
+      4728,
+      4729,
+      4730,
+      4731
+    ],
+    "objets_requis": [
+      {
+        "id": 18552,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "nom": "Chambre de Tal Kasha",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Saharach",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4744
+    ],
+    "monstre_ids": [
+      4739,
+      4740,
+      4741,
+      4742,
+      4743,
+      4744
+    ],
+    "objets_requis": [
+      {
+        "id": 18544,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "nom": "Camp du Comte Razof",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 4,
+    "zone": "Nimotopia",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4803
+    ],
+    "monstre_ids": [
+      4803,
+      4804,
+      4805,
+      4806,
+      4807,
+      4808
+    ],
+    "objets_requis": [
+      {
+        "id": 18736,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 105,
+    "nom": "Chapiteau des Magik Riktus",
+    "niveau_min": 80,
+    "niveau_optimal": 90,
+    "difficulte": 3,
+    "zone": "Landes de Sidimote",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4860
+    ],
+    "monstre_ids": [
+      4860,
+      4861,
+      4862,
+      4863,
+      4864,
+      4865
+    ],
+    "objets_requis": [
+      {
+        "id": 19041,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 106,
+    "nom": "Manoir des Katrepat",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 2,
+    "zone": "Landes de Sidimote",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4882
+    ],
+    "monstre_ids": [
+      4877,
+      4878,
+      4879,
+      4880,
+      4881,
+      4882
+    ],
+    "objets_requis": [
+      {
+        "id": 19049,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 107,
+    "nom": "Belvédère d'Ilyzaelle",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      4967
+    ],
+    "monstre_ids": [
+      4967,
+      4968,
+      4969,
+      4970,
+      4971,
+      4972
+    ],
+    "objets_requis": [
+      {
+        "id": 19216,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 108,
+    "nom": "Tour de Bethel",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 4,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5110
+    ],
+    "monstre_ids": [
+      5110,
+      5111,
+      5112,
+      5113,
+      5114,
+      5115
+    ],
+    "objets_requis": [
+      {
+        "id": 19515,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 109,
+    "nom": "Tour de Solar",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 4,
+    "zone": "Landes de Sidimote",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5100
+    ],
+    "monstre_ids": [
+      5100,
+      5101,
+      5102,
+      5103,
+      5104,
+      5105
+    ],
+    "objets_requis": [
+      {
+        "id": 19514,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 110,
+    "nom": "Brasserie du roi Dazak",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 2,
+    "zone": "Île de Frigost",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5319
+    ],
+    "monstre_ids": [
+      5314,
+      5315,
+      5316,
+      5317,
+      5318,
+      5319
+    ],
+    "objets_requis": [
+      {
+        "id": 19963,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 111,
+    "nom": "Temple du dieu Kao",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Île de Pwâk",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5666
+    ],
+    "monstre_ids": [
+      5666,
+      5668,
+      5669,
+      5670,
+      5671,
+      5672
+    ],
+    "objets_requis": [
+      {
+        "id": 20920,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 112,
+    "nom": "Croquanterie",
+    "niveau_min": 120,
+    "niveau_optimal": 130,
+    "difficulte": 4,
+    "zone": "Île de Pwâk",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5664
+    ],
+    "monstre_ids": [
+      5664,
+      5677,
+      5678,
+      5679,
+      5680,
+      5681
+    ],
+    "objets_requis": [
+      {
+        "id": 20919,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 113,
+    "nom": "Fonderie des Waddicts",
+    "niveau_min": 50,
+    "niveau_optimal": 60,
+    "difficulte": 1,
+    "zone": "Île de Pwâk",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5653
+    ],
+    "monstre_ids": [
+      5652,
+      5653,
+      5689,
+      5690,
+      5691,
+      5692
+    ],
+    "objets_requis": [
+      {
+        "id": 20918,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 114,
+    "nom": "Sanctuaire de Torkélonia",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Archipel des Écailles",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5806
+    ],
+    "monstre_ids": [
+      5806,
+      5807,
+      5808,
+      5809,
+      5810,
+      5811
+    ],
+    "objets_requis": [
+      {
+        "id": 21216,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 115,
+    "nom": "Repaire du Kharnozor",
+    "niveau_min": 90,
+    "niveau_optimal": 100,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5819
+    ],
+    "monstre_ids": [
+      858,
+      878,
+      879,
+      905,
+      5819,
+      5820
+    ],
+    "objets_requis": [
+      {
+        "id": 21249,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 116,
+    "nom": "Épreuve de Draegnerys",
+    "niveau_min": 60,
+    "niveau_optimal": 70,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5823
+    ],
+    "monstre_ids": [
+      76,
+      87,
+      88,
+      89,
+      5822,
+      5823
+    ],
+    "objets_requis": [
+      {
+        "id": 8343,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 117,
+    "nom": "Arbre de Mort",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Dimensions des Cavaliers",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6026
+    ],
+    "monstre_ids": [
+      6026,
+      6027,
+      6028,
+      6029,
+      6030,
+      6031
+    ],
+    "objets_requis": [
+      {
+        "id": 22148,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 118,
+    "nom": "Fers de la Tyrannie",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 5,
+    "zone": "Dimensions des Cavaliers",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5955
+    ],
+    "monstre_ids": [
+      5955,
+      5978,
+      5979,
+      5980,
+      5983,
+      5989
+    ],
+    "objets_requis": [
+      {
+        "id": 22028,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 119,
+    "nom": "Sentence de la Balance",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Dimensions des Cavaliers",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      5990
+    ],
+    "monstre_ids": [
+      5990,
+      5991,
+      5992,
+      5993,
+      5994,
+      5995
+    ],
+    "objets_requis": [
+      {
+        "id": 22149,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 120,
+    "nom": "Trône de Sang",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 2,
+    "zone": "Dimensions des Cavaliers",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6014
+    ],
+    "monstre_ids": [
+      6014,
+      6021,
+      6022,
+      6023,
+      6024,
+      6025
+    ],
+    "objets_requis": [
+      {
+        "id": 22147,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 121,
+    "nom": "Tempête de l'Eliocalypse",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 3,
+    "zone": "Eliocalypse",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6014,
+      5955,
+      5990,
+      6026
+    ],
+    "monstre_ids": [
+      5955,
+      5979,
+      5990,
+      5991,
+      6014,
+      6023,
+      6026,
+      6027
+    ],
+    "objets_requis": [
+      {
+        "id": 22401,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 122,
+    "nom": "Dojo du Vent",
+    "niveau_min": 130,
+    "niveau_optimal": 140,
+    "difficulte": 2,
+    "zone": "Île de Pandala",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6204,
+      6212
+    ],
+    "monstre_ids": [
+      6204,
+      6212,
+      6213,
+      6214,
+      6215,
+      6216,
+      6217
+    ],
+    "objets_requis": [
+      {
+        "id": 7309,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 123,
+    "nom": "Vallée de la Dame des eaux",
+    "niveau_min": 120,
+    "niveau_optimal": 130,
+    "difficulte": 2,
+    "zone": "Île de Pandala",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6256
+    ],
+    "monstre_ids": [
+      6203,
+      6229,
+      6230,
+      6231,
+      6247,
+      6256
+    ],
+    "objets_requis": [
+      {
+        "id": 7310,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 124,
+    "nom": "Fabrique de foux d'artifice",
+    "niveau_min": 130,
+    "niveau_optimal": 140,
+    "difficulte": 5,
+    "zone": "Île de Pandala",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6249
+    ],
+    "monstre_ids": [
+      6249,
+      6251,
+      6252,
+      6253,
+      6254,
+      6255
+    ],
+    "objets_requis": [
+      {
+        "id": 7312,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 125,
+    "nom": "Bambusaie de Damadrya",
+    "niveau_min": 100,
+    "niveau_optimal": 110,
+    "difficulte": 2,
+    "zone": "Île de Pandala",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6326
+    ],
+    "monstre_ids": [
+      6318,
+      6320,
+      6321,
+      6322,
+      6323,
+      6326
+    ],
+    "objets_requis": [
+      {
+        "id": 12735,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 126,
+    "nom": "Atelier du Tanukouï San",
+    "niveau_min": 120,
+    "niveau_optimal": 130,
+    "difficulte": 3,
+    "zone": "Île de Pandala",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6218
+    ],
+    "monstre_ids": [
+      6218,
+      6219,
+      6220,
+      6221,
+      6222,
+      6223
+    ],
+    "objets_requis": [
+      {
+        "id": 7311,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 131,
+    "nom": "Demeure des Esprits",
+    "niveau_min": 160,
+    "niveau_optimal": 170,
+    "difficulte": 4,
+    "zone": "Île de Grobe",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6394
+    ],
+    "monstre_ids": [
+      6389,
+      6390,
+      6391,
+      6392,
+      6393,
+      6394
+    ],
+    "objets_requis": [
+      {
+        "id": 23591,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 132,
+    "nom": "Tombe du Shogun Tofugawa",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 4,
+    "zone": "Île de Grobe",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6388
+    ],
+    "monstre_ids": [
+      6383,
+      6384,
+      6385,
+      6386,
+      6387,
+      6388
+    ],
+    "objets_requis": [
+      {
+        "id": 23630,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 133,
+    "nom": "Mémoire d'Orukam",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 4,
+    "zone": "Wukin et Wukang",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      6472
+    ],
+    "monstre_ids": [
+      6467,
+      6468,
+      6469,
+      6470,
+      6471,
+      6472
+    ],
+    "objets_requis": [
+      {
+        "id": 23950,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 134,
+    "nom": "Souvenir d'Imagiro",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 4,
+    "zone": "Wukin et Wukang",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      6478
+    ],
+    "monstre_ids": [
+      6473,
+      6474,
+      6475,
+      6476,
+      6477,
+      6478
+    ],
+    "objets_requis": [
+      {
+        "id": 23951,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 135,
+    "nom": "Rituel de Kabahal",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 5,
+    "zone": "Atoll des Possédés",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6654
+    ],
+    "monstre_ids": [
+      6650,
+      6651,
+      6652,
+      6653,
+      6654,
+      6656
+    ],
+    "objets_requis": [
+      {
+        "id": 25252,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 136,
+    "nom": "Bataille de l'Aurore Pourpre",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 5,
+    "zone": "Cauchemar des Ravageurs",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      6792
+    ],
+    "monstre_ids": [
+      6787,
+      6788,
+      6789,
+      6790,
+      6791,
+      6792
+    ],
+    "objets_requis": [
+      {
+        "id": 26039,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 138,
+    "nom": "Akadémie des Gobs",
+    "niveau_min": 30,
+    "niveau_optimal": 40,
+    "difficulte": 2,
+    "zone": "Amakna",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      6903
+    ],
+    "monstre_ids": [
+      62,
+      178,
+      6900,
+      6901,
+      6902,
+      6903
+    ],
+    "objets_requis": [
+      {
+        "id": 26680,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 139,
+    "nom": "Tertre du long sommeil",
+    "niveau_min": 140,
+    "niveau_optimal": 150,
+    "difficulte": 4,
+    "zone": "Forêt Maléfique",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      107
+    ],
+    "monstre_ids": [
+      107,
+      6864,
+      6871,
+      6872,
+      6873,
+      6874
+    ],
+    "objets_requis": [
+      {
+        "id": 26333,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 140,
+    "nom": "Chambre des maléfices",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 4,
+    "zone": "Archipel de Valonia",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      7210
+    ],
+    "monstre_ids": [
+      7205,
+      7206,
+      7207,
+      7208,
+      7209,
+      7210
+    ],
+    "objets_requis": [
+      {
+        "id": 27404,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 141,
+    "nom": "Bastion des Marteaux-Aigris",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 5,
+    "zone": "Archipel de Valonia",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      7219
+    ],
+    "monstre_ids": [
+      7214,
+      7215,
+      7216,
+      7217,
+      7218,
+      7219
+    ],
+    "objets_requis": [
+      {
+        "id": 27440,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 142,
+    "nom": "Refuge sylvestre",
+    "niveau_min": 40,
+    "niveau_optimal": 50,
+    "difficulte": 2,
+    "zone": "Archipel de Valonia",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": true,
+    "boss_ids": [
+      7197
+    ],
+    "monstre_ids": [
+      7192,
+      7193,
+      7194,
+      7195,
+      7196,
+      7197
+    ],
+    "objets_requis": [
+      {
+        "id": 27374,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 143,
+    "nom": "Expédition - Tofulailler Royal",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7852,
+      7853,
+      7854,
+      7855,
+      7856,
+      7857
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 144,
+    "nom": "Expédition - Cour du Bouftou Royal",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": null,
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [],
+    "objets_requis": []
+  },
+  {
+    "id": 145,
+    "nom": "Expédition - Clairière du Chêne Mou",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7919,
+      7920,
+      7921,
+      7922,
+      7924
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 146,
+    "nom": "Expédition - Donjon des Forgerons",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7792,
+      7793,
+      7794,
+      7795
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 147,
+    "nom": "Expédition - Antre de Crocabulia",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7906,
+      7908,
+      7909,
+      7910,
+      7912
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 148,
+    "nom": "Expédition - Centre du Labyrinthe du Minotoror",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7925,
+      7926,
+      7927,
+      7928,
+      7929
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 149,
+    "nom": "Expédition - Bibliothèque du Maître Corbac",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7827,
+      7828,
+      7829,
+      7830,
+      7831
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 150,
+    "nom": "Expédition - Grange du Tournesol Affamé",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7796,
+      7797,
+      7798,
+      7799,
+      7800
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 151,
+    "nom": "Expédition - Antre du Blop Multicolore Royal",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7781,
+      7782,
+      7783,
+      7784,
+      7785,
+      7786,
+      7787,
+      7788
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 152,
+    "nom": "Expédition - Sousouricière du Rat Noir",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      936,
+      6739,
+      6742,
+      7899,
+      7900,
+      7901,
+      7902,
+      7903,
+      7904
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 153,
+    "nom": "Expédition - Donjon des Bworks",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7847,
+      7848,
+      7849,
+      7850
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 154,
+    "nom": "Expédition - Pitons Rocheux des Craqueleurs",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7842,
+      7843,
+      7844,
+      7845,
+      7846
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 155,
+    "nom": "Expédition - Garde-manger du Rat Blanc",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7913,
+      7914,
+      7915,
+      7916,
+      7918
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 156,
+    "nom": "Expédition - Tanière du Meulou",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7790
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 157,
+    "nom": "Expédition - Donjon des Squelettes",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": null,
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [],
+    "objets_requis": []
+  },
+  {
+    "id": 158,
+    "nom": "Expédition - Caverne du Koulosse",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      746,
+      747,
+      755,
+      763,
+      7896,
+      7897
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 159,
+    "nom": "Expédition - Arbre de Moon",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7802,
+      7809,
+      7810,
+      7811,
+      7812,
+      7813
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 160,
+    "nom": "Expédition - Château Ensablé",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7872,
+      7873,
+      7874,
+      7875,
+      7876,
+      7877
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 161,
+    "nom": "Expédition - Donjon des Scarafeuilles",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      194,
+      198,
+      240,
+      241,
+      795,
+      798,
+      7808,
+      7817,
+      7818,
+      7819,
+      7820,
+      7821,
+      7822
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 162,
+    "nom": "Expédition - Antre du Dragon Cochon",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      7860,
+      7861,
+      7862,
+      7863,
+      7866,
+      7867,
+      7868
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 163,
+    "nom": "Poste de contrôle du Supervizœuf",
+    "niveau_min": 160,
+    "niveau_optimal": 170,
+    "difficulte": 3,
+    "zone": "Osavora",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      8052
+    ],
+    "monstre_ids": [
+      8048,
+      8049,
+      8050,
+      8051,
+      8052
+    ],
+    "objets_requis": [
+      {
+        "id": 31649,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 164,
+    "nom": "Breuil du Vénérable",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 2,
+    "zone": "Osavora",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      8047
+    ],
+    "monstre_ids": [
+      8042,
+      8043,
+      8044,
+      8045,
+      8046,
+      8047
+    ],
+    "objets_requis": [
+      {
+        "id": 31650,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 165,
+    "nom": "Autel de la Déchireuse",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 5,
+    "zone": "Osavora",
+    "recherche_groupe": true,
+    "disponible_hall": true,
+    "disponible_trousseau": false,
+    "boss_ids": [
+      8037
+    ],
+    "monstre_ids": [
+      8037,
+      8038,
+      8039,
+      8040
+    ],
+    "objets_requis": [
+      {
+        "id": 31651,
+        "quantite": 1
+      }
+    ]
+  },
+  {
+    "id": 166,
+    "nom": "Expédition de l'Audace - Grotte du Bworker",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      478,
+      479,
+      484,
+      485,
+      486,
+      487,
+      488
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 167,
+    "nom": "Expédition de l'Audace - Salle du Minotot",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      121,
+      668,
+      827,
+      830,
+      831,
+      832
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 168,
+    "nom": "Expédition de l'Audace - Donjon de la mine de Sakaï",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": true,
+    "boss_ids": [],
+    "monstre_ids": [
+      2932,
+      2933,
+      2934,
+      2935,
+      2936,
+      2937,
+      2942
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 169,
+    "nom": "Expédition de l'Audace - Salons privés de Klime",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3379,
+      3380,
+      3381,
+      3382,
+      3383,
+      3384
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 170,
+    "nom": "Expédition de l'Audace - Forgefroide de Missiz Frizz",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3385,
+      3386,
+      3387,
+      3389,
+      3390,
+      3391
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 171,
+    "nom": "Expédition de l'Audace - Donjon du Comte Harebourg",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3410,
+      3411,
+      3412,
+      3414,
+      3415,
+      3416
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 172,
+    "nom": "Expédition de l'Audace - Aquadôme de Merkator",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3534,
+      3535,
+      3538,
+      3542,
+      3543,
+      3544
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 173,
+    "nom": "Expédition de l'Audace - Pyramide d'Ombre",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3564,
+      3566,
+      3567,
+      3568,
+      3569,
+      3570
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 174,
+    "nom": "Expédition de l'Audace - Grotte de Kanigroula",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3556,
+      3557,
+      3559,
+      3560,
+      3561,
+      3562
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 175,
+    "nom": "Expédition de l'Audace - Galerie du Phossile",
+    "niveau_min": 140,
+    "niveau_optimal": 150,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3651,
+      3658,
+      3659,
+      3660,
+      3661,
+      3662
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 176,
+    "nom": "Expédition de l'Audace - Cave du Toxoliath",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3735,
+      3736,
+      3737,
+      3738,
+      3739,
+      3752
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 177,
+    "nom": "Expédition de l'Audace - Ventre de la Baleine",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3823,
+      3824,
+      3825,
+      3826,
+      3827,
+      3828
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 178,
+    "nom": "Expédition de l'Audace - Horologium de XLII",
+    "niveau_min": 160,
+    "niveau_optimal": 170,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3840,
+      3841,
+      3842,
+      3843,
+      3844,
+      3849
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 179,
+    "nom": "Expédition de l'Audace - Vaisseau du Capitaine Meno",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      4455,
+      4456,
+      4457,
+      4458,
+      4459,
+      4460
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 180,
+    "nom": "Expédition de l'Audace - Temple de Koutoulou",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      4448,
+      4449,
+      4450,
+      4451,
+      4452,
+      4453
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 181,
+    "nom": "Expédition de l'Audace - Palais de Dantinéa",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      4439,
+      4440,
+      4441,
+      4442,
+      4443,
+      4444
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 182,
+    "nom": "Expédition de l'Audace - Belvédère d'Ilyzaelle",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      4967,
+      4968,
+      4969,
+      4970,
+      4971,
+      4972
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 183,
+    "nom": "Expédition de l'Audace - Tour de Solar",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      5100,
+      5101,
+      5102,
+      5103,
+      5104,
+      5105
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 184,
+    "nom": "Expédition de l'Audace - Brasserie du roi Dazak",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      5314,
+      5315,
+      5316,
+      5317,
+      5318,
+      5319
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 185,
+    "nom": "Expédition de l'Audace - Trône de Sang",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      6014,
+      6021,
+      6022,
+      6023,
+      6024,
+      6025
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 186,
+    "nom": "Expédition de la Bravoure - Grotte du Bworker",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      478,
+      479,
+      484,
+      485,
+      486,
+      487,
+      488
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 187,
+    "nom": "Expédition de la Bravoure - Trône de Sang",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      6014,
+      6021,
+      6022,
+      6023,
+      6024,
+      6025
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 188,
+    "nom": "Expédition de la Bravoure - Brasserie du roi Dazak",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      5314,
+      5315,
+      5316,
+      5317,
+      5318,
+      5319
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 189,
+    "nom": "Expédition de la Bravoure - Tour de Solar",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      5100,
+      5101,
+      5102,
+      5103,
+      5104,
+      5105
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 190,
+    "nom": "Expédition de la Bravoure - Belvédère d'Ilyzaelle",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      4967,
+      4968,
+      4969,
+      4970,
+      4971,
+      4972
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 191,
+    "nom": "Expédition de la Bravoure - Palais de Dantinéa",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      4439,
+      4440,
+      4441,
+      4442,
+      4443,
+      4444
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 192,
+    "nom": "Expédition de la Bravoure - Temple de Koutoulou",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      4448,
+      4449,
+      4450,
+      4451,
+      4452,
+      4453
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 193,
+    "nom": "Expédition de la Bravoure - Vaisseau du Capitaine Meno",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      4455,
+      4456,
+      4457,
+      4458,
+      4459,
+      4460
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 194,
+    "nom": "Expédition de la Bravoure - Horologium de XLII",
+    "niveau_min": 160,
+    "niveau_optimal": 170,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3840,
+      3841,
+      3842,
+      3843,
+      3844,
+      3849
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 195,
+    "nom": "Expédition de la Bravoure - Ventre de la Baleine",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3823,
+      3824,
+      3825,
+      3826,
+      3827,
+      3828
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 196,
+    "nom": "Expédition de la Bravoure - Cave du Toxoliath",
+    "niveau_min": 170,
+    "niveau_optimal": 180,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3735,
+      3736,
+      3737,
+      3738,
+      3739,
+      3752
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 197,
+    "nom": "Expédition de la Bravoure - Galerie du Phossile",
+    "niveau_min": 140,
+    "niveau_optimal": 150,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3651,
+      3658,
+      3659,
+      3660,
+      3661,
+      3662
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 198,
+    "nom": "Expédition de la Bravoure - Grotte de Kanigroula",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3556,
+      3557,
+      3559,
+      3560,
+      3561,
+      3562
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 199,
+    "nom": "Expédition de la Bravoure - Pyramide d'Ombre",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3564,
+      3566,
+      3567,
+      3568,
+      3569,
+      3570
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 200,
+    "nom": "Expédition de la Bravoure - Aquadôme de Merkator",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3534,
+      3535,
+      3538,
+      3542,
+      3543,
+      3544
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 201,
+    "nom": "Expédition de la Bravoure - Donjon du Comte Harebourg",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3410,
+      3411,
+      3412,
+      3414,
+      3415,
+      3416
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 202,
+    "nom": "Expédition de la Bravoure - Forgefroide de Missiz Frizz",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3385,
+      3386,
+      3387,
+      3389,
+      3390,
+      3391
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 203,
+    "nom": "Expédition de la Bravoure - Salons privés de Klime",
+    "niveau_min": 190,
+    "niveau_optimal": 200,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      3379,
+      3380,
+      3381,
+      3382,
+      3383,
+      3384
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 204,
+    "nom": "Expédition de la Bravoure - Donjon de la mine de Sakaï",
+    "niveau_min": 180,
+    "niveau_optimal": 190,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": true,
+    "boss_ids": [],
+    "monstre_ids": [
+      2932,
+      2933,
+      2934,
+      2935,
+      2936,
+      2937,
+      2942
+    ],
+    "objets_requis": []
+  },
+  {
+    "id": 205,
+    "nom": "Expédition de la Bravoure - Salle du Minotot",
+    "niveau_min": 150,
+    "niveau_optimal": 160,
+    "difficulte": 0,
+    "zone": "Expéditions",
+    "recherche_groupe": false,
+    "disponible_hall": false,
+    "disponible_trousseau": false,
+    "boss_ids": [],
+    "monstre_ids": [
+      121,
+      668,
+      827,
+      830,
+      831,
+      832
+    ],
+    "objets_requis": []
+  }
+]
