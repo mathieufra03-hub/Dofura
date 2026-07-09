@@ -95,5 +95,7 @@
 
 **Réponse périmée (race condition réseau)** — quand deux requêtes partent à la suite mais reviennent dans le désordre (la 2e revient avant la 1re), et que l'appli affiche bêtement la dernière REÇUE au lieu de la dernière ENVOYÉE. *Corrigé sur la page Monstres avec un numéro de requête : chaque fetch se compare à "suis-je toujours le dernier demandé ?" avant d'afficher son résultat.*
 
+**État (spell-state)** — un statut temporaire appliqué à un personnage en combat (buff ou debuff : "Affaibli", "Insoignable", "Pesanteur"...), distinct d'un sort. DofusDB les stocke dans une collection séparée (`api.dofusdb.fr/spell-states/{id}`) avec ses propres IDs — **qui se recoupent avec ceux des sorts sans rapport** (ex. l'ID 298 est à la fois le sort "Totem du Feu" ET l'état "Djim", deux choses différentes). *Chantier #6 : les templates "État #3" résolvent ce genre d'ID.*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*
