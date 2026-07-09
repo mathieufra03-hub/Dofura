@@ -36,10 +36,28 @@ if os.path.exists("dofura_effets_speciaux.json"):
     with open("dofura_effets_speciaux.json", "r", encoding="utf-8") as f:
         EFFETS_SPECIAUX_DATA = json.load(f)
 
+ETATS_SPECIAUX_DATA = {}
+if os.path.exists("dofura_etats_speciaux.json"):
+    with open("dofura_etats_speciaux.json", "r", encoding="utf-8") as f:
+        ETATS_SPECIAUX_DATA = json.load(f)
+
+# Effets dont un placeholder brut (#1/#2/#3) est en realite un ID a resoudre,
+# pas un nombre (chantier #6) :
+# - EFFECTS_ETAT_VALEUR : "Etat #3"/"Enleve l'etat #3"/"Desactive l'etat #3",
+#   le champ "value" est un ID d'etat (api.dofusdb.fr/spell-states/{id})
+# - EFFECTS_ETAT_DICE : "Chatiment de #2 #1 sur #3 tours", diceNum et diceSide
+#   sont aussi des IDs d'etat
+# - EFFECTS_SORT_CONDITION : "#1 : +#3 PA" et apparentes, diceNum est l'ID
+#   d'un sort du jeu (deja dans SORTS_DATA, pas besoin de resolution externe)
+EFFECTS_ETAT_VALEUR = {950, 951, 952}
+EFFECTS_ETAT_DICE = {788}
+EFFECTS_SORT_CONDITION = {280, 281, 283, 284, 285, 286, 287, 290, 291, 293, 296, 1036, 1045, 2905, 2935}
+
 def formater_effet(effet):
     effect_id = effet.get("effectId")
     dice_num = effet.get("diceNum", 0)
     dice_side = effet.get("diceSide", 0)
+    value_brut = effet.get("value", 0)
     duration = effet.get("duration", 0)
 
     effect_def = EFFECTS_DATA.get(effect_id, {})
@@ -74,6 +92,32 @@ def formater_effet(effet):
 
     desc = template
 
+    # Resolution des placeholders qui sont en realite des IDs (etat ou sort)
+    # plutot que des nombres (chantier #6). Par defaut #1/#2/#3 restent des
+    # nombres bruts ; ces trois familles remplacent l'un ou l'autre par un nom.
+    remplacement_1 = remplacement_2 = remplacement_3 = None
+    introuvable = False
+    if effect_id in EFFECTS_ETAT_VALEUR:
+        remplacement_3 = ETATS_SPECIAUX_DATA.get(str(value_brut))
+        introuvable = remplacement_3 is None
+    elif effect_id in EFFECTS_ETAT_DICE:
+        remplacement_1 = ETATS_SPECIAUX_DATA.get(str(dice_num))
+        remplacement_2 = ETATS_SPECIAUX_DATA.get(str(dice_side))
+        introuvable = remplacement_1 is None or remplacement_2 is None
+    elif effect_id in EFFECTS_SORT_CONDITION:
+        sort = SORTS_DATA.get(dice_num)
+        remplacement_1 = sort.get("nom") if sort else None
+        introuvable = remplacement_1 is None
+
+    if introuvable:
+        return {
+            "texte": None,
+            "valeur": str(dice_num),
+            "duration": duration,
+            "effect_id": effect_id,
+            "polarite": polarite,
+        }
+
     try:
         dn, ds = int(dice_num), int(dice_side)
         pluriel = (dn != 1) if (ds == 0 or dn == ds) else (ds > 1)
@@ -93,11 +137,12 @@ def formater_effet(effet):
         desc = re.sub(r'\{\{~1~2\s*', ' ', desc)
         desc = re.sub(r'\}\}', '', desc)
 
-    desc = desc.replace("#1", str(dice_num))
+    desc = desc.replace("#1", remplacement_1 if remplacement_1 is not None else str(dice_num))
     if dice_side != 0:
-        desc = desc.replace("#2", str(dice_side))
+        desc = desc.replace("#2", remplacement_2 if remplacement_2 is not None else str(dice_side))
     else:
-        desc = desc.replace("#2", "")
+        desc = desc.replace("#2", remplacement_2 if remplacement_2 is not None else "")
+    desc = desc.replace("#3", remplacement_3 if remplacement_3 is not None else str(value_brut))
 
     # Le retrait de la balise laisse l'espace qui l'entourait des deux cotes
     # (ex. "1 <sprite name=\"PA\"> PA" -> "1  PA") : on les recollapse a un seul.
@@ -107,8 +152,8 @@ def formater_effet(effet):
     # "+" explicite pour les bonus dont le texte demarre par la valeur brute
     # (ex. "2 PM" -> "+2 PM"), symetrique du "-" deja integre par Ankama dans
     # le texte des malus. Le garde-fou "#" absent exclut les rares templates
-    # a placeholders multiples (#3+) que ce formatage ne gere pas encore, et
-    # startswith(valeur) exclut les tournures verbales ("Vole 2 PM") qui n'ont
+    # a placeholders au-dela de #3 (non geres), et startswith(valeur) exclut
+    # les tournures verbales ("Vole 2 PM") qui n'ont
     # pas besoin de signe.
     if polarite == "bonus" and "#" not in desc and desc.startswith(str(dice_num)):
         desc = "+" + desc
