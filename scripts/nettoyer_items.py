@@ -1,0 +1,148 @@
+"""
+Deduplique et distille les fichiers bruts scrapes par scraper_items.py.
+
+Probleme : dofura_items.json/dofura_recipes.json/dofura_item_sets.json
+bruts embarquent des objets complets a chaque reference (une recette
+reembarque l'objet entier de chaque ingredient, une panoplie reembarque
+l'objet entier de chaque membre, un item reembarque sa panoplie ET son
+type entiers) -> 211+244+55.7 Mo, invendable a Git (limite 100 Mo/fichier).
+
+Ce script ne garde que le francais (name/description), les IDs de
+reference (itemSetId, resultId, ingredientId, typeId) au lieu des objets
+imbriques, et renomme "from"/"to" en "diceNum"/"diceSide" pour reutiliser
+formater_effet() tel quel (memes noms de champs que sorts/monstres).
+
+Renomme les fichiers bruts en *_brut.json (backup local, jamais commite)
+avant d'ecrire les versions nettoyees sous les noms canoniques.
+"""
+import json
+import os
+
+FICHIERS = {
+    "items": "dofura_items.json",
+    "recipes": "dofura_recipes.json",
+    "item_sets": "dofura_item_sets.json",
+}
+
+
+def renommer_en_brut(fichier):
+    brut = fichier.replace(".json", "_brut.json")
+    if os.path.exists(brut):
+        print(f"  {brut} existe deja, on ne l'ecrase pas (reprise apres un run precedent).")
+        return brut
+    os.rename(fichier, brut)
+    print(f"  {fichier} -> {brut}")
+    return brut
+
+
+def nettoyer_effets(effets_bruts):
+    """Renomme from/to en diceNum/diceSide pour reutiliser formater_effet()."""
+    return [
+        {
+            "effectId": e.get("effectId"),
+            "diceNum": e.get("from", 0),
+            "diceSide": e.get("to", 0),
+            "elementId": e.get("elementId"),
+            "characteristic": e.get("characteristic"),
+        }
+        for e in effets_bruts
+    ]
+
+
+def nettoyer_items(items_bruts, types_par_id):
+    items = []
+    for it in items_bruts:
+        type_obj = it.get("type") or {}
+        type_id = it.get("typeId")
+        type_nom = (type_obj.get("name") or {}).get("fr", "")
+        super_type_nom = ((type_obj.get("superType") or {}).get("name") or {}).get("fr", "")
+        if not type_nom and type_id in types_par_id:
+            type_nom = types_par_id[type_id]
+
+        items.append({
+            "id": it["id"],
+            "nom": (it.get("name") or {}).get("fr", ""),
+            "img": it.get("img", ""),
+            "level": it.get("level", 0),
+            "type_id": type_id,
+            "type_nom": type_nom,
+            "super_type_nom": super_type_nom,
+            "description": (it.get("description") or {}).get("fr", ""),
+            "effects": nettoyer_effets(it.get("effects", [])),
+            "item_set_id": it.get("itemSetId") if it.get("itemSetId", -1) != -1 else None,
+            "has_recipe": bool(it.get("hasRecipe")),
+            "price": it.get("price", 0),
+        })
+    return items
+
+
+def nettoyer_recipes(recipes_bruts):
+    recipes = []
+    for r in recipes_bruts:
+        ingredient_ids = r.get("ingredientIds", [])
+        quantites = r.get("quantities", [])
+        ingredients = [
+            {"item_id": iid, "quantite": q}
+            for iid, q in zip(ingredient_ids, quantites)
+        ]
+        recipes.append({
+            "result_id": r.get("resultId"),
+            "job_id": r.get("jobId"),
+            "ingredients": ingredients,
+        })
+    return recipes
+
+
+def nettoyer_item_sets(sets_bruts):
+    sets_ = []
+    for s in sets_bruts:
+        item_ids = [it["id"] for it in s.get("items", [])]
+        effects_par_palier = [nettoyer_effets(palier) for palier in s.get("effects", [])]
+        sets_.append({
+            "id": s["id"],
+            "nom": (s.get("name") or {}).get("fr", ""),
+            "level": s.get("level", 0),
+            "item_ids": item_ids,
+            "effects": effects_par_palier,
+        })
+    return sets_
+
+
+def main():
+    print("Chargement de dofura_item_types.json (deja propre, sert de reference type_id -> nom)...")
+    with open("dofura_item_types.json", "r", encoding="utf-8") as f:
+        types_bruts = json.load(f)
+    types_par_id = {t["id"]: (t.get("name") or {}).get("fr", "") for t in types_bruts}
+
+    print("\n=== items ===")
+    brut = renommer_en_brut(FICHIERS["items"])
+    with open(brut, "r", encoding="utf-8") as f:
+        items_bruts = json.load(f)
+    items = nettoyer_items(items_bruts, types_par_id)
+    with open(FICHIERS["items"], "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=False, indent=2)
+    print(f"  {len(items)} items nettoyes -> {FICHIERS['items']}")
+
+    print("\n=== recipes ===")
+    brut = renommer_en_brut(FICHIERS["recipes"])
+    with open(brut, "r", encoding="utf-8") as f:
+        recipes_bruts = json.load(f)
+    recipes = nettoyer_recipes(recipes_bruts)
+    with open(FICHIERS["recipes"], "w", encoding="utf-8") as f:
+        json.dump(recipes, f, ensure_ascii=False, indent=2)
+    print(f"  {len(recipes)} recettes nettoyees -> {FICHIERS['recipes']}")
+
+    print("\n=== item_sets ===")
+    brut = renommer_en_brut(FICHIERS["item_sets"])
+    with open(brut, "r", encoding="utf-8") as f:
+        sets_bruts = json.load(f)
+    sets_ = nettoyer_item_sets(sets_bruts)
+    with open(FICHIERS["item_sets"], "w", encoding="utf-8") as f:
+        json.dump(sets_, f, ensure_ascii=False, indent=2)
+    print(f"  {len(sets_)} panoplies nettoyees -> {FICHIERS['item_sets']}")
+
+    print("\nTermine.")
+
+
+if __name__ == "__main__":
+    main()
