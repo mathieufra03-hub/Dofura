@@ -3,6 +3,17 @@
 > Ce fichier est lu automatiquement par Claude Code à chaque session.
 > Il contient tout ce qu'il faut savoir pour travailler sur Dofura sans casser l'existant.
 
+## Reprise (pause depuis le 2026-07-10)
+
+**Phase 1 de la roadmap (encyclopédie : Donjons → Panoplies → Zones) terminée.** Session mise en pause volontairement par Popo pour quelques jours. État vérifié avant fermeture : `git status` propre (rien en attente hors les JSON bruts habituels, jamais commités — voir règle 9/piège #10), aucun serveur de test resté ouvert, scripts jetables de session supprimés.
+
+**Premier feedback visuel de Popo :** les pages Panoplies et Zones sont jugées pas claires, organisation à revoir — détails à venir dans `REFONTE.md` (à créer, voir ci-dessous).
+
+**Candidats pour la prochaine session, à trancher avec Popo avant tout code (règle 1) :**
+1. **Cadrage du compagnon farm/craft** — chantier stratégique (prochaine étape de la Vision après l'encyclopédie), pas un simple chantier technique : périmètre, écrans, données déjà disponibles vs manquantes à définir ensemble avant d'écrire quoi que ce soit.
+2. **Mini-chantier Krag** — remplir `dofura_donjons_guides.json` (mécaniques de boss, actuellement vide, voir chantier Donjons).
+3. **Création de `REFONTE.md`** — consigner le feedback visuel de Popo (Panoplies/Zones pas claires, organisation à revoir) et cadrer la refonte graphique complète déjà notée en chantier futur #1.
+
 ## Le projet
 
 **Dofura** = encyclopédie + hub d'outils Dofus 3.0. Objectif : devenir LA référence combinant data exhaustive, outils interactifs, suivi quêtes/succès, puis comptes utilisateurs.
