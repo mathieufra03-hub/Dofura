@@ -7,12 +7,28 @@
 
 **Dofura** = encyclopédie + hub d'outils Dofus 3.0. Objectif : devenir LA référence combinant data exhaustive, outils interactifs, suivi quêtes/succès, puis comptes utilisateurs.
 
-**Roadmap (Structure C — Portail modulaire) :**
-- **Phase 1 — Encyclopédie :** Monstres ✅ → Sorts (en cours) → Objets/Équipements → Classes → Zones → Donjons
-- **Phase 2 — Outils légers :** Chasses au trésor (wrapper dofusdb, PAS de rebuild) · Calculateur DD · Carte interactive
-- **Phase 3 — Outils lourds :** Suivi quêtes/succès (nécessite compte)
-- **Phase 4 — Compte utilisateur :** Auth JWT, profil, sauvegarde progression
-- **Retiré définitivement :** Simulateur de stuff · Commerce/HdV · Portails
+## Vision (2026-07-09)
+
+Dofura vise à terme : **encyclopédie complète Dofus 3.0 + accompagnement du joueur** (suivi de progression, outils pratiques), pour rivaliser avec l'écosystème des fan-sites existants.
+
+**Concurrents de référence :**
+- [dofusdb.fr](https://dofusdb.fr) — encyclopédie exhaustive : c'est notre **source de données**, pas notre cible.
+- [duffus.fr](https://duffus.fr) — guides + suivi de progression (cases à cocher) + comptes. Le modèle de notre future partie "accompagnement".
+- [tougli.barbofus.com](https://tougli.barbofus.com) — guides de quêtes + overlay in-game + multilingue.
+- [dofusyelle.com](https://dofusyelle.com) — curation d'expert, info directe.
+- [dafous.app](https://dafous.app) — boîte à outils tout-en-un (appli Unity).
+
+**Positionnement Dofura :** exploiter notre base relationnelle propre (monstres↔drops↔zones↔recettes↔objets↔panoplies) pour proposer des outils croisés qu'un site éditorial classique ne peut pas offrir aussi facilement. Première brique d'accompagnement visée : **compagnon de farm/craft** (objet → ingrédients → où les farmer → progression cochable).
+
+**Retiré définitivement :** Simulateur de stuff · Commerce/HdV · Portails.
+
+**Roadmap révisée (2026-07-09, react-router reporté) :**
+1. Compléter l'encyclopédie : **Donjons (chantier en cours)** → Classes → Zones → Panoplies
+2. react-router (socle SEO/partage, vraies URLs) — reporté, voir Chantiers futurs
+3. Compagnon de farm/craft (première brique d'accompagnement)
+4. Comptes utilisateurs (Phase 4 — nécessite le volume persistant Railway, voir chantiers en cours #1)
+5. Refonte graphique complète
+6. Lancement — **penser à retirer le `noindex` (voir Chantiers en cours) avant cette étape**
 
 ## Environnement de travail
 
@@ -161,7 +177,7 @@ Règle commune : règle 13 (ne jamais inventer) + validation Popo avant intégra
 ## Chantiers futurs (pas encore commencés)
 
 1. **Refonte graphique complète du site (design actuel provisoire).** La charte Krosmoz Espace en place est fonctionnelle mais pas définitive — ne pas passer de temps à la peaufiner d'ici là. En attendant, tout nouveau composant doit grouper ses styles proprement (objet de styles centralisé, pas de valeurs magiques éparpillées inline) pour que ce restyling futur soit simple à faire.
-2. **Migration vers react-router** (vraies URLs, corrige le retour fiche→accueil au lieu de la grille filtrée — limite connue depuis le chantier #4 —, liens partageables).
+2. **Migration vers react-router** (vraies URLs, corrige le retour fiche→accueil au lieu de la grille filtrée — limite connue depuis le chantier #4 —, liens partageables). **Reporté le 2026-07-09** (décision Popo) : passe après l'encyclopédie (Donjons/Classes/Zones/Panoplies), pas avant.
 3. **Page Élevage/Montures.** Catégorie `super_type_nom = "Certificat de monture"` (267 objets : Dragodinde/Volkorne/Muldo) — vérifiée le 2026-07-09, c'est la bonne catégorie pour ça (pas "Certificat" tout court, qui ne contient que des objets de quête invisibles sans rapport).
 4. **Filtre "Légendaires" sur la page Équipements.** Colonne `legendaire` déjà en base depuis le chantier #8bis (25 objets), juste un filtre à brancher côté `/objets` + `/objets/filtres` sur le modèle des filtres existants.
 
