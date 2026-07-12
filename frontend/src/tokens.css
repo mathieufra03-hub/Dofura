@@ -253,6 +253,45 @@
   box-shadow: 0 14px 34px rgba(0,0,0,0.6); padding: 12px 14px; text-align: left;
 }
 
+/* ============================================================
+   Fiches détail (§7 : item, puis donjon/quête/succès). Voir
+   maquette/dofura-fiche-item.jsx.
+   ============================================================ */
+
+/* Encadré de contenu (Effets, Recette, Panoplie...) */
+.df-block {
+  background: rgba(20,26,46,0.92); border: 1px solid rgba(255,198,61,0.2);
+  border-radius: var(--df-radius-block); padding: 22px 24px; margin-bottom: 22px;
+}
+/* Variante liseré doré marqué (ex. "Sorts intégrés" sur les légendaires) */
+.df-block.df-block-leg { border-color: rgba(255,198,61,0.8); box-shadow: 0 0 22px rgba(255,198,61,0.18); }
+.df-block-title {
+  font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--df-gold);
+  margin: 0 0 16px; text-transform: uppercase;
+}
+
+/* Colonne principale + colonne contexte (fiche item/donjon/quête) */
+.df-detail-wrap { display: grid; grid-template-columns: 1fr 400px; gap: 22px; align-items: start; }
+@media (max-width: 940px) { .df-detail-wrap { grid-template-columns: 1fr; } }
+
+/* Ligne cliquable (ingrédient de recette, source d'obtention...) */
+.df-row {
+  position: relative;
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border-radius: 10px; cursor: pointer; font-size: 14px;
+}
+.df-row:hover { background: rgba(77,216,230,0.08); }
+
+/* Pilule neutre (pièce de panoplie, tag...) */
+.df-pill {
+  display: inline-block; margin: 0 8px 8px 0;
+  background: rgba(255,198,61,0.07); border: 1px solid rgba(255,198,61,0.35);
+  color: var(--df-text); font-size: 12.5px; font-weight: 600;
+  border-radius: var(--df-radius-pill); padding: 7px 14px; cursor: pointer;
+}
+.df-pill.on { background: rgba(255,198,61,0.18); border-color: var(--df-gold); color: var(--df-gold); }
+.df-pill:hover { border-color: var(--df-gold); color: var(--df-gold); }
+
 /* Respect du mode "mouvement réduit" (accessibilité) */
 @media (prefers-reduced-motion: reduce) {
   .df-card, .df-card:hover, .df-tile, .df-tile:hover { transition: none; transform: none; }

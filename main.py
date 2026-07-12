@@ -624,12 +624,29 @@ def detail_objet(objet_id: int):
             }
 
     cur.execute("""
-        SELECT r.ingredient_id, r.quantite, r.job_id, o.nom AS ingredient_nom, o.img AS ingredient_img
+        SELECT r.ingredient_id, r.quantite, r.job_id, o.nom AS ingredient_nom, o.img AS ingredient_img,
+               o.niveau AS ingredient_niveau, o.type_nom AS ingredient_type_nom
         FROM recettes r
         LEFT JOIN objets o ON o.id = r.ingredient_id
         WHERE r.objet_id = ?
     """, (objet_id,))
     ingredients = cur.fetchall()
+
+    # Obtention : monstres qui droppent cet objet (table drops, sourcee
+    # Dofensive, liee par NOM — meme mecanisme deja utilise par la fiche
+    # donjon pour son propre tableau de butins). Egalement calcule pour
+    # chaque ingredient de la recette, pour le tooltip "source" au survol.
+    def sources_drop(nom_objet):
+        cur.execute("""
+            SELECT m.id AS monstre_id, m.nom AS monstre_nom, m.image_url AS monstre_img, d.pourcentage
+            FROM drops d JOIN monstres m ON m.id = d.monstre_id
+            WHERE d.nom = ?
+            ORDER BY d.pourcentage DESC
+        """, (nom_objet,))
+        return [dict(r) for r in cur.fetchall()]
+
+    obtention = sources_drop(objet["nom"])
+    sources_ingredients = {i["ingredient_nom"]: sources_drop(i["ingredient_nom"]) for i in ingredients if i["ingredient_nom"]}
 
     panoplie = None
     if objet["panoplie_id"] is not None:
@@ -663,14 +680,32 @@ def detail_objet(objet_id: int):
     donjons_requis = cur.fetchall()
 
     conn.close()
+
+    # Fil d'Ariane : categorie humaine deduite de super_type_nom, reutilise
+    # CATEGORIES_OBJETS (meme mapping que les listes /equipements et /ressources)
+    # plutot qu'une nouvelle table de correspondance. Libelles explicites
+    # (pas de pluriel calcule) pour eviter toute grammaire fragile.
+    LIBELLES_CATEGORIES = {"equipement": "Équipements", "ressource": "Ressources"}
+    categorie_nom = next(
+        (LIBELLES_CATEGORIES[cle] for cle, super_types in CATEGORIES_OBJETS.items() if objet["super_type_nom"] in super_types),
+        None
+    )
+
     return {
         **dict(objet),
+        "legendaire": bool(objet["legendaire"]),
+        "categorie_nom": categorie_nom,
         "effects": [f for e in effets_bruts if (f := formater_effet_objet(e))["texte"] is not None],
         "recette": [
-            {"ingredient_id": i["ingredient_id"], "quantite": i["quantite"], "nom": i["ingredient_nom"], "img": i["ingredient_img"]}
+            {
+                "ingredient_id": i["ingredient_id"], "quantite": i["quantite"],
+                "nom": i["ingredient_nom"], "img": i["ingredient_img"],
+                "niveau": i["ingredient_niveau"], "type_nom": i["ingredient_type_nom"],
+                "sources": sources_ingredients.get(i["ingredient_nom"], []),
+            }
             for i in ingredients
         ],
-        "job_id": ingredients[0]["job_id"] if ingredients else None,
+        "obtention": obtention,
         "panoplie": panoplie,
         "sort_accorde": sort_accorde,
         "donjons_requis": [{"id": d["id"], "nom": d["nom"], "quantite": d["quantite"]} for d in donjons_requis],

@@ -978,131 +978,174 @@ function ObjetsPage({ categorie, titre, placeholder, videMessage, compteurSingul
   )
 }
 
-function ObjetDetailPage({ id, onSelect, onSelectDonjon, onSelectPanoplie, onBack }) {
+// Couleur de polarite : vert bonus / rouge malus / texte normal si sans
+// rapport (ex. "401 a 500 Initiative", ni bonus ni malus au sens strict).
+const couleurPolarite = (p) => p === "bonus" ? "var(--df-green)" : p === "malus" ? "var(--df-red)" : "var(--df-text-2)"
+
+function ObjetDetailPage({ id, onSelect, onSelectDonjon, onSelectPanoplie, onSelectMonstre, onBack }) {
   const [data, setData] = useState(null)
+  const [tip, setTip] = useState(null)
 
   useEffect(() => {
-    setData(null)
+    setData(null); setTip(null)
     fetch(`${API}/objets/${id}`).then(r=>r.json()).then(setData)
   }, [id])
 
-  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>Chargement...</div>
-  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>{data.erreur}</div>
-
-  const couleurPolarite = (p) => p === "bonus" ? C.green : p === "malus" ? C.red : C.txt
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>{data.erreur}</div>
 
   const paliers = data.panoplie
     ? Object.entries(data.panoplie.effets_par_palier).sort((a,b)=>Number(a[0])-Number(b[0]))
     : []
 
   return (
-    <div translate="no" style={{ padding:"1.5rem 2rem", maxWidth:900, margin:"0 auto" }}>
+    <div translate="no" style={{ padding:"1.5rem 2rem 3rem", maxWidth:1240, margin:"0 auto" }}>
       <button onClick={onBack} style={mp.backBtn}>← Retour</button>
 
-      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", display:"grid", gridTemplateColumns:"100px 1fr", gap:20, marginBottom:16 }}>
-        <div style={{ display:"flex", justifyContent:"center", alignItems:"flex-start" }}>
+      {data.categorie_nom && (
+        <div style={{ fontSize:12.5, color:"var(--df-text-3)", marginBottom:18 }}>
+          {data.categorie_nom} {data.type_nom && <>› {data.type_nom} </>}› <b style={{ color:"var(--df-text-2)", fontWeight:600 }}>{data.nom}</b>
+        </div>
+      )}
+
+      <header className={"df-block" + (data.legendaire ? " df-block-leg" : "")} style={{ display:"flex", gap:22, alignItems:"center", flexWrap:"wrap", padding:24 }}>
+        <div style={{ width:96, height:96, borderRadius:16, flexShrink:0, background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.4)", display:"flex", alignItems:"center", justifyContent:"center" }}>
           {data.img
-            ? <img src={data.img} alt={data.nom} style={{ width:90, height:90, objectFit:"contain" }} />
-            : <div style={{ width:90, height:90, background:C.bg3, borderRadius:8 }} />
+            ? <img src={data.img} alt={data.nom} style={{ width:64, height:64, objectFit:"contain" }} />
+            : null
           }
         </div>
         <div>
-          <h2 style={{ fontSize:20, fontWeight:500, color:C.gold2, marginBottom:4 }}>{data.nom}</h2>
-          <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
-            {data.legendaire ? <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.goldf, border:`0.5px solid ${C.goldb}`, color:C.gold2, fontWeight:500 }}>★ Légendaire</span> : null}
-            <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>Niv. {data.niveau}</span>
-            {data.type_nom && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.type_nom}</span>}
+          <h1 className="df-title-gold" style={{ fontSize:"clamp(24px, 4vw, 32px)", margin:0, display:"inline" }}>
+            {data.nom}
+          </h1>
+          {data.legendaire && <span className="df-tile-badge" style={{ marginLeft:12, fontSize:11, padding:"4px 12px" }}>LÉGENDAIRE</span>}
+          <div style={{ color:"var(--df-text-2)", fontSize:14, marginTop:5 }}>
+            Niv. {data.niveau}{data.type_nom ? ` — ${data.type_nom}` : ""}
           </div>
-          {data.description && <p style={{ fontSize:12, color:C.txt2, lineHeight:1.5 }}>{data.description}</p>}
+          {data.description && <div style={{ color:"#8B96B2", fontSize:13, fontStyle:"italic", marginTop:10, maxWidth:640 }}>{data.description}</div>}
         </div>
-      </div>
+      </header>
 
-      {data.sort_accorde && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
-          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Sort accordé</div>
-          <div style={{ fontSize:13, fontWeight:500, color:C.gold2, marginBottom:6 }}>{data.sort_accorde.nom}</div>
-          {data.sort_accorde.description && (
-            <p style={{ fontSize:12, color:C.txt2, lineHeight:1.5, whiteSpace:"pre-line" }}>{data.sort_accorde.description}</p>
+      <div className="df-detail-wrap">
+        {/* ---- Colonne principale ---- */}
+        <div>
+          {data.effects?.length > 0 && (
+            <section className="df-block">
+              <h2 className="df-block-title">Effets</h2>
+              {data.effects.map((e,i) => (
+                <div key={i} style={{ fontSize:15, padding:"5px 0", color:couleurPolarite(e.polarite) }}>{e.texte}</div>
+              ))}
+            </section>
           )}
-          {data.sort_accorde.effects?.length > 0 && (
-            <div>
-              {data.sort_accorde.effects.map((e,i) => (
-                <div key={i} style={{ fontSize:12, color:couleurPolarite(e.polarite), padding:"3px 0", display:"flex", alignItems:"center", gap:6 }}>
-                  <span style={{ color:C.prp2, fontSize:9, flexShrink:0 }}>◆</span> {e.texte}
+
+          {data.legendaire && data.sort_accorde && (
+            <section className="df-block df-block-leg">
+              <h2 className="df-block-title">⭐ Sorts intégrés</h2>
+              <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:15, marginBottom:6 }}>{data.sort_accorde.nom}</div>
+              {data.sort_accorde.description && (
+                <p style={{ color:"var(--df-text-2)", fontSize:13.5, lineHeight:1.5, whiteSpace:"pre-line", margin:0 }}>{data.sort_accorde.description}</p>
+              )}
+              {data.sort_accorde.effects?.length > 0 && (
+                <div style={{ marginTop:8 }}>
+                  {data.sort_accorde.effects.map((e,i) => (
+                    <div key={i} style={{ fontSize:13.5, padding:"3px 0", color:couleurPolarite(e.polarite) }}>{e.texte}</div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {(data.obtention?.length > 0 || data.has_recipe) && (
+            <section className="df-block">
+              <h2 className="df-block-title">Obtention</h2>
+              {data.obtention.map(o => (
+                <div key={o.monstre_id} className="df-row" onClick={()=>onSelectMonstre(o.monstre_id)}>
+                  {o.monstre_img
+                    ? <img src={o.monstre_img} alt={o.monstre_nom} style={{ width:28, height:28, objectFit:"contain" }} />
+                    : <div style={{ width:28, height:28, borderRadius:6, background:"var(--df-bg)" }} />
+                  }
+                  <span style={{ color:"var(--df-cyan)", fontWeight:600 }}>{o.monstre_nom}</span>
+                  <span style={{ color:"var(--df-text-3)", fontSize:12.5, marginLeft:"auto" }}>{o.pourcentage}%</span>
                 </div>
               ))}
-            </div>
+              {data.obtention.length === 0 && data.has_recipe && (
+                <div style={{ color:"var(--df-text-2)", fontSize:14 }}>Obtenu par artisanat — voir la recette ci-contre.</div>
+              )}
+            </section>
           )}
         </div>
-      )}
 
-      {data.effects?.length > 0 && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
-          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Effets</div>
-          {data.effects.map((e,i) => (
-            <div key={i} style={{ fontSize:12, color:couleurPolarite(e.polarite), padding:"3px 0", display:"flex", alignItems:"center", gap:6 }}>
-              <span style={{ color:C.prp2, fontSize:9, flexShrink:0 }}>◆</span> {e.texte}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {data.recette?.length > 0 && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
-          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Recette</div>
-          {data.recette.map((ing,i) => (
-            <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0" }}>
-              {ing.img
-                ? <img src={ing.img} alt={ing.nom} style={{ width:24, height:24, objectFit:"contain" }} />
-                : <div style={{ width:24, height:24, background:C.bg4, borderRadius:4 }} />
-              }
-              <span style={{ fontSize:12, color:C.txt }}>{ing.nom || `Objet #${ing.ingredient_id}`}</span>
-              <span style={{ fontSize:12, color:C.gold, marginLeft:"auto" }}>x{ing.quantite}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {data.panoplie && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
-          <div onClick={()=>onSelectPanoplie(data.panoplie.id)}
-            style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.cyan, marginBottom:10, cursor:"pointer", width:"fit-content" }}>
-            {data.panoplie.nom}
-          </div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
-            {data.panoplie.membres.map(m => (
-              <span key={m.id} onClick={()=>onSelect(m.id)}
-                style={{ fontSize:11, padding:"3px 9px", borderRadius:6, cursor:"pointer",
-                  background:m.id===data.id?C.cyanf:C.bg4, border:`0.5px solid ${m.id===data.id?C.cyan:C.bdr}`, color:m.id===data.id?C.cyan:C.txt2 }}>
-                {m.nom}
-              </span>
-            ))}
-          </div>
-          {paliers.map(([palier, effets]) => (
-            <div key={palier} style={{ marginBottom:8 }}>
-              <div style={{ fontSize:11, color:C.prp2, marginBottom:3 }}>{palier} pièce{Number(palier)>1?"s":""}</div>
-              {effets.map((e,i) => (
-                <div key={i} style={{ fontSize:12, color:couleurPolarite(e.polarite), paddingLeft:10 }}>{e.texte}</div>
+        {/* ---- Colonne contextuelle ---- */}
+        <div>
+          {data.recette?.length > 0 && (
+            <section className="df-block">
+              <h2 className="df-block-title">Recette</h2>
+              {data.recette.map((ing,i) => (
+                <div key={i} className="df-row"
+                  onMouseEnter={()=>setTip(i)} onMouseLeave={()=>setTip(null)}
+                  onClick={()=> ing.ingredient_id && onSelect(ing.ingredient_id)}
+                >
+                  {ing.img
+                    ? <img src={ing.img} alt={ing.nom} style={{ width:28, height:28, objectFit:"contain" }} />
+                    : <div style={{ width:28, height:28, borderRadius:6, background:"var(--df-bg)" }} />
+                  }
+                  <span style={{ color:"var(--df-gold)", fontWeight:700, minWidth:34 }}>{ing.quantite} ×</span>
+                  <span style={{ color:"var(--df-cyan)", fontWeight:600 }}>{ing.nom || `Objet #${ing.ingredient_id}`}</span>
+                  {tip === i && (
+                    <div className="df-tooltip" style={{ left:12, transform:"none", top:"calc(100% + 4px)" }}>
+                      <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:14 }}>{ing.nom}</div>
+                      <div style={{ color:"var(--df-text-2)", fontSize:12, margin:"3px 0 8px" }}>
+                        {ing.type_nom || "Ressource"}{ing.niveau ? ` · Niv. ${ing.niveau}` : ""}
+                      </div>
+                      {ing.sources?.length > 0
+                        ? <div style={{ color:"var(--df-text)", fontSize:12.5 }}>Droppé sur : {ing.sources.map(s=>s.monstre_nom).join(", ")}</div>
+                        : <div style={{ color:"var(--df-text-3)", fontSize:11.5 }}>Source inconnue</div>
+                      }
+                    </div>
+                  )}
+                </div>
               ))}
-            </div>
-          ))}
-        </div>
-      )}
+            </section>
+          )}
 
-      {data.donjons_requis?.length > 0 && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
-          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Nécessaire pour</div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-            {data.donjons_requis.map(d => (
-              <span key={d.id} onClick={()=>onSelectDonjon(d.id)}
-                style={{ fontSize:11, padding:"3px 9px", borderRadius:6, cursor:"pointer",
-                  background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>
-                {d.nom}
-              </span>
-            ))}
-          </div>
+          {data.panoplie && (
+            <section className="df-block">
+              <h2 className="df-block-title" onClick={()=>onSelectPanoplie(data.panoplie.id)} style={{ cursor:"pointer", width:"fit-content" }}>
+                {data.panoplie.nom}
+              </h2>
+              <div style={{ marginBottom:14 }}>
+                {data.panoplie.membres.map(m => (
+                  <span key={m.id} onClick={()=>onSelect(m.id)} className={"df-pill" + (m.id===data.id?" on":"")}>
+                    {m.nom}
+                  </span>
+                ))}
+              </div>
+              {paliers.map(([palier, effets]) => (
+                <div key={palier} style={{ display:"flex", gap:12, fontSize:13.5, padding:"6px 0", flexWrap:"wrap" }}>
+                  <span style={{ color:"var(--df-gold)", fontWeight:700, minWidth:60 }}>{palier} pièce{Number(palier)>1?"s":""}</span>
+                  <span>
+                    {effets.map((e,i) => (
+                      <span key={i} style={{ color:couleurPolarite(e.polarite) }}>{e.texte}{i<effets.length-1?" · ":""}</span>
+                    ))}
+                  </span>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {data.donjons_requis?.length > 0 && (
+            <section className="df-block">
+              <h2 className="df-block-title">Nécessaire pour</h2>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                {data.donjons_requis.map(d => (
+                  <span key={d.id} onClick={()=>onSelectDonjon(d.id)} className="df-pill">{d.nom}</span>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -1800,7 +1843,7 @@ export default function App() {
       {selectedMonstre ? (
         <MonstrePage id={selectedMonstre} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedObjet ? (
-        <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} onBack={handleHome} />
+        <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
       ) : selectedDonjon ? (
         <DonjonDetailPage id={selectedDonjon} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : selectedPanoplie ? (
