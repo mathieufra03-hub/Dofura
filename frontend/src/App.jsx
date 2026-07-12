@@ -31,15 +31,21 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-const navLinks = ["Monstres", "Quêtes", "Équipements", "Ressources", "Métiers", "Zones", "Donjons", "Panoplies", "Almanax"]
-const NAV_LABEL_VERS_CIBLE = { "Monstres":"monstres", "Équipements":"equipement", "Ressources":"ressource", "Donjons":"donjon", "Panoplies":"panoplie", "Zones":"zone" }
+// Structure de nav validée (§2 des specs) : 5 catégories fusionnées.
+// Équipements englobe Panoplies, Métiers englobe Ressources (+ future carte),
+// Bestiaire fusionne Monstres + Zones. Ces pages existent toujours (accès
+// via la grille Encyclopédie de l'accueil ou les liens croisés des fiches),
+// elles ne sont juste plus des onglets de premier niveau. Métiers/Quêtes
+// n'ont pas encore de page : lien inerte, comme avant pour ces libellés.
+const navLinks = ["Équipements", "Métiers", "Donjons", "Bestiaire", "Quêtes"]
+const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres" }
 const quickChips = ["Bouftou", "Iop", "Dofus Turquoise", "Larves de Donjon", "Panoplie Kolosso"]
 
 function Navbar({ onHome, onNav, browsing }) {
   return (
-    <nav style={{ background:C.bg2, borderBottom:`0.5px solid ${C.bdr2}`, padding:"0 2rem", display:"flex", alignItems:"center", height:48, position:"sticky", top:0, zIndex:100 }}>
-      <span onClick={onHome} style={{ fontFamily:"'Cinzel',serif", fontWeight:900, fontSize:17, background:"linear-gradient(90deg,#f0c040,#c478ff)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:"0.08em", marginRight:28, cursor:"pointer" }}>
-        · DOFURA ·
+    <nav style={{ background:"var(--df-panel-bg)", borderBottom:"1px solid var(--df-border-gold)", padding:"0 2rem", display:"flex", alignItems:"center", height:56, position:"sticky", top:0, zIndex:100 }}>
+      <span onClick={onHome} className="df-title-gold" style={{ fontSize:19, letterSpacing:"0.06em", marginRight:28, cursor:"pointer" }}>
+        DOFURA
       </span>
       <div style={{ display:"flex", gap:2, flex:1 }}>
         {navLinks.map(n => {
@@ -47,16 +53,15 @@ function Navbar({ onHome, onNav, browsing }) {
           const actif = cible && browsing === cible
           return (
             <span key={n} onClick={cible ? () => onNav(cible) : undefined}
-              style={{ fontSize:12, color:actif?C.cyan:C.txt2, padding:"6px 11px", borderRadius:6, cursor:cible?"pointer":"default", background:actif?C.cyanf:"transparent" }}
-              onMouseEnter={e=>{if(cible){e.currentTarget.style.color=C.cyan;e.currentTarget.style.background=C.cyanf}}}
-              onMouseLeave={e=>{e.currentTarget.style.color=actif?C.cyan:C.txt2;e.currentTarget.style.background=actif?C.cyanf:"transparent"}}
+              style={{ fontSize:12, color:actif?"var(--df-cyan)":"var(--df-text-2)", padding:"6px 11px", borderRadius:6, cursor:cible?"pointer":"default", background:actif?"rgba(77,216,230,0.08)":"transparent" }}
+              onMouseEnter={e=>{if(cible){e.currentTarget.style.color="var(--df-cyan)";e.currentTarget.style.background="rgba(77,216,230,0.08)"}}}
+              onMouseLeave={e=>{e.currentTarget.style.color=actif?"var(--df-cyan)":"var(--df-text-2)";e.currentTarget.style.background=actif?"rgba(77,216,230,0.08)":"transparent"}}
             >{n}</span>
           )
         })}
       </div>
       <div style={{ marginLeft:"auto", display:"flex", gap:8, alignItems:"center" }}>
-        <div style={{ background:C.bg3, border:`0.5px solid ${C.cyanb}`, borderRadius:6, padding:"5px 11px", fontSize:12, color:C.txt3 }}>Ctrl K</div>
-        <div style={{ background:C.prpf, border:`0.5px solid ${C.prpb}`, borderRadius:6, padding:"5px 13px", fontSize:12, color:C.prp2, cursor:"pointer" }}>Connexion</div>
+        <button className="df-btn-ghost" style={{ padding:"6px 16px", fontSize:12 }}>Connexion</button>
       </div>
     </nav>
   )
@@ -145,16 +150,37 @@ function Hero({ query, setQuery, results, onSelect, loading }) {
 
 function AlmanaxBanner({ data }) {
   if (!data) return null
+  const dateLabel = new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })
+  const dateCapitalisee = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)
   return (
-    <div style={{ background:C.bg4, borderTop:`0.5px solid ${C.bdr2}`, borderBottom:`0.5px solid ${C.bdr2}`, padding:"11px 2rem", display:"flex", alignItems:"center", gap:13 }}>
-      <div style={{ width:36,height:36,background:C.goldf,border:`0.5px solid ${C.goldb}`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0 }}>&#128197;</div>
-      <div style={{ flex:1 }}>
-        <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:C.txt3, marginBottom:3 }}>Almanax du jour</div>
-        <div style={{ fontSize:13, fontWeight:500, color:C.txt, marginBottom:2 }}>{data.offering?.item?.name?.fr || "Offrande du jour"}</div>
-        <div style={{ fontSize:11, color:C.txt2 }}>{data.bonus?.description?.fr || "Bonus actif aujourd'hui"}</div>
-      </div>
-      <div style={{ background:C.goldf, border:`0.5px solid ${C.goldb}`, borderRadius:7, padding:"6px 13px", fontSize:12, color:C.gold, cursor:"pointer", whiteSpace:"nowrap" }}>Voir l'Almanax →</div>
+    <div style={{ background:"var(--df-panel-bg)", padding:"9px 2rem", display:"flex", alignItems:"center", gap:18, flexWrap:"wrap" }}>
+      <span style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:700, letterSpacing:"0.08em", color:"var(--df-gold)" }}>
+        <span style={{ fontSize:13 }}>&#128197;</span> ALMANAX
+      </span>
+      <span style={{ fontSize:12, color:"var(--df-text-2)" }}>{dateCapitalisee}</span>
+      {data.bonus?.description?.fr && (
+        <span style={{ fontSize:12, color:"var(--df-text-2)" }}>
+          Bonus du jour : <span style={{ color:"var(--df-text)" }}>{data.bonus.description.fr}</span>
+        </span>
+      )}
+      {data.offering?.item?.name?.fr && (
+        <span style={{ fontSize:12, color:"var(--df-text-2)" }}>
+          Offrande : <span style={{ color:"var(--df-text)" }}>{data.offering.item.name.fr}</span>
+        </span>
+      )}
+      <span style={{ marginLeft:"auto", fontSize:12, color:"var(--df-cyan)", cursor:"pointer", whiteSpace:"nowrap", fontWeight:600 }}>Voir l'Almanax →</span>
     </div>
+  )
+}
+
+function Footer() {
+  return (
+    <footer style={{ background:"var(--df-panel-bg)", borderTop:"1px solid var(--df-border-gold)", padding:"18px 2rem", textAlign:"center" }}>
+      <p style={{ fontSize:11, color:"var(--df-text-3)", lineHeight:1.6, margin:0 }}>
+        DOFURA — fan-site non officiel. Dofus et Krosmoz sont des marques d'Ankama Games.<br/>
+        Certaines illustrations sont la propriété d'Ankama.
+      </p>
+    </footer>
   )
 }
 
@@ -1535,10 +1561,17 @@ export default function App() {
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
   return (
-    <div translate="no" style={{ minHeight:"100vh", background:C.bg, fontFamily:"sans-serif" }}>
-      <div style={{ height:3, background:"linear-gradient(90deg,#9b4de0,#00d4ff,#f0c040,#c478ff,#00d4ff)", opacity:.7 }} />
-      <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} />
-      <StatsBar />
+    <div translate="no" style={{ position:"relative", minHeight:"100vh", overflow:"hidden", background:"var(--df-bg)", display:"flex", flexDirection:"column" }}>
+      {/* Fond Krosmoz : absolute (jamais fixed, voir CLAUDE.md piège fantômes de texte au scroll) */}
+      <div className="df-nebula" />
+      <div className="df-stars" />
+      <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.32)", pointerEvents:"none" }} />
+
+      <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>
+        <AlmanaxBanner data={almanax} />
+        <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} />
+        <StatsBar />
+        <div style={{ flex:1 }}>
       {selectedMonstre ? (
         <MonstrePage id={selectedMonstre} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedObjet ? (
@@ -1574,10 +1607,12 @@ export default function App() {
       ) : (
         <>
           <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelectMonstre} loading={loading} />
-          <AlmanaxBanner data={almanax} />
           <EncycloGrid onNav={handleNav} />
         </>
       )}
+        </div>
+        <Footer />
+      </div>
     </div>
   )
 }

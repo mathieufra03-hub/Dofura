@@ -1,0 +1,184 @@
+/* ============================================================
+   DOFURA — Design tokens
+   À importer une fois (globals.css / index.css) et à réutiliser partout.
+   Garantit la cohérence visuelle sur toutes les pages.
+   ============================================================ */
+
+:root {
+  /* --- Fonds --- */
+  --df-bg: #0C0F1D;              /* fond principal du site */
+  --df-card-bg: 20, 26, 46;     /* fond des cartes/blocs (en RGB, à utiliser avec opacité ~0.92) */
+  --df-panel-bg: #10152A;       /* menus déroulants, tooltips */
+  --df-track: #1B2138;          /* fond des barres de progression */
+
+  /* --- Doré (identité) --- */
+  --df-gold: #FFC63D;           /* doré accent plein : titres de section, bordures */
+  --df-gold-grad-1: #FFE08A;    /* début dégradé doré (logo, grands titres, boutons) */
+  --df-gold-grad-2: #DE9B1F;    /* fin dégradé doré */
+  --df-gold-btn-1: #FFD35E;     /* début dégradé bouton primaire */
+  --df-gold-btn-2: #E0A62E;     /* fin dégradé bouton primaire */
+  --df-gold-btn-text: #1A1405;  /* texte sombre sur bouton doré */
+
+  /* --- Cyan (interactif) --- */
+  --df-cyan: #4DD8E6;           /* liens, boutons secondaires, éléments cliquables */
+
+  /* --- Accents --- */
+  --df-magenta: #C44BC7;        /* rappel nébuleuses, badge quête */
+
+  /* --- Sémantique stats --- */
+  --df-green: #4CC98D;          /* bonus / stats positives / succès accompli */
+  --df-red: #F26D6D;            /* malus / stats négatives */
+
+  /* --- Texte --- */
+  --df-text: #E8EAF2;           /* texte courant */
+  --df-text-2: #B8BFD6;         /* texte secondaire */
+  --df-text-3: #7F8AA6;         /* texte discret (méta, légendes) */
+  --df-text-off: #3A4257;       /* étoile favori non active */
+
+  /* --- Bordures --- */
+  --df-border-gold: rgba(255, 198, 61, 0.20);   /* bordure carte au repos */
+  --df-border-gold-hover: rgba(255, 198, 61, 0.90);
+  --df-border-cyan: rgba(77, 216, 230, 0.35);   /* encadrés de cross-linking */
+
+  /* --- Couleurs des 6 Dofus primordiaux --- */
+  --df-dofus-emeraude: #3FCF8A;
+  --df-dofus-pourpre: #E0485E;
+  --df-dofus-turquoise: #3FC9E0;
+  --df-dofus-ocre: #E8A33D;
+  --df-dofus-ebene: #6B5E8C;
+  --df-dofus-ivoire: #F0EBDD;
+
+  /* --- Rayons & espacements --- */
+  --df-radius-card: 16px;
+  --df-radius-block: 16px;
+  --df-radius-pill: 999px;
+  --df-radius-tile: 14px;
+
+  /* --- Typo --- */
+  --df-font-logo: 'Cinzel Decorative', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  --df-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ============================================================
+   Helpers réutilisables
+   ============================================================ */
+
+/* Fond nébuleuse Krosmoz — appliquer sur un div en position:absolute; inset:0
+   ⚠️ absolute, PAS fixed (évite les fantômes de repaint au scroll sur Android) */
+.df-nebula {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 720px 520px at 78% 12%, rgba(55,199,224,0.40), transparent 65%),
+    radial-gradient(ellipse 700px 540px at 6% 42%, rgba(179,63,201,0.34), transparent 65%),
+    radial-gradient(ellipse 620px 420px at 32% 2%, rgba(90,63,201,0.32), transparent 65%),
+    radial-gradient(ellipse 600px 450px at 85% 78%, rgba(196,75,199,0.22), transparent 65%),
+    radial-gradient(ellipse 550px 420px at 8% 92%, rgba(55,199,224,0.20), transparent 65%);
+}
+
+/* Champ d'étoiles — tuile CSS répétée, aucune image (§1 des specs) */
+.df-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 25% 15%, rgba(255,255,255,0.9), transparent),
+    radial-gradient(1px 1px at 75% 35%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1.5px 1.5px at 15% 60%, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 60% 80%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 90% 20%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1.5px 1.5px at 40% 90%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 85% 65%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 10% 85%, rgba(255,255,255,0.5), transparent);
+  background-repeat: repeat;
+  background-size: 380px 380px;
+}
+
+/* Grand titre / logo en dégradé doré */
+.df-title-gold {
+  font-family: var(--df-font-logo);
+  font-weight: 700;
+  background: linear-gradient(180deg, var(--df-gold-grad-1) 0%, var(--df-gold-grad-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ⚠️ Titres de SECTION : doré PLEIN (pas de dégradé clippé → évite le bug mobile) */
+.df-section-title {
+  color: var(--df-gold);
+  font-weight: 700;
+  font-family: var(--df-font-body);
+}
+
+/* Carte réutilisable */
+.df-card {
+  background: rgba(var(--df-card-bg), 0.92);
+  border: 1px solid var(--df-border-gold);
+  border-radius: var(--df-radius-card);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.df-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--df-border-gold-hover);
+  box-shadow: 0 0 26px rgba(255, 198, 61, 0.28);
+}
+
+/* Bouton primaire doré */
+.df-btn-gold {
+  background: linear-gradient(180deg, var(--df-gold-btn-1), var(--df-gold-btn-2));
+  color: var(--df-gold-btn-text);
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.df-btn-gold:hover { filter: brightness(1.08); }
+
+/* Bouton secondaire fantôme cyan */
+.df-btn-ghost {
+  background: rgba(77, 216, 230, 0.07);
+  color: var(--df-cyan);
+  border: 1px solid rgba(77, 216, 230, 0.70);
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.df-btn-ghost:hover { background: rgba(77, 216, 230, 0.14); }
+
+/* Case à cocher de progression */
+.df-check {
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  border: 2px solid rgba(255, 198, 61, 0.5);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.df-check.on {
+  background: linear-gradient(180deg, var(--df-gold-btn-1), var(--df-gold-btn-2));
+  border-color: var(--df-gold);
+  color: var(--df-gold-btn-text);
+  font-weight: 700;
+}
+/* Case "auto" (objectif-quête qui se coche tout seul) : bordure pointillée */
+.df-check.auto { border-style: dashed; }
+.df-check.auto.on { border-style: solid; }
+
+/* Barre de progression */
+.df-progress { height: 8px; border-radius: 5px; background: var(--df-track); overflow: hidden; }
+.df-progress > .fill {
+  height: 100%; border-radius: 5px;
+  background: linear-gradient(90deg, var(--df-gold-btn-1), var(--df-gold-btn-2));
+  transition: width 0.3s ease;
+}
+.df-progress > .fill.done {
+  background: linear-gradient(90deg, var(--df-green), #35A86F);
+}
+
+/* Respect du mode "mouvement réduit" (accessibilité) */
+@media (prefers-reduced-motion: reduce) {
+  .df-card, .df-card:hover { transition: none; transform: none; }
+}
