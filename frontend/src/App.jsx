@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
@@ -39,7 +39,6 @@ const C = {
 // n'ont pas encore de page : lien inerte, comme avant pour ces libellés.
 const navLinks = ["Équipements", "Métiers", "Donjons", "Bestiaire", "Quêtes"]
 const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres" }
-const quickChips = ["Bouftou", "Iop", "Dofus Turquoise", "Larves de Donjon", "Panoplie Kolosso"]
 
 function Navbar({ onHome, onNav, browsing }) {
   return (
@@ -47,21 +46,27 @@ function Navbar({ onHome, onNav, browsing }) {
       <span onClick={onHome} className="df-title-gold" style={{ fontSize:19, letterSpacing:"0.06em", marginRight:28, cursor:"pointer" }}>
         DOFURA
       </span>
-      <div style={{ display:"flex", gap:2, flex:1 }}>
+      <div style={{ display:"flex", gap:2, flex:1, overflowX:"auto" }}>
         {navLinks.map(n => {
           const cible = NAV_LABEL_VERS_CIBLE[n]
           const actif = cible && browsing === cible
           return (
             <span key={n} onClick={cible ? () => onNav(cible) : undefined}
-              style={{ fontSize:12, color:actif?"var(--df-cyan)":"var(--df-text-2)", padding:"6px 11px", borderRadius:6, cursor:cible?"pointer":"default", background:actif?"rgba(77,216,230,0.08)":"transparent" }}
-              onMouseEnter={e=>{if(cible){e.currentTarget.style.color="var(--df-cyan)";e.currentTarget.style.background="rgba(77,216,230,0.08)"}}}
-              onMouseLeave={e=>{e.currentTarget.style.color=actif?"var(--df-cyan)":"var(--df-text-2)";e.currentTarget.style.background=actif?"rgba(77,216,230,0.08)":"transparent"}}
+              style={{ fontSize:14.5, color:actif?"var(--df-gold)":"var(--df-text)", padding:"18px 13px", cursor:cible?"pointer":"default", whiteSpace:"nowrap" }}
+              onMouseEnter={e=>{if(cible)e.currentTarget.style.color="var(--df-gold)"}}
+              onMouseLeave={e=>{e.currentTarget.style.color=actif?"var(--df-gold)":"var(--df-text)"}}
             >{n}</span>
           )
         })}
       </div>
       <div style={{ marginLeft:"auto", display:"flex", gap:8, alignItems:"center" }}>
-        <button className="df-btn-ghost" style={{ padding:"6px 16px", fontSize:12 }}>Connexion</button>
+        <button style={{
+          background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.7)",
+          borderRadius:10, padding:"8px 18px", fontSize:13.5, fontWeight:600, cursor:"pointer",
+        }}
+          onMouseEnter={e=>e.currentTarget.style.background="rgba(255,198,61,0.18)"}
+          onMouseLeave={e=>e.currentTarget.style.background="rgba(255,198,61,0.08)"}
+        >Connexion</button>
       </div>
     </nav>
   )
@@ -84,6 +89,63 @@ function StatsBar() {
   )
 }
 
+// Tracé exact de maquette/dofura-home-v4.jsx (composant DofuraHomeV4 > df-egg-logo) :
+// œuf de dragon doré + spirale creusée, SVG original (aucun asset Ankama).
+// Taille en "em" pour rester alignée sur la taille du titre (clamp responsive).
+function DofuraEggO() {
+  return (
+    <svg viewBox="0 0 100 126" aria-label="O" style={{ height:"0.72em", width:"auto", margin:"0 0.03em", transform:"translateY(0.02em)" }}>
+      <defs>
+        <linearGradient id="df-egg-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="var(--df-gold-grad-1)" />
+          <stop offset="1" stopColor="var(--df-gold-grad-2)" />
+        </linearGradient>
+      </defs>
+      <path d="M50 4 C74 4 92 44 92 78 C92 106 74 122 50 122 C26 122 8 106 8 78 C8 44 26 4 50 4 Z" fill="url(#df-egg-grad)" />
+      <path d="M60 42 C72 52 72 72 60 80 C50 87 37 82 35 71" fill="none" stroke="var(--df-bg)" strokeWidth="8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="7" cy="7" r="5.4" stroke="var(--df-cyan)" strokeWidth="2" />
+      <line x1="11" y1="11" x2="15" y2="15" stroke="var(--df-cyan)" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+const DOFUS_PRIMORDIAUX = [
+  { key:"emeraude",  color:"var(--df-dofus-emeraude)" },
+  { key:"pourpre",   color:"var(--df-dofus-pourpre)" },
+  { key:"turquoise", color:"var(--df-dofus-turquoise)" },
+  { key:"ocre",      color:"var(--df-dofus-ocre)" },
+  { key:"ebene",     color:"var(--df-dofus-ebene)" },
+  { key:"ivoire",    color:"var(--df-dofus-ivoire)" },
+]
+
+// Ligne continue avec un segment entre chaque Dofus (pas juste deux traits
+// flanquant un paquet de pastilles) + pastilles en forme d'œuf, comme la maquette.
+function DofusSeparator() {
+  return (
+    <div style={{ display:"flex", alignItems:"center", width:"min(440px, 76%)", margin:"54px auto" }}>
+      <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.25)" }} />
+      {DOFUS_PRIMORDIAUX.map((d, i) => (
+        <span key={d.key} style={{ display:"flex", alignItems:"center" }}>
+          {i > 0 && <span style={{ width:60, height:1, background:"rgba(255,198,61,0.25)" }} />}
+          <span title={d.key} style={{
+            width:9, height:12, margin:"0 3px", display:"block",
+            borderRadius:"50% 50% 50% 50% / 62% 62% 38% 38%",
+            background:d.color, boxShadow:`0 0 8px ${d.color}`,
+          }} />
+        </span>
+      ))}
+      <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.25)" }} />
+    </div>
+  )
+}
+
 function Hero({ query, setQuery, results, onSelect, loading }) {
   const ref = useRef(null)
   useEffect(() => {
@@ -93,57 +155,46 @@ function Hero({ query, setQuery, results, onSelect, loading }) {
   }, [setQuery])
 
   return (
-    <div style={{ background:C.bg3, borderBottom:`0.5px solid ${C.bdr}`, padding:"44px 2rem 36px", textAlign:"center", position:"relative", overflow:"visible", zIndex:10 }}>
-      <div style={{ position:"absolute",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(155,77,224,.22) 0%,transparent 70%)",top:-60,left:-60,pointerEvents:"none" }} />
-      <div style={{ position:"absolute",width:180,height:180,borderRadius:"50%",background:"radial-gradient(circle,rgba(0,212,255,.15) 0%,transparent 70%)",top:-30,right:-40,pointerEvents:"none" }} />
-      <div style={{ position:"absolute",width:140,height:140,borderRadius:"50%",background:"radial-gradient(circle,rgba(155,77,224,.12) 0%,transparent 70%)",bottom:-40,left:"40%",pointerEvents:"none" }} />
-      <p style={{ fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", color:C.prp2, marginBottom:12, position:"relative" }}>
-        Encyclopédie complète – Dofus 3.x
-      </p>
-      <h1 style={{ fontSize:26, fontWeight:500, color:C.txt, lineHeight:1.15, marginBottom:6, position:"relative" }}>
-        Tout l'univers <span style={{ color:C.gold2 }}>DOFUS</span>,<br/>en un seul endroit.
+    <div style={{ padding:"64px 2rem 8px", textAlign:"center", position:"relative", zIndex:1 }}>
+      <h1 className="df-title-gold" style={{ fontSize:"clamp(46px, 9vw, 92px)", lineHeight:1.1, letterSpacing:"0.02em", margin:0, display:"inline-flex", alignItems:"baseline" }}>
+        D<DofuraEggO />FURA
       </h1>
-      <p style={{ fontSize:13, color:C.txt2, marginBottom:24, lineHeight:1.7, position:"relative" }}>
-        Monstres, quêtes, objets, classes, succès – fusionnés depuis les meilleures sources.
+      <p style={{ fontSize:"clamp(15px, 2.5vw, 21px)", color:"var(--df-text-2)", margin:"14px 0 38px" }}>
+        L'encyclopédie Dofus 3.0
       </p>
-      <div ref={ref} style={{ position:"relative", maxWidth:540, margin:"0 auto 16px" }}>
-        <div style={{ background:"rgba(255,255,255,0.05)", border:`0.5px solid ${C.cyanb}`, borderRadius:10, padding:"11px 16px", display:"flex", alignItems:"center", gap:10 }}>
-          <span style={{ fontSize:16, color:C.cyan }}>&#128269;</span>
+      <div ref={ref} style={{ position:"relative", width:"min(680px, 94%)", margin:"0 auto" }}>
+        <div className="df-search-glow" style={{
+          background:"rgba(20,26,46,0.97)", border:"2px solid rgba(77,216,230,0.85)", borderRadius:"var(--df-radius-pill)",
+          padding:"18px 26px", display:"flex", alignItems:"center", gap:12,
+        }}>
+          <SearchIcon />
           <input value={query} onChange={e=>setQuery(e.target.value)}
-            placeholder="Cherche un monstre, une quête, un objet..."
-            style={{ flex:1, background:"transparent", border:"none", outline:"none", color:C.txt, fontSize:13, caretColor:C.cyan }} />
-          {loading && <span style={{ fontSize:11, color:C.txt3 }}>...</span>}
+            placeholder="Rechercher un monstre, un objet, un donjon..."
+            style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"var(--df-text)", fontSize:16, caretColor:"var(--df-cyan)" }} />
+          {loading && <span style={{ fontSize:11, color:"var(--df-text-3)" }}>...</span>}
         </div>
         {results.length > 0 && (
-          <div style={{ position:"absolute", top:"calc(100% + 6px)", left:0, right:0, background:C.bg2, border:`0.5px solid ${C.cyanb}`, borderRadius:10, overflow:"hidden", zIndex:200 }}>
+          <div style={{ position:"absolute", top:"calc(100% + 8px)", left:0, right:0, background:"var(--df-panel-bg)", border:"1px solid var(--df-border-cyan)", borderRadius:14, overflow:"hidden", zIndex:200, textAlign:"left" }}>
             {results.map(m => (
               <div key={m.id} onClick={()=>onSelect(m.id)}
-                style={{ display:"flex", alignItems:"center", gap:12, padding:"8px 14px", cursor:"pointer", borderBottom:`0.5px solid ${C.bdr}` }}
-                onMouseEnter={e=>e.currentTarget.style.background=C.bg3}
+                style={{ display:"flex", alignItems:"center", gap:12, padding:"9px 16px", cursor:"pointer", borderBottom:"1px solid var(--df-border-gold)" }}
+                onMouseEnter={e=>e.currentTarget.style.background="rgba(77,216,230,0.06)"}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}
               >
                 {m.image_url
-                  ? <img src={m.image_url} alt={m.nom} style={{ width:36, height:36, objectFit:"contain", borderRadius:6, background:C.bg4 }} />
-                  : <div style={{ width:36, height:36, background:C.bg4, borderRadius:6 }} />
+                  ? <img src={m.image_url} alt={m.nom} style={{ width:36, height:36, objectFit:"contain", borderRadius:6, background:"var(--df-bg)" }} />
+                  : <div style={{ width:36, height:36, background:"var(--df-bg)", borderRadius:6 }} />
                 }
                 <div>
-                  <div style={{ fontSize:13, fontWeight:500, color:C.txt }}>{m.nom}</div>
-                  <div style={{ fontSize:11, color:C.txt3 }}>{m.famille || m.race || ""}</div>
+                  <div style={{ fontSize:13, fontWeight:500, color:"var(--df-text)" }}>{m.nom}</div>
+                  <div style={{ fontSize:11, color:"var(--df-text-3)" }}>{m.famille || m.race || ""}</div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
-      <div style={{ display:"flex", justifyContent:"center", gap:7, flexWrap:"wrap", position:"relative" }}>
-        {quickChips.map(c => (
-          <span key={c} onClick={()=>setQuery(c)}
-            style={{ background:C.prpf, border:`0.5px solid ${C.prpb}`, borderRadius:16, padding:"4px 12px", fontSize:11, color:C.prp2, cursor:"pointer" }}
-            onMouseEnter={e=>{e.currentTarget.style.background="rgba(155,77,224,0.18)";e.currentTarget.style.borderColor=C.prp2}}
-            onMouseLeave={e=>{e.currentTarget.style.background=C.prpf;e.currentTarget.style.borderColor=C.prpb}}
-          >{c}</span>
-        ))}
-      </div>
+      <DofusSeparator />
     </div>
   )
 }
@@ -153,7 +204,7 @@ function AlmanaxBanner({ data }) {
   const dateLabel = new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })
   const dateCapitalisee = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)
   return (
-    <div style={{ background:"var(--df-panel-bg)", padding:"9px 2rem", display:"flex", alignItems:"center", gap:18, flexWrap:"wrap" }}>
+    <div style={{ background:"var(--df-panel-bg)", borderBottom:"1px solid rgba(255,198,61,0.2)", padding:"9px 2rem", display:"flex", alignItems:"center", gap:18, overflowX:"auto", whiteSpace:"nowrap" }}>
       <span style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:700, letterSpacing:"0.08em", color:"var(--df-gold)" }}>
         <span style={{ fontSize:13 }}>&#128197;</span> ALMANAX
       </span>
@@ -173,6 +224,30 @@ function AlmanaxBanner({ data }) {
   )
 }
 
+// 90 étoiles à position/taille/opacité aléatoires, générées une seule fois
+// (useMemo) puis animées en CSS pur (.df-star) — reprend StarField de la
+// maquette/dofura-home-v4.jsx, remplace l'ancienne tuile CSS répétée.
+function StarField() {
+  const stars = useMemo(() => Array.from({ length:90 }, (_, i) => ({
+    id:i,
+    left:Math.random()*100,
+    top:Math.random()*100,
+    size:Math.random()*2.2+0.8,
+    opacity:Math.random()*0.55+0.2,
+    delay:Math.random()*6,
+  })), [])
+  return (
+    <div style={{ position:"absolute", inset:0, pointerEvents:"none" }}>
+      {stars.map(s => (
+        <div key={s.id} className="df-star" style={{
+          left:s.left+"%", top:s.top+"%", width:s.size, height:s.size,
+          opacity:s.opacity, animationDelay:s.delay+"s",
+        }} />
+      ))}
+    </div>
+  )
+}
+
 function Footer() {
   return (
     <footer style={{ background:"var(--df-panel-bg)", borderTop:"1px solid var(--df-border-gold)", padding:"18px 2rem", textAlign:"center" }}>
@@ -184,32 +259,32 @@ function Footer() {
   )
 }
 
+// Les 6 cartes reprennent exactement les 5 catégories de la navbar (§2) +
+// Carte interactive (chantier futur, voir CLAUDE.md). Équipements/Donjons/
+// Bestiaire ont déjà une page (Panoplies/Ressources/Zones fusionnées dedans,
+// voir navLinks) ; Métiers/Quêtes/Carte interactive n'en ont pas encore —
+// carte affichée à l'identique (cohérence visuelle avec la maquette) mais
+// non cliquable, comme les liens inertes de la navbar.
 function EncycloGrid({ onNav }) {
   const items = [
-    { label:"Monstres",     count:"4 932",  action:()=>onNav("monstres") },
-    { label:"Quêtes",       count:"4 210",  action:null },
-    { label:"Équipements",  count:"3 826",  action:()=>onNav("equipement") },
-    { label:"Ressources",   count:"3 639",  action:()=>onNav("ressource") },
-    { label:"Métiers",      count:"18",     action:null },
-    { label:"Zones",        count:"372",    action:()=>onNav("zone") },
-    { label:"Donjons",      count:"187",    action:()=>onNav("donjon") },
-    { label:"Panoplies",    count:"927",    action:()=>onNav("panoplie") },
+    { label:"Équipements",       desc:"Armes, coiffes, capes... et leurs panoplies",    action:()=>onNav("equipement") },
+    { label:"Métiers",           desc:"Récolte, craft et ressources",                   action:null },
+    { label:"Donjons",           desc:"Boss, salles, stratégies et succès",             action:()=>onNav("donjon") },
+    { label:"Bestiaire",         desc:"Toutes les créatures, par zone et sous-zone",    action:()=>onNav("monstres") },
+    { label:"Quêtes",            desc:"Étapes, prérequis et récompenses",               action:null },
+    { label:"Carte interactive", desc:"Positions des ressources et métiers", lit:true,  action:null },
   ]
   return (
-    <div style={{ padding:"18px 2rem 0" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-        <span style={{ fontSize:13, fontWeight:500, color:C.txt }}>Encyclopédie</span>
-        <span style={{ fontSize:11, color:C.txt3 }}>Tout voir →</span>
-      </div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(120px, 1fr))", gap:8, marginBottom:18 }}>
+    <div style={{ padding:"0 2rem 60px", maxWidth:1240, margin:"0 auto" }}>
+      <div className="df-section-title" style={{ fontSize:"clamp(22px, 3.5vw, 28px)", marginBottom:24 }}>Explorer l'encyclopédie</div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(260px, 1fr))", gap:22 }}>
         {items.map(it => (
-          <div key={it.label} onClick={it.action||undefined}
-            style={{ background:C.bg3, border:`0.5px solid ${C.bdr}`, borderRadius:8, padding:"14px 6px", textAlign:"center", cursor:it.action?"pointer":"default" }}
-            onMouseEnter={e=>{if(it.action){e.currentTarget.style.borderColor=C.cyan;e.currentTarget.style.background=C.cyanf}}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor=C.bdr;e.currentTarget.style.background=C.bg3}}
+          <div key={it.label} onClick={it.action||undefined} className={"df-card" + (it.lit?" df-card-lit":"")}
+            style={{ padding:26, cursor:it.action?"pointer":"default" }}
           >
-            <div style={{ fontSize:11, color:C.txt, fontWeight:500, marginBottom:4 }}>{it.label}</div>
-            <div style={{ fontSize:10, color:C.txt3 }}>{it.count}</div>
+            <div style={{ fontSize:19, fontWeight:700, color:"var(--df-gold)", marginBottom:8 }}>{it.label}</div>
+            <div style={{ fontSize:13.5, color:"var(--df-text-2)", lineHeight:1.5, marginBottom:18 }}>{it.desc}</div>
+            <div style={{ fontSize:13.5, color:"var(--df-cyan)", fontWeight:600 }}>Explorer →</div>
           </div>
         ))}
       </div>
@@ -1564,7 +1639,7 @@ export default function App() {
     <div translate="no" style={{ position:"relative", minHeight:"100vh", overflow:"hidden", background:"var(--df-bg)", display:"flex", flexDirection:"column" }}>
       {/* Fond Krosmoz : absolute (jamais fixed, voir CLAUDE.md piège fantômes de texte au scroll) */}
       <div className="df-nebula" />
-      <div className="df-stars" />
+      <StarField />
       <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.32)", pointerEvents:"none" }} />
 
       <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>

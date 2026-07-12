@@ -1,9 +1,7 @@
 /* ============================================================
    DOFURA — Design tokens
-   Importé une fois (main.jsx) et réutilisé partout.
+   À importer une fois (globals.css / index.css) et à réutiliser partout.
    Garantit la cohérence visuelle sur toutes les pages.
-   Source : doc/dofura-tokens.css (cahier de refonte) — copie exacte,
-   ne pas modifier ici sans mettre à jour la source.
    ============================================================ */
 
 :root {
@@ -72,31 +70,11 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 720px 520px at 78% 12%, rgba(55,199,224,0.40), transparent 65%),
-    radial-gradient(ellipse 700px 540px at 6% 42%, rgba(179,63,201,0.34), transparent 65%),
-    radial-gradient(ellipse 620px 420px at 32% 2%, rgba(90,63,201,0.32), transparent 65%),
-    radial-gradient(ellipse 600px 450px at 85% 78%, rgba(196,75,199,0.22), transparent 65%),
-    radial-gradient(ellipse 550px 420px at 8% 92%, rgba(55,199,224,0.20), transparent 65%);
-}
-
-/* Champ d'étoiles — points générés en JS (position aléatoire), scintillement CSS.
-   Voir maquette/dofura-home-v4.jsx (StarField côté App.jsx). */
-.df-star {
-  position: absolute;
-  border-radius: 50%;
-  background: #fff;
-  pointer-events: none;
-  animation: df-twinkle 5s ease-in-out infinite;
-}
-@keyframes df-twinkle { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.6); } }
-
-/* Halo pulsant de la barre de recherche (Hero) */
-@keyframes df-search-pulse {
-  0%, 100% { box-shadow: 0 0 34px rgba(77,216,230,0.38), 0 0 90px rgba(77,216,230,0.14); }
-  50%      { box-shadow: 0 0 44px rgba(77,216,230,0.52), 0 0 110px rgba(77,216,230,0.2); }
-}
-.df-search-glow {
-  animation: df-search-pulse 3.2s ease-in-out infinite;
+    radial-gradient(ellipse 720px 520px at 78% 12%, rgba(55,199,224,0.20), transparent 65%),
+    radial-gradient(ellipse 700px 540px at 6% 42%, rgba(179,63,201,0.17), transparent 65%),
+    radial-gradient(ellipse 620px 420px at 32% 2%, rgba(90,63,201,0.17), transparent 65%),
+    radial-gradient(ellipse 600px 450px at 85% 78%, rgba(196,75,199,0.10), transparent 65%),
+    radial-gradient(ellipse 550px 420px at 8% 92%, rgba(55,199,224,0.09), transparent 65%);
 }
 
 /* Grand titre / logo en dégradé doré */
@@ -128,14 +106,6 @@
   transform: translateY(-3px);
   border-color: var(--df-border-gold-hover);
   box-shadow: 0 0 26px rgba(255, 198, 61, 0.28);
-}
-/* Variante "mise en avant" (ex. carte à venir sur la grille Encyclopédie) :
-   même rendu qu'un hover, mais figé — voir maquette/dofura-home-v4.jsx (.df-card.lit) */
-.df-card.df-card-lit {
-  background: rgba(22, 29, 51, 0.96);
-  border-color: rgba(255, 198, 61, 0.9);
-  border-width: 1.5px;
-  box-shadow: 0 0 26px rgba(255, 198, 61, 0.3);
 }
 
 /* Bouton primaire doré */
@@ -193,5 +163,4 @@
 /* Respect du mode "mouvement réduit" (accessibilité) */
 @media (prefers-reduced-motion: reduce) {
   .df-card, .df-card:hover { transition: none; transform: none; }
-  .df-star, .df-search-glow { animation: none; }
 }
