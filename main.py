@@ -431,9 +431,29 @@ TRANCHES_NIVEAU = {
     "1-50": (1, 50), "51-100": (51, 100), "101-150": (101, 150), "151-200": (151, 200),
 }
 
+# Filtre "Effets recherchés" des équipements (§5 CLAUDE.md, "le filtre tueur").
+# Chaque effect_id a ete verifie individuellement dans dofura_effects.json
+# (boost=true, characteristic_operator="+", description au mot entier) —
+# PAS un simple substring sur le nom, qui aurait aussi remonte des mecaniques
+# homonymes sans rapport avec un vrai bonus de stat portee par l'objet :
+# "Esquive PA"(160)/"Retrait PA"(410)/"Vole PA"(84) pour PA, meme piege pour PM.
+# Seule Vitalite a plusieurs effect_id verifies (valeur fixe + 2 variantes %).
+EFFETS_RECHERCHABLES = {
+    "Force":        (118,),
+    "Agilité":      (119,),
+    "Chance":       (123,),
+    "Sagesse":      (124,),
+    "Vitalité":     (125, 1078, 2844),
+    "Intelligence": (126,),
+    "PA":           (111,),
+    "PM":           (128,),
+}
+
 @app.get("/objets")
 def liste_objets(categorie: str = "equipement", search: str = "", type: str = "",
-                  tranche_niveau: str = "", page: int = 1, page_size: int = 48):
+                  niveau_min: int = 1, niveau_max: int = 999,
+                  effets: str = "", panoplie: bool = False, legendaire: bool = False,
+                  tri: str = "az", page: int = 1, page_size: int = 48):
     page = max(page, 1)
     page_size = min(max(page_size, 1), 200)
     super_types = CATEGORIES_OBJETS.get(categorie, CATEGORIES_OBJETS["equipement"])
@@ -441,20 +461,47 @@ def liste_objets(categorie: str = "equipement", search: str = "", type: str = ""
     conditions = [f"super_type_nom IN ({','.join('?' for _ in super_types)})", "nom LIKE ?"]
     params = list(super_types) + [f"%{search}%"]
 
-    if type == SANS_VALEUR:
-        conditions.append("(type_nom IS NULL OR type_nom = '')")
-    elif type:
-        conditions.append("type_nom = ?")
-        params.append(type)
+    # Multi-selection (checkboxes, pas un menu deroulant) : plusieurs types
+    # a la fois, "__aucune__" mele aux vrais types possible (OR, pas AND).
+    types_choisis = [t for t in type.split(",") if t]
+    if types_choisis:
+        sous_conditions = []
+        if SANS_VALEUR in types_choisis:
+            sous_conditions.append("(type_nom IS NULL OR type_nom = '')")
+            types_choisis = [t for t in types_choisis if t != SANS_VALEUR]
+        if types_choisis:
+            sous_conditions.append(f"type_nom IN ({','.join('?' for _ in types_choisis)})")
+            params.extend(types_choisis)
+        conditions.append("(" + " OR ".join(sous_conditions) + ")")
 
-    if tranche_niveau == SANS_VALEUR:
-        conditions.append("(niveau IS NULL OR niveau = 0)")
-    elif tranche_niveau in TRANCHES_NIVEAU:
-        borne_min, borne_max = TRANCHES_NIVEAU[tranche_niveau]
-        conditions.append("niveau BETWEEN ? AND ?")
-        params.extend([borne_min, borne_max])
+    conditions.append("niveau BETWEEN ? AND ?")
+    params.extend([niveau_min, niveau_max])
+
+    if panoplie:
+        conditions.append("panoplie_id IS NOT NULL")
+    if legendaire:
+        conditions.append("legendaire = 1")
+
+    # Effets recherches : logique ET (l'objet doit porter TOUS les effets
+    # coches, ex. Force + Vitalite en meme temps), un EXISTS par effet choisi.
+    effets_choisis = [e for e in effets.split(",") if e in EFFETS_RECHERCHABLES]
+    for e in effets_choisis:
+        ids = EFFETS_RECHERCHABLES[e]
+        conditions.append(f"""EXISTS (
+            SELECT 1 FROM objets_effets oe
+            WHERE oe.objet_id = objets.id AND oe.effect_id IN ({','.join('?' for _ in ids)})
+        )""")
+        params.extend(ids)
 
     where_clause = " AND ".join(conditions)
+
+    ordres = {
+        "az": "nom",
+        "niveau_desc": "niveau DESC, nom",
+        "niveau_asc": "niveau ASC, nom",
+        "type": "type_nom, niveau DESC",
+    }
+    order_by = ordres.get(tri, ordres["az"])
 
     conn = get_db()
     cur = conn.cursor()
@@ -462,19 +509,42 @@ def liste_objets(categorie: str = "equipement", search: str = "", type: str = ""
     total = cur.fetchone()[0]
 
     cur.execute(f"""
-        SELECT id, nom, img, niveau, type_nom FROM objets
+        SELECT id, nom, img, niveau, type_nom, legendaire, panoplie_id FROM objets
         WHERE {where_clause}
-        ORDER BY nom
+        ORDER BY {order_by}
         LIMIT ? OFFSET ?
     """, params + [page_size, (page - 1) * page_size])
     rows = cur.fetchall()
+
+    # Effets formates par objet (pour le tooltip au survol des vignettes) :
+    # une seule requete groupee sur la page courante (max page_size lignes),
+    # pas une par objet — meme fonction de formatage que la fiche detail
+    # (formater_effet_objet), une seule source de verite pour le texte.
+    effets_par_objet = {}
+    ids_page = [r["id"] for r in rows]
+    if ids_page:
+        cur.execute(f"""
+            SELECT * FROM objets_effets WHERE objet_id IN ({','.join('?' for _ in ids_page)})
+        """, ids_page)
+        for e in cur.fetchall():
+            f = formater_effet_objet(e)
+            if f["texte"] is not None:
+                effets_par_objet.setdefault(e["objet_id"], []).append(f)
     conn.close()
+
+    objets_resultat = []
+    for r in rows:
+        d = dict(r)
+        d["effects"] = effets_par_objet.get(r["id"], [])
+        d["legendaire"] = bool(d["legendaire"])
+        d["panoplie"] = d.pop("panoplie_id") is not None
+        objets_resultat.append(d)
 
     return {
         "total": total,
         "page": page,
         "page_size": page_size,
-        "objets": [dict(r) for r in rows],
+        "objets": objets_resultat,
     }
 
 @app.get("/objets/filtres")
@@ -503,8 +573,20 @@ def filtres_objets(categorie: str = "equipement"):
     """, super_types)
     sans_niveau = cur.fetchone()[0] > 0
 
+    # Bornes reelles du curseur de niveau (pas de valeur en dur type 200 :
+    # Dofus 3.0 a des objets au-dela selon les extensions live).
+    cur.execute(f"""
+        SELECT MIN(niveau), MAX(niveau) FROM objets
+        WHERE super_type_nom IN ({placeholders}) AND niveau IS NOT NULL AND niveau > 0
+    """, super_types)
+    niveau_min_dispo, niveau_max_dispo = cur.fetchone()
+
     conn.close()
-    return {"types": types, "sans_type": sans_type, "sans_niveau": sans_niveau}
+    return {
+        "types": types, "sans_type": sans_type, "sans_niveau": sans_niveau,
+        "niveau_min": niveau_min_dispo or 1, "niveau_max": niveau_max_dispo or 200,
+        "effets": list(EFFETS_RECHERCHABLES.keys()) if categorie == "equipement" else [],
+    }
 
 @app.get("/objets/{objet_id}")
 def detail_objet(objet_id: int):

@@ -35,10 +35,12 @@ const C = {
 // Équipements englobe Panoplies, Métiers englobe Ressources (+ future carte),
 // Bestiaire fusionne Monstres + Zones. Ces pages existent toujours (accès
 // via la grille Encyclopédie de l'accueil ou les liens croisés des fiches),
-// elles ne sont juste plus des onglets de premier niveau. Métiers/Quêtes
-// n'ont pas encore de page : lien inerte, comme avant pour ces libellés.
+// elles ne sont juste plus des onglets de premier niveau. Quêtes n'a pas
+// encore de page : lien inerte. "Métiers" pointe vers Ressources en
+// attendant le vrai hub Métiers (chantier futur #11 CLAUDE.md) — sans ça,
+// les 3 639 ressources deviendraient injoignables depuis l'interface.
 const navLinks = ["Équipements", "Métiers", "Donjons", "Bestiaire", "Quêtes"]
-const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres" }
+const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres", "Métiers":"ressource" }
 
 function Navbar({ onHome, onNav, browsing }) {
   return (
@@ -261,14 +263,15 @@ function Footer() {
 
 // Les 6 cartes reprennent exactement les 5 catégories de la navbar (§2) +
 // Carte interactive (chantier futur, voir CLAUDE.md). Équipements/Donjons/
-// Bestiaire ont déjà une page (Panoplies/Ressources/Zones fusionnées dedans,
-// voir navLinks) ; Métiers/Quêtes/Carte interactive n'en ont pas encore —
-// carte affichée à l'identique (cohérence visuelle avec la maquette) mais
-// non cliquable, comme les liens inertes de la navbar.
+// Bestiaire ont déjà une page (Panoplies/Zones fusionnées dedans, voir
+// navLinks) ; Quêtes/Carte interactive n'en ont pas encore — carte affichée
+// à l'identique (cohérence visuelle avec la maquette) mais non cliquable,
+// comme le lien inerte de la navbar. Métiers pointe vers Ressources en
+// attendant le vrai hub Métiers (même raison que NAV_LABEL_VERS_CIBLE).
 function EncycloGrid({ onNav }) {
   const items = [
     { label:"Équipements",       desc:"Armes, coiffes, capes... et leurs panoplies",    action:()=>onNav("equipement") },
-    { label:"Métiers",           desc:"Récolte, craft et ressources",                   action:null },
+    { label:"Métiers",           desc:"Récolte, craft et ressources",                   action:()=>onNav("ressource") },
     { label:"Donjons",           desc:"Boss, salles, stratégies et succès",             action:()=>onNav("donjon") },
     { label:"Bestiaire",         desc:"Toutes les créatures, par zone et sous-zone",    action:()=>onNav("monstres") },
     { label:"Quêtes",            desc:"Étapes, prérequis et récompenses",               action:null },
@@ -714,30 +717,72 @@ function MonstresPage({ onSelect, onBack }) {
   )
 }
 
+const TRI_OPTIONS = [
+  { valeur:"az",          label:"A → Z" },
+  { valeur:"niveau_desc", label:"Niveau ↓" },
+  { valeur:"niveau_asc",  label:"Niveau ↑" },
+  { valeur:"type",        label:"Par type" },
+]
+
+// Regroupement sous en-tetes : depend du tri actif (lettres / types / tranches
+// de 50 niveaux), calcule sur la page courante uniquement — comme le tri et
+// les filtres, la pagination reste geree cote serveur (voir CLAUDE.md §5).
+function grouperObjets(objets, tri) {
+  const cleDe = (o) => {
+    if (tri === "type") return o.type_nom || "—"
+    if (tri === "niveau_desc" || tri === "niveau_asc") {
+      const base = Math.floor((o.niveau - 1) / 50) * 50 + 1
+      return `Niv. ${base} à ${base + 49}`
+    }
+    return (o.nom.charAt(0) || "?").toUpperCase()
+  }
+  const groupes = []
+  objets.forEach(o => {
+    const cle = cleDe(o)
+    const dernier = groupes[groupes.length - 1]
+    if (dernier && dernier.cle === cle) dernier.items.push(o)
+    else groupes.push({ cle, items:[o] })
+  })
+  return groupes
+}
+
+const fchk = { display:"flex", alignItems:"center", gap:9, padding:"4px 0", fontSize:13.5, color:"var(--df-text-2)", cursor:"pointer" }
+const fchkInput = { accentColor:"var(--df-gold)", width:15, height:15, cursor:"pointer" }
+const ftitle = { fontSize:11.5, fontWeight:700, letterSpacing:2, textTransform:"uppercase", margin:"18px 0 10px" }
+
 // Composant unique reutilise pour /equipements et /ressources (DRY) : seule
-// la prop "categorie" change le perimetre interroge cote backend, le reste
-// (titre, placeholder, textes) est parametre depuis le point d'appel plutot
-// que devine ici, pour eviter toute logique de grammaire fragile.
+// la prop "categorie" change le perimetre interroge cote backend. Les filtres
+// avances (effets recherches / avec panoplie / legendaire) n'ont de sens que
+// pour les equipements — masques pour les ressources plutot que devines.
 function ObjetsPage({ categorie, titre, placeholder, videMessage, compteurSingulier, compteurPluriel, onSelect, onBack }) {
   const [objets, setObjets] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
-  const [type, setType] = useState("")
-  const [trancheNiveau, setTrancheNiveau] = useState("")
+  const [tri, setTri] = useState("az")
   const [types, setTypes] = useState([])
-  const [sansTypeDispo, setSansTypeDispo] = useState(false)
-  const [sansNiveauDispo, setSansNiveauDispo] = useState(false)
+  const [typesDispo, setTypesDispo] = useState([])
+  const [niveauBounds, setNiveauBounds] = useState(null)
+  const [niveauMin, setNiveauMin] = useState(1)
+  const [niveauMax, setNiveauMax] = useState(200)
+  const [effets, setEffets] = useState([])
+  const [effetsDispo, setEffetsDispo] = useState([])
+  const [panoplie, setPanoplie] = useState(false)
+  const [legendaire, setLegendaire] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [tip, setTip] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Categorie fixee par la page (pas de cascade a double sens necessaire
-  // comme famille/zone) : les filtres ne dependent que d'elle, recharges au
-  // changement de categorie (navigation directe equipement <-> ressource).
+  // Categorie fixee par la page : les filtres ne dependent que d'elle,
+  // recharges au changement de categorie (navigation directe equipement <-> ressource).
   useEffect(() => {
-    setSearchInput(""); setSearch(""); setType(""); setTrancheNiveau(""); setPage(1)
+    setSearchInput(""); setSearch(""); setTypes([]); setEffets([])
+    setPanoplie(false); setLegendaire(false); setTri("az"); setPage(1); setNiveauBounds(null)
     fetch(`${API}/objets/filtres?categorie=${categorie}`).then(r=>r.json()).then(d => {
-      setTypes(d.types); setSansTypeDispo(d.sans_type); setSansNiveauDispo(d.sans_niveau)
+      setTypesDispo(d.types); setEffetsDispo(d.effets)
+      setNiveauBounds({ min:d.niveau_min, max:d.niveau_max })
+      setNiveauMin(d.niveau_min); setNiveauMax(d.niveau_max)
     })
   }, [categorie])
 
@@ -748,9 +793,14 @@ function ObjetsPage({ categorie, titre, placeholder, videMessage, compteurSingul
 
   const objetsRequeteId = useRef(0)
   useEffect(() => {
+    if (!niveauBounds) return // attend les vraies bornes de niveau avant le premier appel
     const requeteId = ++objetsRequeteId.current
     setLoading(true)
-    const params = new URLSearchParams({ categorie, search, type, tranche_niveau: trancheNiveau, page, page_size: PAGE_SIZE })
+    const params = new URLSearchParams({
+      categorie, search, tri, page, page_size: PAGE_SIZE,
+      type: types.join(","), niveau_min: niveauMin, niveau_max: niveauMax,
+      effets: effets.join(","), panoplie, legendaire,
+    })
     fetch(`${API}/objets?${params}`)
       .then(r=>r.json())
       .then(d => {
@@ -758,72 +808,172 @@ function ObjetsPage({ categorie, titre, placeholder, videMessage, compteurSingul
         setObjets(d.objets); setTotal(d.total); setLoading(false)
       })
       .catch(()=>{ if (requeteId === objetsRequeteId.current) setLoading(false) })
-  }, [categorie, search, type, trancheNiveau, page])
+  }, [categorie, search, tri, types, niveauMin, niveauMax, effets, panoplie, legendaire, page, niveauBounds])
+
+  const toggleType = (t) => { setTypes(ts => ts.includes(t) ? ts.filter(x=>x!==t) : [...ts, t]); setPage(1) }
+  const toggleEffet = (e) => { setEffets(es => es.includes(e) ? es.filter(x=>x!==e) : [...es, e]); setPage(1) }
+
+  const chips = [
+    ...types.map(t => ({ label:t, off:()=>toggleType(t) })),
+    ...(niveauBounds && (niveauMin > niveauBounds.min || niveauMax < niveauBounds.max)
+      ? [{ label:`Niv. ${niveauMin}-${niveauMax}`, off:()=>{ setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max); setPage(1) } }]
+      : []),
+    ...effets.map(e => ({ label:e, off:()=>toggleEffet(e) })),
+    ...(panoplie ? [{ label:"Avec panoplie", off:()=>{ setPanoplie(false); setPage(1) } }] : []),
+    ...(legendaire ? [{ label:"Légendaire", off:()=>{ setLegendaire(false); setPage(1) } }] : []),
+  ]
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
-  const filtresActifs = search || type || trancheNiveau
+  const groupes = useMemo(() => grouperObjets(objets, tri), [objets, tri])
 
   const reinitialiser = () => {
-    setSearchInput(""); setSearch(""); setType(""); setTrancheNiveau(""); setPage(1)
+    setSearchInput(""); setSearch(""); setTypes([]); setEffets([])
+    setPanoplie(false); setLegendaire(false)
+    if (niveauBounds) { setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max) }
+    setPage(1)
   }
 
   return (
     <div style={mp.page}>
       <button onClick={onBack} style={mp.backBtn}>← Retour</button>
 
-      <div style={mp.filtreBar}>
-        <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
-          placeholder={placeholder} style={mp.searchInput} />
-
-        <select value={type} onChange={e=>{ setType(e.target.value); setPage(1) }} style={mp.select}>
-          <option value="">Tous les types</option>
-          {sansTypeDispo && <option value={SANS_VALEUR}>Sans type</option>}
-          {types.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-
-        <select value={trancheNiveau} onChange={e=>{ setTrancheNiveau(e.target.value); setPage(1) }} style={mp.select}>
-          <option value="">Tous niveaux</option>
-          {TRANCHES_NIVEAU.map(tr => <option key={tr.valeur} value={tr.valeur}>{tr.label}</option>)}
-          {sansNiveauDispo && <option value={SANS_VALEUR}>Sans niveau</option>}
-        </select>
-
-        {filtresActifs && <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser</button>}
-
-        <span style={mp.compteur}>{total} {total!==1?compteurPluriel:compteurSingulier}</span>
+      <div style={{ display:"flex", alignItems:"baseline", gap:14, flexWrap:"wrap", marginBottom:18 }}>
+        <h1 className="df-section-title" style={{ fontSize:"clamp(24px, 4vw, 32px)", margin:0 }}>{titre}</h1>
+        <span style={{ color:"var(--df-text-3)", fontSize:13.5 }}>{total} {total!==1?compteurPluriel:compteurSingulier}</span>
       </div>
 
-      {!loading && objets.length === 0 ? (
-        <div style={mp.videEtat}>
-          {videMessage}
-          {filtresActifs && <div style={{ marginTop:10 }}>
-            <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
-          </div>}
+      <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:16 }}>
+        <div style={{ flex:1, minWidth:200, display:"flex", alignItems:"center", gap:10, background:"rgba(20,26,46,0.95)", border:"1px solid rgba(77,216,230,0.5)", borderRadius:12, padding:"11px 16px" }}>
+          <SearchIcon />
+          <input value={searchInput} onChange={e=>setSearchInput(e.target.value)} placeholder={placeholder}
+            style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"var(--df-text)", fontSize:14 }} />
         </div>
-      ) : (
-        <div style={mp.grid}>
-          {objets.map(o => (
-            <div key={o.id} onClick={()=>onSelect(o.id)} style={mp.card}
-              onMouseEnter={e=>e.currentTarget.style.borderColor=C.cyan}
-              onMouseLeave={e=>e.currentTarget.style.borderColor=C.bdr}
-            >
-              {o.img
-                ? <img src={o.img} alt={o.nom} style={mp.cardImg} />
-                : <div style={mp.cardImgVide} />
-              }
-              <div style={mp.cardNom}>{o.nom}</div>
-              <div style={mp.cardFamille}>Niv. {o.niveau} — {o.type_nom || "—"}</div>
-            </div>
+        <select value={tri} onChange={e=>{ setTri(e.target.value); setPage(1) }}
+          style={{ background:"rgba(20,26,46,0.95)", color:"var(--df-text)", border:"1px solid rgba(255,198,61,0.35)", borderRadius:12, padding:"11px 14px", fontSize:13.5, cursor:"pointer" }}>
+          {TRI_OPTIONS.map(o => <option key={o.valeur} value={o.valeur}>{o.label}</option>)}
+        </select>
+        <button className="df-filters-toggle" onClick={()=>setShowFilters(s=>!s)}
+          style={{ background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.6)", borderRadius:12, padding:"11px 16px", fontSize:13.5, fontWeight:600, cursor:"pointer" }}>
+          Filtres{chips.length>0?` (${chips.length})`:""}
+        </button>
+      </div>
+
+      {chips.length > 0 && (
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16, alignItems:"center" }}>
+          {chips.map((c,i) => (
+            <button key={i} className="df-chip-filter" onClick={c.off}>{c.label} <span className="x">✕</span></button>
           ))}
+          <button onClick={reinitialiser} style={{ background:"none", border:"none", color:"var(--df-text-3)", fontSize:12.5, cursor:"pointer", textDecoration:"underline" }}>
+            Tout effacer
+          </button>
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div style={mp.pagination}>
-          <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
-          <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
-          <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+      <div className="df-list-wrap">
+        <aside className={"df-filters-panel" + (showFilters?" df-filters-open":"")}
+          style={{ background:"rgba(20,26,46,0.92)", border:"1px solid rgba(255,198,61,0.2)", borderRadius:16, padding:20 }}>
+          <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Type</div>
+          {typesDispo.map(t => (
+            <label key={t} style={fchk}>
+              <input type="checkbox" checked={types.includes(t)} onChange={()=>toggleType(t)} style={fchkInput} />
+              {t}
+            </label>
+          ))}
+
+          {niveauBounds && (
+            <>
+              <div className="df-section-title" style={ftitle}>Niveau</div>
+              <input type="range" min={niveauBounds.min} max={niveauBounds.max} value={niveauMin}
+                onChange={e=>{ setNiveauMin(Math.min(Number(e.target.value), niveauMax)); setPage(1) }}
+                style={{ width:"100%", accentColor:"var(--df-cyan)" }} />
+              <input type="range" min={niveauBounds.min} max={niveauBounds.max} value={niveauMax}
+                onChange={e=>{ setNiveauMax(Math.max(Number(e.target.value), niveauMin)); setPage(1) }}
+                style={{ width:"100%", accentColor:"var(--df-cyan)" }} />
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"var(--df-text-3)", marginTop:2 }}>
+                <span>Min : {niveauMin}</span><span>Max : {niveauMax}</span>
+              </div>
+            </>
+          )}
+
+          {categorie === "equipement" && effetsDispo.length > 0 && (
+            <>
+              <div className="df-section-title" style={ftitle}>Effets recherchés</div>
+              <div>
+                {effetsDispo.map(e => (
+                  <button key={e} className={"df-chip-fx" + (effets.includes(e)?" on":"")} onClick={()=>toggleEffet(e)}>{e}</button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {categorie === "equipement" && (
+            <>
+              <div className="df-section-title" style={ftitle}>Options</div>
+              <label style={fchk}>
+                <input type="checkbox" checked={panoplie} onChange={()=>{ setPanoplie(p=>!p); setPage(1) }} style={fchkInput} />
+                Avec panoplie
+              </label>
+              <label style={fchk}>
+                <input type="checkbox" checked={legendaire} onChange={()=>{ setLegendaire(l=>!l); setPage(1) }} style={fchkInput} />
+                Légendaire uniquement
+              </label>
+            </>
+          )}
+        </aside>
+
+        <div>
+          {!loading && objets.length === 0 ? (
+            <div style={mp.videEtat}>
+              {videMessage}
+              {chips.length > 0 && <div style={{ marginTop:10 }}>
+                <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+              </div>}
+            </div>
+          ) : groupes.map((g, gi) => (
+            <div key={g.cle + gi}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, margin: gi===0 ? "0 0 12px" : "24px 0 12px" }}>
+                <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>{g.cle}</span>
+                <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
+                <span style={{ color:"var(--df-text-3)", fontSize:11.5 }}>{g.items.length} item{g.items.length>1?"s":""}</span>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
+                {g.items.map(o => (
+                  <div key={o.id} className="df-tile" onClick={()=>onSelect(o.id)}
+                    onMouseEnter={()=>setTip(o.id)} onMouseLeave={()=>setTip(null)}
+                  >
+                    {o.img
+                      ? <img src={o.img} alt={o.nom} style={{ width:44, height:44, objectFit:"contain", margin:"0 auto 10px", display:"block" }} />
+                      : <div style={{ width:44, height:44, borderRadius:10, margin:"0 auto 10px", background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)" }} />
+                    }
+                    <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:12.5, lineHeight:1.25, minHeight:31, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>{o.nom}</div>
+                    <div style={{ color:"var(--df-text-3)", fontSize:11, marginTop:4 }}>Niv. {o.niveau} — {o.type_nom || "—"}</div>
+                    {o.legendaire && <span className="df-tile-badge">LÉG.</span>}
+                    {tip === o.id && (
+                      <div className="df-tooltip">
+                        {o.effects.length > 0
+                          ? o.effects.slice(0,6).map((e,i) => (
+                              <div key={i} style={{ fontSize:12.5, padding:"2px 0", color: e.polarite==="malus" ? "var(--df-red)" : e.polarite==="bonus" ? "var(--df-green)" : "var(--df-text-2)" }}>{e.texte}</div>
+                            ))
+                          : <div style={{ fontSize:12, color:"var(--df-text-3)" }}>Pas d'effet notable</div>
+                        }
+                        {o.panoplie && <div style={{ color:"var(--df-text-2)", fontSize:11.5, marginTop:7, paddingTop:7, borderTop:"1px solid rgba(255,198,61,0.15)" }}>Fait partie d'une panoplie</div>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {totalPages > 1 && (
+            <div style={mp.pagination}>
+              <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+              <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+              <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
