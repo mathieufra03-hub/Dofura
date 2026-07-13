@@ -1,11 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import sqlite3
 import uvicorn
 import os
 import json
 import re
 import subprocess
+import bcrypt
+import jwt
+from datetime import datetime, timedelta, timezone
 subprocess.run(["python", "init_db.py"])
 
 app = FastAPI()
@@ -16,6 +20,52 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Cle de signature JWT en variable d'environnement (regle 12 CLAUDE.md,
+# jamais de secret en dur) — le defaut ne sert qu'au dev local, a definir
+# dans les Variables Railway avant tout déploiement reel avec des comptes.
+JWT_SECRET = os.environ.get("JWT_SECRET", "dev-local-secret-a-changer-en-prod")
+JWT_ALGO = "HS256"
+JWT_DUREE_JOURS = 30
+
+# Definis ici (avant toute route) car detail_donjon() plus bas utilise deja
+# utilisateur_optionnel — les dependances FastAPI sont resolues a la
+# definition de la route, pas seulement a l'appel.
+def hash_password(password):
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+def verifier_password(password, password_hash):
+    return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+
+def creer_jwt(user_id, pseudo):
+    payload = {
+        "user_id": user_id, "pseudo": pseudo,
+        "exp": datetime.now(timezone.utc) + timedelta(days=JWT_DUREE_JOURS),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
+
+def decoder_token(authorization):
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    try:
+        payload = jwt.decode(authorization.removeprefix("Bearer "), JWT_SECRET, algorithms=[JWT_ALGO])
+        return {"id": payload["user_id"], "pseudo": payload["pseudo"]}
+    except jwt.InvalidTokenError:
+        return None
+
+def utilisateur_courant(authorization: str = Header(None)):
+    """Dependance stricte : leve 401 si pas connecte — endpoints qui
+    exigent un compte (ecriture de progression/favoris)."""
+    user = decoder_token(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Non connecte")
+    return user
+
+def utilisateur_optionnel(authorization: str = Header(None)):
+    """Variante souple : renvoie None si pas connecte, ne bloque jamais —
+    pages publiques consultables sans compte qui affichent juste l'etat
+    du favori/de la progression quand un utilisateur EST connecte."""
+    return decoder_token(authorization)
 
 SORTS_DATA = {}
 EFFECTS_DATA = {}
@@ -897,7 +947,7 @@ def filtres_donjons():
     return {"zones": zones, "sans_zone": sans_zone}
 
 @app.get("/donjons/{donjon_id}")
-def detail_donjon(donjon_id: int):
+def detail_donjon(donjon_id: int, user: dict = Depends(utilisateur_optionnel)):
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM donjons WHERE id = ?", (donjon_id,))
@@ -905,6 +955,12 @@ def detail_donjon(donjon_id: int):
     if not donjon:
         conn.close()
         return {"erreur": "Donjon introuvable"}
+
+    favori = False
+    if user:
+        cur.execute("SELECT 1 FROM favoris WHERE user_id = ? AND element_type = 'donjon' AND element_id = ?",
+                    (user["id"], str(donjon_id)))
+        favori = cur.fetchone() is not None
 
     cur.execute("""
         SELECT dm.monstre_id, dm.est_boss, m.nom, m.image_url
@@ -963,6 +1019,7 @@ def detail_donjon(donjon_id: int):
 
     return {
         **dict(donjon),
+        "favori": favori,
         "boss_principal": boss_principal,
         "monstres": [
             {"id": r["monstre_id"], "nom": r["nom"], "img": r["image_url"], "est_boss": bool(r["est_boss"])}
@@ -1120,6 +1177,139 @@ def detail_sous_zone(nom: str):
             for r in monstres_rows
         ],
     }
+
+# ============================================================
+# Comptes utilisateurs / progression / favoris (chantier Phase 4)
+# ⚠️ Teste en local uniquement pour l'instant — voir la note dans
+# init_db.py sur le volume persistant Railway absent (CLAUDE.md,
+# "Chantiers en cours #1"). Session en JWT via header Authorization,
+# pas de cookies (deja decide au §6 du CLAUDE.md — front/back sur deux
+# domaines a terme).
+# ============================================================
+
+class InscriptionBody(BaseModel):
+    pseudo: str
+    email: str
+    password: str
+
+class ConnexionBody(BaseModel):
+    identifiant: str  # pseudo ou email
+    password: str
+
+class ProgressionBody(BaseModel):
+    element_type: str
+    element_id: str
+    fait: bool
+
+class FavoriBody(BaseModel):
+    element_type: str
+    element_id: str
+
+@app.post("/auth/register")
+def inscription(body: InscriptionBody):
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="Mot de passe trop court (8 caractères minimum)")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM users WHERE pseudo = ? OR email = ?", (body.pseudo, body.email))
+    if cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=409, detail="Pseudo ou email déjà utilisé")
+    cur.execute("INSERT INTO users (pseudo, email, password_hash) VALUES (?, ?, ?)",
+                (body.pseudo, body.email, hash_password(body.password)))
+    user_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return {"token": creer_jwt(user_id, body.pseudo), "pseudo": body.pseudo}
+
+@app.post("/auth/login")
+def connexion(body: ConnexionBody):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, pseudo, password_hash FROM users WHERE pseudo = ? OR email = ?",
+                (body.identifiant, body.identifiant))
+    user = cur.fetchone()
+    conn.close()
+    if not user or not verifier_password(body.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Identifiants incorrects")
+    return {"token": creer_jwt(user["id"], user["pseudo"]), "pseudo": user["pseudo"]}
+
+@app.post("/auth/dev-login")
+def connexion_test():
+    """Connexion en un clic au compte de test seme par init_db.py — outil
+    de dev local le temps que l'inscription publique n'est pas construite."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, pseudo FROM users WHERE pseudo = 'PopoTest'")
+    user = cur.fetchone()
+    conn.close()
+    if not user:
+        raise HTTPException(status_code=404, detail="Compte de test introuvable")
+    return {"token": creer_jwt(user["id"], user["pseudo"]), "pseudo": user["pseudo"]}
+
+@app.get("/auth/me")
+def moi(user: dict = Depends(utilisateur_courant)):
+    return user
+
+@app.get("/progression")
+def liste_progression(element_type: str = "", user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    if element_type:
+        cur.execute("SELECT element_type, element_id, fait FROM progression_joueur WHERE user_id = ? AND element_type = ?",
+                    (user["id"], element_type))
+    else:
+        cur.execute("SELECT element_type, element_id, fait FROM progression_joueur WHERE user_id = ?", (user["id"],))
+    rows = cur.fetchall()
+    conn.close()
+    return {"progression": [dict(r) for r in rows]}
+
+@app.post("/progression")
+def marquer_progression(body: ProgressionBody, user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO progression_joueur (user_id, element_type, element_id, fait, date_maj)
+        VALUES (?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(user_id, element_type, element_id)
+        DO UPDATE SET fait = excluded.fait, date_maj = excluded.date_maj
+    """, (user["id"], body.element_type, body.element_id, int(body.fait)))
+    conn.commit()
+    conn.close()
+    return {"element_type": body.element_type, "element_id": body.element_id, "fait": body.fait}
+
+@app.get("/favoris")
+def liste_favoris(element_type: str = "", user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    if element_type:
+        cur.execute("SELECT element_type, element_id FROM favoris WHERE user_id = ? AND element_type = ?",
+                    (user["id"], element_type))
+    else:
+        cur.execute("SELECT element_type, element_id FROM favoris WHERE user_id = ?", (user["id"],))
+    rows = cur.fetchall()
+    conn.close()
+    return {"favoris": [dict(r) for r in rows]}
+
+@app.post("/favoris")
+def ajouter_favori(body: FavoriBody, user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT OR IGNORE INTO favoris (user_id, element_type, element_id) VALUES (?, ?, ?)",
+                (user["id"], body.element_type, body.element_id))
+    conn.commit()
+    conn.close()
+    return {"favori": True}
+
+@app.delete("/favoris")
+def retirer_favori(element_type: str, element_id: str, user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM favoris WHERE user_id = ? AND element_type = ? AND element_id = ?",
+                (user["id"], element_type, element_id))
+    conn.commit()
+    conn.close()
+    return {"favori": False}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))

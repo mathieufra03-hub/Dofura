@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import bcrypt
 with open("dofura_monstres.json", "r", encoding="utf-8") as f:
     monstres = json.load(f)
 with open("dofura_items.json", "r", encoding="utf-8") as f:
@@ -273,6 +274,53 @@ for z in zones_areas:
         INSERT OR REPLACE INTO zones_areas (nom, area)
         VALUES (?, ?)
     """, (z.get("nom"), z.get("area")))
+
+
+# ============================================================
+# Comptes utilisateurs / progression / favoris (chantier Phase 4)
+# ⚠️ CREATE TABLE IF NOT EXISTS UNIQUEMENT — jamais de DROP TABLE ici.
+# Contrairement a tout ce qui precede (encyclopedie, regeneree a chaque
+# demarrage depuis les JSON sources, voir regle 9 CLAUDE.md), ces 3 tables
+# portent de la donnee utilisateur reelle qui doit survivre aux redemarrages
+# locaux. ATTENTION : sur Railway (pas de volume persistant, voir CLAUDE.md
+# "Chantiers en cours #1"), tout dofura.db reste ephemere au redeploiement
+# tant que ce chantier n'est pas fait — teste en local uniquement pour l'instant.
+cur.executescript("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pseudo TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS progression_joueur (
+    user_id INTEGER NOT NULL,
+    element_type TEXT NOT NULL,
+    element_id TEXT NOT NULL,
+    fait INTEGER NOT NULL DEFAULT 0,
+    date_maj TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, element_type, element_id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS favoris (
+    user_id INTEGER NOT NULL,
+    element_type TEXT NOT NULL,
+    element_id TEXT NOT NULL,
+    date_ajout TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, element_type, element_id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+""")
+
+# Compte de test seme au demarrage (idempotent) : mot de passe connu, permet
+# de tester favoris/progression sans avoir monte l'inscription publique.
+# Identifiants documentes dans CLAUDE.md (section Compte de test).
+TEST_PSEUDO, TEST_EMAIL, TEST_PASSWORD = "PopoTest", "popo-test@dofura.local", "dofura-test-2026"
+cur.execute("SELECT id FROM users WHERE pseudo = ?", (TEST_PSEUDO,))
+if not cur.fetchone():
+    hash_test = bcrypt.hashpw(TEST_PASSWORD.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    cur.execute("INSERT INTO users (pseudo, email, password_hash) VALUES (?, ?, ?)",
+                (TEST_PSEUDO, TEST_EMAIL, hash_test))
 
 conn.commit()
 conn.close()

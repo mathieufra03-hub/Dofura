@@ -42,7 +42,72 @@ const C = {
 const navLinks = ["Équipements", "Métiers", "Donjons", "Bestiaire", "Quêtes"]
 const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres", "Métiers":"ressource" }
 
-function Navbar({ onHome, onNav, browsing }) {
+// Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
+// ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
+// ici (endpoint /auth/register pret cote backend, formulaire a construire
+// plus tard) — le compte de test suffit pour explorer favoris/progression
+// avant que l'inscription publique n'existe.
+function LoginPanel({ onLogin, onClose }) {
+  const [identifiant, setIdentifiant] = useState("")
+  const [password, setPassword] = useState("")
+  const [erreur, setErreur] = useState("")
+  const [loading, setLoading] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) onClose() }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [onClose])
+
+  const connecter = () => {
+    if (!identifiant || !password) return
+    setLoading(true); setErreur("")
+    fetch(`${API}/auth/login`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ identifiant, password }) })
+      .then(async r => {
+        if (!r.ok) { const d = await r.json().catch(()=>({})); throw new Error(d.detail || "Erreur de connexion") }
+        return r.json()
+      })
+      .then(d => onLogin(d.token))
+      .catch(e => { setErreur(e.message); setLoading(false) })
+  }
+
+  const connexionTest = () => {
+    setLoading(true); setErreur("")
+    fetch(`${API}/auth/dev-login`, { method:"POST" })
+      .then(r => r.json())
+      .then(d => onLogin(d.token))
+      .catch(() => { setErreur("Compte de test indisponible"); setLoading(false) })
+  }
+
+  const champStyle = { width:"100%", boxSizing:"border-box", background:"rgba(20,26,46,0.9)", border:"1px solid rgba(77,216,230,0.3)", borderRadius:8, padding:"9px 12px", fontSize:13, color:"var(--df-text)", outline:"none", marginBottom:8 }
+
+  return (
+    <div ref={ref} style={{ position:"absolute", top:"calc(100% + 8px)", right:0, width:280, background:"var(--df-panel-bg)", border:"1px solid rgba(255,198,61,0.3)", borderRadius:12, boxShadow:"0 14px 34px rgba(0,0,0,0.6)", padding:18, zIndex:200, textAlign:"left" }}>
+      <div style={{ fontSize:11, fontWeight:700, letterSpacing:1, color:"var(--df-gold)", textTransform:"uppercase", marginBottom:12 }}>Connexion</div>
+      <input value={identifiant} onChange={e=>setIdentifiant(e.target.value)} placeholder="Pseudo ou email" style={champStyle} />
+      <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="Mot de passe"
+        onKeyDown={e=>{ if (e.key==="Enter") connecter() }} style={{ ...champStyle, marginBottom:10 }} />
+      {erreur && <div style={{ color:"var(--df-red)", fontSize:12, marginBottom:8 }}>{erreur}</div>}
+      <button disabled={loading || !identifiant || !password} onClick={connecter}
+        style={{ width:"100%", background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.7)", borderRadius:8, padding:"9px", fontSize:13, fontWeight:600, cursor:loading?"default":"pointer", marginBottom:10, opacity:loading?0.6:1 }}>
+        Se connecter
+      </button>
+      <div style={{ display:"flex", alignItems:"center", gap:8, margin:"4px 0 10px" }}>
+        <div style={{ flex:1, height:1, background:"rgba(255,198,61,0.15)" }} />
+        <span style={{ fontSize:10, color:"var(--df-text-3)" }}>ou</span>
+        <div style={{ flex:1, height:1, background:"rgba(255,198,61,0.15)" }} />
+      </div>
+      <button disabled={loading} onClick={connexionTest}
+        style={{ width:"100%", background:"rgba(77,216,230,0.07)", color:"var(--df-cyan)", border:"1px solid rgba(77,216,230,0.6)", borderRadius:8, padding:"9px", fontSize:12.5, fontWeight:600, cursor:loading?"default":"pointer" }}>
+        Connexion rapide (compte de test)
+      </button>
+    </div>
+  )
+}
+
+function Navbar({ onHome, onNav, browsing, user, onLogin, onLogout }) {
+  const [showLogin, setShowLogin] = useState(false)
   return (
     <nav style={{ background:"var(--df-panel-bg)", borderBottom:"1px solid var(--df-border-gold)", padding:"0 2rem", display:"flex", alignItems:"center", height:56, position:"sticky", top:0, zIndex:100 }}>
       <span onClick={onHome} className="df-title-gold" style={{ fontSize:19, letterSpacing:"0.06em", marginRight:28, cursor:"pointer" }}>
@@ -61,14 +126,26 @@ function Navbar({ onHome, onNav, browsing }) {
           )
         })}
       </div>
-      <div style={{ marginLeft:"auto", display:"flex", gap:8, alignItems:"center" }}>
-        <button style={{
-          background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.7)",
-          borderRadius:10, padding:"8px 18px", fontSize:13.5, fontWeight:600, cursor:"pointer",
-        }}
-          onMouseEnter={e=>e.currentTarget.style.background="rgba(255,198,61,0.18)"}
-          onMouseLeave={e=>e.currentTarget.style.background="rgba(255,198,61,0.08)"}
-        >Connexion</button>
+      <div style={{ marginLeft:"auto", display:"flex", gap:12, alignItems:"center", position:"relative" }}>
+        {user ? (
+          <>
+            <span style={{ fontSize:13, color:"var(--df-text-2)" }}>{user.pseudo}</span>
+            <button onClick={onLogout} style={{ background:"transparent", color:"var(--df-text-3)", border:"1px solid rgba(255,198,61,0.25)", borderRadius:10, padding:"7px 14px", fontSize:12.5, cursor:"pointer" }}>
+              Déconnexion
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={()=>setShowLogin(s=>!s)} style={{
+              background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.7)",
+              borderRadius:10, padding:"8px 18px", fontSize:13.5, fontWeight:600, cursor:"pointer",
+            }}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,198,61,0.18)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,198,61,0.08)"}
+            >Connexion</button>
+            {showLogin && <LoginPanel onLogin={(token)=>{ onLogin(token); setShowLogin(false) }} onClose={()=>setShowLogin(false)} />}
+          </>
+        )}
       </div>
     </nav>
   )
@@ -1517,13 +1594,16 @@ function DonjonsPage({ onSelect, onBack }) {
   )
 }
 
-function DonjonDetailPage({ id, onSelectMonstre, onSelectObjet, onBack }) {
+function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onBack }) {
   const [data, setData] = useState(null)
+  const [favoriEnCours, setFavoriEnCours] = useState(false)
+  const [messageConnexion, setMessageConnexion] = useState(false)
 
   useEffect(() => {
     setData(null)
-    fetch(`${API}/donjons/${id}`).then(r=>r.json()).then(setData)
-  }, [id])
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    fetch(`${API}/donjons/${id}`, { headers }).then(r=>r.json()).then(setData)
+  }, [id, token])
 
   if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>Chargement...</div>
   if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>{data.erreur}</div>
@@ -1535,11 +1615,43 @@ function DonjonDetailPage({ id, onSelectMonstre, onSelectObjet, onBack }) {
 
   const aGuide = data.guide && (data.guide.mecaniques?.length > 0 || data.guide.salles?.length > 0 || data.guide.compo_conseillee)
 
+  // ★ favori : demo concrete du systeme progression/comptes (Phase 4) sur la
+  // seule fiche detail deja construite a ce stade du roadmap (donjons). Pas
+  // connecte -> pas d'appel API, juste une invite a se connecter.
+  const toggleFavori = () => {
+    if (!token) { setMessageConnexion(true); return }
+    setFavoriEnCours(true)
+    const methode = data.favori ? "DELETE" : "POST"
+    const url = data.favori
+      ? `${API}/favoris?element_type=donjon&element_id=${id}`
+      : `${API}/favoris`
+    fetch(url, {
+      method: methode,
+      headers: { Authorization:`Bearer ${token}`, ...(methode==="POST" ? {"Content-Type":"application/json"} : {}) },
+      body: methode==="POST" ? JSON.stringify({ element_type:"donjon", element_id:String(id) }) : undefined,
+    })
+      .then(r=>r.json())
+      .then(d => { setData(prev => ({ ...prev, favori:d.favori })); setFavoriEnCours(false) })
+      .catch(()=>setFavoriEnCours(false))
+  }
+
   return (
     <div translate="no" style={{ padding:"1.5rem 2rem", maxWidth:900, margin:"0 auto" }}>
       <button onClick={onBack} style={mp.backBtn}>← Retour</button>
 
-      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", display:"grid", gridTemplateColumns:"100px 1fr", gap:20, marginBottom:16 }}>
+      <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", display:"grid", gridTemplateColumns:"100px 1fr", gap:20, marginBottom:16, position:"relative" }}>
+        <div style={{ position:"absolute", top:14, right:16, textAlign:"right" }}>
+          <span onClick={toggleFavori} title={data.favori?"Retirer des favoris":"Ajouter aux favoris"}
+            style={{ fontSize:22, lineHeight:1, cursor:favoriEnCours?"default":"pointer", color:data.favori?C.gold:C.txt3, opacity:favoriEnCours?0.5:1, userSelect:"none" }}>
+            {data.favori ? "★" : "☆"}
+          </span>
+          {messageConnexion && (
+            <div style={{ marginTop:4, fontSize:11, color:C.txt2, maxWidth:150 }}>
+              Connecte-toi pour ajouter des favoris
+              <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:C.txt3, cursor:"pointer" }}>✕</span>
+            </div>
+          )}
+        </div>
         <div style={{ display:"flex", justifyContent:"center", alignItems:"flex-start" }}>
           {data.boss_principal?.img
             ? <img src={data.boss_principal.img} alt={data.nom} style={{ width:90, height:90, objectFit:"contain" }} />
@@ -1888,6 +2000,8 @@ export default function App() {
   const [selectedSousZone, setSelectedSousZone] = useState(null)
   const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone"
   const [almanax, setAlmanax]   = useState(null)
+  const [token, setToken] = useState(() => localStorage.getItem("dofura_token") || null)
+  const [user, setUser]   = useState(null)
 
   useEffect(() => {
     if (query.length < 2) { setResults([]); return }
@@ -1906,6 +2020,26 @@ export default function App() {
     fetch(`https://api.dofusdb.fr/almanax/${today}?lang=fr`)
       .then(r=>r.json()).then(setAlmanax).catch(()=>{})
   }, [])
+
+  // Session en JWT (header Authorization, pas de cookies — voir CLAUDE.md
+  // §6). Seul le jeton vit en localStorage, jamais la progression/les
+  // favoris eux-memes (qui restent en base, par compte).
+  useEffect(() => {
+    if (!token) { setUser(null); return }
+    fetch(`${API}/auth/me`, { headers:{ Authorization:`Bearer ${token}` } })
+      .then(r => { if (!r.ok) throw new Error(); return r.json() })
+      .then(setUser)
+      .catch(() => { setToken(null); localStorage.removeItem("dofura_token") })
+  }, [token])
+
+  const handleLogin = (nouveauToken) => {
+    localStorage.setItem("dofura_token", nouveauToken)
+    setToken(nouveauToken)
+  }
+  const handleLogout = () => {
+    localStorage.removeItem("dofura_token")
+    setToken(null)
+  }
 
   const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setBrowsing(null); setQuery(""); setResults([]) }
   const handleSelectMonstre  = (id) => { resetNav(); setSelectedMonstre(id) }
@@ -1926,7 +2060,7 @@ export default function App() {
 
       <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>
         <AlmanaxBanner data={almanax} />
-        <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} />
+        <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} user={user} onLogin={handleLogin} onLogout={handleLogout} />
         <StatsBar />
         <div style={{ flex:1 }}>
       {selectedMonstre ? (
@@ -1934,7 +2068,7 @@ export default function App() {
       ) : selectedObjet ? (
         <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
       ) : selectedDonjon ? (
-        <DonjonDetailPage id={selectedDonjon} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onBack={handleHome} />
+        <DonjonDetailPage id={selectedDonjon} token={token} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : selectedPanoplie ? (
         <PanoplieDetailPage id={selectedPanoplie} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : selectedSousZone ? (
