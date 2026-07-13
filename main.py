@@ -109,6 +109,16 @@ if os.path.exists("dofura_donjons_guides.json"):
     with open("dofura_donjons_guides.json", "r", encoding="utf-8") as f:
         DONJONS_GUIDES_DATA = json.load(f)
 
+# Contenu editorial des quetes (resume + points cles), redige par Lorn a
+# partir des etapes officielles deja en base (jamais depuis DPLN/Papycha —
+# voir CLAUDE.md chantier Quetes). Meme logique que DONJONS_GUIDES_DATA :
+# fichier separe des donnees scrapees, {} tant qu'une zone n'a pas ete
+# rediger et validee par Popo, jamais dans dofura_quetes.json.
+QUETES_GUIDES_DATA = {}
+if os.path.exists("dofura_quetes_guides.json"):
+    with open("dofura_quetes_guides.json", "r", encoding="utf-8") as f:
+        QUETES_GUIDES_DATA = json.load(f)
+
 # Effets dont un placeholder brut (#1/#2/#3) est en realite un ID a resoudre,
 # pas un nombre (chantier #6) :
 # - EFFECTS_ETAT_VALEUR : "Etat #3"/"Enleve l'etat #3"/"Desactive l'etat #3",
@@ -1378,6 +1388,15 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
 
     conn.close()
 
+    # Guide editorial (resume + points cles) : contenu redige par Lorn a
+    # partir des etapes officielles, absent tant qu'une zone n'a pas ete
+    # traitee -> section masquee cote frontend (meme logique que le guide
+    # de boss des donjons).
+    guide_brut = QUETES_GUIDES_DATA.get(str(quete_id), {})
+    resume = guide_brut.get("resume", "")
+    points_cles = guide_brut.get("points_cles", [])
+    guide = {"resume": resume, "points_cles": points_cles} if (resume or points_cles) else None
+
     return {
         **dict(quete),
         "favori": favori,
@@ -1385,6 +1404,7 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
         "prerequis_quetes": prerequis_quetes,
         "prerequis_objets": prerequis_objets,
         "donjon_lie": donjon_lie,
+        "guide": guide,
     }
 
 # ============================================================

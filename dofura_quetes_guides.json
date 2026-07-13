@@ -1,0 +1,496 @@
+{
+  "1062": {
+    "points_cles": [],
+    "resume": "Fouillez les charrettes d'Astrub à la recherche d'objets volés."
+  },
+  "115": {
+    "points_cles": [],
+    "resume": "Rok Gnorok a été aperçu dans les lacs enchantés."
+  },
+  "116": {
+    "points_cles": [],
+    "resume": "Musha l'Oni a été aperçu dans la baie de Cania."
+  },
+  "117": {
+    "points_cles": [],
+    "resume": "Marzwel le Gobelin a été aperçu dans le massif de Cania."
+  },
+  "118": {
+    "points_cles": [],
+    "resume": "Zatoïshwan a été aperçu du côté de Feudala."
+  },
+  "119": {
+    "points_cles": [],
+    "resume": "Aermyne 'Braco' Scalptaras a été aperçue du côté de la forêt de Kalyptus."
+  },
+  "1199": {
+    "points_cles": [],
+    "resume": "Aidez Kerubim à remettre en état un plumeau magique."
+  },
+  "1200": {
+    "points_cles": [],
+    "resume": "Les poils de Kerubim Crépin sont une ressource magique recherchée par les artisans : rossez des trafiquants Xélors pour en récupérer."
+  },
+  "1201": {
+    "points_cles": [],
+    "resume": "Kerubim Crépin vous demande d'enquêter sur la présence d'un chasseur de Shushus à Astrub."
+  },
+  "1420": {
+    "points_cles": [],
+    "resume": "Jouez une partie de Kama Baraka (421 kamas) pour tenter de remporter une potion de Kerubim ou d'autres surprises."
+  },
+  "1426": {
+    "points_cles": [],
+    "resume": "Assurez l'entretien hebdomadaire de la boutique de Kerubim avec de la cire de Gligli."
+  },
+  "1482": {
+    "points_cles": [],
+    "resume": "Un Enutrof vous a parlé d'une chasse aux trésors dans le Monde des Douze : direction les champs de Cania pour visiter la Malle aux trésors de la famille Terra."
+  },
+  "1517": {
+    "points_cles": [],
+    "resume": "Kerubim Crépin veut offrir à son père, le dieu Ecaflip, un œuf fécondé de Haute Truche."
+  },
+  "1526": {
+    "points_cles": [],
+    "resume": "Récupérez l'anneau de Tot, l'un des trois objets nécessaires pour contrer la malédiction de Totankama."
+  },
+  "153": {
+    "points_cles": [
+      "Rencontrer le Maître des clefs pour débuter l'épreuve",
+      "Traverser le donjon des Squelettes",
+      "Traverser le donjon des Tofus",
+      "Être recommandé à un ami du Maître des clefs"
+    ],
+    "resume": "Le Maître des clefs vous met à l'épreuve avant de vous recommander à l'un de ses amis."
+  },
+  "1607": {
+    "points_cles": [],
+    "resume": "Une croquette à l'aura divine vous lance dans une quête peu commune : interrogez Kankreblath pour en savoir plus."
+  },
+  "1615": {
+    "points_cles": [],
+    "resume": "Lester, inquiet pour son ami Hicha, vous demande de le retrouver."
+  },
+  "1616": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers le Roi-Dieu."
+  },
+  "1677": {
+    "points_cles": [],
+    "resume": "Hazel a reçu des enclumes à la place des chaudrons commandés : menez l'enquête."
+  },
+  "1678": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers la Balance Krosmique."
+  },
+  "1696": {
+    "points_cles": [],
+    "resume": "Kerubim vous propose un tour dans la dimension du dieu Ecaflip."
+  },
+  "1780": {
+    "points_cles": [],
+    "resume": "Débarrassez Tainéla d'un cochon pour ramener la tranquillité."
+  },
+  "1841": {
+    "points_cles": [],
+    "resume": "Sidèle vous demande d'aider de jeunes Ouginaks à s'intégrer parmi les mercenaires d'Astrub."
+  },
+  "1842": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Ouginak."
+  },
+  "1958": {
+    "points_cles": [],
+    "resume": "La conseillère Archie vous renseigne sur Astrub et pourrait vous confier une mission à votre niveau."
+  },
+  "1959": {
+    "points_cles": [],
+    "resume": "Identifiez et capturez un trafiquant de faux Dofus pour le livrer aux autorités."
+  },
+  "1960": {
+    "points_cles": [],
+    "resume": "La Conseillère Archie souhaite vous voir pour vous confier une nouvelle mission."
+  },
+  "1962": {
+    "points_cles": [],
+    "resume": "Un mercenaire a découvert dans la forêt un indice lié au trafic de faux Dofus : rendez-vous sur place."
+  },
+  "1963": {
+    "points_cles": [],
+    "resume": "Vérifiez pour Allisteria que les mercenaires d'Astrub ne sont pas des tire-au-flanc."
+  },
+  "1964": {
+    "points_cles": [],
+    "resume": "Aidez Abrazelon à tester le comportement de plusieurs animaux pour trouver le compagnon idéal des mineurs d'Astrub."
+  },
+  "1965": {
+    "points_cles": [],
+    "resume": "Faites le point avec les responsables de la fête de la chocopépite pour Gasdaure."
+  },
+  "1966": {
+    "points_cles": [],
+    "resume": "Jim Fleps vous demande de voler une bourse, un os et un diamant."
+  },
+  "1967": {
+    "points_cles": [],
+    "resume": "Cherchez les cartes du tarot de Montrakwartz éparpillées dans Astrub."
+  },
+  "1968": {
+    "points_cles": [],
+    "resume": "Meow Moew, maudit par un Leprechaun, a trop de chance : attirez la malchance sur lui pour lever la malédiction."
+  },
+  "1969": {
+    "points_cles": [],
+    "resume": "Inoculez un remède expérimental à quatre malades souffrant d'aventurite pour Nepra Lido."
+  },
+  "1970": {
+    "points_cles": [],
+    "resume": "Enquêtez sur le comportement étrange de jeunes disciples pour Rok Elreuss."
+  },
+  "1971": {
+    "points_cles": [],
+    "resume": "Setsinbol exige que les Crâs suivent un entraînement régulier."
+  },
+  "1972": {
+    "points_cles": [],
+    "resume": "Aidez Sadadi Sama à guérir un bosquet sacré malade."
+  },
+  "1973": {
+    "points_cles": [],
+    "resume": "Purifiez-vous avant de partir sur les traces des lames de la souffrance pour Saketsu."
+  },
+  "1974": {
+    "points_cles": [],
+    "resume": "Sel Dawa s'inquiète pour sa nièce Regane, adepte de l'eau : partez la retrouver."
+  },
+  "1975": {
+    "points_cles": [],
+    "resume": "La conseillère Archie vante la quiétude du lac d'Astrub."
+  },
+  "1976": {
+    "points_cles": [],
+    "resume": "Suivez la piste d'un notaire, duc et antiquaire pour Kaulysse Himo."
+  },
+  "1977": {
+    "points_cles": [],
+    "resume": "Kerubim Crépin a un plan pour capturer l'individu qui l'a arnaqué."
+  },
+  "1978": {
+    "points_cles": [],
+    "resume": "Apportez une bière à Badufron."
+  },
+  "1979": {
+    "points_cles": [],
+    "resume": "Badufron vous confie plusieurs missions."
+  },
+  "1980": {
+    "points_cles": [],
+    "resume": "Réduisez la population de pichons infestant les calanques d'Astrub pour Bart Cousti."
+  },
+  "1981": {
+    "points_cles": [],
+    "resume": "Aidez Vaiguy à extraire des morceaux de plantes à cuisiner."
+  },
+  "1982": {
+    "points_cles": [],
+    "resume": "Massacrez des bouftous pour Jeffrey Baratourte."
+  },
+  "1983": {
+    "points_cles": [],
+    "resume": "Équipez-vous d'une baguette rikiki pour accéder aux planques des Vilinsekts, ou trouvez un accès à la Cache de Kankreblath."
+  },
+  "1984": {
+    "points_cles": [],
+    "resume": "Paule Amploa vous demande d'enquêter sur la contamination des céréales."
+  },
+  "1985": {
+    "points_cles": [],
+    "resume": "Remplacez un livreur malade le temps d'une livraison."
+  },
+  "1986": {
+    "points_cles": [],
+    "resume": "Badufron a besoin d'une quintaine animée pour améliorer l'entraînement des mercenaires."
+  },
+  "1987": {
+    "points_cles": [],
+    "resume": "Un apprenti d'Hel Munster a disparu."
+  },
+  "1988": {
+    "points_cles": [],
+    "resume": "Voyez l'archiviste Oz Dralett pour un livre d'histoire mentionnant le dragon d'Astrub."
+  },
+  "1989": {
+    "points_cles": [],
+    "resume": "Montrez le livre calciné au Mage Ax, capable de le restaurer."
+  },
+  "1990": {
+    "points_cles": [],
+    "resume": "Récupérez un parchemin volé par des rats particuliers dans les égouts."
+  },
+  "1991": {
+    "points_cles": [],
+    "resume": "Apprenez-en plus sur Rathrosk le dragon gris."
+  },
+  "1992": {
+    "points_cles": [],
+    "resume": "Remontez le moral d'un chacha malheureux avec du lailait et un goujon frais."
+  },
+  "1993": {
+    "points_cles": [],
+    "resume": "Phite cherche à récupérer différents types de cheveux pour en faire des perruques."
+  },
+  "1994": {
+    "points_cles": [],
+    "resume": "Des miliciens de Bonta et Brâkmar peuvent vous renseigner sur leur cité respective."
+  },
+  "1996": {
+    "points_cles": [],
+    "resume": "Aidez la mercenaire d'Astrub à surveiller trois Gobelins."
+  },
+  "1998": {
+    "points_cles": [],
+    "resume": "Erty Trapchet a oublié d'arroser ses plantes, trop absorbé par son étude de la végétation."
+  },
+  "1999": {
+    "points_cles": [],
+    "resume": "Éléanor Mande fait appel à un alchimiste pour sélectionner les bouftous à accoupler."
+  },
+  "2000": {
+    "points_cles": [],
+    "resume": "Une bête sauvage terrorise les bûcherons de la forêt d'Astrub : neutralisez-la pour le disciple de Sêpt."
+  },
+  "2003": {
+    "points_cles": [],
+    "resume": "Fouillez la Cache de Kankreblath à la recherche des Dofus cachés par Kerubim."
+  },
+  "2005": {
+    "points_cles": [],
+    "resume": "Metag le guerrier vous parle d'une relique aux fabuleux pouvoirs, mais veut d'abord tester votre valeur."
+  },
+  "2006": {
+    "points_cles": [],
+    "resume": "Metag veut encore tester vos aptitudes avant de vous confier une tâche héroïque."
+  },
+  "2007": {
+    "points_cles": [],
+    "resume": "Becky, fossoyeuse du cimetière d'Astrub, s'inquiète du saccage de plusieurs tombes."
+  },
+  "2008": {
+    "points_cles": [],
+    "resume": "Le prêtre Nistracolamus propose un stage de découverte de l'exorcisme dans le cimetière d'Astrub."
+  },
+  "2009": {
+    "points_cles": [],
+    "resume": "Rencontrez le représentant de votre classe siégeant au Conseil d'Astrub."
+  },
+  "2085": {
+    "points_cles": [],
+    "resume": "Crokalcrolak, bloqué dans une anomalie temporelle en voulant rejoindre l'île de Crocuzko, a besoin d'aide."
+  },
+  "2098": {
+    "points_cles": [],
+    "resume": "Le Horlemar s'est enfui sur le Monde des Douze : partez à sa poursuite pour le détruire."
+  },
+  "2101": {
+    "points_cles": [],
+    "resume": "Trouvez et amenez vingt Gobelins au pays d'Amakna, là où s'étendent les mauves."
+  },
+  "2103": {
+    "points_cles": [],
+    "resume": "Une simulation est en cours dans un donjon : corrigez le problème au plus vite."
+  },
+  "2104": {
+    "points_cles": [],
+    "resume": "Une simulation est en cours dans un donjon : corrigez le problème au plus vite."
+  },
+  "2105": {
+    "points_cles": [],
+    "resume": "Une simulation est en cours dans un donjon : corrigez le problème au plus vite."
+  },
+  "2149": {
+    "points_cles": [],
+    "resume": "L'île de Pandala a pu renaître en une nuit : aidez Moktwa à découvrir les changements qui l'ont affectée."
+  },
+  "2192": {
+    "points_cles": [],
+    "resume": "En quête des six Dofus, rendez-vous sur l'île de Pandala pour découvrir un lieu sacré en traversant le grand pont de bambou."
+  },
+  "2467": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers la Lance Originelle."
+  },
+  "2470": {
+    "points_cles": [],
+    "resume": "Yvain Dykt vous confie une mission de routine pour vos débuts en tant que Forgelance."
+  },
+  "2483": {
+    "points_cles": [],
+    "resume": "Rendez-vous au village d'Amakna pour découvrir l'Auberge des compagnons."
+  },
+  "2491": {
+    "points_cles": [],
+    "resume": "Aidez les habitants d'Astrub pour gagner en expérience avant d'affronter les Altérés puissants de l'arène de Fallanster, accessible par un portail dans la tour du Conseil."
+  },
+  "2504": {
+    "points_cles": [],
+    "resume": "Inspectez l'Akadémie des Gobs pour Emma Tompouce."
+  },
+  "29": {
+    "points_cles": [],
+    "resume": "Padgref Demoël, aperçu du côté du Bois de Litneg, est recherché pour détérioration de Bouftou domestique et tapage nocturne."
+  },
+  "30": {
+    "points_cles": [],
+    "resume": "Frakacia Leukocytine, aperçue en Forêt d'Astrub, est recherchée pour ponctions illégales d'hémoglobine."
+  },
+  "32": {
+    "points_cles": [],
+    "resume": "Qil Bil, aperçu près du Cimetière des Torturés, est recherché pour arrachage de membres."
+  },
+  "33": {
+    "points_cles": [],
+    "resume": "Brumen Tinctorias, aperçu du côté de la Désolation de Sidimote, est recherché pour insoumission à l'ordre cosmique."
+  },
+  "34": {
+    "points_cles": [],
+    "resume": "Fouduglen l'écureuil parcourt Astrub à la recherche de glands à se mettre sous la dent."
+  },
+  "35": {
+    "points_cles": [],
+    "resume": "Ogivol Scalarcin, aperçu en Bordure de Brâkmar, est recherché pour avoir dérobé de nombreux objets, dont des documents secrets."
+  },
+  "657": {
+    "points_cles": [],
+    "resume": "Retrouvez Barnabé, enlevé et emmené en dehors de ce monde."
+  },
+  "704": {
+    "points_cles": [
+      "Suivre les instructions de Bapapa pour préparer le coup",
+      "Dérober la pièce de kama géante dans la banque d'Astrub"
+    ],
+    "resume": "Le Roublard Bapapa vous embauche pour un gros coup : dérober une pièce de kama géante dans la banque d'Astrub."
+  },
+  "713": {
+    "points_cles": [],
+    "resume": "Sucrepul exige un cœur de gardien de donjon, sous peine de vous arracher le vôtre."
+  },
+  "714": {
+    "points_cles": [
+      "Cueillir des fleurs de blops",
+      "Rapporter une liste de fleurs des champs",
+      "Rapporter des bouquets de fleurs",
+      "Rapporter des bouquets de roses rares",
+      "Recevoir l'amulette du pouvoir de l'amour"
+    ],
+    "resume": "Songrand de Nohto vous envoie cueillir des fleurs de plus en plus rares, avant de vous offrir une amulette au pouvoir d'éveiller les sentiments."
+  },
+  "716": {
+    "points_cles": [
+      "Aider Hibaba à écarter la menace qui pèse sur lui",
+      "Retrouver Marp pour la suite du plan"
+    ],
+    "resume": "Hibaba, menacé, vous demande de l'aide puis vous envoie retrouver Marp pour la suite de son plan."
+  },
+  "718": {
+    "points_cles": [
+      "Interroger des habitants sur la Bête",
+      "Préparer un piège",
+      "Combattre la Bête le temps que le piège soit débloqué",
+      "Découvrir la vérité avec Jykel le gobelin"
+    ],
+    "resume": "L'Apprenti d'Otomaï vous fait enquêter sur une mystérieuse Bête qui sème le désordre à Astrub, avant de découvrir qu'elle n'est pas ce qu'il croyait."
+  },
+  "762": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Crâ."
+  },
+  "763": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Ecaflip."
+  },
+  "764": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Eniripsa."
+  },
+  "765": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Enutrof."
+  },
+  "766": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Féca."
+  },
+  "767": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Iop."
+  },
+  "768": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Osamodas."
+  },
+  "769": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Pandawa."
+  },
+  "770": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Dralbour."
+  },
+  "771": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Sacrieur."
+  },
+  "772": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Sadida."
+  },
+  "773": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Sram."
+  },
+  "774": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Xélor."
+  },
+  "775": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Sadida."
+  },
+  "893": {
+    "points_cles": [],
+    "resume": "Quelque chose tracasse Metag Robill, et vous en êtes apparemment responsable ; le Maître des clefs connaît peut-être la solution."
+  },
+  "894": {
+    "points_cles": [],
+    "resume": "Le Gobelin Prim tient à vous faire admirer des gravures créées pour une œuvre d'Herdegrize le Mystique."
+  },
+  "896": {
+    "points_cles": [],
+    "resume": "Inspectez le Château Ensablé pour Emma Tompouce."
+  },
+  "897": {
+    "points_cles": [],
+    "resume": "Inspectez la Maison Fantôme pour Emma Tompouce."
+  },
+  "898": {
+    "points_cles": [],
+    "resume": "Inspectez le Nid du Kwakwa pour Emma Tompouce."
+  },
+  "899": {
+    "points_cles": [],
+    "resume": "Inspectez la Grotte Hesque pour Emma Tompouce."
+  },
+  "938": {
+    "points_cles": [],
+    "resume": "Aidez les Steamers à percer le mystère du monstre qui hante l'étang bleu d'Astrub."
+  },
+  "939": {
+    "points_cles": [],
+    "resume": "Rendez-vous au Temple des Douze pour montrer votre dévotion envers Oktapodas."
+  },
+  "953": {
+    "points_cles": [],
+    "resume": "Le Mage Ax vous envoie dans la plaine des Porkass pour en apprendre plus sur son concept d'almanach."
+  }
+}

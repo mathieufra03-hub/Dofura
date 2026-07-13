@@ -97,13 +97,25 @@ print(f"{len(npcs)} PNJ resolus")
 #    par une quete peut resoudre le startPosition d'une autre quete qui ne
 #    l'a pas dans ses propres objectifs) avant de resoudre quete par quete.
 map_vers_subarea = {}
+map_vers_nom = {}
+map_vers_xy = {}
 for q in quetes_brutes:
     for etape in q.get("steps", []):
         for obj in etape.get("objectives", []):
             m = obj.get("map")
-            if m and m.get("subAreaId") is not None and obj.get("mapId"):
-                map_vers_subarea.setdefault(obj["mapId"], m["subAreaId"])
+            if not m or not obj.get("mapId"):
+                continue
+            map_id = obj["mapId"]
+            if m.get("subAreaId") is not None:
+                map_vers_subarea.setdefault(map_id, m["subAreaId"])
+            nom_carte = m.get("name", {}).get("fr")
+            if nom_carte and nom_carte != "0":
+                map_vers_nom.setdefault(map_id, nom_carte)
+            if m.get("posX") is not None and m.get("posY") is not None:
+                map_vers_xy.setdefault(map_id, (m["posX"], m["posY"]))
 print(f"{len(map_vers_subarea)} cartes resolues en subArea (index global)")
+print(f"{len(map_vers_nom)} cartes avec un nom de lieu precis")
+print(f"{len(map_vers_xy)} cartes avec des coordonnees [x,y]")
 
 
 def sous_zone_de(quete):
@@ -122,6 +134,21 @@ def sous_zone_de(quete):
     return premier_repli
 
 
+# Position de depart precise : nom de lieu (ex. "Boutique de Kerubim") si
+# disponible, sinon repli sur le nom de la sous-zone (ex. "Foret d'Astrub"),
+# + coordonnees [x,y] du monde (memes reperes qu'affiches en jeu). Resolu via
+# le mapId du startPosition dans les index globaux ci-dessus -- ~5% des
+# quetes restent sans position precise (aucun objectif ne reference leur
+# propre carte de depart), meme limite deja documentee pour la zone.
+def position_precise_de(quete):
+    map_depart = quete["startPosition"][0]["mapId"] if quete.get("startPosition") else None
+    if map_depart is None:
+        return None, None
+    nom = map_vers_nom.get(map_depart)
+    xy = map_vers_xy.get(map_depart)
+    return nom, xy
+
+
 sous_zone_par_quete = {q["id"]: sous_zone_de(q) for q in quetes_brutes}
 subarea_ids = set(sous_zone_par_quete.values())
 subareas = fetch_par_lots("subareas", subarea_ids)
@@ -136,6 +163,11 @@ def zone_de(quete):
     subarea = subareas.get(sous_zone_par_quete.get(quete["id"]))
     area = areas.get(subarea["areaId"]) if subarea else None
     return area["name"]["fr"] if area else None
+
+
+def sous_zone_nom_de(quete):
+    subarea = subareas.get(sous_zone_par_quete.get(quete["id"]))
+    return subarea["name"]["fr"] if subarea else None
 
 
 # 4. Nettoyer et assembler.
@@ -172,6 +204,7 @@ for q in quetes_brutes:
     startpos = q.get("startPosition") or [{}]
     npc_id = startpos[0].get("npcId")
     npc = npcs.get(npc_id)
+    lieu_precis, xy = position_precise_de(q)
 
     quetes.append({
         "id": q["id"],
@@ -181,6 +214,9 @@ for q in quetes_brutes:
         "categorie": categorie,
         "is_dungeon_quest": bool(q.get("isDungeonQuest")),
         "zone": zone_de(q),
+        "sous_zone": sous_zone_nom_de(q),
+        "lieu_precis": lieu_precis,
+        "coordonnees": {"x": xy[0], "y": xy[1]} if xy else None,
         "pnj": npc["name"]["fr"] if npc else None,
         "prerequis_quetes": q.get("need", {}).get("quests", []),
         "prerequis_items": [
@@ -195,7 +231,9 @@ for q in quetes_brutes:
     })
 
 sans_zone = sum(1 for q in quetes if q["zone"] is None)
+sans_xy = sum(1 for q in quetes if q["coordonnees"] is None)
 print(f"Sans zone resolue : {sans_zone}/{len(quetes)}")
+print(f"Sans coordonnees [x,y] resolues : {sans_xy}/{len(quetes)}")
 print(f"Categories : repetable={sum(1 for q in quetes if q['categorie']=='repetable')} "
       f"autre={sum(1 for q in quetes if q['categorie']=='autre')}")
 

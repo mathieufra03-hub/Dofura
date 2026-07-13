@@ -2299,6 +2299,26 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
           {data.pnj && <> · PNJ : {data.pnj}</>}
         </div>
 
+        {(data.lieu_precis || data.sous_zone || data.coord_x != null) && (
+          <div style={{ color:"var(--df-text-3)", fontSize:12.5, marginTop:4 }}>
+            📍 {data.lieu_precis || data.sous_zone}
+            {data.coord_x != null && data.coord_y != null && <> [{data.coord_x}, {data.coord_y}]</>}
+          </div>
+        )}
+
+        {data.guide && (
+          <div style={{ marginTop:12, maxWidth:640 }}>
+            {data.guide.resume && (
+              <p style={{ color:"#8B96B2", fontSize:13.5, fontStyle:"italic", margin:0 }}>{data.guide.resume}</p>
+            )}
+            {data.guide.points_cles?.length > 0 && (
+              <ul style={{ margin:"8px 0 0", paddingLeft:18, color:"var(--df-text-2)", fontSize:13 }}>
+                {data.guide.points_cles.map((p,i) => <li key={i} style={{ padding:"2px 0" }}>{p}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+
         {data.etapes.length > 0 && (
           <div style={{ background:"rgba(12,15,29,0.6)", borderRadius:12, padding:"14px 18px", marginTop:18 }}>
             <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, marginBottom:8 }}>

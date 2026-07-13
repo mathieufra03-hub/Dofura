@@ -165,6 +165,10 @@ CREATE TABLE quetes (
     categorie TEXT,
     is_dungeon_quest INTEGER,
     zone TEXT,
+    sous_zone TEXT,
+    lieu_precis TEXT,
+    coord_x INTEGER,
+    coord_y INTEGER,
     pnj TEXT
 );
 CREATE TABLE quetes_etapes (
@@ -325,12 +329,15 @@ for z in zones_areas:
     """, (z.get("nom"), z.get("area")))
 
 for q in quetes:
+    coord = q.get("coordonnees") or {}
     cur.execute("""
-        INSERT OR REPLACE INTO quetes (id, nom, niveau_min, niveau_max, categorie, is_dungeon_quest, zone, pnj)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO quetes (id, nom, niveau_min, niveau_max, categorie, is_dungeon_quest, zone,
+                                        sous_zone, lieu_precis, coord_x, coord_y, pnj)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         q.get("id"), q.get("nom"), q.get("niveau_min"), q.get("niveau_max"),
-        q.get("categorie"), int(bool(q.get("is_dungeon_quest"))), q.get("zone"), q.get("pnj")
+        q.get("categorie"), int(bool(q.get("is_dungeon_quest"))), q.get("zone"),
+        q.get("sous_zone"), q.get("lieu_precis"), coord.get("x"), coord.get("y"), q.get("pnj")
     ))
     for ordre, e in enumerate(q.get("etapes", [])):
         cur.execute("""
