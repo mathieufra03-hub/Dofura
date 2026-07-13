@@ -13,6 +13,8 @@ with open("dofura_donjons.json", "r", encoding="utf-8") as f:
     donjons = json.load(f)
 with open("dofura_zones_areas.json", "r", encoding="utf-8") as f:
     zones_areas = json.load(f)
+with open("dofura_quetes.json", "r", encoding="utf-8") as f:
+    quetes = json.load(f)
 conn = sqlite3.connect("dofura.db")
 cur = conn.cursor()
 cur.executescript("""
@@ -30,6 +32,12 @@ DROP TABLE IF EXISTS donjons;
 DROP TABLE IF EXISTS donjons_monstres;
 DROP TABLE IF EXISTS donjons_objets_requis;
 DROP TABLE IF EXISTS zones_areas;
+DROP TABLE IF EXISTS quetes;
+DROP TABLE IF EXISTS quetes_etapes;
+DROP TABLE IF EXISTS quetes_etapes_items;
+DROP TABLE IF EXISTS quetes_prerequis_quetes;
+DROP TABLE IF EXISTS quetes_prerequis_objets;
+DROP TABLE IF EXISTS quetes_donjons;
 CREATE TABLE monstres (
     id INTEGER PRIMARY KEY,
     nom TEXT,
@@ -148,6 +156,47 @@ CREATE TABLE donjons_objets_requis (
 CREATE TABLE zones_areas (
     nom TEXT PRIMARY KEY,
     area TEXT
+);
+CREATE TABLE quetes (
+    id INTEGER PRIMARY KEY,
+    nom TEXT,
+    niveau_min INTEGER,
+    niveau_max INTEGER,
+    categorie TEXT,
+    is_dungeon_quest INTEGER,
+    zone TEXT,
+    pnj TEXT
+);
+CREATE TABLE quetes_etapes (
+    id INTEGER PRIMARY KEY,
+    quete_id INTEGER,
+    ordre INTEGER,
+    nom TEXT,
+    description TEXT,
+    a_xp INTEGER,
+    a_kamas INTEGER
+);
+CREATE TABLE quetes_etapes_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    etape_id INTEGER,
+    objet_id INTEGER,
+    quantite INTEGER
+);
+CREATE TABLE quetes_prerequis_quetes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quete_id INTEGER,
+    quete_requise_id INTEGER
+);
+CREATE TABLE quetes_prerequis_objets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quete_id INTEGER,
+    objet_id INTEGER,
+    quantite INTEGER
+);
+CREATE TABLE quetes_donjons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quete_id INTEGER,
+    donjon_id INTEGER
 );
 """)
 def safe_int(val):
@@ -274,6 +323,41 @@ for z in zones_areas:
         INSERT OR REPLACE INTO zones_areas (nom, area)
         VALUES (?, ?)
     """, (z.get("nom"), z.get("area")))
+
+for q in quetes:
+    cur.execute("""
+        INSERT OR REPLACE INTO quetes (id, nom, niveau_min, niveau_max, categorie, is_dungeon_quest, zone, pnj)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        q.get("id"), q.get("nom"), q.get("niveau_min"), q.get("niveau_max"),
+        q.get("categorie"), int(bool(q.get("is_dungeon_quest"))), q.get("zone"), q.get("pnj")
+    ))
+    for ordre, e in enumerate(q.get("etapes", [])):
+        cur.execute("""
+            INSERT OR REPLACE INTO quetes_etapes (id, quete_id, ordre, nom, description, a_xp, a_kamas)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (e.get("id"), q.get("id"), ordre, e.get("nom"), e.get("description"),
+              int(bool(e.get("a_xp"))), int(bool(e.get("a_kamas")))))
+        for it in e.get("items", []):
+            cur.execute("""
+                INSERT INTO quetes_etapes_items (etape_id, objet_id, quantite)
+                VALUES (?, ?, ?)
+            """, (e.get("id"), it.get("id"), it.get("quantite")))
+    for quete_requise_id in q.get("prerequis_quetes", []):
+        cur.execute("""
+            INSERT INTO quetes_prerequis_quetes (quete_id, quete_requise_id)
+            VALUES (?, ?)
+        """, (q.get("id"), quete_requise_id))
+    for it in q.get("prerequis_items", []):
+        cur.execute("""
+            INSERT INTO quetes_prerequis_objets (quete_id, objet_id, quantite)
+            VALUES (?, ?, ?)
+        """, (q.get("id"), it.get("id"), it.get("quantite")))
+    for donjon_id in q.get("donjons_lies", []):
+        cur.execute("""
+            INSERT INTO quetes_donjons (quete_id, donjon_id)
+            VALUES (?, ?)
+        """, (q.get("id"), donjon_id))
 
 
 # ============================================================

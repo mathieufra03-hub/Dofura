@@ -1004,6 +1004,17 @@ def detail_donjon(donjon_id: int, user: dict = Depends(utilisateur_optionnel)):
         """, monstre_ids)
         drops = [dict(r) for r in cur.fetchall()]
 
+    # Quetes associees (lien croisé chantier Quetes, cout marginal quasi nul
+    # grace a la table de jonction quetes_donjons deja construite au scraping).
+    cur.execute("""
+        SELECT q.id, q.nom, q.niveau_min
+        FROM quetes_donjons qd
+        JOIN quetes q ON q.id = qd.quete_id
+        WHERE qd.donjon_id = ?
+        ORDER BY q.nom
+    """, (donjon_id,))
+    quetes_associees = [dict(r) for r in cur.fetchall()]
+
     conn.close()
 
     # Guide de boss (mecaniques/salles/composition) : contenu 100% editorial,
@@ -1031,6 +1042,7 @@ def detail_donjon(donjon_id: int, user: dict = Depends(utilisateur_optionnel)):
         ],
         "drops": drops,
         "guide": guide,
+        "quetes_associees": quetes_associees,
     }
 
 @app.get("/zones")
@@ -1176,6 +1188,203 @@ def detail_sous_zone(nom: str):
             {"id": r["id"], "nom": r["nom"], "img": r["image_url"], "niveau_base": r["niveau_base"]}
             for r in monstres_rows
         ],
+    }
+
+# ============================================================
+# Quetes (chantier Quetes, encyclopedie)
+# Categorie a seulement 2 valeurs reelles ("repetable"/"autre") : la
+# categorie "quete de dofus" imaginee au depart a ete abandonnee (verifie
+# que seuls 3 Dofus reels sur 34 sont donnes directement par une quete —
+# les autres passent par un SUCCES, relève du futur chantier Succes/Chasse
+# aux Dofus, pas de celui-ci).
+# XP/Kamas ne sont que des booleens (a_xp/a_kamas) : DofusDB ne stocke que
+# des ratios, jamais de montant absolu — afficher un chiffre serait invente.
+# ============================================================
+
+CATEGORIE_QUETE_LABELS = {"repetable": "Répétable", "autre": "Quête"}
+
+@app.get("/quetes")
+def liste_quetes(search: str = "", categorie: str = "", zone: str = "",
+                  tri: str = "zone", page: int = 1, page_size: int = 48,
+                  user: dict = Depends(utilisateur_optionnel)):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 200)
+
+    conditions = ["q.nom LIKE ?"]
+    params = [f"%{search}%"]
+
+    categories_choisies = [c for c in categorie.split(",") if c in CATEGORIE_QUETE_LABELS]
+    if categories_choisies:
+        conditions.append(f"q.categorie IN ({','.join('?' for _ in categories_choisies)})")
+        params.extend(categories_choisies)
+
+    zones_choisies = [z for z in zone.split(",") if z]
+    if SANS_VALEUR in zones_choisies:
+        autres_zones = [z for z in zones_choisies if z != SANS_VALEUR]
+        clause = "(q.zone IS NULL OR q.zone = '')"
+        if autres_zones:
+            clause += f" OR q.zone IN ({','.join('?' for _ in autres_zones)})"
+        conditions.append(f"({clause})")
+        params.extend(autres_zones)
+    elif zones_choisies:
+        conditions.append(f"q.zone IN ({','.join('?' for _ in zones_choisies)})")
+        params.extend(zones_choisies)
+
+    where_clause = " AND ".join(conditions)
+    ordre_sql = {
+        "niveau": "q.niveau_min, q.nom",
+        "az": "q.nom",
+    }.get(tri, "q.zone, q.niveau_min, q.nom")  # "zone" = defaut, voir §5 specs
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(f"SELECT COUNT(*) FROM quetes q WHERE {where_clause}", params)
+    total = cur.fetchone()[0]
+
+    cur.execute(f"""
+        SELECT q.id, q.nom, q.niveau_min, q.categorie, q.zone,
+               (SELECT COUNT(*) FROM quetes_etapes qe WHERE qe.quete_id = q.id) AS nb_etapes
+        FROM quetes q
+        WHERE {where_clause}
+        ORDER BY {ordre_sql}
+        LIMIT ? OFFSET ?
+    """, params + [page_size, (page - 1) * page_size])
+    rows = cur.fetchall()
+
+    favoris_ids = set()
+    if user and rows:
+        ids = [str(r["id"]) for r in rows]
+        placeholders = ",".join("?" for _ in ids)
+        cur.execute(f"""
+            SELECT element_id FROM favoris
+            WHERE user_id = ? AND element_type = 'quete' AND element_id IN ({placeholders})
+        """, [user["id"]] + ids)
+        favoris_ids = {r["element_id"] for r in cur.fetchall()}
+    conn.close()
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "quetes": [
+            {**dict(r), "favori": str(r["id"]) in favoris_ids}
+            for r in rows
+        ],
+    }
+
+@app.get("/quetes/filtres")
+def filtres_quetes():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT zone FROM quetes WHERE zone IS NOT NULL AND zone != '' ORDER BY zone")
+    zones = [r[0] for r in cur.fetchall()]
+    cur.execute("SELECT COUNT(*) FROM quetes WHERE zone IS NULL OR zone = ''")
+    sans_zone = cur.fetchone()[0] > 0
+    conn.close()
+    return {
+        "categories": [{"valeur": k, "label": v} for k, v in CATEGORIE_QUETE_LABELS.items()],
+        "zones": zones,
+        "sans_zone": sans_zone,
+    }
+
+@app.get("/quetes/{quete_id}")
+def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM quetes WHERE id = ?", (quete_id,))
+    quete = cur.fetchone()
+    if not quete:
+        conn.close()
+        return {"erreur": "Quête introuvable"}
+
+    favori = False
+    progression_utilisateur = {}
+    if user:
+        cur.execute("SELECT 1 FROM favoris WHERE user_id = ? AND element_type = 'quete' AND element_id = ?",
+                    (user["id"], str(quete_id)))
+        favori = cur.fetchone() is not None
+        cur.execute("SELECT element_id, fait FROM progression_joueur WHERE user_id = ? AND element_type = 'quete_etape'",
+                    (user["id"],))
+        progression_utilisateur = {r["element_id"]: bool(r["fait"]) for r in cur.fetchall()}
+
+    cur.execute("SELECT id, nom, description, a_xp, a_kamas FROM quetes_etapes WHERE quete_id = ? ORDER BY ordre",
+                (quete_id,))
+    etapes_rows = cur.fetchall()
+    etape_ids = [r["id"] for r in etapes_rows]
+    items_par_etape = {}
+    if etape_ids:
+        placeholders = ",".join("?" for _ in etape_ids)
+        cur.execute(f"""
+            SELECT qei.etape_id, qei.objet_id, qei.quantite, o.nom, o.img
+            FROM quetes_etapes_items qei
+            LEFT JOIN objets o ON o.id = qei.objet_id
+            WHERE qei.etape_id IN ({placeholders})
+        """, etape_ids)
+        for r in cur.fetchall():
+            items_par_etape.setdefault(r["etape_id"], []).append(
+                {"id": r["objet_id"], "nom": r["nom"], "img": r["img"], "quantite": r["quantite"]})
+
+    etapes = [{
+        "id": r["id"],
+        "nom": r["nom"],
+        "description": r["description"],
+        "a_xp": bool(r["a_xp"]),
+        "a_kamas": bool(r["a_kamas"]),
+        "items": items_par_etape.get(r["id"], []),
+        "fait": progression_utilisateur.get(str(r["id"]), False),
+    } for r in etapes_rows]
+
+    cur.execute("""
+        SELECT ppq.quete_requise_id, q.nom, q.niveau_min,
+               (SELECT COUNT(*) FROM quetes_etapes WHERE quete_id = q.id) AS nb_etapes_total
+        FROM quetes_prerequis_quetes ppq
+        JOIN quetes q ON q.id = ppq.quete_requise_id
+        WHERE ppq.quete_id = ?
+    """, (quete_id,))
+    prerequis_quetes = []
+    for r in cur.fetchall():
+        nb_fait = 0
+        if user:
+            cur.execute("""
+                SELECT COUNT(*) FROM quetes_etapes qe
+                JOIN progression_joueur pj ON pj.element_type = 'quete_etape' AND pj.element_id = CAST(qe.id AS TEXT)
+                WHERE qe.quete_id = ? AND pj.user_id = ? AND pj.fait = 1
+            """, (r["quete_requise_id"], user["id"]))
+            nb_fait = cur.fetchone()[0]
+        prerequis_quetes.append({
+            "id": r["quete_requise_id"],
+            "nom": r["nom"],
+            "niveau_min": r["niveau_min"],
+            "ok": r["nb_etapes_total"] > 0 and nb_fait >= r["nb_etapes_total"],
+        })
+
+    cur.execute("""
+        SELECT ppo.objet_id, ppo.quantite, o.nom, o.img
+        FROM quetes_prerequis_objets ppo
+        LEFT JOIN objets o ON o.id = ppo.objet_id
+        WHERE ppo.quete_id = ?
+    """, (quete_id,))
+    prerequis_objets = [dict(r) for r in cur.fetchall()]
+
+    cur.execute("""
+        SELECT d.id, d.nom, d.niveau_optimal
+        FROM quetes_donjons qd
+        JOIN donjons d ON d.id = qd.donjon_id
+        WHERE qd.quete_id = ?
+        LIMIT 1
+    """, (quete_id,))
+    donjon_row = cur.fetchone()
+    donjon_lie = dict(donjon_row) if donjon_row else None
+
+    conn.close()
+
+    return {
+        **dict(quete),
+        "favori": favori,
+        "etapes": etapes,
+        "prerequis_quetes": prerequis_quetes,
+        "prerequis_objets": prerequis_objets,
+        "donjon_lie": donjon_lie,
     }
 
 # ============================================================

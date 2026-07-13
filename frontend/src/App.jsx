@@ -35,12 +35,12 @@ const C = {
 // Équipements englobe Panoplies, Métiers englobe Ressources (+ future carte),
 // Bestiaire fusionne Monstres + Zones. Ces pages existent toujours (accès
 // via la grille Encyclopédie de l'accueil ou les liens croisés des fiches),
-// elles ne sont juste plus des onglets de premier niveau. Quêtes n'a pas
-// encore de page : lien inerte. "Métiers" pointe vers Ressources en
-// attendant le vrai hub Métiers (chantier futur #11 CLAUDE.md) — sans ça,
-// les 3 639 ressources deviendraient injoignables depuis l'interface.
+// elles ne sont juste plus des onglets de premier niveau. "Métiers" pointe
+// vers Ressources en attendant le vrai hub Métiers (chantier futur #11
+// CLAUDE.md) — sans ça, les 3 639 ressources deviendraient injoignables
+// depuis l'interface.
 const navLinks = ["Équipements", "Métiers", "Donjons", "Bestiaire", "Quêtes"]
-const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres", "Métiers":"ressource" }
+const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres", "Métiers":"ressource", "Quêtes":"quete" }
 
 // Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
 // ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
@@ -153,7 +153,7 @@ function Navbar({ onHome, onNav, browsing, user, onLogin, onLogout }) {
 
 function StatsBar() {
   const items = [
-    {val:"4 932",label:"monstres"},{val:"4 210",label:"quêtes"},
+    {val:"4 932",label:"monstres"},{val:"1 976",label:"quêtes"},
     {val:"18 900",label:"articles"},{val:"18",label:"classes"},
     {val:"1 430",label:"succès"},{val:"18",label:"métiers"},
   ]
@@ -351,7 +351,7 @@ function EncycloGrid({ onNav }) {
     { label:"Métiers",           desc:"Récolte, craft et ressources",                   action:()=>onNav("ressource") },
     { label:"Donjons",           desc:"Boss, salles, stratégies et succès",             action:()=>onNav("donjon") },
     { label:"Bestiaire",         desc:"Toutes les créatures, par zone et sous-zone",    action:()=>onNav("monstres") },
-    { label:"Quêtes",            desc:"Étapes, prérequis et récompenses",               action:null },
+    { label:"Quêtes",            desc:"Étapes, prérequis et récompenses",               action:()=>onNav("quete") },
     { label:"Carte interactive", desc:"Positions des ressources et métiers", lit:true,  action:null },
   ]
   return (
@@ -1594,7 +1594,7 @@ function DonjonsPage({ onSelect, onBack }) {
   )
 }
 
-function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onBack }) {
+function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onSelectQuete, onBack }) {
   const [data, setData] = useState(null)
   const [favoriEnCours, setFavoriEnCours] = useState(false)
   const [messageConnexion, setMessageConnexion] = useState(false)
@@ -1736,7 +1736,7 @@ function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onBack })
       )}
 
       {data.drops?.length > 0 && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
           <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Drops</div>
           {data.drops.map((d,i) => (
             <div key={i} onClick={()=>d.objet_id && onSelectObjet(d.objet_id)}
@@ -1747,6 +1747,19 @@ function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onBack })
               }
               <span style={{ fontSize:12, color:d.objet_id?C.cyan:C.txt }}>{d.nom}</span>
               <span style={{ fontSize:11, color:C.txt3, marginLeft:"auto" }}>{d.pourcentage}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.quetes_associees?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.cyanb}`, borderRadius:10, padding:"14px 16px" }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Quêtes associées</div>
+          {data.quetes_associees.map(q => (
+            <div key={q.id} onClick={()=>onSelectQuete(q.id)}
+              style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0", cursor:"pointer" }}>
+              <span style={{ fontSize:12, color:C.cyan, fontWeight:600 }}>{q.nom}</span>
+              <span style={{ fontSize:11, color:C.txt3, marginLeft:"auto" }}>Niv. {q.niveau_min}</span>
             </div>
           ))}
         </div>
@@ -1988,6 +2001,417 @@ function SousZoneDetailPage({ nom, onSelectRegion, onSelectMonstre, onBack }) {
   )
 }
 
+const CATEGORIE_QUETE_LABELS = { repetable:"Répétable", autre:"Quête" }
+
+// Regroupement sous en-tetes : "zone" (defaut §5 specs) groupe par region
+// (ou "Sans zone" — voir CLAUDE.md, ~6% des quetes sans position resolue,
+// gap de donnee assume comme les autres domaines), "niveau" par tranche de
+// 20 (specs : "tranches de 20", contrairement aux tranches de 50 des objets).
+function grouperQuetes(quetes, tri) {
+  const cleDe = (q) => {
+    if (tri === "niveau") {
+      const base = Math.floor((q.niveau_min - 1) / 20) * 20 + 1
+      return `Niv. ${base} à ${base + 19}`
+    }
+    if (tri === "az") return (q.nom.charAt(0) || "?").toUpperCase()
+    return q.zone || "Sans zone"
+  }
+  const groupes = []
+  quetes.forEach(q => {
+    const cle = cleDe(q)
+    const dernier = groupes[groupes.length - 1]
+    if (dernier && dernier.cle === cle) dernier.items.push(q)
+    else groupes.push({ cle, items:[q] })
+  })
+  return groupes
+}
+
+// Lien externe DofusPourLesNoobs : jamais d'URL de fiche devinee (teste :
+// une URL construite depuis le nom renvoie du 404 sans filet). Toujours la
+// page de recherche interne du site, qui repond 200 meme sans resultat —
+// donc jamais de lien mort (voir CLAUDE.md).
+const urlGuideDPLN = (nomQuete) => `https://www.dofuspourlesnoobs.com/?s=${encodeURIComponent(nomQuete)}`
+
+function QuetesPage({ token, onSelect, onBack }) {
+  const [quetes, setQuetes] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
+  const [tri, setTri] = useState("zone")
+  const [categories, setCategories] = useState([])
+  const [zones, setZones] = useState([])
+  const [zonesDispo, setZonesDispo] = useState([])
+  const [sansZoneDispo, setSansZoneDispo] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [messageConnexion, setMessageConnexion] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${API}/quetes/filtres`).then(r=>r.json()).then(d => {
+      setZonesDispo(d.zones); setSansZoneDispo(d.sans_zone)
+    })
+  }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  const quetesRequeteId = useRef(0)
+  useEffect(() => {
+    const requeteId = ++quetesRequeteId.current
+    setLoading(true)
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    const params = new URLSearchParams({
+      search, tri, page, page_size: PAGE_SIZE,
+      categorie: categories.join(","), zone: zones.join(","),
+    })
+    fetch(`${API}/quetes?${params}`, { headers })
+      .then(r=>r.json())
+      .then(d => {
+        if (requeteId !== quetesRequeteId.current) return
+        setQuetes(d.quetes); setTotal(d.total); setLoading(false)
+      })
+      .catch(()=>{ if (requeteId === quetesRequeteId.current) setLoading(false) })
+  }, [search, tri, categories, zones, page, token])
+
+  const toggleCategorie = (c) => { setCategories(cs => cs.includes(c) ? cs.filter(x=>x!==c) : [...cs, c]); setPage(1) }
+  const toggleZone = (z) => { setZones(zs => zs.includes(z) ? zs.filter(x=>x!==z) : [...zs, z]); setPage(1) }
+
+  const chips = [
+    ...categories.map(c => ({ label:CATEGORIE_QUETE_LABELS[c], off:()=>toggleCategorie(c) })),
+    ...zones.map(z => ({ label:z===SANS_VALEUR?"Sans zone":z, off:()=>toggleZone(z) })),
+  ]
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
+  const groupes = useMemo(() => grouperQuetes(quetes, tri), [quetes, tri])
+
+  const reinitialiser = () => { setSearchInput(""); setSearch(""); setCategories([]); setZones([]); setPage(1) }
+
+  const toggleFavori = (q) => {
+    if (!token) { setMessageConnexion(true); return }
+    const methode = q.favori ? "DELETE" : "POST"
+    const url = q.favori ? `${API}/favoris?element_type=quete&element_id=${q.id}` : `${API}/favoris`
+    fetch(url, {
+      method: methode,
+      headers: { Authorization:`Bearer ${token}`, ...(methode==="POST" ? {"Content-Type":"application/json"} : {}) },
+      body: methode==="POST" ? JSON.stringify({ element_type:"quete", element_id:String(q.id) }) : undefined,
+    })
+      .then(r=>r.json())
+      .then(d => setQuetes(qs => qs.map(x => x.id===q.id ? { ...x, favori:d.favori } : x)))
+  }
+
+  return (
+    <div style={mp.page}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={{ display:"flex", alignItems:"baseline", gap:14, flexWrap:"wrap", marginBottom:18 }}>
+        <h1 className="df-section-title" style={{ fontSize:"clamp(24px, 4vw, 32px)", margin:0 }}>Quêtes</h1>
+        <span style={{ color:"var(--df-text-3)", fontSize:13.5 }}>{total} quête{total!==1?"s":""}</span>
+      </div>
+
+      <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:16 }}>
+        <div style={{ flex:1, minWidth:200, display:"flex", alignItems:"center", gap:10, background:"rgba(20,26,46,0.95)", border:"1px solid rgba(77,216,230,0.5)", borderRadius:12, padding:"11px 16px" }}>
+          <SearchIcon />
+          <input value={searchInput} onChange={e=>setSearchInput(e.target.value)} placeholder="Rechercher une quête..."
+            style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"var(--df-text)", fontSize:14 }} />
+        </div>
+        <select value={tri} onChange={e=>{ setTri(e.target.value); setPage(1) }}
+          style={{ background:"rgba(20,26,46,0.95)", color:"var(--df-text)", border:"1px solid rgba(255,198,61,0.35)", borderRadius:12, padding:"11px 14px", fontSize:13.5, cursor:"pointer" }}>
+          <option value="zone">Par zone</option>
+          <option value="niveau">Par niveau</option>
+          <option value="az">A → Z</option>
+        </select>
+        <button className="df-filters-toggle" onClick={()=>setShowFilters(s=>!s)}
+          style={{ background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.6)", borderRadius:12, padding:"11px 16px", fontSize:13.5, fontWeight:600, cursor:"pointer" }}>
+          Filtres{chips.length>0?` (${chips.length})`:""}
+        </button>
+      </div>
+
+      {chips.length > 0 && (
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16, alignItems:"center" }}>
+          {chips.map((c,i) => (
+            <button key={i} className="df-chip-filter" onClick={c.off}>{c.label} <span className="x">✕</span></button>
+          ))}
+          <button onClick={reinitialiser} style={{ background:"none", border:"none", color:"var(--df-text-3)", fontSize:12.5, cursor:"pointer", textDecoration:"underline" }}>
+            Tout effacer
+          </button>
+        </div>
+      )}
+
+      <div className="df-list-wrap">
+        <aside className={"df-filters-panel" + (showFilters?" df-filters-open":"")}
+          style={{ background:"rgba(20,26,46,0.92)", border:"1px solid rgba(255,198,61,0.2)", borderRadius:16, padding:20 }}>
+          <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Catégorie</div>
+          {Object.entries(CATEGORIE_QUETE_LABELS).map(([v,label]) => (
+            <label key={v} style={fchk}>
+              <input type="checkbox" checked={categories.includes(v)} onChange={()=>toggleCategorie(v)} style={fchkInput} />
+              {label}
+            </label>
+          ))}
+
+          <div className="df-section-title" style={ftitle}>Zone</div>
+          {sansZoneDispo && (
+            <label style={fchk}>
+              <input type="checkbox" checked={zones.includes(SANS_VALEUR)} onChange={()=>toggleZone(SANS_VALEUR)} style={fchkInput} />
+              Sans zone
+            </label>
+          )}
+          {zonesDispo.map(z => (
+            <label key={z} style={fchk}>
+              <input type="checkbox" checked={zones.includes(z)} onChange={()=>toggleZone(z)} style={fchkInput} />
+              {z}
+            </label>
+          ))}
+        </aside>
+
+        <div>
+          {messageConnexion && (
+            <div style={{ fontSize:12, color:"var(--df-text-2)", marginBottom:12 }}>
+              Connecte-toi pour ajouter des favoris
+              <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:"var(--df-text-3)", cursor:"pointer" }}>✕</span>
+            </div>
+          )}
+
+          {!loading && quetes.length === 0 ? (
+            <div style={mp.videEtat}>
+              Aucune quête ne correspond à ces filtres.
+              {chips.length > 0 && <div style={{ marginTop:10 }}>
+                <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+              </div>}
+            </div>
+          ) : groupes.map((g, gi) => (
+            <div key={g.cle + gi}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, margin: gi===0 ? "0 0 12px" : "24px 0 12px" }}>
+                <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>{g.cle}</span>
+                <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
+                <span style={{ color:"var(--df-text-3)", fontSize:11.5 }}>{g.items.length} quête{g.items.length>1?"s":""}</span>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:8 }}>
+                {g.items.map(q => (
+                  <div key={q.id} onClick={()=>onSelect(q.id)}
+                    style={{ display:"flex", alignItems:"center", gap:14, background:"rgba(20,26,46,0.9)", border:"1px solid rgba(255,198,61,0.13)", borderRadius:12, padding:"12px 16px", cursor:"pointer" }}
+                    onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(255,198,61,0.7)"}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,198,61,0.13)"}
+                  >
+                    <span onClick={e=>{ e.stopPropagation(); toggleFavori(q) }} title={q.favori?"Retirer des favoris":"Ajouter aux favoris"}
+                      style={{ fontSize:17, color:q.favori?"var(--df-gold)":"var(--df-text-off)", cursor:"pointer", userSelect:"none" }}>
+                      {q.favori ? "★" : "☆"}
+                    </span>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:14.5 }}>{q.nom}</div>
+                      <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:1 }}>
+                        Niv. {q.niveau_min} · {q.zone || "—"} · {q.nb_etapes} étape{q.nb_etapes!==1?"s":""}
+                      </div>
+                    </div>
+                    {q.categorie === "repetable" && (
+                      <span style={{ fontSize:11, fontWeight:700, letterSpacing:0.5, borderRadius:999, padding:"4px 11px", whiteSpace:"nowrap", background:"rgba(140,150,178,0.15)", color:"var(--df-text-2)" }}>
+                        Répétable
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {totalPages > 1 && (
+            <div style={mp.pagination}>
+              <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+              <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+              <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack }) {
+  const [data, setData] = useState(null)
+  const [favoriEnCours, setFavoriEnCours] = useState(false)
+  const [messageConnexion, setMessageConnexion] = useState(false)
+
+  useEffect(() => {
+    setData(null)
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    fetch(`${API}/quetes/${id}`, { headers }).then(r=>r.json()).then(setData)
+  }, [id, token])
+
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>{data.erreur}</div>
+
+  const doneCount = data.etapes.filter(e=>e.fait).length
+  const pct = data.etapes.length ? Math.round((doneCount / data.etapes.length) * 100) : 0
+
+  const toggleFavori = () => {
+    if (!token) { setMessageConnexion(true); return }
+    setFavoriEnCours(true)
+    const methode = data.favori ? "DELETE" : "POST"
+    const url = data.favori ? `${API}/favoris?element_type=quete&element_id=${id}` : `${API}/favoris`
+    fetch(url, {
+      method: methode,
+      headers: { Authorization:`Bearer ${token}`, ...(methode==="POST" ? {"Content-Type":"application/json"} : {}) },
+      body: methode==="POST" ? JSON.stringify({ element_type:"quete", element_id:String(id) }) : undefined,
+    })
+      .then(r=>r.json())
+      .then(d => { setData(prev => ({ ...prev, favori:d.favori })); setFavoriEnCours(false) })
+      .catch(()=>setFavoriEnCours(false))
+  }
+
+  const toggleEtape = (etape) => {
+    if (!token) { setMessageConnexion(true); return }
+    const fait = !etape.fait
+    setData(prev => ({ ...prev, etapes: prev.etapes.map(e => e.id===etape.id ? { ...e, fait } : e) }))
+    fetch(`${API}/progression`, {
+      method: "POST",
+      headers: { Authorization:`Bearer ${token}`, "Content-Type":"application/json" },
+      body: JSON.stringify({ element_type:"quete_etape", element_id:String(etape.id), fait }),
+    }).catch(()=>{
+      setData(prev => ({ ...prev, etapes: prev.etapes.map(e => e.id===etape.id ? { ...e, fait:!fait } : e) }))
+    })
+  }
+
+  return (
+    <div translate="no" style={{ padding:"1.5rem 2rem 3rem", maxWidth:1240, margin:"0 auto" }}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <header className="df-block" style={{ position:"relative", padding:24 }}>
+        <div style={{ position:"absolute", top:20, right:22, textAlign:"right" }}>
+          <span onClick={toggleFavori} title={data.favori?"Retirer des favoris":"Ajouter aux favoris"}
+            style={{ fontSize:26, lineHeight:1, cursor:favoriEnCours?"default":"pointer", color:data.favori?"var(--df-gold)":"var(--df-text-off)", opacity:favoriEnCours?0.5:1, userSelect:"none" }}>
+            {data.favori ? "★" : "☆"}
+          </span>
+          {messageConnexion && (
+            <div style={{ marginTop:4, fontSize:11, color:"var(--df-text-2)", maxWidth:150 }}>
+              Connecte-toi pour suivre ta progression
+              <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:"var(--df-text-3)", cursor:"pointer" }}>✕</span>
+            </div>
+          )}
+        </div>
+
+        <h1 className="df-title-gold" style={{ fontSize:"clamp(22px, 4vw, 30px)", margin:0, maxWidth:640 }}>{data.nom}</h1>
+        <div style={{ color:"var(--df-text-2)", fontSize:14, marginTop:8 }}>
+          Niv. {data.niveau_min}{data.niveau_max > data.niveau_min ? `-${data.niveau_max}` : ""} · {CATEGORIE_QUETE_LABELS[data.categorie]}
+          {data.zone && <> · {data.zone}</>}
+          {data.pnj && <> · PNJ : {data.pnj}</>}
+        </div>
+
+        {data.etapes.length > 0 && (
+          <div style={{ background:"rgba(12,15,29,0.6)", borderRadius:12, padding:"14px 18px", marginTop:18 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, marginBottom:8 }}>
+              <span style={{ color:"var(--df-text-2)" }}>Progression</span>
+              <span style={{ color:"var(--df-gold)", fontWeight:700 }}>{doneCount} / {data.etapes.length} · {pct}%</span>
+            </div>
+            <div className="df-progress"><div className={"fill" + (pct===100?" done":"")} style={{ width:pct+"%" }} /></div>
+          </div>
+        )}
+      </header>
+
+      <div className="df-detail-wrap">
+        <div>
+          {data.etapes.length > 0 && (
+            <section className="df-block">
+              <h2 className="df-block-title">Étapes</h2>
+              {data.etapes.map((e,i) => (
+                <div key={e.id} onClick={()=>toggleEtape(e)}
+                  style={{ display:"flex", alignItems:"flex-start", gap:13, padding:"11px 0", borderBottom:i<data.etapes.length-1?"1px solid rgba(255,255,255,0.05)":"none", cursor:"pointer" }}>
+                  <div className={"df-check" + (e.fait?" on":"")} style={{ marginTop:1, flexShrink:0 }}>{e.fait?"✓":""}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14.5, color:e.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:e.fait?"line-through":"none", lineHeight:1.5 }}>
+                      <span style={{ color:"var(--df-text-3)", fontWeight:700, marginRight:4 }}>{i+1}.</span>{e.description || e.nom}
+                    </div>
+                    {(e.a_xp || e.a_kamas || e.items.length > 0) && (
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:6 }}>
+                        {e.a_xp && <span style={{ fontSize:11.5, color:"var(--df-cyan)" }}>+ XP</span>}
+                        {e.a_kamas && <span style={{ fontSize:11.5, color:"var(--df-gold)" }}>+ Kamas</span>}
+                        {e.items.map((it,ii) => (
+                          <span key={ii} onClick={ev=>{ ev.stopPropagation(); it.id && onSelectObjet(it.id) }}
+                            style={{ fontSize:11.5, color:"var(--df-green)", cursor:it.id?"pointer":"default" }}>
+                            {it.quantite>1?`${it.quantite}× `:""}{it.nom || `Objet #${it.id}`}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {!token && (
+                <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:14, fontStyle:"italic" }}>
+                  Connecte-toi pour sauvegarder ta progression automatiquement.
+                </div>
+              )}
+            </section>
+          )}
+        </div>
+
+        <div>
+          {(data.prerequis_quetes.length > 0 || data.prerequis_objets.length > 0) && (
+            <section className="df-block">
+              <h2 className="df-block-title">Prérequis</h2>
+              {data.prerequis_quetes.map(p => (
+                <div key={p.id} onClick={()=>onSelect(p.id)} style={{ display:"flex", alignItems:"center", gap:10, fontSize:14, padding:"7px 0", cursor:"pointer" }}>
+                  <span style={{ color:p.ok?"var(--df-green)":"var(--df-text-3)", fontWeight:700 }}>{p.ok?"✓":"○"}</span>
+                  <span style={{ color:"var(--df-cyan)" }}>{p.nom}</span>
+                </div>
+              ))}
+              {data.prerequis_objets.map((o,i) => (
+                <div key={i} onClick={()=>o.objet_id && onSelectObjet(o.objet_id)}
+                  style={{ display:"flex", alignItems:"center", gap:10, fontSize:14, padding:"7px 0", cursor:o.objet_id?"pointer":"default" }}>
+                  {o.img
+                    ? <img src={o.img} alt={o.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                    : <div style={{ width:22, height:22, background:"var(--df-bg)", borderRadius:4 }} />
+                  }
+                  <span style={{ color:o.objet_id?"var(--df-cyan)":"var(--df-text)" }}>{o.nom || `Objet #${o.objet_id}`}</span>
+                  <span style={{ color:"var(--df-gold)", marginLeft:"auto" }}>×{o.quantite}</span>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {data.etapes.some(e => e.a_xp || e.a_kamas || e.items.length > 0) && (
+            <section className="df-block">
+              <h2 className="df-block-title">Récompenses</h2>
+              {data.etapes.some(e=>e.a_xp) && <div style={{ fontSize:14.5, color:"var(--df-cyan)", padding:"5px 0" }}>✦ Expérience</div>}
+              {data.etapes.some(e=>e.a_kamas) && <div style={{ fontSize:14.5, color:"var(--df-gold)", padding:"5px 0" }}>◈ Kamas</div>}
+              {data.etapes.flatMap(e=>e.items).map((it,i) => (
+                <div key={i} onClick={()=>it.id && onSelectObjet(it.id)}
+                  style={{ display:"flex", alignItems:"center", gap:10, fontSize:14.5, padding:"5px 0", cursor:it.id?"pointer":"default" }}>
+                  {it.img
+                    ? <img src={it.img} alt={it.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                    : <div style={{ width:22, height:22, background:"var(--df-bg)", borderRadius:4 }} />
+                  }
+                  <span style={{ color:"var(--df-green)" }}>{it.quantite>1?`${it.quantite}× `:""}{it.nom || `Objet #${it.id}`}</span>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {data.donjon_lie && (
+            <section className="df-block" style={{ borderColor:"var(--df-border-cyan)" }}>
+              <h2 className="df-block-title">🏰 Donjon lié</h2>
+              <div onClick={()=>onSelectDonjon(data.donjon_lie.id)} style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer" }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ color:"var(--df-cyan)", fontWeight:700, fontSize:14.5 }}>{data.donjon_lie.nom}</div>
+                  <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:1 }}>Niv. {data.donjon_lie.niveau_optimal}</div>
+                </div>
+                <span style={{ color:"var(--df-cyan)", fontSize:18, fontWeight:700 }}>→</span>
+              </div>
+            </section>
+          )}
+
+          <a href={urlGuideDPLN(data.nom)} target="_blank" rel="noopener noreferrer"
+            className="df-btn-ghost" style={{ display:"block", textAlign:"center", padding:"12px 16px", fontSize:13.5, textDecoration:"none" }}>
+            Guide complet sur DofusPourLesNoobs →
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [query, setQuery]       = useState("")
   const [results, setResults]   = useState([])
@@ -1998,7 +2422,8 @@ export default function App() {
   const [selectedPanoplie, setSelectedPanoplie] = useState(null)
   const [selectedRegion, setSelectedRegion]     = useState(null)
   const [selectedSousZone, setSelectedSousZone] = useState(null)
-  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone"
+  const [selectedQuete, setSelectedQuete]       = useState(null)
+  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete"
   const [almanax, setAlmanax]   = useState(null)
   const [token, setToken] = useState(() => localStorage.getItem("dofura_token") || null)
   const [user, setUser]   = useState(null)
@@ -2041,13 +2466,14 @@ export default function App() {
     setToken(null)
   }
 
-  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setBrowsing(null); setQuery(""); setResults([]) }
+  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setBrowsing(null); setQuery(""); setResults([]) }
   const handleSelectMonstre  = (id) => { resetNav(); setSelectedMonstre(id) }
   const handleSelectObjet    = (id) => { resetNav(); setSelectedObjet(id) }
   const handleSelectDonjon   = (id) => { resetNav(); setSelectedDonjon(id) }
   const handleSelectPanoplie = (id) => { resetNav(); setSelectedPanoplie(id) }
   const handleSelectRegion   = (nom) => { resetNav(); setSelectedRegion(nom) }
   const handleSelectSousZone = (nom) => { resetNav(); setSelectedSousZone(nom) }
+  const handleSelectQuete    = (id) => { resetNav(); setSelectedQuete(id) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
@@ -2068,13 +2494,15 @@ export default function App() {
       ) : selectedObjet ? (
         <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
       ) : selectedDonjon ? (
-        <DonjonDetailPage id={selectedDonjon} token={token} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onBack={handleHome} />
+        <DonjonDetailPage id={selectedDonjon} token={token} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onSelectQuete={handleSelectQuete} onBack={handleHome} />
       ) : selectedPanoplie ? (
         <PanoplieDetailPage id={selectedPanoplie} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : selectedSousZone ? (
         <SousZoneDetailPage nom={selectedSousZone} onSelectRegion={handleSelectRegion} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
       ) : selectedRegion ? (
         <RegionDetailPage nom={selectedRegion} onSelectSousZone={handleSelectSousZone} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
+      ) : selectedQuete ? (
+        <QuetePage id={selectedQuete} token={token} onSelect={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : browsing === "monstres" ? (
         <BestiairePage onSelect={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "donjon" ? (
@@ -2083,6 +2511,8 @@ export default function App() {
         <PanopliesPage onSelect={handleSelectPanoplie} onBack={handleHome} />
       ) : browsing === "zone" ? (
         <RegionsPage onSelect={handleSelectRegion} onSelectSousZone={handleSelectSousZone} onBack={handleHome} />
+      ) : browsing === "quete" ? (
+        <QuetesPage token={token} onSelect={handleSelectQuete} onBack={handleHome} />
       ) : browsing === "equipement" ? (
         <ObjetsPage categorie="equipement" titre="Équipements"
           placeholder="Rechercher un équipement..."
