@@ -19,6 +19,18 @@
 
 **CLAUDE.md** — les instructions de travail lues automatiquement par Claude Code au début de chaque session. *Le tien contient tes 17 règles et les pièges connus du projet.*
 
+## Plugins Claude Code installés
+
+*On gère les plugins avec la commande `/plugin` (installer, lister, désinstaller), puis `/reload-plugins` pour les activer. Règle : on n'installe que des plugins de confiance — priorité au marketplace officiel `claude-plugins-official` (Anthropic/GitHub), jamais un plugin tiers inconnu sans avoir vérifié ce qu'il fait.*
+
+**commit-commands** (officiel) — ajoute des commandes toutes prêtes pour le workflow Git courant : committer, pousser sur GitHub, ouvrir une pull request. *Pourquoi : évite de retaper la même série de commandes git à chaque fin de chantier (règle 4 : commit + push systématique en fin de session).* Installation : `/plugin install commit-commands@claude-plugins-official`.
+
+**security-guidance** (officiel) — relit le code généré à la recherche de failles de sécurité (injections, XSS, SSRF, secrets codés en dur, et une vingtaine d'autres familles de vulnérabilités) : alertes automatiques pendant l'édition + relecture plus poussée avant de committer. *Pourquoi : un filet de sécurité supplémentaire, dans l'esprit de la règle 12 (jamais de secret dans le code).* Installation : `/plugin install security-guidance@claude-plugins-official`.
+
+**github (MCP)** — connecte Claude Code directement à l'API GitHub : créer des issues, gérer des pull requests, relire du code, chercher dans des dépôts. *À confirmer : l'étendue exacte de ce qu'il peut faire sur le repo Dofura (accès en écriture ?) — à vérifier via `/plugin` avant de s'en servir pour de vrai.* Installation : `/plugin install github@claude-plugins-official`.
+
+**pr-review-toolkit** (pas encore installé, à étudier plus tard) — des sous-agents spécialisés pour la relecture de pull requests (commentaires, tests, gestion d'erreurs, conception des types, qualité et simplification du code). *Pourquoi attendre : Dofura n'a pas encore de vraies pull requests (tout part directement sur `main`) — utile le jour où le workflow Git se complexifie.*
+
 ## Les langages du projet (qui fait quoi)
 
 **Python** — le langage du backend. Se lit presque comme de l'anglais. *Chez toi : main.py (le serveur) et tous les scrapers.*
