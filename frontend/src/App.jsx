@@ -557,82 +557,69 @@ const mp = {
   comboboxEmpty: { padding:"10px 12px", fontSize:12, color:C.txt3 },
 }
 
-function ZoneCombobox({ zones, sansZoneDispo, value, onChange }) {
-  const [open, setOpen] = useState(false)
-  const [filtre, setFiltre] = useState("")
-  const ref = useRef(null)
+const CATEGORIE_BADGE_TEXTE = { boss:"BOSS", archi:"ARCHI", quete:"QUÊTE" }
+const CATEGORIE_BADGE_CLASSE = { boss:"", archi:" df-tile-badge-archi", quete:" df-tile-badge-quete" }
 
-  useEffect(() => {
-    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [])
-
-  const label = value === "" ? "Toutes les zones" : value === SANS_VALEUR ? "Sans zone" : value
-  const zonesFiltrees = zones.filter(z => z.toLowerCase().includes(filtre.toLowerCase()))
-
-  const choisir = (v) => { onChange(v); setOpen(false); setFiltre("") }
-
-  return (
-    <div ref={ref} style={mp.comboboxWrap}>
-      <button type="button" onClick={()=>setOpen(o=>!o)} style={mp.comboboxButton(open)}>
-        {label} <span style={{ fontSize:10, opacity:0.6 }}>▾</span>
-      </button>
-      {open && (
-        <div style={mp.comboboxPanel}>
-          <input autoFocus value={filtre} onChange={e=>setFiltre(e.target.value)}
-            placeholder="Rechercher une zone..." style={mp.comboboxInput} />
-          <div style={mp.comboboxList}>
-            <div onClick={()=>choisir("")} style={mp.comboboxOption(value==="")}>Toutes les zones</div>
-            {sansZoneDispo && <div onClick={()=>choisir(SANS_VALEUR)} style={mp.comboboxOption(value===SANS_VALEUR)}>Sans zone</div>}
-            {zonesFiltrees.map(z => (
-              <div key={z} onClick={()=>choisir(z)} style={mp.comboboxOption(value===z)}>{z}</div>
-            ))}
-            {zonesFiltrees.length === 0 && <div style={mp.comboboxEmpty}>Aucune zone ne correspond</div>}
-          </div>
-        </div>
-      )}
-    </div>
-  )
+// Regroupement sous en-tetes : "Par zone" utilise la region principale du
+// monstre (un monstre peut avoir plusieurs zones, voir main.py) — comme
+// pour les objets, seul le tri A→Z groupe par lettre.
+function grouperMonstres(monstres, tri) {
+  const cleDe = (m) => tri === "zone" ? (m.region || "Sans région") : (m.nom.charAt(0) || "?").toUpperCase()
+  const groupes = []
+  monstres.forEach(m => {
+    const cle = cleDe(m)
+    const dernier = groupes[groupes.length - 1]
+    if (dernier && dernier.cle === cle) dernier.items.push(m)
+    else groupes.push({ cle, items:[m] })
+  })
+  return groupes
 }
 
-function MonstresPage({ onSelect, onBack }) {
+// Bestiaire = fusion Monstres + Zones (§2/§5 specs). Region → sous-zone en
+// cascade comme les autres filtres a deux niveaux du site (type/effets sur
+// Equipements) : les sous-zones proposees dependent des regions cochees.
+function BestiairePage({ onSelect, onBack }) {
   const [monstres, setMonstres] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
-  const [famille, setFamille] = useState("")
-  const [zone, setZone] = useState("")
-  const [familles, setFamilles] = useState([])
-  const [zones, setZones] = useState([])
-  const [sansFamilleDispo, setSansFamilleDispo] = useState(true)
-  const [sansZoneDispo, setSansZoneDispo] = useState(true)
+  const [tri, setTri] = useState("az")
+  const [regions, setRegions] = useState([])
+  const [regionsDispo, setRegionsDispo] = useState([])
+  const [sousZones, setSousZones] = useState([])
+  const [sousZonesDispo, setSousZonesDispo] = useState([])
+  const [categories, setCategories] = useState([])
+  const [categoriesDispo, setCategoriesDispo] = useState([])
+  const [niveauBounds, setNiveauBounds] = useState(null)
+  const [niveauMin, setNiveauMin] = useState(1)
+  const [niveauMax, setNiveauMax] = useState(200)
+  const [showFilters, setShowFilters] = useState(false)
+  const [tip, setTip] = useState(null)
   const [loading, setLoading] = useState(true)
-  const filtresRequeteId = useRef(0)
 
-  // Filtres en cascade : les familles proposees dependent de la zone active
-  // (et vice versa), jamais de leur propre valeur — sinon la selection en
-  // cours pourrait disparaitre de son propre menu. Si la famille ou la zone
-  // choisie devient incompatible avec l'autre filtre, on la reinitialise
-  // plutot que de laisser le joueur sur une combinaison impossible.
+  // Categories + regions + bornes de niveau : fixes, chargees une fois.
   useEffect(() => {
-    const requeteId = ++filtresRequeteId.current
-    const params = new URLSearchParams()
-    if (famille) params.set("famille", famille)
-    if (zone) params.set("zone", zone)
-    fetch(`${API}/monstres/filtres?${params}`).then(r=>r.json()).then(d => {
-      if (requeteId !== filtresRequeteId.current) return // reponse perimee (filtre change entre-temps)
-      setFamilles(d.familles); setZones(d.zones)
-      setSansFamilleDispo(d.sans_famille); setSansZoneDispo(d.sans_zone)
-
-      if (famille === SANS_VALEUR && !d.sans_famille) { setFamille(""); setPage(1) }
-      else if (famille && famille !== SANS_VALEUR && !d.familles.includes(famille)) { setFamille(""); setPage(1) }
-
-      if (zone === SANS_VALEUR && !d.sans_zone) { setZone(""); setPage(1) }
-      else if (zone && zone !== SANS_VALEUR && !d.zones.includes(zone)) { setZone(""); setPage(1) }
+    fetch(`${API}/monstres/filtres`).then(r=>r.json()).then(d => {
+      setRegionsDispo(d.regions); setCategoriesDispo(d.categories)
+      setNiveauBounds({ min:d.niveau_min, max:d.niveau_max })
+      setNiveauMin(d.niveau_min); setNiveauMax(d.niveau_max)
     })
-  }, [famille, zone])
+  }, [])
+
+  // Cascade region -> sous-zones : aucune sous-zone proposee tant qu'aucune
+  // region n'est cochee (comme la maquette : "Coche une zone pour affiner"),
+  // et la selection de sous-zones est nettoyee si une region est decochee.
+  const sousZonesRequeteId = useRef(0)
+  useEffect(() => {
+    const requeteId = ++sousZonesRequeteId.current
+    if (regions.length === 0) { setSousZonesDispo([]); setSousZones([]); return }
+    fetch(`${API}/monstres/filtres?region=${encodeURIComponent(regions.join(","))}`).then(r=>r.json()).then(d => {
+      if (requeteId !== sousZonesRequeteId.current) return
+      setSousZonesDispo(d.sous_zones)
+      setSousZones(sz => sz.filter(s => d.sous_zones.includes(s)))
+    })
+  }, [regions])
 
   useEffect(() => {
     const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
@@ -641,78 +628,180 @@ function MonstresPage({ onSelect, onBack }) {
 
   const monstresRequeteId = useRef(0)
   useEffect(() => {
+    if (!niveauBounds) return
     const requeteId = ++monstresRequeteId.current
     setLoading(true)
-    const params = new URLSearchParams({ search, famille, zone, page, page_size: PAGE_SIZE })
+    const params = new URLSearchParams({
+      search, tri, page, page_size: PAGE_SIZE,
+      region: regions.join(","), sous_zone: sousZones.join(","), categorie: categories.join(","),
+      niveau_min: niveauMin, niveau_max: niveauMax,
+    })
     fetch(`${API}/monstres?${params}`)
       .then(r=>r.json())
       .then(d => {
-        if (requeteId !== monstresRequeteId.current) return // reponse perimee (filtre change entre-temps)
+        if (requeteId !== monstresRequeteId.current) return
         setMonstres(d.monstres); setTotal(d.total); setLoading(false)
       })
       .catch(()=>{ if (requeteId === monstresRequeteId.current) setLoading(false) })
-  }, [search, famille, zone, page])
+  }, [search, tri, regions, sousZones, categories, niveauMin, niveauMax, page, niveauBounds])
+
+  const toggleRegion = (r) => { setRegions(rs => rs.includes(r) ? rs.filter(x=>x!==r) : [...rs, r]); setPage(1) }
+  const toggleSousZone = (s) => { setSousZones(ss => ss.includes(s) ? ss.filter(x=>x!==s) : [...ss, s]); setPage(1) }
+  const toggleCategorie = (c) => { setCategories(cs => cs.includes(c) ? cs.filter(x=>x!==c) : [...cs, c]); setPage(1) }
+  const libelleCategorie = (v) => categoriesDispo.find(c=>c.valeur===v)?.label || v
+
+  const chips = [
+    ...regions.map(r => ({ label:r, off:()=>toggleRegion(r) })),
+    ...sousZones.map(s => ({ label:s, off:()=>toggleSousZone(s) })),
+    ...categories.map(c => ({ label:libelleCategorie(c), off:()=>toggleCategorie(c) })),
+    ...(niveauBounds && (niveauMin > niveauBounds.min || niveauMax < niveauBounds.max)
+      ? [{ label:`Niv. ${niveauMin}-${niveauMax}`, off:()=>{ setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max); setPage(1) } }]
+      : []),
+  ]
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
-  const filtresActifs = search || famille || zone
+  const groupes = useMemo(() => grouperMonstres(monstres, tri), [monstres, tri])
 
   const reinitialiser = () => {
-    setSearchInput(""); setSearch(""); setFamille(""); setZone(""); setPage(1)
+    setSearchInput(""); setSearch(""); setRegions([]); setSousZones([]); setCategories([])
+    if (niveauBounds) { setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max) }
+    setPage(1)
   }
 
   return (
     <div style={mp.page}>
       <button onClick={onBack} style={mp.backBtn}>← Retour</button>
 
-      <div style={mp.filtreBar}>
-        <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
-          placeholder="Rechercher un monstre..." style={mp.searchInput} />
-
-        <select value={famille} onChange={e=>{ setFamille(e.target.value); setPage(1) }} style={mp.select}>
-          <option value="">Toutes les familles</option>
-          {sansFamilleDispo && <option value={SANS_VALEUR}>Sans famille</option>}
-          {familles.map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
-
-        <ZoneCombobox zones={zones} sansZoneDispo={sansZoneDispo} value={zone} onChange={(v)=>{ setZone(v); setPage(1) }} />
-
-        {filtresActifs && <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser</button>}
-
-        <span style={mp.compteur}>{total} monstre{total!==1?"s":""}</span>
+      <div style={{ display:"flex", alignItems:"baseline", gap:14, flexWrap:"wrap", marginBottom:18 }}>
+        <h1 className="df-section-title" style={{ fontSize:"clamp(24px, 4vw, 32px)", margin:0 }}>Bestiaire</h1>
+        <span style={{ color:"var(--df-text-3)", fontSize:13.5 }}>{total} créature{total!==1?"s":""}</span>
       </div>
 
-      {!loading && monstres.length === 0 ? (
-        <div style={mp.videEtat}>
-          Aucun monstre ne correspond à ces filtres.
-          {filtresActifs && <div style={{ marginTop:10 }}>
-            <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
-          </div>}
+      <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:16 }}>
+        <div style={{ flex:1, minWidth:200, display:"flex", alignItems:"center", gap:10, background:"rgba(20,26,46,0.95)", border:"1px solid rgba(77,216,230,0.5)", borderRadius:12, padding:"11px 16px" }}>
+          <SearchIcon />
+          <input value={searchInput} onChange={e=>setSearchInput(e.target.value)} placeholder="Rechercher une créature..."
+            style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"var(--df-text)", fontSize:14 }} />
         </div>
-      ) : (
-        <div style={mp.grid}>
-          {monstres.map(m => (
-            <div key={m.id} onClick={()=>onSelect(m.id)} style={mp.card}
-              onMouseEnter={e=>e.currentTarget.style.borderColor=C.cyan}
-              onMouseLeave={e=>e.currentTarget.style.borderColor=C.bdr}
-            >
-              {m.image_url
-                ? <img src={m.image_url} alt={m.nom} style={mp.cardImg} />
-                : <div style={mp.cardImgVide} />
-              }
-              <div style={mp.cardNom}>{m.nom}</div>
-              <div style={mp.cardFamille}>{m.famille || "—"}</div>
-            </div>
+        <select value={tri} onChange={e=>{ setTri(e.target.value); setPage(1) }}
+          style={{ background:"rgba(20,26,46,0.95)", color:"var(--df-text)", border:"1px solid rgba(255,198,61,0.35)", borderRadius:12, padding:"11px 14px", fontSize:13.5, cursor:"pointer" }}>
+          <option value="az">A → Z</option>
+          <option value="zone">Par zone</option>
+        </select>
+        <button className="df-filters-toggle" onClick={()=>setShowFilters(s=>!s)}
+          style={{ background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.6)", borderRadius:12, padding:"11px 16px", fontSize:13.5, fontWeight:600, cursor:"pointer" }}>
+          Filtres{chips.length>0?` (${chips.length})`:""}
+        </button>
+      </div>
+
+      {chips.length > 0 && (
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16, alignItems:"center" }}>
+          {chips.map((c,i) => (
+            <button key={i} className="df-chip-filter" onClick={c.off}>{c.label} <span className="x">✕</span></button>
           ))}
+          <button onClick={reinitialiser} style={{ background:"none", border:"none", color:"var(--df-text-3)", fontSize:12.5, cursor:"pointer", textDecoration:"underline" }}>
+            Tout effacer
+          </button>
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div style={mp.pagination}>
-          <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
-          <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
-          <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+      <div className="df-list-wrap">
+        <aside className={"df-filters-panel" + (showFilters?" df-filters-open":"")}
+          style={{ background:"rgba(20,26,46,0.92)", border:"1px solid rgba(255,198,61,0.2)", borderRadius:16, padding:20 }}>
+          <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Zone</div>
+          {regionsDispo.map(r => (
+            <label key={r} style={fchk}>
+              <input type="checkbox" checked={regions.includes(r)} onChange={()=>toggleRegion(r)} style={fchkInput} />
+              {r}
+            </label>
+          ))}
+
+          <div className="df-section-title" style={ftitle}>Sous-zone</div>
+          {sousZonesDispo.length === 0
+            ? <div style={{ color:"var(--df-text-3)", fontSize:11.5, fontStyle:"italic" }}>Coche une zone pour affiner par sous-zone</div>
+            : sousZonesDispo.map(s => (
+                <label key={s} style={{ ...fchk, paddingLeft:22, fontSize:12.5, color:"var(--df-text-2)" }}>
+                  <input type="checkbox" checked={sousZones.includes(s)} onChange={()=>toggleSousZone(s)} style={{ ...fchkInput, accentColor:"var(--df-cyan)" }} />
+                  {s}
+                </label>
+              ))
+          }
+
+          <div className="df-section-title" style={ftitle}>Catégorie</div>
+          {categoriesDispo.map(c => (
+            <label key={c.valeur} style={fchk}>
+              <input type="checkbox" checked={categories.includes(c.valeur)} onChange={()=>toggleCategorie(c.valeur)} style={fchkInput} />
+              {c.label}
+            </label>
+          ))}
+
+          {niveauBounds && (
+            <>
+              <div className="df-section-title" style={ftitle}>Niveau</div>
+              <input type="range" min={niveauBounds.min} max={niveauBounds.max} value={niveauMin}
+                onChange={e=>{ setNiveauMin(Math.min(Number(e.target.value), niveauMax)); setPage(1) }}
+                style={{ width:"100%", accentColor:"var(--df-cyan)" }} />
+              <input type="range" min={niveauBounds.min} max={niveauBounds.max} value={niveauMax}
+                onChange={e=>{ setNiveauMax(Math.max(Number(e.target.value), niveauMin)); setPage(1) }}
+                style={{ width:"100%", accentColor:"var(--df-cyan)" }} />
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"var(--df-text-3)", marginTop:2 }}>
+                <span>Min : {niveauMin}</span><span>Max : {niveauMax}</span>
+              </div>
+            </>
+          )}
+        </aside>
+
+        <div>
+          {!loading && monstres.length === 0 ? (
+            <div style={mp.videEtat}>
+              Aucune créature ne correspond à ces filtres.
+              {chips.length > 0 && <div style={{ marginTop:10 }}>
+                <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+              </div>}
+            </div>
+          ) : groupes.map((g, gi) => (
+            <div key={g.cle + gi}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, margin: gi===0 ? "0 0 12px" : "24px 0 12px" }}>
+                <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>{g.cle}</span>
+                <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
+                <span style={{ color:"var(--df-text-3)", fontSize:11.5 }}>{g.items.length} créature{g.items.length>1?"s":""}</span>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
+                {g.items.map(m => (
+                  <div key={m.id} className="df-tile" onClick={()=>onSelect(m.id)}
+                    onMouseEnter={()=>setTip(m.id)} onMouseLeave={()=>setTip(null)}
+                  >
+                    {m.image_url
+                      ? <img src={m.image_url} alt={m.nom} style={{ width:44, height:44, objectFit:"contain", margin:"0 auto 10px", display:"block" }} />
+                      : <div style={{ width:44, height:44, borderRadius:10, margin:"0 auto 10px", background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)" }} />
+                    }
+                    <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:12.5, lineHeight:1.25, minHeight:31, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>{m.nom}</div>
+                    <div style={{ color:"var(--df-text-3)", fontSize:11, marginTop:4 }}>Niv. {m.niveau ?? "—"}</div>
+                    {m.categorie !== "monstre" && (
+                      <span className={"df-tile-badge" + CATEGORIE_BADGE_CLASSE[m.categorie]}>{CATEGORIE_BADGE_TEXTE[m.categorie]}</span>
+                    )}
+                    {tip === m.id && (
+                      <div className="df-tooltip">
+                        <div style={{ color:"var(--df-cyan)", fontSize:12.5, fontWeight:600 }}>{m.region || "Région inconnue"}</div>
+                        {m.sous_zone && <div style={{ color:"var(--df-text-2)", fontSize:12, marginTop:2 }}>{m.sous_zone}</div>}
+                        <div style={{ color:"var(--df-text)", fontSize:12, marginTop:8, paddingTop:8, borderTop:"1px solid rgba(255,198,61,0.15)" }}>{libelleCategorie(m.categorie)}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {totalPages > 1 && (
+            <div style={mp.pagination}>
+              <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+              <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+              <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -1853,7 +1942,7 @@ export default function App() {
       ) : selectedRegion ? (
         <RegionDetailPage nom={selectedRegion} onSelectSousZone={handleSelectSousZone} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : browsing === "monstres" ? (
-        <MonstresPage onSelect={handleSelectMonstre} onBack={handleHome} />
+        <BestiairePage onSelect={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "donjon" ? (
         <DonjonsPage onSelect={handleSelectDonjon} onBack={handleHome} />
       ) : browsing === "panoplie" ? (

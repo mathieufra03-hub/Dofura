@@ -211,100 +211,141 @@ def get_db():
 
 SANS_VALEUR = "__aucune__"
 
+# Bestiaire (fusion Monstres + Zones) : categories calculees, pas stockees.
+# "Boss de donjon" et "Archimonstre"/"Monstre de quete" viennent de deux
+# mecanismes differents (jointure donjons_monstres.est_boss vs famille) —
+# verifie sur la base (135 monstres boss, familles "Creatures Archimonstres"/
+# "Creatures de quete" deja connues du chantier Zones). Un monstre peut
+# cumuler plusieurs categories (ex. boss ET archimonstre) : priorite
+# d'affichage boss > archi > quete pour le badge (une seule pastille par
+# vignette), mais le filtre matche sur l'union (OR) des cases cochees.
+CATEGORIE_LABELS = {"boss": "Boss de donjon", "archi": "Archimonstre", "quete": "Monstre de quête", "monstre": "Monstre"}
+CATEGORIE_CONDITIONS = {
+    "boss":    "m.id IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1)",
+    "archi":   "m.famille = 'Créatures Archimonstres'",
+    "quete":   "m.famille = 'Créatures de quête'",
+    "monstre": "m.id NOT IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1) AND (m.famille IS NULL OR m.famille NOT IN ('Créatures Archimonstres', 'Créatures de quête'))",
+}
+# Reutilise partout : niveau "naturel" de rencontre = grade le plus bas du
+# monstre (deja la convention du chantier Zones, pas la plage complete).
+SQL_NIVEAU_BASE = "(SELECT monstre_id, MIN(niveau) AS niveau_base FROM grades GROUP BY monstre_id)"
+
 @app.get("/monstres")
-def liste_monstres(search: str = "", famille: str = "", zone: str = "", page: int = 1, page_size: int = 48):
+def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", categorie: str = "",
+                    niveau_min: int = 1, niveau_max: int = 999, tri: str = "az",
+                    page: int = 1, page_size: int = 48):
     page = max(page, 1)
     page_size = min(max(page_size, 1), 200)
 
-    conditions = ["nom LIKE ?"]
+    conditions = ["m.nom LIKE ?"]
     params = [f"%{search}%"]
 
-    if famille == SANS_VALEUR:
-        conditions.append("(famille IS NULL OR famille = '')")
-    elif famille:
-        conditions.append("famille = ?")
-        params.append(famille)
+    regions_choisies = [r for r in region.split(",") if r]
+    if regions_choisies:
+        conditions.append(f"""m.id IN (
+            SELECT z.monstre_id FROM zones z JOIN zones_areas za ON za.nom = z.nom
+            WHERE za.area IN ({','.join('?' for _ in regions_choisies)})
+        )""")
+        params.extend(regions_choisies)
 
-    if zone == SANS_VALEUR:
-        conditions.append("id NOT IN (SELECT monstre_id FROM zones)")
-    elif zone:
-        conditions.append("id IN (SELECT monstre_id FROM zones WHERE nom = ?)")
-        params.append(zone)
+    sous_zones_choisies = [s for s in sous_zone.split(",") if s]
+    if sous_zones_choisies:
+        conditions.append(f"m.id IN (SELECT monstre_id FROM zones WHERE nom IN ({','.join('?' for _ in sous_zones_choisies)}))")
+        params.extend(sous_zones_choisies)
+
+    categories_choisies = [c for c in categorie.split(",") if c in CATEGORIE_CONDITIONS]
+    if categories_choisies:
+        conditions.append("(" + " OR ".join(CATEGORIE_CONDITIONS[c] for c in categories_choisies) + ")")
+
+    conditions.append("base.niveau_base BETWEEN ? AND ?")
+    params.extend([niveau_min, niveau_max])
 
     where_clause = " AND ".join(conditions)
+    # Region "principale" (premiere par ordre alpha) : utilisee pour le tri/
+    # regroupement "Par zone" et affichee en tooltip — un monstre peut avoir
+    # plusieurs zones, on ne peut en montrer qu'une sur la vignette.
+    sql_region_principale = """(
+        SELECT MIN(za.area) FROM zones z JOIN zones_areas za ON za.nom = z.nom WHERE z.monstre_id = m.id
+    )"""
+    sql_sous_zone_principale = "(SELECT MIN(z.nom) FROM zones z WHERE z.monstre_id = m.id)"
+
+    ordres = {
+        "az": "m.nom",
+        "zone": f"(region_principale IS NULL), region_principale, m.nom",
+    }
+    order_by = ordres.get(tri, ordres["az"])
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute(f"SELECT COUNT(*) FROM monstres WHERE {where_clause}", params)
+    cur.execute(f"""
+        SELECT COUNT(*) FROM monstres m JOIN {SQL_NIVEAU_BASE} base ON base.monstre_id = m.id
+        WHERE {where_clause}
+    """, params)
     total = cur.fetchone()[0]
 
     cur.execute(f"""
-        SELECT * FROM monstres
+        SELECT m.id, m.nom, m.image_url, m.famille, base.niveau_base,
+               {sql_region_principale} AS region_principale,
+               {sql_sous_zone_principale} AS sous_zone_principale,
+               (m.id IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1)) AS est_boss
+        FROM monstres m
+        JOIN {SQL_NIVEAU_BASE} base ON base.monstre_id = m.id
         WHERE {where_clause}
-        ORDER BY nom
+        ORDER BY {order_by}
         LIMIT ? OFFSET ?
     """, params + [page_size, (page - 1) * page_size])
     rows = cur.fetchall()
     conn.close()
 
+    def categorie_de(r):
+        if r["est_boss"]: return "boss"
+        if r["famille"] == "Créatures Archimonstres": return "archi"
+        if r["famille"] == "Créatures de quête": return "quete"
+        return "monstre"
+
     return {
         "total": total,
         "page": page,
         "page_size": page_size,
-        "monstres": [dict(r) for r in rows],
+        "monstres": [
+            {
+                "id": r["id"], "nom": r["nom"], "image_url": r["image_url"],
+                "niveau": r["niveau_base"], "region": r["region_principale"], "sous_zone": r["sous_zone_principale"],
+                "categorie": categorie_de(r),
+            }
+            for r in rows
+        ],
     }
 
 @app.get("/monstres/filtres")
-def filtres_monstres(famille: str = "", zone: str = ""):
+def filtres_monstres(region: str = ""):
     conn = get_db()
     cur = conn.cursor()
 
-    # Familles disponibles : filtrees par la zone active (jamais par la famille
-    # elle-meme, sinon la valeur selectionnee pourrait disparaitre de son propre menu).
-    zone_cond, zone_params = "", []
-    if zone == SANS_VALEUR:
-        zone_cond = "AND id NOT IN (SELECT monstre_id FROM zones)"
-    elif zone:
-        zone_cond = "AND id IN (SELECT monstre_id FROM zones WHERE nom = ?)"
-        zone_params = [zone]
+    cur.execute("SELECT DISTINCT area FROM zones_areas WHERE area IS NOT NULL ORDER BY area")
+    regions = [r[0] for r in cur.fetchall()]
 
-    cur.execute(f"""
-        SELECT DISTINCT famille FROM monstres
-        WHERE famille IS NOT NULL AND famille != '' {zone_cond}
-        ORDER BY famille
-    """, zone_params)
-    familles = [r[0] for r in cur.fetchall()]
+    # Sous-zones disponibles : filtrees par les regions cochees (cascade —
+    # cocher une region revele ses sous-zones). Sans region cochee, aucune
+    # sous-zone proposee (comme la maquette : "Coche une zone pour affiner").
+    sous_zones = []
+    regions_choisies = [r for r in region.split(",") if r]
+    if regions_choisies:
+        cur.execute(f"""
+            SELECT nom FROM zones_areas WHERE area IN ({','.join('?' for _ in regions_choisies)}) ORDER BY nom
+        """, regions_choisies)
+        sous_zones = [r[0] for r in cur.fetchall()]
 
-    cur.execute(f"""
-        SELECT COUNT(*) FROM monstres
-        WHERE (famille IS NULL OR famille = '') {zone_cond}
-    """, zone_params)
-    sans_famille = cur.fetchone()[0] > 0
-
-    # Zones disponibles : filtrees par la famille active (meme logique inverse).
-    famille_cond, famille_params = "", []
-    if famille == SANS_VALEUR:
-        famille_cond = "AND (famille IS NULL OR famille = '')"
-    elif famille:
-        famille_cond = "AND famille = ?"
-        famille_params = [famille]
-
-    cur.execute(f"""
-        SELECT DISTINCT z.nom FROM zones z
-        JOIN monstres m ON m.id = z.monstre_id
-        WHERE 1=1 {famille_cond}
-        ORDER BY z.nom
-    """, famille_params)
-    zones = [r[0] for r in cur.fetchall()]
-
-    cur.execute(f"""
-        SELECT COUNT(*) FROM monstres
-        WHERE id NOT IN (SELECT monstre_id FROM zones) {famille_cond}
-    """, famille_params)
-    sans_zone = cur.fetchone()[0] > 0
+    cur.execute(f"SELECT MIN(niveau_base), MAX(niveau_base) FROM {SQL_NIVEAU_BASE}")
+    niveau_min_dispo, niveau_max_dispo = cur.fetchone()
 
     conn.close()
-    return {"familles": familles, "sans_famille": sans_famille, "zones": zones, "sans_zone": sans_zone}
+    return {
+        "regions": regions,
+        "sous_zones": sous_zones,
+        "categories": [{"valeur": k, "label": v} for k, v in CATEGORIE_LABELS.items()],
+        "niveau_min": niveau_min_dispo or 1, "niveau_max": niveau_max_dispo or 200,
+    }
 
 @app.get("/monstres/{monstre_id}")
 def detail_monstre(monstre_id: int):
