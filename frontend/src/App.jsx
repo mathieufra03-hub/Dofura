@@ -2032,6 +2032,34 @@ function grouperQuetes(quetes, tri) {
 // donc jamais de lien mort (voir CLAUDE.md).
 const urlGuideDPLN = (nomQuete) => `https://www.dofuspourlesnoobs.com/?s=${encodeURIComponent(nomQuete)}`
 
+// Bouton position -> copie "/travel x,y" dans le presse-papier (la commande
+// d'autopilote que les joueurs collent dans le chat Dofus). Donnee deja en
+// base (coord_x/coord_y), aucun nouveau calcul : juste un formatage + un
+// clic. Retour visuel "Copié !" 1,5s avant de reprendre l'affichage normal.
+function BoutonTravel({ x, y }) {
+  const [copie, setCopie] = useState(false)
+  if (x == null || y == null) return null
+  const copier = (e) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(`/travel ${x},${y}`).then(() => {
+      setCopie(true)
+      setTimeout(() => setCopie(false), 1500)
+    })
+  }
+  return (
+    <button onClick={copier} title="Copier la commande /travel"
+      style={{
+        background: copie ? "rgba(76,201,141,0.15)" : "rgba(0,212,255,0.1)",
+        border: `1.5px solid ${copie ? "var(--df-green)" : "var(--df-cyan)"}`,
+        borderRadius: 7, padding: "3px 10px", fontSize: 14, fontWeight: 800,
+        color: copie ? "var(--df-green)" : "var(--df-cyan)", cursor: "pointer",
+        fontFamily: "inherit", whiteSpace: "nowrap",
+      }}>
+      {copie ? "✓ Copié !" : `📍 [${x}, ${y}]`}
+    </button>
+  )
+}
+
 function QuetesPage({ token, onSelect, onBack }) {
   const [quetes, setQuetes] = useState([])
   const [total, setTotal] = useState(0)
@@ -2300,9 +2328,9 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
         </div>
 
         {(data.lieu_precis || data.sous_zone || data.coord_x != null) && (
-          <div style={{ color:"var(--df-text-3)", fontSize:12.5, marginTop:4 }}>
-            📍 {data.lieu_precis || data.sous_zone}
-            {data.coord_x != null && data.coord_y != null && <> [{data.coord_x}, {data.coord_y}]</>}
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:8 }}>
+            <span style={{ color:"var(--df-text-2)", fontSize:13.5 }}>{data.lieu_precis || data.sous_zone}</span>
+            <BoutonTravel x={data.coord_x} y={data.coord_y} />
           </div>
         )}
 
@@ -2315,6 +2343,11 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
               <ul style={{ margin:"8px 0 0", paddingLeft:18, color:"var(--df-text-2)", fontSize:13 }}>
                 {data.guide.points_cles.map((p,i) => <li key={i} style={{ padding:"2px 0" }}>{p}</li>)}
               </ul>
+            )}
+            {data.guide.astuce_dialogue && (
+              <div style={{ marginTop:8, background:"rgba(196,75,199,0.08)", border:"1px solid rgba(196,75,199,0.3)", borderRadius:8, padding:"8px 12px", fontSize:13, color:"var(--df-text-2)" }}>
+                💬 {data.guide.astuce_dialogue}
+              </div>
             )}
           </div>
         )}
@@ -2337,14 +2370,35 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
               <h2 className="df-block-title">Étapes</h2>
               {data.etapes.map((e,i) => (
                 <div key={e.id} onClick={()=>toggleEtape(e)}
-                  style={{ display:"flex", alignItems:"flex-start", gap:13, padding:"11px 0", borderBottom:i<data.etapes.length-1?"1px solid rgba(255,255,255,0.05)":"none", cursor:"pointer" }}>
-                  <div className={"df-check" + (e.fait?" on":"")} style={{ marginTop:1, flexShrink:0 }}>{e.fait?"✓":""}</div>
+                  style={{ display:"flex", alignItems:"flex-start", gap:15, padding:"22px 4px", borderBottom:i<data.etapes.length-1?"1px solid rgba(255,255,255,0.07)":"none", cursor:"pointer" }}>
+                  <div className={"df-check" + (e.fait?" on":"")} style={{ marginTop:2, flexShrink:0 }}>{e.fait?"✓":""}</div>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:14.5, color:e.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:e.fait?"line-through":"none", lineHeight:1.5 }}>
-                      <span style={{ color:"var(--df-text-3)", fontWeight:700, marginRight:4 }}>{i+1}.</span>{e.description || e.nom}
-                    </div>
+                    {e.actions?.length > 0 ? e.actions.map((a,ai) => (
+                      <div key={ai} style={{
+                        display:"flex", flexWrap:"wrap", alignItems:"center", gap:9,
+                        marginTop:ai>0?14:0, paddingTop:ai>0?14:0,
+                        borderTop:ai>0?"1px dashed rgba(255,255,255,0.09)":"none",
+                      }}>
+                        {ai===0
+                          ? <span style={{ color:"var(--df-text-3)", fontWeight:700, fontSize:14.5 }}>{i+1}.</span>
+                          : <span style={{ width:18 }} />
+                        }
+                        <span style={{ fontSize:17 }}>{a.icone}</span>
+                        <span style={{ fontSize:14.5, color:e.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:e.fait?"line-through":"none" }}>
+                          {a.verbe && <>{a.verbe} </>}
+                          <strong style={{ color:e.fait?"var(--df-text-3)":"var(--df-gold)" }}>{a.cible}</strong>
+                          {a.cible_secondaire && <span style={{ color:"var(--df-text-3)", fontWeight:400 }}> à {a.cible_secondaire}</span>}
+                        </span>
+                        {a.lieu && <span style={{ fontSize:12.5, color:"var(--df-text-3)" }}>({a.lieu})</span>}
+                        <BoutonTravel x={a.coord_x} y={a.coord_y} />
+                      </div>
+                    )) : (
+                      <div style={{ fontSize:14.5, color:e.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:e.fait?"line-through":"none", lineHeight:1.5 }}>
+                        <span style={{ color:"var(--df-text-3)", fontWeight:700, marginRight:4 }}>{i+1}.</span>{e.nom}
+                      </div>
+                    )}
                     {(e.a_xp || e.a_kamas || e.items.length > 0) && (
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:6 }}>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:12 }}>
                         {e.a_xp && <span style={{ fontSize:11.5, color:"var(--df-cyan)" }}>+ XP</span>}
                         {e.a_kamas && <span style={{ fontSize:11.5, color:"var(--df-gold)" }}>+ Kamas</span>}
                         {e.items.map((it,ii) => (
@@ -2386,6 +2440,23 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
                   }
                   <span style={{ color:o.objet_id?"var(--df-cyan)":"var(--df-text)" }}>{o.nom || `Objet #${o.objet_id}`}</span>
                   <span style={{ color:"var(--df-gold)", marginLeft:"auto" }}>×{o.quantite}</span>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {data.ressources?.length > 0 && (
+            <section className="df-block">
+              <h2 className="df-block-title">Ressources à prévoir</h2>
+              {data.ressources.map((r,i) => (
+                <div key={i} onClick={()=>r.objet_id && onSelectObjet(r.objet_id)}
+                  style={{ display:"flex", alignItems:"center", gap:10, fontSize:14, padding:"7px 0", cursor:r.objet_id?"pointer":"default" }}>
+                  {r.img
+                    ? <img src={r.img} alt={r.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                    : <div style={{ width:22, height:22, background:"var(--df-bg)", borderRadius:4 }} />
+                  }
+                  <span style={{ color:r.objet_id?"var(--df-cyan)":"var(--df-text)" }}>{r.nom || `Objet #${r.objet_id}`}</span>
+                  <span style={{ color:"var(--df-gold)", marginLeft:"auto" }}>×{r.quantite}</span>
                 </div>
               ))}
             </section>

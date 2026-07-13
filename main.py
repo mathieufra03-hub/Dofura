@@ -1322,6 +1322,7 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
     etapes_rows = cur.fetchall()
     etape_ids = [r["id"] for r in etapes_rows]
     items_par_etape = {}
+    actions_par_etape = {}
     if etape_ids:
         placeholders = ",".join("?" for _ in etape_ids)
         cur.execute(f"""
@@ -1334,10 +1335,24 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
             items_par_etape.setdefault(r["etape_id"], []).append(
                 {"id": r["objet_id"], "nom": r["nom"], "img": r["img"], "quantite": r["quantite"]})
 
+        cur.execute(f"""
+            SELECT etape_id, icone, verbe, cible, cible_secondaire, lieu, coord_x, coord_y
+            FROM quetes_etapes_actions
+            WHERE etape_id IN ({placeholders})
+            ORDER BY etape_id, ordre
+        """, etape_ids)
+        for r in cur.fetchall():
+            actions_par_etape.setdefault(r["etape_id"], []).append({
+                "icone": r["icone"], "verbe": r["verbe"], "cible": r["cible"],
+                "cible_secondaire": r["cible_secondaire"], "lieu": r["lieu"],
+                "coord_x": r["coord_x"], "coord_y": r["coord_y"],
+            })
+
     etapes = [{
         "id": r["id"],
         "nom": r["nom"],
         "description": r["description"],
+        "actions": actions_par_etape.get(r["id"], []),
         "a_xp": bool(r["a_xp"]),
         "a_kamas": bool(r["a_kamas"]),
         "items": items_par_etape.get(r["id"], []),
@@ -1386,16 +1401,31 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
     donjon_row = cur.fetchone()
     donjon_lie = dict(donjon_row) if donjon_row else None
 
+    # Ressources a prevoir : liste de courses agregee sur toute la quete
+    # (pas seulement le prerequis de depart), calculee au scraping depuis
+    # tous les objectifs "ramener un objet" (scraper_quetes.py).
+    cur.execute("""
+        SELECT qr.objet_id, qr.quantite, o.nom, o.img
+        FROM quetes_ressources qr
+        LEFT JOIN objets o ON o.id = qr.objet_id
+        WHERE qr.quete_id = ?
+    """, (quete_id,))
+    ressources = [dict(r) for r in cur.fetchall()]
+
     conn.close()
 
-    # Guide editorial (resume + points cles) : contenu redige par Lorn a
-    # partir des etapes officielles, absent tant qu'une zone n'a pas ete
-    # traitee -> section masquee cote frontend (meme logique que le guide
-    # de boss des donjons).
+    # Guide editorial (resume + points cles + astuce dialogue optionnelle) :
+    # contenu redige par Lorn/Popo, absent tant qu'une zone/quete n'a pas ete
+    # traitee -> section masquee cote frontend (meme logique que le guide de
+    # boss des donjons). L'astuce dialogue est au compte-goutte, quete par
+    # quete, jamais generee automatiquement (aucune donnee de dialogue
+    # disponible publiquement — voir CLAUDE.md).
     guide_brut = QUETES_GUIDES_DATA.get(str(quete_id), {})
     resume = guide_brut.get("resume", "")
     points_cles = guide_brut.get("points_cles", [])
-    guide = {"resume": resume, "points_cles": points_cles} if (resume or points_cles) else None
+    astuce_dialogue = guide_brut.get("astuce_dialogue", "")
+    guide = {"resume": resume, "points_cles": points_cles, "astuce_dialogue": astuce_dialogue} \
+        if (resume or points_cles or astuce_dialogue) else None
 
     return {
         **dict(quete),
@@ -1403,6 +1433,7 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
         "etapes": etapes,
         "prerequis_quetes": prerequis_quetes,
         "prerequis_objets": prerequis_objets,
+        "ressources": ressources,
         "donjon_lie": donjon_lie,
         "guide": guide,
     }

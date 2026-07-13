@@ -35,6 +35,8 @@ DROP TABLE IF EXISTS zones_areas;
 DROP TABLE IF EXISTS quetes;
 DROP TABLE IF EXISTS quetes_etapes;
 DROP TABLE IF EXISTS quetes_etapes_items;
+DROP TABLE IF EXISTS quetes_etapes_actions;
+DROP TABLE IF EXISTS quetes_ressources;
 DROP TABLE IF EXISTS quetes_prerequis_quetes;
 DROP TABLE IF EXISTS quetes_prerequis_objets;
 DROP TABLE IF EXISTS quetes_donjons;
@@ -183,6 +185,24 @@ CREATE TABLE quetes_etapes (
 CREATE TABLE quetes_etapes_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     etape_id INTEGER,
+    objet_id INTEGER,
+    quantite INTEGER
+);
+CREATE TABLE quetes_etapes_actions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    etape_id INTEGER,
+    ordre INTEGER,
+    icone TEXT,
+    verbe TEXT,
+    cible TEXT,
+    cible_secondaire TEXT,
+    lieu TEXT,
+    coord_x INTEGER,
+    coord_y INTEGER
+);
+CREATE TABLE quetes_ressources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quete_id INTEGER,
     objet_id INTEGER,
     quantite INTEGER
 );
@@ -350,6 +370,12 @@ for q in quetes:
                 INSERT INTO quetes_etapes_items (etape_id, objet_id, quantite)
                 VALUES (?, ?, ?)
             """, (e.get("id"), it.get("id"), it.get("quantite")))
+        for ordre_action, a in enumerate(e.get("actions", [])):
+            cur.execute("""
+                INSERT INTO quetes_etapes_actions (etape_id, ordre, icone, verbe, cible, cible_secondaire, lieu, coord_x, coord_y)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (e.get("id"), ordre_action, a.get("icone"), a.get("verbe"), a.get("cible"),
+                  a.get("cible_secondaire"), a.get("lieu"), a.get("x"), a.get("y")))
     for quete_requise_id in q.get("prerequis_quetes", []):
         cur.execute("""
             INSERT INTO quetes_prerequis_quetes (quete_id, quete_requise_id)
@@ -360,6 +386,11 @@ for q in quetes:
             INSERT INTO quetes_prerequis_objets (quete_id, objet_id, quantite)
             VALUES (?, ?, ?)
         """, (q.get("id"), it.get("id"), it.get("quantite")))
+    for r in q.get("ressources", []):
+        cur.execute("""
+            INSERT INTO quetes_ressources (quete_id, objet_id, quantite)
+            VALUES (?, ?, ?)
+        """, (q.get("id"), r.get("id"), r.get("quantite")))
     for donjon_id in q.get("donjons_lies", []):
         cur.execute("""
             INSERT INTO quetes_donjons (quete_id, donjon_id)
