@@ -378,6 +378,129 @@ function EncycloGrid({ onNav }) {
   )
 }
 
+// Œuf-jauge (maquette dofura-home-v4.jsx) : se remplit par le bas selon la
+// progression, 100% = plein + halo. L'image officielle du Dofus (champ img
+// depuis la base) est centrée par-dessus, comme prévu au §6 des specs
+// ("sur le vrai site : vraies images officielles"). Dofus non trackable
+// (aucune quête/succès reconnu·e côté DofusDB — voir main.py /dofus) :
+// contour éteint, pas de %, jamais un faux 0% permanent.
+const OEUF_PATH = "M50 4 C74 4 92 44 92 78 C92 106 74 122 50 122 C26 122 8 106 8 78 C8 44 26 4 50 4 Z"
+function OeufJauge({ id, couleur, pct, taille, trackable }) {
+  const c = couleur || "#C9A24B"
+  return (
+    <svg width={taille} height={taille * 1.26} viewBox="0 0 100 126"
+      style={{ filter: pct===100 ? `drop-shadow(0 0 8px ${c})` : "none", flexShrink:0, display:"block", margin:"0 auto" }}>
+      <defs><clipPath id={"df-oeuf-clip-"+id}><path d={OEUF_PATH} /></clipPath></defs>
+      <path d={OEUF_PATH} fill="rgba(27,33,56,0.9)" />
+      {trackable && pct > 0 && (
+        <rect x="0" y={126 - 126*(pct/100)} width="100" height={126*(pct/100)} fill={c} clipPath={`url(#df-oeuf-clip-${id})`} />
+      )}
+      <path d={OEUF_PATH} fill="none" stroke={trackable ? (pct===100 ? c : "rgba(154,163,189,0.5)") : "rgba(90,97,120,0.3)"} strokeWidth="4" />
+    </svg>
+  )
+}
+
+function CarreDofus({ d, taille, petit, onClick }) {
+  const cliquable = d.trackable && (d.quete_id != null || d.succes_id != null) && !!onClick
+  return (
+    <div onClick={cliquable ? onClick : undefined}
+      className={"df-card"} style={{
+        padding: petit ? "14px 8px 12px" : "16px 10px 14px", textAlign:"center",
+        cursor: cliquable ? "pointer" : "default",
+        borderColor: d.obtenu ? "rgba(255,198,61,0.75)" : undefined,
+        boxShadow: d.obtenu ? "0 0 16px rgba(255,198,61,0.22)" : undefined,
+      }}
+      title={!d.trackable ? "Aucune quête ni succès reconnu(e) pour ce Dofus — pas de suivi automatique possible" : undefined}
+    >
+      {d.img
+        ? (
+          <div style={{ position:"relative", width:taille, height:taille, margin:"0 auto" }}>
+            <OeufJauge id={d.id} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
+            <img src={d.img} alt={d.nom} style={{ position:"absolute", inset:0, margin:"auto", maxWidth:"58%", maxHeight:"58%", opacity:d.trackable?1:0.35 }} />
+          </div>
+        )
+        : <OeufJauge id={d.id} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
+      }
+      <div style={{ fontSize:petit?11.5:12.5, fontWeight:700, color:"var(--df-text)", margin:"9px 0 1px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{d.nom}</div>
+      <div style={{ fontSize:10.5, color:"var(--df-text-3)" }}>Niv. {d.niveau}</div>
+      {d.trackable ? (
+        <div style={{ fontSize:petit?11:11.5, fontWeight:700, color:d.pct===0?"var(--df-text-off)":"var(--df-gold)", marginTop:5 }}>
+          {d.obtenu ? "✓ Obtenu" : `${d.pct} %`}
+        </div>
+      ) : (
+        <div style={{ fontSize:petit?11:11.5, color:"var(--df-text-off)", marginTop:5 }}>Non suivi</div>
+      )}
+    </div>
+  )
+}
+
+// La Chasse aux Dofus (§6 specs, section signature de la home). Branché sur
+// /dofus (main.py) : progression calculée depuis les vraies relations
+// Dofus↔quête/succès en base, jamais une valeur inventée.
+function ChasseDofus({ token, onSelectQuete, onSelectSucces }) {
+  const [dofus, setDofus] = useState([])
+  const [total, setTotal] = useState(0)
+  const [obtenus, setObtenus] = useState(null)
+  const [masquerObtenus, setMasquerObtenus] = useState(false)
+
+  useEffect(() => {
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    fetch(`${API}/dofus`, { headers }).then(r=>r.json()).then(d => {
+      setDofus(d.dofus); setTotal(d.total); setObtenus(d.obtenus)
+    })
+  }, [token])
+
+  const visibles = token && masquerObtenus ? dofus.filter(d => !d.obtenu) : dofus
+  const primordiaux = visibles.filter(d => d.primordial)
+  const autres = visibles.filter(d => !d.primordial)
+
+  const ouvrir = (d) => {
+    if (d.quete_id != null) onSelectQuete(d.quete_id)
+    else if (d.succes_id != null) onSelectSucces(d.succes_id)
+  }
+
+  return (
+    <div style={{ padding:"0 2rem 60px", maxWidth:1240, margin:"0 auto" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:16, flexWrap:"wrap", marginBottom:6 }}>
+        <div className="df-section-title" style={{ fontSize:"clamp(22px, 3.5vw, 28px)", margin:0 }}>La Chasse aux Dofus</div>
+        {token && obtenus != null && (
+          <span style={{ background:"rgba(255,198,61,0.1)", border:"1px solid rgba(255,198,61,0.5)", color:"var(--df-gold)", fontWeight:700, fontSize:14, borderRadius:999, padding:"6px 16px" }}>
+            {obtenus} / {total} Dofus
+          </span>
+        )}
+        {token && (
+          <label style={{ display:"flex", alignItems:"center", gap:8, color:"var(--df-text-2)", fontSize:13, cursor:"pointer", userSelect:"none", marginLeft:"auto" }}>
+            <input type="checkbox" checked={masquerObtenus} onChange={()=>setMasquerObtenus(m=>!m)} style={{ accentColor:"var(--df-gold)", width:15, height:15, cursor:"pointer" }} />
+            Masquer les Dofus obtenus
+          </label>
+        )}
+      </div>
+
+      {!token && (
+        <div className="df-card" style={{ cursor:"default", maxWidth:620, marginTop:20, marginBottom:26, padding:"22px 26px" }}>
+          <p style={{ margin:0, fontSize:14.5, color:"var(--df-text-2)", lineHeight:1.5 }}>
+            Tous les Dofus du jeu sont là. Connecte-toi pour suivre ta progression : chaque œuf se remplit au fil des quêtes et succès que tu coches.
+          </p>
+        </div>
+      )}
+
+      <div style={{ color:"var(--df-text)", fontSize:16, fontWeight:600, margin:"26px 0 16px", letterSpacing:0.5 }}>⭐ Les six Primordiaux</div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(130px, 1fr))", gap:14, filter:token?"none":"grayscale(1)", opacity:token?1:0.55 }}>
+        {primordiaux.map(d => (
+          <CarreDofus key={d.id} d={d} taille={54} onClick={token?()=>ouvrir(d):undefined} />
+        ))}
+      </div>
+
+      <div style={{ color:"var(--df-text)", fontSize:16, fontWeight:600, margin:"26px 0 16px", letterSpacing:0.5 }}>Tous les autres Dofus — triés par niveau requis</div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(108px, 1fr))", gap:12, filter:token?"none":"grayscale(1)", opacity:token?1:0.55 }}>
+        {autres.map(d => (
+          <CarreDofus key={d.id} d={d} taille={38} petit onClick={token?()=>ouvrir(d):undefined} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function SortsPanel({ sorts }) {
   const [openId, setOpenId] = useState(null)
   const [sortData, setSortData] = useState({})
@@ -3092,6 +3215,7 @@ export default function App() {
         <>
           <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelectMonstre} loading={loading} />
           <EncycloGrid onNav={handleNav} />
+          <ChasseDofus token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} />
         </>
       )}
         </div>

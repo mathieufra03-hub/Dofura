@@ -1694,6 +1694,125 @@ def detail_succes(succes_id: int, user: dict = Depends(utilisateur_optionnel)):
     }
 
 # ============================================================
+# Chasse aux Dofus (home, §6 specs)
+# Perimetre : objets.type_nom = 'Dofus' (34 objets), Kaliptus (id 8072)
+# retire sur demande Popo (deja documente CLAUDE.md). 6 primordiaux
+# identifies par ID (verifie sans ecart : Emeraude 737, Pourpre 694,
+# Turquoise 739, Ocre 7754, Ebene 7114, Ivoire 7115), couleur reprise des
+# tokens CSS deja definis (--df-dofus-*), pas de nouvelle couleur inventee.
+# Relation Dofus<->quete/succes : PAS une nouvelle donnee scrapee, deduite
+# des tables deja en base (quetes_etapes_items + succes_recompenses_items,
+# liees par objet_id — memes tables que les recompenses de quete/succes
+# deja affichees ailleurs). 9 Dofus sur 33 (hors Kaliptus) n'ont aucune
+# source reconnue dans les donnees DofusDB (dont le Dofus Ocre, pourtant
+# primordial — verifie : ni questsThatReward, ni achievementsThatReward,
+# ni recette, ni drop sur cet item cote DofusDB) : gap reel, jamais
+# invente, expose via "trackable": false plutot que de fausser un 0%
+# permanent qui laisserait croire a un bug (decision Popo).
+# ============================================================
+
+DOFUS_ID_EXCLU = 8072  # Kaliptus, retire sur demande Popo (voir CLAUDE.md)
+DOFUS_PRIMORDIAUX_COULEURS = {
+    737: "var(--df-dofus-emeraude)",
+    694: "var(--df-dofus-pourpre)",
+    739: "var(--df-dofus-turquoise)",
+    7754: "var(--df-dofus-ocre)",
+    7114: "var(--df-dofus-ebene)",
+    7115: "var(--df-dofus-ivoire)",
+}
+
+
+def _etat_etapes_quetes(cur, user_id, quete_ids):
+    """{quete_id: {'fait': int, 'total': int}} — meme calcul que la barre
+    de progression de la fiche quete, reutilise ici pour les Dofus lies a
+    une quete plutot qu'a un succes."""
+    if not quete_ids:
+        return {}
+    ph = ",".join("?" for _ in quete_ids)
+    cur.execute(f"""
+        SELECT qe.quete_id, COUNT(*) AS total, SUM(CASE WHEN pj.fait = 1 THEN 1 ELSE 0 END) AS fait
+        FROM quetes_etapes qe
+        LEFT JOIN progression_joueur pj
+            ON pj.element_type = 'quete_etape' AND pj.element_id = CAST(qe.id AS TEXT) AND pj.user_id = ?
+        WHERE qe.quete_id IN ({ph})
+        GROUP BY qe.quete_id
+    """, [user_id] + quete_ids)
+    return {r["quete_id"]: {"fait": r["fait"] or 0, "total": r["total"]} for r in cur.fetchall()}
+
+
+@app.get("/dofus")
+def liste_dofus(user: dict = Depends(utilisateur_optionnel)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nom, niveau, img FROM objets WHERE type_nom = 'Dofus' AND id != ? ORDER BY niveau, nom",
+                (DOFUS_ID_EXCLU,))
+    dofus_rows = cur.fetchall()
+    dofus_ids = [r["id"] for r in dofus_rows]
+
+    quete_par_dofus = {}
+    succes_par_dofus = {}
+    if dofus_ids:
+        ph = ",".join("?" for _ in dofus_ids)
+        cur.execute(f"""
+            SELECT qei.objet_id, qe.quete_id
+            FROM quetes_etapes_items qei
+            JOIN quetes_etapes qe ON qe.id = qei.etape_id
+            WHERE qei.objet_id IN ({ph})
+        """, dofus_ids)
+        for r in cur.fetchall():
+            quete_par_dofus.setdefault(r["objet_id"], set()).add(r["quete_id"])
+
+        cur.execute(f"SELECT objet_id, succes_id FROM succes_recompenses_items WHERE objet_id IN ({ph})",
+                    dofus_ids)
+        for r in cur.fetchall():
+            succes_par_dofus.setdefault(r["objet_id"], set()).add(r["succes_id"])
+
+    user_id = user["id"] if user else None
+    tous_quete_ids = sorted({q for s in quete_par_dofus.values() for q in s})
+    tous_succes_ids = sorted({s for s in succes_par_dofus.values() for s in s})
+    etats_quetes = _etat_etapes_quetes(cur, user_id, tous_quete_ids)
+    etats_succes = _etat_objectifs_succes(cur, user_id, tous_succes_ids)
+
+    resultats = []
+    obtenus = 0
+    for r in dofus_rows:
+        quete_ids = quete_par_dofus.get(r["id"], set())
+        succes_ids = succes_par_dofus.get(r["id"], set())
+        trackable = bool(quete_ids or succes_ids)
+
+        fait = total = 0
+        for qid in quete_ids:
+            e = etats_quetes.get(qid, {"fait": 0, "total": 0})
+            fait += e["fait"]; total += e["total"]
+        for sid in succes_ids:
+            e = etats_succes.get(sid, {"fait": 0, "total": 0})
+            fait += e["fait"]; total += e["total"]
+
+        pct = round(fait / total * 100) if total else 0
+        obtenu = user is not None and trackable and total > 0 and fait >= total
+        if obtenu:
+            obtenus += 1
+
+        resultats.append({
+            "id": r["id"], "nom": r["nom"], "niveau": r["niveau"], "img": r["img"],
+            "primordial": r["id"] in DOFUS_PRIMORDIAUX_COULEURS,
+            "couleur": DOFUS_PRIMORDIAUX_COULEURS.get(r["id"]),
+            "trackable": trackable,
+            "pct": pct if user else 0,
+            "obtenu": obtenu,
+            "quete_id": sorted(quete_ids)[0] if quete_ids else None,
+            "succes_id": sorted(succes_ids)[0] if succes_ids else None,
+        })
+
+    conn.close()
+    return {
+        "dofus": resultats,
+        "total": len(resultats),
+        "obtenus": obtenus if user else None,
+    }
+
+
+# ============================================================
 # Comptes utilisateurs / progression / favoris (chantier Phase 4)
 # ⚠️ Teste en local uniquement pour l'instant — voir la note dans
 # init_db.py sur le volume persistant Railway absent (CLAUDE.md,
