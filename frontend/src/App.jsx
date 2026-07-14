@@ -155,7 +155,7 @@ function StatsBar() {
   const items = [
     {val:"4 932",label:"monstres"},{val:"1 976",label:"quêtes"},
     {val:"18 900",label:"articles"},{val:"18",label:"classes"},
-    {val:"1 430",label:"succès"},{val:"18",label:"métiers"},
+    {val:"1 572",label:"succès"},{val:"18",label:"métiers"},
   ]
   return (
     <div style={{ background:C.bg2, borderBottom:`0.5px solid ${C.bdr}`, padding:"7px 2rem", display:"flex", gap:28, justifyContent:"center", flexWrap:"wrap" }}>
@@ -338,13 +338,18 @@ function Footer() {
   )
 }
 
-// Les 6 cartes reprennent exactement les 5 catégories de la navbar (§2) +
-// Carte interactive (chantier futur, voir CLAUDE.md). Équipements/Donjons/
-// Bestiaire ont déjà une page (Panoplies/Zones fusionnées dedans, voir
-// navLinks) ; Quêtes/Carte interactive n'en ont pas encore — carte affichée
-// à l'identique (cohérence visuelle avec la maquette) mais non cliquable,
-// comme le lien inerte de la navbar. Métiers pointe vers Ressources en
-// attendant le vrai hub Métiers (même raison que NAV_LABEL_VERS_CIBLE).
+// Les 5 premières cartes reprennent exactement les 5 catégories de la
+// navbar (§2). Équipements/Donjons/Bestiaire ont déjà une page (Panoplies/
+// Zones fusionnées dedans, voir navLinks) ; Quêtes en a une aussi bien que
+// le §3 des specs ne la liste pas encore dans cette grille (spec figée
+// avant le chantier Quetes). Carte interactive : chantier futur, affichée
+// mais non cliquable. Succès : ajoutée ici malgré le §2 qui l'exclut
+// explicitement de la NAVBAR (couche transversale) — la grille Encyclopédie
+// de l'accueil reste le seul point d'entree pour PARCOURIR la liste tant
+// que l'espace perso (§8, Phase 4) n'existe pas ; les liens contextuels
+// (fiche donjon -> succes, fiche succes -> quete) restent le complement,
+// pas le seul acces. Metiers pointe vers Ressources en attendant le vrai
+// hub Metiers (meme raison que NAV_LABEL_VERS_CIBLE).
 function EncycloGrid({ onNav }) {
   const items = [
     { label:"Équipements",       desc:"Armes, coiffes, capes... et leurs panoplies",    action:()=>onNav("equipement") },
@@ -352,6 +357,7 @@ function EncycloGrid({ onNav }) {
     { label:"Donjons",           desc:"Boss, salles, stratégies et succès",             action:()=>onNav("donjon") },
     { label:"Bestiaire",         desc:"Toutes les créatures, par zone et sous-zone",    action:()=>onNav("monstres") },
     { label:"Quêtes",            desc:"Étapes, prérequis et récompenses",               action:()=>onNav("quete") },
+    { label:"Succès",            desc:"Objectifs, points et récompenses",               action:()=>onNav("succes") },
     { label:"Carte interactive", desc:"Positions des ressources et métiers", lit:true,  action:null },
   ]
   return (
@@ -1594,7 +1600,7 @@ function DonjonsPage({ onSelect, onBack }) {
   )
 }
 
-function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onSelectQuete, onBack }) {
+function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onSelectQuete, onSelectSucces, onBack }) {
   const [data, setData] = useState(null)
   const [favoriEnCours, setFavoriEnCours] = useState(false)
   const [messageConnexion, setMessageConnexion] = useState(false)
@@ -1760,6 +1766,19 @@ function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onSelectQ
               style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0", cursor:"pointer" }}>
               <span style={{ fontSize:12, color:C.cyan, fontWeight:600 }}>{q.nom}</span>
               <span style={{ fontSize:11, color:C.txt3, marginLeft:"auto" }}>Niv. {q.niveau_min}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.succes_du_donjon?.length > 0 && (
+        <div style={{ background:C.bg2, border:`0.5px solid ${C.goldb}`, borderRadius:10, padding:"14px 16px" }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Succès du donjon</div>
+          {data.succes_du_donjon.map(s => (
+            <div key={s.id} onClick={()=>onSelectSucces(s.id)}
+              style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0", cursor:"pointer" }}>
+              <span style={{ fontSize:12, color:C.gold, fontWeight:600 }}>{s.nom}</span>
+              <span style={{ fontSize:11, color:C.txt3, marginLeft:"auto" }}>{s.points} pts</span>
             </div>
           ))}
         </div>
@@ -2503,6 +2522,386 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
   )
 }
 
+// Regroupement sous en-tetes de categorie : la liste arrive deja triee dans
+// cet ordre par le backend (CATEGORIES_SUCCES_ORDRE), on regroupe juste les
+// lignes consecutives — meme mecanisme que grouperQuetes.
+function grouperSucces(succes) {
+  const groupes = []
+  succes.forEach(s => {
+    const dernier = groupes[groupes.length - 1]
+    if (dernier && dernier.cle === s.categorie) dernier.items.push(s)
+    else groupes.push({ cle: s.categorie, items: [s] })
+  })
+  return groupes
+}
+
+function SuccesPage({ token, onSelect, onBack }) {
+  const [succes, setSucces] = useState([])
+  const [total, setTotal] = useState(0)
+  const [pointsGagnes, setPointsGagnes] = useState(null)
+  const [pointsTotal, setPointsTotal] = useState(null)
+  const [page, setPage] = useState(1)
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
+  const [categories, setCategories] = useState([])
+  const [categoriesDispo, setCategoriesDispo] = useState([])
+  const [masquerAccomplis, setMasquerAccomplis] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [messageConnexion, setMessageConnexion] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${API}/succes/filtres`).then(r=>r.json()).then(d => setCategoriesDispo(d.categories))
+  }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  const succesRequeteId = useRef(0)
+  useEffect(() => {
+    const requeteId = ++succesRequeteId.current
+    setLoading(true)
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    const params = new URLSearchParams({
+      search, page, page_size: PAGE_SIZE,
+      categorie: categories.join(","), masquer_accomplis: token ? masquerAccomplis : false,
+    })
+    fetch(`${API}/succes?${params}`, { headers })
+      .then(r=>r.json())
+      .then(d => {
+        if (requeteId !== succesRequeteId.current) return
+        setSucces(d.succes); setTotal(d.total)
+        setPointsGagnes(d.points_gagnes); setPointsTotal(d.points_total)
+        setLoading(false)
+      })
+      .catch(()=>{ if (requeteId === succesRequeteId.current) setLoading(false) })
+  }, [search, categories, masquerAccomplis, page, token])
+
+  const toggleCategorie = (c) => { setCategories(cs => cs.includes(c) ? cs.filter(x=>x!==c) : [...cs, c]); setPage(1) }
+
+  const chips = categories.map(c => ({ label:c, off:()=>toggleCategorie(c) }))
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1)
+  const groupes = useMemo(() => grouperSucces(succes), [succes])
+  const reinitialiser = () => { setSearchInput(""); setSearch(""); setCategories([]); setMasquerAccomplis(false); setPage(1) }
+
+  const toggleFavori = (s) => {
+    if (!token) { setMessageConnexion(true); return }
+    const methode = s.favori ? "DELETE" : "POST"
+    const url = s.favori ? `${API}/favoris?element_type=succes&element_id=${s.id}` : `${API}/favoris`
+    fetch(url, {
+      method: methode,
+      headers: { Authorization:`Bearer ${token}`, ...(methode==="POST" ? {"Content-Type":"application/json"} : {}) },
+      body: methode==="POST" ? JSON.stringify({ element_type:"succes", element_id:String(s.id) }) : undefined,
+    })
+      .then(r=>r.json())
+      .then(d => setSucces(ss => ss.map(x => x.id===s.id ? { ...x, favori:d.favori } : x)))
+  }
+
+  return (
+    <div style={mp.page}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={{ display:"flex", alignItems:"baseline", gap:14, flexWrap:"wrap", marginBottom:8 }}>
+        <h1 className="df-section-title" style={{ fontSize:"clamp(24px, 4vw, 32px)", margin:0 }}>Succès</h1>
+        <span style={{ color:"var(--df-text-3)", fontSize:13.5 }}>{total} succès</span>
+      </div>
+
+      {token && pointsGagnes != null && (
+        <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(255,198,61,0.1)", border:"1px solid rgba(255,198,61,0.5)", color:"var(--df-gold)", fontWeight:700, fontSize:14, borderRadius:999, padding:"7px 16px", marginBottom:18 }}>
+          🏆 {pointsGagnes} / {pointsTotal} points de succès
+        </div>
+      )}
+
+      <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:16 }}>
+        <div style={{ flex:1, minWidth:200, display:"flex", alignItems:"center", gap:10, background:"rgba(20,26,46,0.95)", border:"1px solid rgba(77,216,230,0.5)", borderRadius:12, padding:"11px 16px" }}>
+          <SearchIcon />
+          <input value={searchInput} onChange={e=>setSearchInput(e.target.value)} placeholder="Rechercher un succès..."
+            style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"var(--df-text)", fontSize:14 }} />
+        </div>
+        <button className="df-filters-toggle" onClick={()=>setShowFilters(s=>!s)}
+          style={{ background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.6)", borderRadius:12, padding:"11px 16px", fontSize:13.5, fontWeight:600, cursor:"pointer" }}>
+          Filtres{chips.length>0?` (${chips.length})`:""}
+        </button>
+      </div>
+
+      {chips.length > 0 && (
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16, alignItems:"center" }}>
+          {chips.map((c,i) => (
+            <button key={i} className="df-chip-filter" onClick={c.off}>{c.label} <span className="x">✕</span></button>
+          ))}
+          <button onClick={reinitialiser} style={{ background:"none", border:"none", color:"var(--df-text-3)", fontSize:12.5, cursor:"pointer", textDecoration:"underline" }}>
+            Tout effacer
+          </button>
+        </div>
+      )}
+
+      <div className="df-list-wrap">
+        <aside className={"df-filters-panel" + (showFilters?" df-filters-open":"")}
+          style={{ background:"rgba(20,26,46,0.92)", border:"1px solid rgba(255,198,61,0.2)", borderRadius:16, padding:20 }}>
+          <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Catégorie</div>
+          {categoriesDispo.map(c => (
+            <label key={c} style={fchk}>
+              <input type="checkbox" checked={categories.includes(c)} onChange={()=>toggleCategorie(c)} style={fchkInput} />
+              {c}
+            </label>
+          ))}
+          {token && (
+            <>
+              <div className="df-section-title" style={ftitle}>Affichage</div>
+              <label style={fchk}>
+                <input type="checkbox" checked={masquerAccomplis} onChange={()=>{ setMasquerAccomplis(m=>!m); setPage(1) }} style={fchkInput} />
+                Masquer les succès accomplis
+              </label>
+            </>
+          )}
+        </aside>
+
+        <div>
+          {messageConnexion && (
+            <div style={{ fontSize:12, color:"var(--df-text-2)", marginBottom:12 }}>
+              Connecte-toi pour ajouter des favoris
+              <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:"var(--df-text-3)", cursor:"pointer" }}>✕</span>
+            </div>
+          )}
+
+          {!loading && succes.length === 0 ? (
+            <div style={mp.videEtat}>
+              Aucun succès ne correspond à ces filtres.
+              {(chips.length > 0 || masquerAccomplis) && <div style={{ marginTop:10 }}>
+                <button onClick={reinitialiser} style={mp.resetBtn}>Réinitialiser les filtres</button>
+              </div>}
+            </div>
+          ) : groupes.map((g, gi) => (
+            <div key={g.cle + gi}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, margin: gi===0 ? "0 0 12px" : "24px 0 12px" }}>
+                <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>{g.cle}</span>
+                <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
+                <span style={{ color:"var(--df-text-3)", fontSize:11.5 }}>{g.items.length} succès</span>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:8 }}>
+                {g.items.map(s => {
+                  const pct = s.total ? Math.round((s.fait / s.total) * 100) : 0
+                  return (
+                    <div key={s.id} onClick={()=>onSelect(s.id)}
+                      style={{ display:"flex", alignItems:"center", gap:14, background:"rgba(20,26,46,0.9)", border:`1px solid ${s.accompli?"rgba(76,201,141,0.4)":"rgba(255,198,61,0.13)"}`, borderRadius:12, padding:"12px 16px", cursor:"pointer" }}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(255,198,61,0.7)"}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor=s.accompli?"rgba(76,201,141,0.4)":"rgba(255,198,61,0.13)"}
+                    >
+                      <span onClick={e=>{ e.stopPropagation(); toggleFavori(s) }} title={s.favori?"Retirer des favoris":"Ajouter aux favoris"}
+                        style={{ fontSize:17, color:s.favori?"var(--df-gold)":"var(--df-text-off)", cursor:"pointer", userSelect:"none" }}>
+                        {s.favori ? "★" : "☆"}
+                      </span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:14.5 }}>{s.nom}</div>
+                        {token ? (
+                          <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:5 }}>
+                            <div style={{ flex:1, maxWidth:180, height:5, borderRadius:3, background:"#1B2138", overflow:"hidden" }}>
+                              <div style={{ height:"100%", borderRadius:3, width:pct+"%", background: s.accompli ? "linear-gradient(90deg, #4CC98D, #35A86F)" : "linear-gradient(90deg, #FFD35E, #E0A62E)" }} />
+                            </div>
+                            <span style={{ color:"var(--df-text-3)", fontSize:11.5 }}>{s.fait} / {s.total}</span>
+                          </div>
+                        ) : (
+                          <div style={{ color:"var(--df-text-3)", fontSize:11.5, marginTop:5 }}>{s.total} objectif{s.total>1?"s":""}</div>
+                        )}
+                      </div>
+                      <span style={{ color:s.accompli?"var(--df-green)":"var(--df-gold)", fontWeight:700, fontSize:13, whiteSpace:"nowrap" }}>
+                        {s.accompli ? "✓ " : ""}{s.points} pts
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+
+          {totalPages > 1 && (
+            <div style={mp.pagination}>
+              <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+              <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+              <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SuccePage({ id, token, onSelectQuete, onSelectObjet, onSelectDonjon, onBack }) {
+  const [data, setData] = useState(null)
+  const [favoriEnCours, setFavoriEnCours] = useState(false)
+  const [messageConnexion, setMessageConnexion] = useState(false)
+
+  useEffect(() => {
+    setData(null)
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    fetch(`${API}/succes/${id}`, { headers }).then(r=>r.json()).then(setData)
+  }, [id, token])
+
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>{data.erreur}</div>
+
+  const pct = data.objectifs_total ? Math.round((data.objectifs_faits / data.objectifs_total) * 100) : 0
+
+  const toggleFavori = () => {
+    if (!token) { setMessageConnexion(true); return }
+    setFavoriEnCours(true)
+    const methode = data.favori ? "DELETE" : "POST"
+    const url = data.favori ? `${API}/favoris?element_type=succes&element_id=${id}` : `${API}/favoris`
+    fetch(url, {
+      method: methode,
+      headers: { Authorization:`Bearer ${token}`, ...(methode==="POST" ? {"Content-Type":"application/json"} : {}) },
+      body: methode==="POST" ? JSON.stringify({ element_type:"succes", element_id:String(id) }) : undefined,
+    })
+      .then(r=>r.json())
+      .then(d => { setData(prev => ({ ...prev, favori:d.favori })); setFavoriEnCours(false) })
+      .catch(()=>setFavoriEnCours(false))
+  }
+
+  const toggleObjectif = (objectif) => {
+    if (!token || objectif.type === "quete") return
+    const fait = !objectif.fait
+    setData(prev => ({ ...prev, objectifs: prev.objectifs.map(o => o.id===objectif.id ? { ...o, fait } : o),
+      objectifs_faits: prev.objectifs_faits + (fait ? 1 : -1) }))
+    fetch(`${API}/progression`, {
+      method: "POST",
+      headers: { Authorization:`Bearer ${token}`, "Content-Type":"application/json" },
+      body: JSON.stringify({ element_type:"succes_objectif", element_id:String(objectif.id), fait }),
+    }).catch(()=>{
+      setData(prev => ({ ...prev, objectifs: prev.objectifs.map(o => o.id===objectif.id ? { ...o, fait:!fait } : o),
+        objectifs_faits: prev.objectifs_faits + (fait ? -1 : 1) }))
+    })
+  }
+
+  return (
+    <div translate="no" style={{ padding:"1.5rem 2rem 3rem", maxWidth:1240, margin:"0 auto" }}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <header className="df-block" style={{ position:"relative", padding:24 }}>
+        <div style={{ position:"absolute", top:20, right:22, textAlign:"right" }}>
+          <span onClick={toggleFavori} title={data.favori?"Retirer des favoris":"Ajouter aux favoris"}
+            style={{ fontSize:26, lineHeight:1, cursor:favoriEnCours?"default":"pointer", color:data.favori?"var(--df-gold)":"var(--df-text-off)", opacity:favoriEnCours?0.5:1, userSelect:"none" }}>
+            {data.favori ? "★" : "☆"}
+          </span>
+          {messageConnexion && (
+            <div style={{ marginTop:4, fontSize:11, color:"var(--df-text-2)", maxWidth:150 }}>
+              Connecte-toi pour suivre ta progression
+              <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:"var(--df-text-3)", cursor:"pointer" }}>✕</span>
+            </div>
+          )}
+        </div>
+
+        <h1 className="df-title-gold" style={{ fontSize:"clamp(22px, 4vw, 30px)", margin:0, maxWidth:640 }}>{data.nom}</h1>
+        <div style={{ color:"var(--df-text-2)", fontSize:14, marginTop:8 }}>
+          Catégorie : {data.categorie} · <span style={{ color:"var(--df-gold)", fontWeight:700 }}>{data.points} points</span> · Niv. {data.niveau}
+        </div>
+        {data.description && (
+          <p style={{ color:"#8B96B2", fontSize:13.5, fontStyle:"italic", margin:"12px 0 0", maxWidth:700 }}>{data.description}</p>
+        )}
+
+        {token && data.objectifs_total > 0 && (
+          <div style={{ background:"rgba(12,15,29,0.6)", borderRadius:12, padding:"14px 18px", marginTop:18 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, marginBottom:8 }}>
+              <span style={{ color:"var(--df-text-2)" }}>Progression</span>
+              <span style={{ color:"var(--df-gold)", fontWeight:700 }}>{data.objectifs_faits} / {data.objectifs_total} · {pct}%</span>
+            </div>
+            <div className="df-progress"><div className={"fill" + (pct===100?" done":"")} style={{ width:pct+"%" }} /></div>
+          </div>
+        )}
+      </header>
+
+      <div className="df-detail-wrap">
+        <div>
+          {data.objectifs.length > 0 && (
+            <section className="df-block">
+              <h2 className="df-block-title">Objectifs</h2>
+              {data.objectifs.map((o,i) => (
+                <div key={o.id} onClick={()=>toggleObjectif(o)}
+                  style={{ display:"flex", alignItems:"flex-start", gap:13, padding:"12px 0", borderBottom:i<data.objectifs.length-1?"1px solid rgba(255,255,255,0.05)":"none", cursor:o.type==="manuel"?"pointer":"default" }}>
+                  <div className={"df-check" + (o.fait?" on":"") + (o.type==="quete"?" auto":"")} style={{ marginTop:1, flexShrink:0 }}>{o.fait?"✓":""}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:14.5, color:o.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:o.fait?"line-through":"none", lineHeight:1.5 }}>{o.nom}</div>
+                    {o.type === "quete" ? (
+                      <span onClick={e=>{ e.stopPropagation(); onSelectQuete(o.quete_id) }}
+                        style={{ display:"inline-block", marginTop:4, fontSize:10.5, fontWeight:700, letterSpacing:0.5, borderRadius:999, padding:"2px 9px", background:"rgba(77,216,230,0.13)", color:"var(--df-cyan)", cursor:"pointer" }}>
+                        QUÊTE <span style={{ marginLeft:4 }}>→</span>
+                      </span>
+                    ) : (
+                      <span style={{ display:"inline-block", marginTop:4, fontSize:10.5, fontWeight:700, letterSpacing:0.5, borderRadius:999, padding:"2px 9px", background:"rgba(140,150,178,0.15)", color:"var(--df-text-2)" }}>
+                        À COCHER SOI-MÊME
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {token ? (
+                <div style={{ color:"var(--df-green)", fontSize:11.5, marginTop:14, display:"flex", alignItems:"center", gap:6 }}>
+                  ✦ Les objectifs « quête » se cochent tout seuls dès que tu valides la quête liée.
+                </div>
+              ) : (
+                <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:14, fontStyle:"italic" }}>
+                  Connecte-toi pour suivre ta progression sur ce succès.
+                </div>
+              )}
+            </section>
+          )}
+        </div>
+
+        <div>
+          {(data.recompense_titre || data.recompense_a_kamas || data.recompense_items?.length > 0) && (
+            <section className="df-block">
+              <h2 className="df-block-title">Récompenses</h2>
+              <div style={{ display:"flex", alignItems:"center", gap:12, fontSize:14, padding:"9px 0" }}>
+                <span style={{ width:30, height:30, borderRadius:8, background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15 }}>🏆</span>
+                <span style={{ color:"var(--df-gold)", fontWeight:700 }}>{data.points} points de succès</span>
+              </div>
+              {data.recompense_titre && (
+                <div style={{ display:"flex", alignItems:"center", gap:12, fontSize:14, padding:"9px 0" }}>
+                  <span style={{ width:30, height:30, borderRadius:8, background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15 }}>🎖️</span>
+                  <span style={{ color:"#D98AE0" }}>Titre : « {data.recompense_titre} »</span>
+                </div>
+              )}
+              {data.recompense_a_kamas && (
+                <div style={{ display:"flex", alignItems:"center", gap:12, fontSize:14, padding:"9px 0" }}>
+                  <span style={{ width:30, height:30, borderRadius:8, background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15 }}>◈</span>
+                  <span style={{ color:"var(--df-gold)" }}>+ Kamas</span>
+                </div>
+              )}
+              {data.recompense_items?.map((it,i) => (
+                <div key={i} onClick={()=>it.objet_id && onSelectObjet(it.objet_id)}
+                  style={{ display:"flex", alignItems:"center", gap:10, fontSize:14, padding:"7px 0", cursor:it.objet_id?"pointer":"default" }}>
+                  {it.img
+                    ? <img src={it.img} alt={it.nom} style={{ width:22, height:22, objectFit:"contain" }} />
+                    : <div style={{ width:22, height:22, background:"var(--df-bg)", borderRadius:4 }} />
+                  }
+                  <span style={{ color:"var(--df-green)" }}>{it.quantite>1?`${it.quantite}× `:""}{it.nom || `Objet #${it.objet_id}`}</span>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {data.donjons_lies?.length > 0 && (
+            <section className="df-block" style={{ borderColor:"var(--df-border-cyan)" }}>
+              <h2 className="df-block-title">🏰 Donjon lié</h2>
+              {data.donjons_lies.map(d => (
+                <div key={d.id} onClick={()=>onSelectDonjon(d.id)} style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer", padding:"6px 0" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:"var(--df-cyan)", fontWeight:700, fontSize:14.5 }}>{d.nom}</div>
+                    <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:1 }}>Niv. {d.niveau_optimal}</div>
+                  </div>
+                  <span style={{ color:"var(--df-cyan)", fontSize:18, fontWeight:700 }}>→</span>
+                </div>
+              ))}
+            </section>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [query, setQuery]       = useState("")
   const [results, setResults]   = useState([])
@@ -2514,7 +2913,8 @@ export default function App() {
   const [selectedRegion, setSelectedRegion]     = useState(null)
   const [selectedSousZone, setSelectedSousZone] = useState(null)
   const [selectedQuete, setSelectedQuete]       = useState(null)
-  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete"
+  const [selectedSucces, setSelectedSucces]     = useState(null)
+  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete" | "succes"
   const [almanax, setAlmanax]   = useState(null)
   const [token, setToken] = useState(() => localStorage.getItem("dofura_token") || null)
   const [user, setUser]   = useState(null)
@@ -2557,7 +2957,7 @@ export default function App() {
     setToken(null)
   }
 
-  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setBrowsing(null); setQuery(""); setResults([]) }
+  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setSelectedSucces(null); setBrowsing(null); setQuery(""); setResults([]) }
   const handleSelectMonstre  = (id) => { resetNav(); setSelectedMonstre(id) }
   const handleSelectObjet    = (id) => { resetNav(); setSelectedObjet(id) }
   const handleSelectDonjon   = (id) => { resetNav(); setSelectedDonjon(id) }
@@ -2565,6 +2965,7 @@ export default function App() {
   const handleSelectRegion   = (nom) => { resetNav(); setSelectedRegion(nom) }
   const handleSelectSousZone = (nom) => { resetNav(); setSelectedSousZone(nom) }
   const handleSelectQuete    = (id) => { resetNav(); setSelectedQuete(id) }
+  const handleSelectSucces   = (id) => { resetNav(); setSelectedSucces(id) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
@@ -2585,7 +2986,7 @@ export default function App() {
       ) : selectedObjet ? (
         <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
       ) : selectedDonjon ? (
-        <DonjonDetailPage id={selectedDonjon} token={token} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onSelectQuete={handleSelectQuete} onBack={handleHome} />
+        <DonjonDetailPage id={selectedDonjon} token={token} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onBack={handleHome} />
       ) : selectedPanoplie ? (
         <PanoplieDetailPage id={selectedPanoplie} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : selectedSousZone ? (
@@ -2594,6 +2995,8 @@ export default function App() {
         <RegionDetailPage nom={selectedRegion} onSelectSousZone={handleSelectSousZone} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedQuete ? (
         <QuetePage id={selectedQuete} token={token} onSelect={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
+      ) : selectedSucces ? (
+        <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : browsing === "monstres" ? (
         <BestiairePage onSelect={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "donjon" ? (
@@ -2604,6 +3007,8 @@ export default function App() {
         <RegionsPage onSelect={handleSelectRegion} onSelectSousZone={handleSelectSousZone} onBack={handleHome} />
       ) : browsing === "quete" ? (
         <QuetesPage token={token} onSelect={handleSelectQuete} onBack={handleHome} />
+      ) : browsing === "succes" ? (
+        <SuccesPage token={token} onSelect={handleSelectSucces} onBack={handleHome} />
       ) : browsing === "equipement" ? (
         <ObjetsPage categorie="equipement" titre="Équipements"
           placeholder="Rechercher un équipement..."

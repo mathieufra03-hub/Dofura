@@ -15,6 +15,8 @@ with open("dofura_zones_areas.json", "r", encoding="utf-8") as f:
     zones_areas = json.load(f)
 with open("dofura_quetes.json", "r", encoding="utf-8") as f:
     quetes = json.load(f)
+with open("dofura_succes.json", "r", encoding="utf-8") as f:
+    succes = json.load(f)
 conn = sqlite3.connect("dofura.db")
 cur = conn.cursor()
 cur.executescript("""
@@ -40,6 +42,10 @@ DROP TABLE IF EXISTS quetes_ressources;
 DROP TABLE IF EXISTS quetes_prerequis_quetes;
 DROP TABLE IF EXISTS quetes_prerequis_objets;
 DROP TABLE IF EXISTS quetes_donjons;
+DROP TABLE IF EXISTS succes;
+DROP TABLE IF EXISTS succes_objectifs;
+DROP TABLE IF EXISTS succes_recompenses_items;
+DROP TABLE IF EXISTS succes_donjons;
 CREATE TABLE monstres (
     id INTEGER PRIMARY KEY,
     nom TEXT,
@@ -222,6 +228,36 @@ CREATE TABLE quetes_donjons (
     quete_id INTEGER,
     donjon_id INTEGER
 );
+CREATE TABLE succes (
+    id INTEGER PRIMARY KEY,
+    nom TEXT,
+    description TEXT,
+    categorie TEXT,
+    points INTEGER,
+    niveau INTEGER,
+    img TEXT,
+    recompense_titre TEXT,
+    recompense_a_kamas INTEGER
+);
+CREATE TABLE succes_objectifs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    succes_id INTEGER,
+    ordre INTEGER,
+    nom TEXT,
+    type TEXT,
+    quete_id INTEGER
+);
+CREATE TABLE succes_recompenses_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    succes_id INTEGER,
+    objet_id INTEGER,
+    quantite INTEGER
+);
+CREATE TABLE succes_donjons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    succes_id INTEGER,
+    donjon_id INTEGER
+);
 """)
 def safe_int(val):
     if isinstance(val, dict):
@@ -396,6 +432,32 @@ for q in quetes:
             INSERT INTO quetes_donjons (quete_id, donjon_id)
             VALUES (?, ?)
         """, (q.get("id"), donjon_id))
+
+for s in succes:
+    cur.execute("""
+        INSERT OR REPLACE INTO succes (id, nom, description, categorie, points, niveau, img,
+                                        recompense_titre, recompense_a_kamas)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        s.get("id"), s.get("nom"), s.get("description"), s.get("categorie"),
+        s.get("points"), s.get("niveau"), s.get("img"),
+        s.get("recompense_titre"), int(bool(s.get("recompense_a_kamas")))
+    ))
+    for ordre, o in enumerate(s.get("objectifs", [])):
+        cur.execute("""
+            INSERT INTO succes_objectifs (succes_id, ordre, nom, type, quete_id)
+            VALUES (?, ?, ?, ?, ?)
+        """, (s.get("id"), ordre, o.get("nom"), o.get("type"), o.get("quete_id")))
+    for it in s.get("recompense_items", []):
+        cur.execute("""
+            INSERT INTO succes_recompenses_items (succes_id, objet_id, quantite)
+            VALUES (?, ?, ?)
+        """, (s.get("id"), it.get("id"), it.get("quantite")))
+    for donjon_id in s.get("donjons_lies", []):
+        cur.execute("""
+            INSERT INTO succes_donjons (succes_id, donjon_id)
+            VALUES (?, ?)
+        """, (s.get("id"), donjon_id))
 
 
 # ============================================================

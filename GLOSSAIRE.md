@@ -123,5 +123,9 @@
 
 **Table de jonction (junction table)** — une table qui ne sert qu'à relier deux autres tables entre elles quand une donnée peut avoir plusieurs liens (un donjon a plusieurs monstres, un monstre peut apparaître dans plusieurs donjons — impossible à ranger dans une seule colonne). *`donjons_monstres` relie `donjons` et `monstres`, avec en plus un drapeau `est_boss` pour savoir lequel est le boss principal.*
 
+**Expression régulière (regex)** — un motif de texte qui décrit "à quoi doit ressembler" une chaîne de caractères, pour la reconnaître ou en extraire un bout, plutôt que de comparer lettre à lettre. *Chantier Succès : `Q[fF][>=](\d+)` reconnaît un critère du type `QF>690,0` ou `Qf=134` et en extrait l'ID de quête (690, 134...) sans avoir à écrire un cas par variante.*
+
+**Objectif dérivé (auto-coché)** — une case à cocher dont l'état n'est pas stocké directement, mais recalculé à chaque affichage à partir d'une autre donnée déjà suivie ailleurs — impossible à cocher à la main, elle "regarde" simplement si l'autre condition est déjà remplie. *Chantier Succès : un objectif "quête" d'un succès ne se coche jamais lui-même en base — il est marqué fait dès que toutes les étapes de la quête liée le sont, recalculé à chaque chargement de la fiche.*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*

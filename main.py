@@ -1025,6 +1025,17 @@ def detail_donjon(donjon_id: int, user: dict = Depends(utilisateur_optionnel)):
     """, (donjon_id,))
     quetes_associees = [dict(r) for r in cur.fetchall()]
 
+    # Succes du donjon (reciproque du lien croisé du chantier Succes, meme
+    # table de jonction succes_donjons — cout marginal quasi nul).
+    cur.execute("""
+        SELECT s.id, s.nom, s.points
+        FROM succes_donjons sd
+        JOIN succes s ON s.id = sd.succes_id
+        WHERE sd.donjon_id = ?
+        ORDER BY s.nom
+    """, (donjon_id,))
+    succes_du_donjon = [dict(r) for r in cur.fetchall()]
+
     conn.close()
 
     # Guide de boss (mecaniques/salles/composition) : contenu 100% editorial,
@@ -1051,8 +1062,9 @@ def detail_donjon(donjon_id: int, user: dict = Depends(utilisateur_optionnel)):
             for r in objets_requis_rows
         ],
         "drops": drops,
-        "guide": guide,
         "quetes_associees": quetes_associees,
+        "succes_du_donjon": succes_du_donjon,
+        "guide": guide,
     }
 
 @app.get("/zones")
@@ -1436,6 +1448,249 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
         "ressources": ressources,
         "donjon_lie": donjon_lie,
         "guide": guide,
+    }
+
+# ============================================================
+# Succes (chantier Succes, encyclopedie)
+# Scope volontairement restreint aux 6 categories qui correspondent a la
+# maquette (Donjons/Quetes/Exploration/Bestiaire/Elevage/Metiers, 1572/2774
+# succes reels — decision Popo, voir scraper_succes.py). Un objectif est de
+# type "quete" (auto-coche des que la quete liee est entierement validee,
+# meme calcul que les prerequis de la fiche quete) ou "manuel" (coche a la
+# main, stocke dans progression_joueur comme un element_type distinct
+# 'succes_objectif', element_id = id de la ligne succes_objectifs).
+# ============================================================
+
+CATEGORIES_SUCCES_ORDRE = ["Quêtes", "Donjons", "Bestiaire", "Métiers", "Exploration", "Élevage"]
+
+
+def _etat_objectifs_succes(cur, user_id, succes_ids):
+    """{succes_id: {'fait': int, 'total': int}} pour l'utilisateur donne
+    (tout a 0 si non connecte). Reutilise pour la liste (barres de
+    progression) et pour le compteur global de points."""
+    if not succes_ids:
+        return {}
+    placeholders = ",".join("?" for _ in succes_ids)
+    cur.execute(f"SELECT id, succes_id, type, quete_id FROM succes_objectifs WHERE succes_id IN ({placeholders})",
+                succes_ids)
+    objectifs = cur.fetchall()
+
+    total = {}
+    fait = {}
+    for o in objectifs:
+        total[o["succes_id"]] = total.get(o["succes_id"], 0) + 1
+
+    if not user_id:
+        return {sid: {"fait": 0, "total": t} for sid, t in total.items()}
+
+    manuel_ids = [str(o["id"]) for o in objectifs if o["type"] == "manuel"]
+    manuel_faits = set()
+    if manuel_ids:
+        ph = ",".join("?" for _ in manuel_ids)
+        cur.execute(f"""
+            SELECT element_id FROM progression_joueur
+            WHERE user_id = ? AND element_type = 'succes_objectif' AND element_id IN ({ph}) AND fait = 1
+        """, [user_id] + manuel_ids)
+        manuel_faits = {r["element_id"] for r in cur.fetchall()}
+
+    quete_ids = sorted({o["quete_id"] for o in objectifs if o["type"] == "quete" and o["quete_id"]})
+    quetes_completes = set()
+    if quete_ids:
+        ph = ",".join("?" for _ in quete_ids)
+        cur.execute(f"""
+            SELECT qe.quete_id, COUNT(*) AS total_etapes,
+                   SUM(CASE WHEN pj.fait = 1 THEN 1 ELSE 0 END) AS etapes_faites
+            FROM quetes_etapes qe
+            LEFT JOIN progression_joueur pj
+                ON pj.element_type = 'quete_etape' AND pj.element_id = CAST(qe.id AS TEXT) AND pj.user_id = ?
+            WHERE qe.quete_id IN ({ph})
+            GROUP BY qe.quete_id
+        """, [user_id] + quete_ids)
+        for r in cur.fetchall():
+            if r["total_etapes"] > 0 and r["etapes_faites"] >= r["total_etapes"]:
+                quetes_completes.add(r["quete_id"])
+
+    for o in objectifs:
+        done = (str(o["id"]) in manuel_faits) if o["type"] == "manuel" else (o["quete_id"] in quetes_completes)
+        if done:
+            fait[o["succes_id"]] = fait.get(o["succes_id"], 0) + 1
+
+    return {sid: {"fait": fait.get(sid, 0), "total": t} for sid, t in total.items()}
+
+
+@app.get("/succes")
+def liste_succes(search: str = "", categorie: str = "", masquer_accomplis: bool = False,
+                  page: int = 1, page_size: int = 48,
+                  user: dict = Depends(utilisateur_optionnel)):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 400)
+    conn = get_db()
+    cur = conn.cursor()
+
+    conditions = ["nom LIKE ?"]
+    params = [f"%{search}%"]
+    categories_choisies = [c for c in categorie.split(",") if c in CATEGORIES_SUCCES_ORDRE]
+    if categories_choisies:
+        conditions.append(f"categorie IN ({','.join('?' for _ in categories_choisies)})")
+        params.extend(categories_choisies)
+    where_clause = " AND ".join(conditions)
+
+    ordre_categorie = "CASE categorie " + " ".join(
+        f"WHEN ? THEN {i}" for i in range(len(CATEGORIES_SUCCES_ORDRE))) + " ELSE 99 END"
+    cur.execute(f"""
+        SELECT id, nom, categorie, points, niveau, img
+        FROM succes
+        WHERE {where_clause}
+        ORDER BY {ordre_categorie}, nom
+    """, params + CATEGORIES_SUCCES_ORDRE)
+    rows = cur.fetchall()
+    succes_ids = [r["id"] for r in rows]
+
+    etats = _etat_objectifs_succes(cur, user["id"] if user else None, succes_ids)
+
+    favoris_ids = set()
+    if user and succes_ids:
+        ph = ",".join("?" for _ in succes_ids)
+        cur.execute(f"""
+            SELECT element_id FROM favoris
+            WHERE user_id = ? AND element_type = 'succes' AND element_id IN ({ph})
+        """, [user["id"]] + [str(i) for i in succes_ids])
+        favoris_ids = {r["element_id"] for r in cur.fetchall()}
+
+    resultats = []
+    for r in rows:
+        etat = etats.get(r["id"], {"fait": 0, "total": 0})
+        accompli = user is not None and etat["total"] > 0 and etat["fait"] >= etat["total"]
+        if masquer_accomplis and user and accompli:
+            continue
+        resultats.append({
+            **dict(r), "fait": etat["fait"], "total": etat["total"], "accompli": accompli,
+            "favori": str(r["id"]) in favoris_ids,
+        })
+
+    points_gagnes = None
+    points_total = None
+    if user:
+        # Compteur global : calcule sur TOUS les succes du perimetre (pas
+        # seulement la recherche/filtre courant), voir §5 specs.
+        cur.execute("SELECT id, points FROM succes")
+        tous = cur.fetchall()
+        etats_tous = _etat_objectifs_succes(cur, user["id"], [r["id"] for r in tous])
+        points_total = sum(r["points"] for r in tous)
+        points_gagnes = sum(
+            r["points"] for r in tous
+            if etats_tous.get(r["id"], {"fait": 0, "total": 0})["total"] > 0
+            and etats_tous[r["id"]]["fait"] >= etats_tous[r["id"]]["total"]
+        )
+
+    conn.close()
+    total = len(resultats)
+    debut = (page - 1) * page_size
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "succes": resultats[debut:debut + page_size],
+        "points_gagnes": points_gagnes,
+        "points_total": points_total,
+    }
+
+
+@app.get("/succes/filtres")
+def filtres_succes():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT categorie FROM succes")
+    presentes = {r["categorie"] for r in cur.fetchall()}
+    conn.close()
+    return {"categories": [c for c in CATEGORIES_SUCCES_ORDRE if c in presentes]}
+
+
+@app.get("/succes/{succes_id}")
+def detail_succes(succes_id: int, user: dict = Depends(utilisateur_optionnel)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM succes WHERE id = ?", (succes_id,))
+    succes = cur.fetchone()
+    if not succes:
+        conn.close()
+        return {"erreur": "Succès introuvable"}
+
+    favori = False
+    if user:
+        cur.execute("SELECT 1 FROM favoris WHERE user_id = ? AND element_type = 'succes' AND element_id = ?",
+                    (user["id"], str(succes_id)))
+        favori = cur.fetchone() is not None
+
+    cur.execute("SELECT id, ordre, nom, type, quete_id FROM succes_objectifs WHERE succes_id = ? ORDER BY ordre",
+                (succes_id,))
+    objectifs_rows = cur.fetchall()
+    objectif_ids = [r["id"] for r in objectifs_rows]
+
+    etat_par_objectif = {}
+    if user and objectif_ids:
+        manuel_ids = [str(r["id"]) for r in objectifs_rows if r["type"] == "manuel"]
+        if manuel_ids:
+            ph = ",".join("?" for _ in manuel_ids)
+            cur.execute(f"""
+                SELECT element_id FROM progression_joueur
+                WHERE user_id = ? AND element_type = 'succes_objectif' AND element_id IN ({ph}) AND fait = 1
+            """, [user["id"]] + manuel_ids)
+            faits = {r["element_id"] for r in cur.fetchall()}
+            for r in objectifs_rows:
+                if r["type"] == "manuel":
+                    etat_par_objectif[r["id"]] = str(r["id"]) in faits
+
+        quete_ids = sorted({r["quete_id"] for r in objectifs_rows if r["type"] == "quete" and r["quete_id"]})
+        if quete_ids:
+            ph = ",".join("?" for _ in quete_ids)
+            cur.execute(f"""
+                SELECT qe.quete_id, COUNT(*) AS total_etapes,
+                       SUM(CASE WHEN pj.fait = 1 THEN 1 ELSE 0 END) AS etapes_faites
+                FROM quetes_etapes qe
+                LEFT JOIN progression_joueur pj
+                    ON pj.element_type = 'quete_etape' AND pj.element_id = CAST(qe.id AS TEXT) AND pj.user_id = ?
+                WHERE qe.quete_id IN ({ph})
+                GROUP BY qe.quete_id
+            """, [user["id"]] + quete_ids)
+            quetes_completes = {r["quete_id"] for r in cur.fetchall()
+                                 if r["total_etapes"] > 0 and r["etapes_faites"] >= r["total_etapes"]}
+            for r in objectifs_rows:
+                if r["type"] == "quete":
+                    etat_par_objectif[r["id"]] = r["quete_id"] in quetes_completes
+
+    objectifs = [{
+        "id": r["id"], "nom": r["nom"], "type": r["type"], "quete_id": r["quete_id"],
+        "fait": etat_par_objectif.get(r["id"], False),
+    } for r in objectifs_rows]
+    nb_faits = sum(1 for o in objectifs if o["fait"])
+
+    cur.execute("""
+        SELECT sri.objet_id, sri.quantite, o.nom, o.img
+        FROM succes_recompenses_items sri
+        LEFT JOIN objets o ON o.id = sri.objet_id
+        WHERE sri.succes_id = ?
+    """, (succes_id,))
+    recompense_items = [dict(r) for r in cur.fetchall()]
+
+    cur.execute("""
+        SELECT d.id, d.nom, d.niveau_optimal
+        FROM succes_donjons sd
+        JOIN donjons d ON d.id = sd.donjon_id
+        WHERE sd.succes_id = ?
+        ORDER BY d.nom
+    """, (succes_id,))
+    donjons_lies = [dict(r) for r in cur.fetchall()]
+
+    conn.close()
+    return {
+        **dict(succes),
+        "favori": favori,
+        "objectifs": objectifs,
+        "objectifs_faits": nb_faits,
+        "objectifs_total": len(objectifs),
+        "recompense_items": recompense_items,
+        "donjons_lies": donjons_lies,
     }
 
 # ============================================================
