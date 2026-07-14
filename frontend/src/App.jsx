@@ -414,9 +414,9 @@ function CarreDofus({ d, taille, petit, onClick }) {
     >
       {d.img
         ? (
-          <div style={{ position:"relative", width:taille, height:taille, margin:"0 auto" }}>
+          <div style={{ position:"relative", width:taille, height:taille*1.26, margin:"0 auto" }}>
             <OeufJauge id={d.id} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
-            <img src={d.img} alt={d.nom} style={{ position:"absolute", inset:0, margin:"auto", maxWidth:"58%", maxHeight:"58%", opacity:d.trackable?1:0.35 }} />
+            <img src={d.img} alt={d.nom} style={{ position:"absolute", inset:0, margin:"auto", maxWidth:"92%", maxHeight:"92%", opacity:d.trackable?1:0.35 }} />
           </div>
         )
         : <OeufJauge id={d.id} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
