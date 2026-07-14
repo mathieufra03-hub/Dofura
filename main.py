@@ -293,9 +293,13 @@ SQL_NIVEAU_BASE = "(SELECT monstre_id, MIN(niveau) AS niveau_base FROM grades GR
 @app.get("/monstres")
 def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", categorie: str = "",
                     niveau_min: int = 1, niveau_max: int = 999, tri: str = "az",
-                    page: int = 1, page_size: int = 48):
+                    page: int = 1, page_size: int = 48,
+                    user: dict = Depends(utilisateur_optionnel)):
     page = max(page, 1)
-    page_size = min(max(page_size, 1), 200)
+    # Plafond releve 200->400 pour l'Archidex (chantier Dofus, 306
+    # archimonstres a afficher sans pagination pour l'usage "checklist" —
+    # jamais un total en dur, juste une marge technique de pagination).
+    page_size = min(max(page_size, 1), 400)
 
     conditions = ["m.nom LIKE ?"]
     params = [f"%{search}%"]
@@ -355,6 +359,28 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
         LIMIT ? OFFSET ?
     """, params + [page_size, (page - 1) * page_size])
     rows = cur.fetchall()
+
+    # Suivi "chasse" (Archidex, chantier Dofus) : reutilise progression_joueur
+    # avec un nouveau element_type 'archimonstre' (table generique deja concue
+    # pour ca, aucune migration necessaire). chasses_total = nombre de
+    # monstres COCHES parmi tout l'ensemble filtre (pas seulement la page
+    # affichee), pour un compteur global juste sans devoir tout charger cote
+    # front — jamais un chiffre en dur, toujours recalcule depuis la base.
+    chasses_ids = set()
+    chasses_total = None
+    if user:
+        cur.execute("""
+            SELECT element_id FROM progression_joueur
+            WHERE user_id = ? AND element_type = 'archimonstre' AND fait = 1
+        """, (user["id"],))
+        chasses_ids = {r["element_id"] for r in cur.fetchall()}
+        cur.execute(f"""
+            SELECT m.id FROM monstres m JOIN {SQL_NIVEAU_BASE} base ON base.monstre_id = m.id
+            WHERE {where_clause}
+        """, params)
+        ids_filtres = {str(r["id"]) for r in cur.fetchall()}
+        chasses_total = len(chasses_ids & ids_filtres)
+
     conn.close()
 
     def categorie_de(r):
@@ -367,11 +393,13 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
         "total": total,
         "page": page,
         "page_size": page_size,
+        "chasses_total": chasses_total,
         "monstres": [
             {
                 "id": r["id"], "nom": r["nom"], "image_url": r["image_url"],
                 "niveau": r["niveau_base"], "region": r["region_principale"], "sous_zone": r["sous_zone_principale"],
                 "categorie": categorie_de(r),
+                "chasse": str(r["id"]) in chasses_ids,
             }
             for r in rows
         ],
@@ -1831,6 +1859,108 @@ def liste_dofus(user: dict = Depends(utilisateur_optionnel)):
     }
 
 
+def _itineraire_pour_dofus(cur, quete_ids_directs, succes_ids, user_id):
+    """Liste chronologique des quetes menant a un Dofus (chantier Dofus,
+    demande Popo — refonte façon Duffus). Deux cas, aucune donnee inventee :
+    - Dofus lie a un succes : les objectifs de type "quete" du succes,
+      DEJA ordonnes par succes_objectifs.ordre (liste curatee par Ankama
+      elle-meme, pas une reconstruction). Les succes purement "manuel"
+      (aucun objectif quete) donnent un itineraire vide, gere par l'appelant.
+    - Dofus recompense directement par une quete (pas de succes) : cette
+      seule quete, sans remonter recursivement SES propres prerequis (deja
+      visibles sur sa fiche via le bloc Prerequis existant — remonter plus
+      loin serait une frontiere arbitraire que rien dans les donnees ne
+      justifie, contrairement a la liste d'un succes qui est, elle, bornee
+      par Ankama).
+    Prerequis affiches en ligne UNIQUEMENT s'ils pointent vers une AUTRE
+    quete de ce meme itineraire (table quetes_prerequis_quetes deja
+    existante) — un prerequis hors-liste n'a rien a quoi se lier ici.
+    Donjon lie intercale via quetes_donjons (deja existante, meme donnee
+    que le bloc "Donjon lie" de la fiche quete).
+    """
+    if succes_ids:
+        cur.execute("""
+            SELECT quete_id FROM succes_objectifs
+            WHERE succes_id = ? AND type = 'quete' AND quete_id IS NOT NULL
+            ORDER BY ordre
+        """, (succes_ids[0],))
+        quete_ids = [r["quete_id"] for r in cur.fetchall()]
+    else:
+        quete_ids = list(quete_ids_directs)
+
+    if not quete_ids:
+        return []
+
+    etats = _etat_etapes_quetes(cur, user_id, quete_ids)
+
+    ph = ",".join("?" for _ in quete_ids)
+    cur.execute(f"SELECT id, nom, niveau_min FROM quetes WHERE id IN ({ph})", quete_ids)
+    infos = {r["id"]: r for r in cur.fetchall()}
+
+    cur.execute(f"SELECT quete_id, quete_requise_id FROM quetes_prerequis_quetes WHERE quete_id IN ({ph})", quete_ids)
+    prereqs_par_quete = {}
+    for r in cur.fetchall():
+        prereqs_par_quete.setdefault(r["quete_id"], []).append(r["quete_requise_id"])
+
+    cur.execute(f"""
+        SELECT qd.quete_id, d.id AS donjon_id, d.nom AS donjon_nom, d.niveau_optimal
+        FROM quetes_donjons qd JOIN donjons d ON d.id = qd.donjon_id
+        WHERE qd.quete_id IN ({ph})
+    """, quete_ids)
+    donjons_par_quete = {
+        r["quete_id"]: {"id": r["donjon_id"], "nom": r["donjon_nom"], "niveau_optimal": r["niveau_optimal"]}
+        for r in cur.fetchall()
+    }
+
+    ensemble_itineraire = set(quete_ids)
+    itineraire = []
+    for qid in quete_ids:
+        info = infos.get(qid)
+        if not info:
+            continue
+        e = etats.get(qid, {"fait": 0, "total": 0})
+        prereqs_dans_liste = [
+            {"id": pid, "nom": infos[pid]["nom"]}
+            for pid in prereqs_par_quete.get(qid, [])
+            if pid in ensemble_itineraire and pid in infos
+        ]
+        itineraire.append({
+            "id": qid, "nom": info["nom"], "niveau_min": info["niveau_min"],
+            "etapes_faites": e["fait"], "etapes_total": e["total"],
+            "fait": e["total"] > 0 and e["fait"] >= e["total"],
+            "prerequis": prereqs_dans_liste,
+            "donjon_lie": donjons_par_quete.get(qid),
+        })
+    return itineraire
+
+
+class QueteCompleteBody(BaseModel):
+    quete_id: int
+    fait: bool
+
+
+@app.post("/progression/quete-complete")
+def marquer_quete_complete(body: QueteCompleteBody, user: dict = Depends(utilisateur_courant)):
+    """Coche/decoche TOUTES les etapes d'une quete d'un coup (itineraire
+    d'un Dofus, chantier Dofus) — ecrit dans la MEME table/cles que la
+    fiche quete (progression_joueur, element_type='quete_etape'), donc
+    une seule source de verite : coche ici = coche sur la fiche quete."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM quetes_etapes WHERE quete_id = ?", (body.quete_id,))
+    etape_ids = [r["id"] for r in cur.fetchall()]
+    for etape_id in etape_ids:
+        cur.execute("""
+            INSERT INTO progression_joueur (user_id, element_type, element_id, fait, date_maj)
+            VALUES (?, 'quete_etape', ?, ?, datetime('now'))
+            ON CONFLICT(user_id, element_type, element_id)
+            DO UPDATE SET fait = excluded.fait, date_maj = excluded.date_maj
+        """, (user["id"], str(etape_id), int(body.fait)))
+    conn.commit()
+    conn.close()
+    return {"quete_id": body.quete_id, "fait": body.fait, "etapes_total": len(etape_ids)}
+
+
 @app.get("/dofus/{dofus_id}")
 def detail_dofus(dofus_id: int, user: dict = Depends(utilisateur_optionnel)):
     conn = get_db()
@@ -1878,6 +2008,9 @@ def detail_dofus(dofus_id: int, user: dict = Depends(utilisateur_optionnel)):
         if r:
             succes_lie = dict(r)
 
+    itineraire = _itineraire_pour_dofus(cur, quete_ids, succes_ids, user_id)
+    quetes_faites = sum(1 for e in itineraire if e["fait"])
+
     conn.close()
     return {
         "id": d["id"], "nom": d["nom"], "niveau": d["niveau"], "img": d["img"],
@@ -1888,6 +2021,9 @@ def detail_dofus(dofus_id: int, user: dict = Depends(utilisateur_optionnel)):
         "obtenu": obtenu,
         "quete_liee": quete_liee,
         "succes_lie": succes_lie,
+        "itineraire": itineraire,
+        "itineraire_fait": quetes_faites,
+        "itineraire_total": len(itineraire),
     }
 
 

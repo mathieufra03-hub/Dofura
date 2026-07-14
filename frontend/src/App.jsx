@@ -491,44 +491,82 @@ function ChasseDofus({ token, onSelectDofus }) {
 
 // Archidex (demande explicite Popo, 2026-07-14) : liste des archimonstres
 // déjà en base (famille "Créatures Archimonstres", catégorie "archi" du
-// Bestiaire, chantier #4). Réutilise directement /monstres?categorie=archi
-// (aucun nouvel endpoint) et la vignette .df-tile déjà stylée pour le
-// Bestiaire — même composant visuel, pas de nouvelle carte inventée.
+// Bestiaire, chantier #4). Réutilise /monstres?categorie=archi (le total
+// exact — jamais un chiffre en dur — et, si connecté, le suivi "chasse" par
+// monstre, nouveau element_type 'archimonstre' dans progression_joueur,
+// même table générique déjà utilisée partout ailleurs) et la vignette
+// .df-tile déjà stylée pour le Bestiaire. Chargé en un seul appel (plafond
+// /monstres relevé à 400, largement au-dessus des 306 réels) pour l'usage
+// "checklist qu'on parcourt" plutôt qu'un catalogue paginé — le fallback de
+// pagination reste actif si ce nombre dépassait un jour 400.
 // Scope volontairement limité à la fiche du Dofus Ocre pour l'instant (pas
 // de lien thématique Ocre↔archimonstres établi, juste le premier Dofus à
 // avoir une vraie fiche dédiée) — facile à généraliser si Popo le demande.
-const ARCHIDEX_PAGE_SIZE = 24
-function ArchidexSection({ onSelectMonstre }) {
+const ARCHIDEX_PAGE_SIZE = 400
+function ArchidexSection({ token, onSelectMonstre }) {
   const [monstres, setMonstres] = useState([])
   const [total, setTotal] = useState(0)
+  const [chasses, setChasses] = useState(null)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [messageConnexion, setMessageConnexion] = useState(false)
 
   useEffect(() => {
     setLoading(true)
-    fetch(`${API}/monstres?categorie=archi&tri=az&page=${page}&page_size=${ARCHIDEX_PAGE_SIZE}`)
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    fetch(`${API}/monstres?categorie=archi&tri=az&page=${page}&page_size=${ARCHIDEX_PAGE_SIZE}`, { headers })
       .then(r=>r.json())
-      .then(d => { setMonstres(d.monstres); setTotal(d.total); setLoading(false) })
+      .then(d => { setMonstres(d.monstres); setTotal(d.total); setChasses(d.chasses_total); setLoading(false) })
       .catch(()=>setLoading(false))
-  }, [page])
+  }, [page, token])
 
   const totalPages = Math.max(Math.ceil(total / ARCHIDEX_PAGE_SIZE), 1)
 
+  const toggleChasse = (m) => {
+    if (!token) { setMessageConnexion(true); return }
+    const fait = !m.chasse
+    setMonstres(ms => ms.map(x => x.id===m.id ? { ...x, chasse:fait } : x))
+    setChasses(c => (c ?? 0) + (fait ? 1 : -1))
+    fetch(`${API}/progression`, {
+      method: "POST",
+      headers: { Authorization:`Bearer ${token}`, "Content-Type":"application/json" },
+      body: JSON.stringify({ element_type:"archimonstre", element_id:String(m.id), fait }),
+    }).catch(()=>{
+      setMonstres(ms => ms.map(x => x.id===m.id ? { ...x, chasse:!fait } : x))
+      setChasses(c => (c ?? 0) + (fait ? -1 : 1))
+    })
+  }
+
   return (
     <section className="df-block">
-      <h2 className="df-block-title">Archidex — {total} archimonstres</h2>
+      <div style={{ display:"flex", alignItems:"center", gap:14, flexWrap:"wrap", marginBottom:16 }}>
+        <h2 className="df-block-title" style={{ margin:0 }}>Archidex</h2>
+        <span style={{ background:"rgba(255,198,61,0.1)", border:"1px solid rgba(255,198,61,0.5)", color:"var(--df-gold)", fontWeight:700, fontSize:13, borderRadius:999, padding:"4px 14px" }}>
+          {token && chasses != null ? `${chasses} / ${total} archimonstres` : `${total} archimonstres`}
+        </span>
+        {messageConnexion && (
+          <span style={{ fontSize:12, color:"var(--df-text-2)" }}>
+            Connecte-toi pour cocher tes archimonstres chassés
+            <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:"var(--df-text-3)", cursor:"pointer" }}>✕</span>
+          </span>
+        )}
+      </div>
       {loading ? (
         <div style={{ ...mp.videEtat, padding:"1.5rem 1rem" }}>Chargement...</div>
       ) : (
         <>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
             {monstres.map(m => (
-              <div key={m.id} className="df-tile" onClick={()=>onSelectMonstre(m.id)}>
+              <div key={m.id} className="df-tile" style={{ position:"relative" }} onClick={()=>onSelectMonstre(m.id)}>
+                <div className={"df-check" + (m.chasse?" on":"")} onClick={e=>{ e.stopPropagation(); toggleChasse(m) }}
+                  style={{ position:"absolute", top:8, left:8, width:20, height:20, fontSize:12 }}>
+                  {m.chasse ? "✓" : ""}
+                </div>
                 {m.image_url
                   ? <img src={m.image_url} alt={m.nom} style={{ width:44, height:44, objectFit:"contain", margin:"0 auto 10px", display:"block" }} />
                   : <div style={{ width:44, height:44, borderRadius:10, margin:"0 auto 10px", background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)" }} />
                 }
-                <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:12.5, lineHeight:1.25, minHeight:31, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>{m.nom}</div>
+                <div style={{ color:m.chasse?"var(--df-green)":"var(--df-gold)", fontWeight:700, fontSize:12.5, lineHeight:1.25, minHeight:31, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>{m.nom}</div>
                 <div style={{ color:"var(--df-text-3)", fontSize:11, marginTop:4 }}>Niv. {m.niveau ?? "—"}</div>
                 <div style={{ color:"var(--df-text-3)", fontSize:10.5, marginTop:2 }}>{m.region || "Région inconnue"}</div>
               </div>
@@ -552,17 +590,49 @@ function ArchidexSection({ onSelectMonstre }) {
 // comme chantier futur séparé — juste de quoi donner une vraie destination
 // à chaque œuf de la Chasse aux Dofus (avant, seuls les Dofus trackables
 // renvoyaient quelque part, les 9 non trackables n'allaient nulle part).
-function DofusDetailPage({ id, token, onSelectQuete, onSelectSucces, onSelectMonstre, onBack }) {
+function DofusDetailPage({ id, token, onSelectQuete, onSelectSucces, onSelectDonjon, onSelectMonstre, onBack }) {
   const [data, setData] = useState(null)
+  const [messageConnexion, setMessageConnexion] = useState(false)
+
+  const charger = () => {
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    return fetch(`${API}/dofus/${id}`, { headers }).then(r=>r.json()).then(setData)
+  }
 
   useEffect(() => {
     setData(null)
-    const headers = token ? { Authorization:`Bearer ${token}` } : {}
-    fetch(`${API}/dofus/${id}`, { headers }).then(r=>r.json()).then(setData)
+    charger()
   }, [id, token])
 
   if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>Chargement...</div>
   if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>{data.erreur}</div>
+
+  // Coche/decoche une quete ENTIERE de l'itineraire d'un coup (meme table
+  // progression_joueur que la fiche quete complete — une seule source de
+  // verite, voir /progression/quete-complete). Mise a jour optimiste de la
+  // case + du compteur pour un retour instantane, puis re-fetch complet pour
+  // resynchroniser le % global (qui agrège aussi le succès lié le cas
+  // échéant), plutôt que de recalculer cet agrégat à la main côté front.
+  const toggleQuete = (etape) => {
+    if (!token) { setMessageConnexion(true); return }
+    const fait = !etape.fait
+    setData(prev => ({
+      ...prev,
+      itineraire: prev.itineraire.map(e => e.id===etape.id ? { ...e, fait } : e),
+      itineraire_fait: prev.itineraire_fait + (fait ? 1 : -1),
+    }))
+    fetch(`${API}/progression/quete-complete`, {
+      method: "POST",
+      headers: { Authorization:`Bearer ${token}`, "Content-Type":"application/json" },
+      body: JSON.stringify({ quete_id: etape.id, fait }),
+    }).then(charger).catch(()=>{
+      setData(prev => ({
+        ...prev,
+        itineraire: prev.itineraire.map(e => e.id===etape.id ? { ...e, fait:!fait } : e),
+        itineraire_fait: prev.itineraire_fait + (fait ? -1 : 1),
+      }))
+    })
+  }
 
   return (
     <div translate="no" style={{ padding:"1.5rem 2rem 3rem", maxWidth:1240, margin:"0 auto" }}>
@@ -594,31 +664,72 @@ function DofusDetailPage({ id, token, onSelectQuete, onSelectSucces, onSelectMon
         </div>
       </header>
 
-      {(data.quete_liee || data.succes_lie) && (
-        <section className="df-block" style={{ borderColor:"var(--df-border-cyan)" }}>
-          <h2 className="df-block-title">{data.quete_liee ? "Quête liée" : "Succès lié"}</h2>
-          {data.quete_liee && (
-            <div onClick={()=>onSelectQuete(data.quete_liee.id)} style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer" }}>
-              <div style={{ flex:1 }}>
-                <div style={{ color:"var(--df-cyan)", fontWeight:700, fontSize:14.5 }}>{data.quete_liee.nom}</div>
-                <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:1 }}>Niv. {data.quete_liee.niveau_min}</div>
+      {data.itineraire?.length > 0 ? (
+        <section className="df-block">
+          <div style={{ display:"flex", alignItems:"center", gap:14, flexWrap:"wrap", marginBottom:18 }}>
+            <h2 className="df-block-title" style={{ margin:0 }}>Itinéraire</h2>
+            <span style={{ background:"rgba(255,198,61,0.1)", border:"1px solid rgba(255,198,61,0.5)", color:"var(--df-gold)", fontWeight:700, fontSize:13, borderRadius:999, padding:"4px 14px" }}>
+              {data.itineraire_fait} / {data.itineraire_total} quêtes
+            </span>
+          </div>
+          {data.itineraire.map((e,i) => (
+            <div key={e.id} style={{ padding:"16px 0", borderBottom: i<data.itineraire.length-1 ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
+              {e.prerequis.length > 0 && (
+                <div style={{ fontSize:11.5, color:"var(--df-text-3)", marginBottom:8, marginLeft:38 }}>
+                  🔒 Nécessite : {e.prerequis.map(p=>p.nom).join(", ")}
+                </div>
+              )}
+              <div style={{ display:"flex", alignItems:"flex-start", gap:14 }}>
+                <div className={"df-check" + (e.fait?" on":"")} onClick={()=>toggleQuete(e)} style={{ flexShrink:0, marginTop:2 }}>{e.fait?"✓":""}</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div onClick={()=>onSelectQuete(e.id)} style={{ color:e.fait?"var(--df-text-3)":"var(--df-cyan)", fontWeight:700, fontSize:14.5, cursor:"pointer", textDecoration:e.fait?"line-through":"none" }}>{e.nom}</div>
+                  <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:2 }}>Niv. {e.niveau_min}</div>
+                  {e.donjon_lie && (
+                    <div onClick={()=>onSelectDonjon(e.donjon_lie.id)} style={{ marginTop:8, display:"inline-flex", alignItems:"center", gap:7, cursor:"pointer", background:"rgba(77,216,230,0.07)", border:"1px solid rgba(77,216,230,0.3)", borderRadius:8, padding:"4px 10px" }}>
+                      <span style={{ fontSize:12.5 }}>🏰</span>
+                      <span style={{ color:"var(--df-cyan)", fontSize:12.5 }}>{e.donjon_lie.nom}</span>
+                      <span style={{ color:"var(--df-text-3)", fontSize:11 }}>Niv. {e.donjon_lie.niveau_optimal}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <span style={{ color:"var(--df-cyan)", fontSize:18, fontWeight:700 }}>→</span>
+            </div>
+          ))}
+          {!token && (
+            <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:8, fontStyle:"italic" }}>
+              Connecte-toi pour cocher ta progression sur cet itinéraire.
+            </div>
+          )}
+          {messageConnexion && (
+            <div style={{ color:"var(--df-text-2)", fontSize:12, marginTop:8 }}>
+              Connecte-toi pour suivre ta progression
+              <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:"var(--df-text-3)", cursor:"pointer" }}>✕</span>
             </div>
           )}
           {data.succes_lie && (
-            <div onClick={()=>onSelectSucces(data.succes_lie.id)} style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer" }}>
-              <div style={{ flex:1 }}>
-                <div style={{ color:"var(--df-cyan)", fontWeight:700, fontSize:14.5 }}>{data.succes_lie.nom}</div>
-                <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:1 }}>{data.succes_lie.points} points</div>
-              </div>
-              <span style={{ color:"var(--df-cyan)", fontSize:18, fontWeight:700 }}>→</span>
+            <div onClick={()=>onSelectSucces(data.succes_lie.id)} style={{ marginTop:18, paddingTop:16, borderTop:"1px solid rgba(255,255,255,0.08)", display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
+              <span style={{ color:"var(--df-text-3)", fontSize:12.5 }}>Fait partie du succès</span>
+              <span style={{ color:"var(--df-cyan)", fontWeight:600, fontSize:13 }}>{data.succes_lie.nom} →</span>
             </div>
           )}
         </section>
-      )}
+      ) : data.succes_lie ? (
+        <section className="df-block" style={{ borderColor:"var(--df-border-cyan)" }}>
+          <h2 className="df-block-title">Succès lié</h2>
+          <p style={{ color:"var(--df-text-3)", fontSize:13, fontStyle:"italic", margin:"0 0 14px" }}>
+            Ce Dofus ne s'obtient pas via une suite de quêtes mais directement via ce succès.
+          </p>
+          <div onClick={()=>onSelectSucces(data.succes_lie.id)} style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer" }}>
+            <div style={{ flex:1 }}>
+              <div style={{ color:"var(--df-cyan)", fontWeight:700, fontSize:14.5 }}>{data.succes_lie.nom}</div>
+              <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:1 }}>{data.succes_lie.points} points</div>
+            </div>
+            <span style={{ color:"var(--df-cyan)", fontSize:18, fontWeight:700 }}>→</span>
+          </div>
+        </section>
+      ) : null}
 
-      {data.id === 7754 && <ArchidexSection onSelectMonstre={onSelectMonstre} />}
+      {data.id === 7754 && <ArchidexSection token={token} onSelectMonstre={onSelectMonstre} />}
     </div>
   )
 }
@@ -3311,7 +3422,7 @@ export default function App() {
       ) : selectedSucces ? (
         <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedDofus ? (
-        <DofusDetailPage id={selectedDofus} token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
+        <DofusDetailPage id={selectedDofus} token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onSelectDonjon={handleSelectDonjon} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "monstres" ? (
         <BestiairePage onSelect={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "donjon" ? (
