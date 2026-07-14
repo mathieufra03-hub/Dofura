@@ -109,7 +109,7 @@ function LoginPanel({ onLogin, onClose }) {
 function Navbar({ onHome, onNav, browsing, user, onLogin, onLogout }) {
   const [showLogin, setShowLogin] = useState(false)
   return (
-    <nav style={{ background:"var(--df-panel-bg)", borderBottom:"1px solid var(--df-border-gold)", padding:"0 2rem", display:"flex", alignItems:"center", height:56, position:"sticky", top:0, zIndex:100 }}>
+    <nav style={{ background:"var(--df-panel-bg)", borderBottom:"1px solid var(--df-border-gold)", padding:"14px 2rem", display:"flex", alignItems:"center", position:"sticky", top:0, zIndex:100 }}>
       <span onClick={onHome} className="df-title-gold" style={{ fontSize:19, letterSpacing:"0.06em", marginRight:28, cursor:"pointer" }}>
         DOFURA
       </span>
@@ -151,23 +151,6 @@ function Navbar({ onHome, onNav, browsing, user, onLogin, onLogout }) {
   )
 }
 
-function StatsBar() {
-  const items = [
-    {val:"4 932",label:"monstres"},{val:"1 976",label:"quêtes"},
-    {val:"18 900",label:"articles"},{val:"18",label:"classes"},
-    {val:"1 572",label:"succès"},{val:"18",label:"métiers"},
-  ]
-  return (
-    <div style={{ background:C.bg2, borderBottom:`0.5px solid ${C.bdr}`, padding:"7px 2rem", display:"flex", gap:28, justifyContent:"center", flexWrap:"wrap" }}>
-      {items.map(i => (
-        <span key={i.label} style={{ fontSize:12, color:C.txt3 }}>
-          <span style={{ fontWeight:500, color:C.gold, fontSize:13 }}>{i.val}</span> {i.label}
-        </span>
-      ))}
-    </div>
-  )
-}
-
 // Tracé exact de maquette/dofura-home-v4.jsx (composant DofuraHomeV4 > df-egg-logo) :
 // œuf de dragon doré + spirale creusée, SVG original (aucun asset Ankama).
 // Taille en "em" pour rester alignée sur la taille du titre (clamp responsive).
@@ -175,13 +158,24 @@ function DofuraEggO() {
   return (
     <svg viewBox="0 0 100 126" aria-label="O" style={{ height:"0.72em", width:"auto", margin:"0 0.03em", transform:"translateY(0.02em)" }}>
       <defs>
-        <linearGradient id="df-egg-grad" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="df-egg-grad" x1="0" y1="0" x2="0.15" y2="1">
           <stop offset="0" stopColor="var(--df-gold-grad-1)" />
+          <stop offset="0.55" stopColor="var(--df-gold)" />
           <stop offset="1" stopColor="var(--df-gold-grad-2)" />
         </linearGradient>
+        <radialGradient id="df-egg-sheen" cx="34%" cy="24%" r="46%">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.8" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </radialGradient>
+        <clipPath id="df-egg-clip">
+          <path d="M50 4 C74 4 92 44 92 78 C92 106 74 122 50 122 C26 122 8 106 8 78 C8 44 26 4 50 4 Z" />
+        </clipPath>
       </defs>
-      <path d="M50 4 C74 4 92 44 92 78 C92 106 74 122 50 122 C26 122 8 106 8 78 C8 44 26 4 50 4 Z" fill="url(#df-egg-grad)" />
-      <path d="M60 42 C72 52 72 72 60 80 C50 87 37 82 35 71" fill="none" stroke="var(--df-bg)" strokeWidth="8" strokeLinecap="round" />
+      <path d="M50 4 C74 4 92 44 92 78 C92 106 74 122 50 122 C26 122 8 106 8 78 C8 44 26 4 50 4 Z"
+        fill="url(#df-egg-grad)" stroke="var(--df-gold-grad-2)" strokeWidth="1.5" />
+      <ellipse cx="35" cy="32" rx="28" ry="20" fill="url(#df-egg-sheen)" clipPath="url(#df-egg-clip)" />
+      <path d="M60 40 C73 51 73 73 60 82 C49 90 35 84 33 72" fill="none" stroke="var(--df-bg)" strokeWidth="7" strokeLinecap="round" opacity="0.92" />
+      <circle cx="33" cy="72" r="2.4" fill="var(--df-bg)" opacity="0.92" />
     </svg>
   )
 }
@@ -236,7 +230,7 @@ function Hero({ query, setQuery, results, onSelect, loading }) {
   return (
     <div style={{ padding:"64px 2rem 8px", textAlign:"center", position:"relative", zIndex:1 }}>
       <h1 className="df-title-gold" style={{ fontSize:"clamp(46px, 9vw, 92px)", lineHeight:1.1, letterSpacing:"0.02em", margin:0, display:"inline-flex", alignItems:"baseline" }}>
-        D<DofuraEggO />FURA
+        D<DofuraEggO />F<span style={{ marginLeft:"0.05em" }}>URA</span>
       </h1>
       <p style={{ fontSize:"clamp(15px, 2.5vw, 21px)", color:"var(--df-text-2)", margin:"14px 0 38px" }}>
         L'encyclopédie Dofus 3.0
@@ -395,13 +389,12 @@ function OeufJauge({ id, couleur, pct, taille, trackable }) {
       {trackable && pct > 0 && (
         <rect x="0" y={126 - 126*(pct/100)} width="100" height={126*(pct/100)} fill={c} clipPath={`url(#df-oeuf-clip-${id})`} />
       )}
-      <path d={OEUF_PATH} fill="none" stroke={trackable ? (pct===100 ? c : "rgba(154,163,189,0.5)") : "rgba(90,97,120,0.3)"} strokeWidth="4" />
     </svg>
   )
 }
 
 function CarreDofus({ d, taille, petit, onClick }) {
-  const cliquable = d.trackable && (d.quete_id != null || d.succes_id != null) && !!onClick
+  const cliquable = !!onClick
   return (
     <div onClick={cliquable ? onClick : undefined}
       className={"df-card"} style={{
@@ -437,7 +430,7 @@ function CarreDofus({ d, taille, petit, onClick }) {
 // La Chasse aux Dofus (§6 specs, section signature de la home). Branché sur
 // /dofus (main.py) : progression calculée depuis les vraies relations
 // Dofus↔quête/succès en base, jamais une valeur inventée.
-function ChasseDofus({ token, onSelectQuete, onSelectSucces }) {
+function ChasseDofus({ token, onSelectDofus }) {
   const [dofus, setDofus] = useState([])
   const [total, setTotal] = useState(0)
   const [obtenus, setObtenus] = useState(null)
@@ -453,11 +446,6 @@ function ChasseDofus({ token, onSelectQuete, onSelectSucces }) {
   const visibles = token && masquerObtenus ? dofus.filter(d => !d.obtenu) : dofus
   const primordiaux = visibles.filter(d => d.primordial)
   const autres = visibles.filter(d => !d.primordial)
-
-  const ouvrir = (d) => {
-    if (d.quete_id != null) onSelectQuete(d.quete_id)
-    else if (d.succes_id != null) onSelectSucces(d.succes_id)
-  }
 
   return (
     <div style={{ padding:"0 2rem 60px", maxWidth:1240, margin:"0 auto" }}>
@@ -485,18 +473,152 @@ function ChasseDofus({ token, onSelectQuete, onSelectSucces }) {
       )}
 
       <div style={{ color:"var(--df-text)", fontSize:16, fontWeight:600, margin:"26px 0 16px", letterSpacing:0.5 }}>⭐ Les six Primordiaux</div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(130px, 1fr))", gap:14, filter:token?"none":"grayscale(1)", opacity:token?1:0.55 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(170px, 1fr))", gap:16, filter:token?"none":"grayscale(1)", opacity:token?1:0.55 }}>
         {primordiaux.map(d => (
-          <CarreDofus key={d.id} d={d} taille={54} onClick={token?()=>ouvrir(d):undefined} />
+          <CarreDofus key={d.id} d={d} taille={78} onClick={()=>onSelectDofus(d.id)} />
         ))}
       </div>
 
       <div style={{ color:"var(--df-text)", fontSize:16, fontWeight:600, margin:"26px 0 16px", letterSpacing:0.5 }}>Tous les autres Dofus — triés par niveau requis</div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(108px, 1fr))", gap:12, filter:token?"none":"grayscale(1)", opacity:token?1:0.55 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(140px, 1fr))", gap:14, filter:token?"none":"grayscale(1)", opacity:token?1:0.55 }}>
         {autres.map(d => (
-          <CarreDofus key={d.id} d={d} taille={38} petit onClick={token?()=>ouvrir(d):undefined} />
+          <CarreDofus key={d.id} d={d} taille={56} petit onClick={()=>onSelectDofus(d.id)} />
         ))}
       </div>
+    </div>
+  )
+}
+
+// Archidex (demande explicite Popo, 2026-07-14) : liste des archimonstres
+// déjà en base (famille "Créatures Archimonstres", catégorie "archi" du
+// Bestiaire, chantier #4). Réutilise directement /monstres?categorie=archi
+// (aucun nouvel endpoint) et la vignette .df-tile déjà stylée pour le
+// Bestiaire — même composant visuel, pas de nouvelle carte inventée.
+// Scope volontairement limité à la fiche du Dofus Ocre pour l'instant (pas
+// de lien thématique Ocre↔archimonstres établi, juste le premier Dofus à
+// avoir une vraie fiche dédiée) — facile à généraliser si Popo le demande.
+const ARCHIDEX_PAGE_SIZE = 24
+function ArchidexSection({ onSelectMonstre }) {
+  const [monstres, setMonstres] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch(`${API}/monstres?categorie=archi&tri=az&page=${page}&page_size=${ARCHIDEX_PAGE_SIZE}`)
+      .then(r=>r.json())
+      .then(d => { setMonstres(d.monstres); setTotal(d.total); setLoading(false) })
+      .catch(()=>setLoading(false))
+  }, [page])
+
+  const totalPages = Math.max(Math.ceil(total / ARCHIDEX_PAGE_SIZE), 1)
+
+  return (
+    <section className="df-block">
+      <h2 className="df-block-title">Archidex — {total} archimonstres</h2>
+      {loading ? (
+        <div style={{ ...mp.videEtat, padding:"1.5rem 1rem" }}>Chargement...</div>
+      ) : (
+        <>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
+            {monstres.map(m => (
+              <div key={m.id} className="df-tile" onClick={()=>onSelectMonstre(m.id)}>
+                {m.image_url
+                  ? <img src={m.image_url} alt={m.nom} style={{ width:44, height:44, objectFit:"contain", margin:"0 auto 10px", display:"block" }} />
+                  : <div style={{ width:44, height:44, borderRadius:10, margin:"0 auto 10px", background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)" }} />
+                }
+                <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:12.5, lineHeight:1.25, minHeight:31, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>{m.nom}</div>
+                <div style={{ color:"var(--df-text-3)", fontSize:11, marginTop:4 }}>Niv. {m.niveau ?? "—"}</div>
+                <div style={{ color:"var(--df-text-3)", fontSize:10.5, marginTop:2 }}>{m.region || "Région inconnue"}</div>
+              </div>
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div style={mp.pagination}>
+              <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+              <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+              <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
+// Fiche dédiée d'un Dofus (demande Popo, 2026-07-14) : version fonctionnelle
+// minimale, pas encore le "fond thématique ambiance" prévu au §6 des specs
+// comme chantier futur séparé — juste de quoi donner une vraie destination
+// à chaque œuf de la Chasse aux Dofus (avant, seuls les Dofus trackables
+// renvoyaient quelque part, les 9 non trackables n'allaient nulle part).
+function DofusDetailPage({ id, token, onSelectQuete, onSelectSucces, onSelectMonstre, onBack }) {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    setData(null)
+    const headers = token ? { Authorization:`Bearer ${token}` } : {}
+    fetch(`${API}/dofus/${id}`, { headers }).then(r=>r.json()).then(setData)
+  }, [id, token])
+
+  if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>Chargement...</div>
+  if (data.erreur) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:"var(--df-text-2)", fontSize:14 }}>{data.erreur}</div>
+
+  return (
+    <div translate="no" style={{ padding:"1.5rem 2rem 3rem", maxWidth:1240, margin:"0 auto" }}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <header className="df-block" style={{ display:"flex", alignItems:"center", gap:22, padding:24, flexWrap:"wrap" }}>
+        <div style={{ position:"relative", width:84, height:84*1.26, flexShrink:0 }}>
+          <OeufJauge id={data.id} couleur={data.couleur} pct={data.pct} taille={84} trackable={data.trackable} />
+          {data.img && <img src={data.img} alt={data.nom} style={{ position:"absolute", inset:0, margin:"auto", maxWidth:"92%", maxHeight:"92%", opacity:data.trackable?1:0.35 }} />}
+        </div>
+        <div style={{ flex:1, minWidth:200 }}>
+          <h1 className="df-title-gold" style={{ fontSize:"clamp(22px, 4vw, 30px)", margin:0 }}>{data.nom}</h1>
+          <div style={{ color:"var(--df-text-2)", fontSize:14, marginTop:8 }}>
+            Niv. {data.niveau}{data.primordial && <> · <span style={{ color:"var(--df-gold)" }}>⭐ Dofus primordial</span></>}
+          </div>
+          {data.trackable ? (
+            <div style={{ marginTop:14, maxWidth:320 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, marginBottom:6 }}>
+                <span style={{ color:"var(--df-text-2)" }}>Progression</span>
+                <span style={{ color:"var(--df-gold)", fontWeight:700 }}>{data.obtenu ? "✓ Obtenu" : `${data.pct} %`}</span>
+              </div>
+              <div className="df-progress"><div className={"fill" + (data.pct===100?" done":"")} style={{ width:data.pct+"%" }} /></div>
+            </div>
+          ) : (
+            <div style={{ color:"var(--df-text-3)", fontSize:12.5, marginTop:14, fontStyle:"italic" }}>
+              Aucune quête ni succès reconnu(e) pour ce Dofus dans les données publiques — pas de suivi automatique possible.
+            </div>
+          )}
+        </div>
+      </header>
+
+      {(data.quete_liee || data.succes_lie) && (
+        <section className="df-block" style={{ borderColor:"var(--df-border-cyan)" }}>
+          <h2 className="df-block-title">{data.quete_liee ? "Quête liée" : "Succès lié"}</h2>
+          {data.quete_liee && (
+            <div onClick={()=>onSelectQuete(data.quete_liee.id)} style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer" }}>
+              <div style={{ flex:1 }}>
+                <div style={{ color:"var(--df-cyan)", fontWeight:700, fontSize:14.5 }}>{data.quete_liee.nom}</div>
+                <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:1 }}>Niv. {data.quete_liee.niveau_min}</div>
+              </div>
+              <span style={{ color:"var(--df-cyan)", fontSize:18, fontWeight:700 }}>→</span>
+            </div>
+          )}
+          {data.succes_lie && (
+            <div onClick={()=>onSelectSucces(data.succes_lie.id)} style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer" }}>
+              <div style={{ flex:1 }}>
+                <div style={{ color:"var(--df-cyan)", fontWeight:700, fontSize:14.5 }}>{data.succes_lie.nom}</div>
+                <div style={{ color:"var(--df-text-3)", fontSize:12, marginTop:1 }}>{data.succes_lie.points} points</div>
+              </div>
+              <span style={{ color:"var(--df-cyan)", fontSize:18, fontWeight:700 }}>→</span>
+            </div>
+          )}
+        </section>
+      )}
+
+      {data.id === 7754 && <ArchidexSection onSelectMonstre={onSelectMonstre} />}
     </div>
   )
 }
@@ -3104,6 +3226,7 @@ export default function App() {
   const [selectedSousZone, setSelectedSousZone] = useState(null)
   const [selectedQuete, setSelectedQuete]       = useState(null)
   const [selectedSucces, setSelectedSucces]     = useState(null)
+  const [selectedDofus, setSelectedDofus]       = useState(null)
   const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete" | "succes"
   const [almanax, setAlmanax]   = useState(null)
   const [token, setToken] = useState(() => localStorage.getItem("dofura_token") || null)
@@ -3147,7 +3270,7 @@ export default function App() {
     setToken(null)
   }
 
-  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setSelectedSucces(null); setBrowsing(null); setQuery(""); setResults([]) }
+  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setSelectedSucces(null); setSelectedDofus(null); setBrowsing(null); setQuery(""); setResults([]) }
   const handleSelectMonstre  = (id) => { resetNav(); setSelectedMonstre(id) }
   const handleSelectObjet    = (id) => { resetNav(); setSelectedObjet(id) }
   const handleSelectDonjon   = (id) => { resetNav(); setSelectedDonjon(id) }
@@ -3156,6 +3279,7 @@ export default function App() {
   const handleSelectSousZone = (nom) => { resetNav(); setSelectedSousZone(nom) }
   const handleSelectQuete    = (id) => { resetNav(); setSelectedQuete(id) }
   const handleSelectSucces   = (id) => { resetNav(); setSelectedSucces(id) }
+  const handleSelectDofus    = (id) => { resetNav(); setSelectedDofus(id) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
@@ -3167,9 +3291,8 @@ export default function App() {
       <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.32)", pointerEvents:"none" }} />
 
       <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>
-        <AlmanaxBanner data={almanax} />
         <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} user={user} onLogin={handleLogin} onLogout={handleLogout} />
-        <StatsBar />
+        <AlmanaxBanner data={almanax} />
         <div style={{ flex:1 }}>
       {selectedMonstre ? (
         <MonstrePage id={selectedMonstre} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
@@ -3187,6 +3310,8 @@ export default function App() {
         <QuetePage id={selectedQuete} token={token} onSelect={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedSucces ? (
         <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
+      ) : selectedDofus ? (
+        <DofusDetailPage id={selectedDofus} token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "monstres" ? (
         <BestiairePage onSelect={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "donjon" ? (
@@ -3215,7 +3340,7 @@ export default function App() {
         <>
           <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelectMonstre} loading={loading} />
           <EncycloGrid onNav={handleNav} />
-          <ChasseDofus token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} />
+          <ChasseDofus token={token} onSelectDofus={handleSelectDofus} />
         </>
       )}
         </div>

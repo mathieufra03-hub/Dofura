@@ -1709,9 +1709,27 @@ def detail_succes(succes_id: int, user: dict = Depends(utilisateur_optionnel)):
 # ni recette, ni drop sur cet item cote DofusDB) : gap reel, jamais
 # invente, expose via "trackable": false plutot que de fausser un 0%
 # permanent qui laisserait croire a un bug (decision Popo).
+#
+# Doublon "Dofus Sylvestre" signale par Popo (2 entrees au meme nom) :
+# PAS un doublon de scraping (contrairement au precedent "Panoplie d'apparat
+# de Stroud", chantier Panoplies) — verifie sur l'API DofusDB en direct.
+# 3 objets distincts existent : 29134 "Dofus Sylvestre" et 29135 "Dofus
+# Verdoyant" portent un champ `criterions` non vide (ex. "Qa=2488|Qa=2489")
+# et ZERO recompense (ni quete, ni succes) -> ce sont des variantes
+# d'AFFICHAGE conditionnelles (icone "verrouillee" selon la progression
+# d'une quete), jamais elles-memes obtenues. 29136 "Dofus Sylvestre" n'a
+# aucun `criterions` et EST recompense par le succes 7761 -> c'est le seul
+# vrai Dofus obtenable de cette chaine. Motif verifie generalisable : sur
+# les 34 Dofus, CES DEUX-LA sont les seuls avec un `criterions` non vide
+# (champ absent de dofura_items.json/objets, verifie directement sur
+# l'API brute) -> exclusion ciblee, pas un hasard.
 # ============================================================
 
-DOFUS_ID_EXCLU = 8072  # Kaliptus, retire sur demande Popo (voir CLAUDE.md)
+DOFUS_IDS_EXCLUS = {
+    8072,   # Kaliptus, retire sur demande Popo (voir CLAUDE.md)
+    29134,  # "Dofus Sylvestre" verrouille (criterions non vide, 0 recompense) — voir 29136
+    29135,  # "Dofus Verdoyant" verrouille (criterions non vide, 0 recompense) — variante de la meme chaine
+}
 DOFUS_PRIMORDIAUX_COULEURS = {
     737: "var(--df-dofus-emeraude)",
     694: "var(--df-dofus-pourpre)",
@@ -1744,8 +1762,9 @@ def _etat_etapes_quetes(cur, user_id, quete_ids):
 def liste_dofus(user: dict = Depends(utilisateur_optionnel)):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT id, nom, niveau, img FROM objets WHERE type_nom = 'Dofus' AND id != ? ORDER BY niveau, nom",
-                (DOFUS_ID_EXCLU,))
+    placeholders_exclus = ",".join("?" for _ in DOFUS_IDS_EXCLUS)
+    cur.execute(f"SELECT id, nom, niveau, img FROM objets WHERE type_nom = 'Dofus' AND id NOT IN ({placeholders_exclus}) ORDER BY niveau, nom",
+                list(DOFUS_IDS_EXCLUS))
     dofus_rows = cur.fetchall()
     dofus_ids = [r["id"] for r in dofus_rows]
 
@@ -1809,6 +1828,66 @@ def liste_dofus(user: dict = Depends(utilisateur_optionnel)):
         "dofus": resultats,
         "total": len(resultats),
         "obtenus": obtenus if user else None,
+    }
+
+
+@app.get("/dofus/{dofus_id}")
+def detail_dofus(dofus_id: int, user: dict = Depends(utilisateur_optionnel)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nom, niveau, img FROM objets WHERE id = ? AND type_nom = 'Dofus'", (dofus_id,))
+    d = cur.fetchone()
+    if not d:
+        conn.close()
+        return {"erreur": "Dofus introuvable"}
+
+    cur.execute("""
+        SELECT DISTINCT qe.quete_id FROM quetes_etapes_items qei
+        JOIN quetes_etapes qe ON qe.id = qei.etape_id WHERE qei.objet_id = ?
+    """, (dofus_id,))
+    quete_ids = sorted({r["quete_id"] for r in cur.fetchall()})
+    cur.execute("SELECT succes_id FROM succes_recompenses_items WHERE objet_id = ?", (dofus_id,))
+    succes_ids = sorted({r["succes_id"] for r in cur.fetchall()})
+
+    user_id = user["id"] if user else None
+    etats_quetes = _etat_etapes_quetes(cur, user_id, quete_ids)
+    etats_succes = _etat_objectifs_succes(cur, user_id, succes_ids)
+
+    fait = total = 0
+    for qid in quete_ids:
+        e = etats_quetes.get(qid, {"fait": 0, "total": 0})
+        fait += e["fait"]; total += e["total"]
+    for sid in succes_ids:
+        e = etats_succes.get(sid, {"fait": 0, "total": 0})
+        fait += e["fait"]; total += e["total"]
+
+    trackable = bool(quete_ids or succes_ids)
+    pct = round(fait / total * 100) if total else 0
+    obtenu = user is not None and trackable and total > 0 and fait >= total
+
+    quete_liee = None
+    if quete_ids:
+        cur.execute("SELECT id, nom, niveau_min FROM quetes WHERE id = ?", (quete_ids[0],))
+        r = cur.fetchone()
+        if r:
+            quete_liee = dict(r)
+    succes_lie = None
+    if succes_ids:
+        cur.execute("SELECT id, nom, points FROM succes WHERE id = ?", (succes_ids[0],))
+        r = cur.fetchone()
+        if r:
+            succes_lie = dict(r)
+
+    conn.close()
+    return {
+        "id": d["id"], "nom": d["nom"], "niveau": d["niveau"], "img": d["img"],
+        "primordial": d["id"] in DOFUS_PRIMORDIAUX_COULEURS,
+        "couleur": DOFUS_PRIMORDIAUX_COULEURS.get(d["id"]),
+        "trackable": trackable,
+        "pct": pct if user else 0,
+        "obtenu": obtenu,
+        "quete_liee": quete_liee,
+        "succes_lie": succes_lie,
     }
 
 
