@@ -1348,7 +1348,7 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
                 {"id": r["objet_id"], "nom": r["nom"], "img": r["img"], "quantite": r["quantite"]})
 
         cur.execute(f"""
-            SELECT etape_id, icone, verbe, cible, cible_secondaire, lieu, coord_x, coord_y
+            SELECT etape_id, icone, verbe, cible, cible_secondaire, lieu, coord_x, coord_y, carte_img
             FROM quetes_etapes_actions
             WHERE etape_id IN ({placeholders})
             ORDER BY etape_id, ordre
@@ -1357,7 +1357,7 @@ def detail_quete(quete_id: int, user: dict = Depends(utilisateur_optionnel)):
             actions_par_etape.setdefault(r["etape_id"], []).append({
                 "icone": r["icone"], "verbe": r["verbe"], "cible": r["cible"],
                 "cible_secondaire": r["cible_secondaire"], "lieu": r["lieu"],
-                "coord_x": r["coord_x"], "coord_y": r["coord_y"],
+                "coord_x": r["coord_x"], "coord_y": r["coord_y"], "carte_img": r["carte_img"],
             })
 
     etapes = [{

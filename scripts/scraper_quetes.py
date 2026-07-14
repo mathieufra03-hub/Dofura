@@ -154,6 +154,7 @@ print(f"{len(npcs)} PNJ resolus")
 map_vers_subarea = {}
 map_vers_nom = {}
 map_vers_xy = {}
+map_vers_img = {}
 for q in quetes_brutes:
     for etape in q.get("steps", []):
         for obj in etape.get("objectives", []):
@@ -168,9 +169,18 @@ for q in quetes_brutes:
                 map_vers_nom.setdefault(map_id, nom_carte)
             if m.get("posX") is not None and m.get("posY") is not None:
                 map_vers_xy.setdefault(map_id, (m["posX"], m["posY"]))
+            # Image reelle de la carte (chantier "fiche quete v3", demande
+            # Popo) : verifie que api.dofusdb.fr/img/maps/{echelle}/{mapId}.jpg
+            # repond bien 200 avant de s'en servir (pas de /maps liste mais
+            # l'URL est embarquee sur chaque objet map). Echelle 0.5 = bon
+            # compromis poids/lisibilite pour une carte repliable en fiche.
+            img = m.get("img", {}).get("0.5")
+            if img:
+                map_vers_img.setdefault(map_id, img)
 print(f"{len(map_vers_subarea)} cartes resolues en subArea (index global)")
 print(f"{len(map_vers_nom)} cartes avec un nom de lieu precis")
 print(f"{len(map_vers_xy)} cartes avec des coordonnees [x,y]")
+print(f"{len(map_vers_img)} cartes avec une image")
 
 
 def sous_zone_de(quete):
@@ -198,10 +208,11 @@ def sous_zone_de(quete):
 def position_precise_de(quete):
     map_depart = quete["startPosition"][0]["mapId"] if quete.get("startPosition") else None
     if map_depart is None:
-        return None, None
+        return None, None, None
     nom = map_vers_nom.get(map_depart)
     xy = map_vers_xy.get(map_depart)
-    return nom, xy
+    img = map_vers_img.get(map_depart)
+    return nom, xy, img
 
 
 sous_zone_par_quete = {q["id"]: sous_zone_de(q) for q in quetes_brutes}
@@ -230,20 +241,21 @@ def sous_zone_nom_de(quete):
 def position_de_objectif(obj):
     map_id = obj.get("mapId")
     if not map_id:
-        return None, None
+        return None, None, None
     lieu = map_vers_nom.get(map_id)
     if not lieu:
         subarea = subareas.get(map_vers_subarea.get(map_id))
         lieu = subarea["name"]["fr"] if subarea else None
     xy = map_vers_xy.get(map_id)
-    return lieu, xy
+    img = map_vers_img.get(map_id)
+    return lieu, xy, img
 
 
 def action_depuis_objectif(obj):
     cn = obj.get("className")
     p = obj.get("parameters", {}) or {}
-    lieu, xy = position_de_objectif(obj)
-    base = {"lieu": lieu, "x": xy[0] if xy else None, "y": xy[1] if xy else None}
+    lieu, xy, img = position_de_objectif(obj)
+    base = {"lieu": lieu, "x": xy[0] if xy else None, "y": xy[1] if xy else None, "carte_img": img}
 
     if cn == "QuestObjectiveGoToNpcData":
         npc = npcs.get(p.get("parameter0"))
@@ -288,7 +300,7 @@ def actions_de_etape(objectives):
     if dungeons_ref:
         donjon = DONJONS.get(sorted(dungeons_ref)[0])
         nom = donjon["nom"] if donjon else f"Donjon #{sorted(dungeons_ref)[0]}"
-        return [{"icone": ICONES_ACTION["donjon"], "verbe": "Traverser le", "cible": nom, "lieu": None, "x": None, "y": None}]
+        return [{"icone": ICONES_ACTION["donjon"], "verbe": "Traverser le", "cible": nom, "lieu": None, "x": None, "y": None, "carte_img": None}]
 
     autres = [o for o in objectives if o.get("className") != "QuestObjectiveGoToNpcData"]
     a_traiter = autres if autres else objectives
@@ -353,7 +365,7 @@ for q in quetes_brutes:
     startpos = q.get("startPosition") or [{}]
     npc_id = startpos[0].get("npcId")
     npc = npcs.get(npc_id)
-    lieu_precis, xy = position_precise_de(q)
+    lieu_precis, xy, carte_img_depart = position_precise_de(q)
 
     quetes.append({
         "id": q["id"],
@@ -366,6 +378,7 @@ for q in quetes_brutes:
         "sous_zone": sous_zone_nom_de(q),
         "lieu_precis": lieu_precis,
         "coordonnees": {"x": xy[0], "y": xy[1]} if xy else None,
+        "carte_img_depart": carte_img_depart,
         "pnj": npc["name"]["fr"] if npc else None,
         "prerequis_quetes": q.get("need", {}).get("quests", []),
         "prerequis_items": [

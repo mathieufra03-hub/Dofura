@@ -177,7 +177,8 @@ CREATE TABLE quetes (
     lieu_precis TEXT,
     coord_x INTEGER,
     coord_y INTEGER,
-    pnj TEXT
+    pnj TEXT,
+    carte_img_depart TEXT
 );
 CREATE TABLE quetes_etapes (
     id INTEGER PRIMARY KEY,
@@ -204,7 +205,8 @@ CREATE TABLE quetes_etapes_actions (
     cible_secondaire TEXT,
     lieu TEXT,
     coord_x INTEGER,
-    coord_y INTEGER
+    coord_y INTEGER,
+    carte_img TEXT
 );
 CREATE TABLE quetes_ressources (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -388,12 +390,13 @@ for q in quetes:
     coord = q.get("coordonnees") or {}
     cur.execute("""
         INSERT OR REPLACE INTO quetes (id, nom, niveau_min, niveau_max, categorie, is_dungeon_quest, zone,
-                                        sous_zone, lieu_precis, coord_x, coord_y, pnj)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                        sous_zone, lieu_precis, coord_x, coord_y, pnj, carte_img_depart)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         q.get("id"), q.get("nom"), q.get("niveau_min"), q.get("niveau_max"),
         q.get("categorie"), int(bool(q.get("is_dungeon_quest"))), q.get("zone"),
-        q.get("sous_zone"), q.get("lieu_precis"), coord.get("x"), coord.get("y"), q.get("pnj")
+        q.get("sous_zone"), q.get("lieu_precis"), coord.get("x"), coord.get("y"), q.get("pnj"),
+        q.get("carte_img_depart")
     ))
     for ordre, e in enumerate(q.get("etapes", [])):
         cur.execute("""
@@ -408,10 +411,10 @@ for q in quetes:
             """, (e.get("id"), it.get("id"), it.get("quantite")))
         for ordre_action, a in enumerate(e.get("actions", [])):
             cur.execute("""
-                INSERT INTO quetes_etapes_actions (etape_id, ordre, icone, verbe, cible, cible_secondaire, lieu, coord_x, coord_y)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO quetes_etapes_actions (etape_id, ordre, icone, verbe, cible, cible_secondaire, lieu, coord_x, coord_y, carte_img)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (e.get("id"), ordre_action, a.get("icone"), a.get("verbe"), a.get("cible"),
-                  a.get("cible_secondaire"), a.get("lieu"), a.get("x"), a.get("y")))
+                  a.get("cible_secondaire"), a.get("lieu"), a.get("x"), a.get("y"), a.get("carte_img")))
     for quete_requise_id in q.get("prerequis_quetes", []):
         cur.execute("""
             INSERT INTO quetes_prerequis_quetes (quete_id, quete_requise_id)

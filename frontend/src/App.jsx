@@ -2055,7 +2055,7 @@ const urlGuideDPLN = (nomQuete) => `https://www.dofuspourlesnoobs.com/?s=${encod
 // d'autopilote que les joueurs collent dans le chat Dofus). Donnee deja en
 // base (coord_x/coord_y), aucun nouveau calcul : juste un formatage + un
 // clic. Retour visuel "Copié !" 1,5s avant de reprendre l'affichage normal.
-function BoutonTravel({ x, y }) {
+function BoutonTravel({ x, y, big }) {
   const [copie, setCopie] = useState(false)
   if (x == null || y == null) return null
   const copier = (e) => {
@@ -2070,13 +2070,32 @@ function BoutonTravel({ x, y }) {
       style={{
         background: copie ? "rgba(76,201,141,0.15)" : "rgba(0,212,255,0.1)",
         border: `1.5px solid ${copie ? "var(--df-green)" : "var(--df-cyan)"}`,
-        borderRadius: 7, padding: "3px 10px", fontSize: 14, fontWeight: 800,
+        borderRadius: 7, padding: big ? "6px 14px" : "3px 10px", fontSize: big ? 16 : 14, fontWeight: 800,
         color: copie ? "var(--df-green)" : "var(--df-cyan)", cursor: "pointer",
         fontFamily: "inherit", whiteSpace: "nowrap",
       }}>
       {copie ? "✓ Copié !" : `📍 [${x}, ${y}]`}
     </button>
   )
+}
+
+// Icônes SVG par type d'action (maquette dofura-fiche-quete-v3.jsx) — plus
+// d'emojis sur la fiche quête. Le backend n'expose que icone(emoji)/verbe,
+// donc on retrouve le type visuel depuis le verbe déjà factuel (généré par
+// scraper_quetes.py, jamais depuis un texte libre).
+const TYPE_ICONE_PAR_VERBE = {
+  "Parler à": "talk", "Combattre": "fight", "Rapporter": "bring",
+  "Découvrir": "go", "Fabriquer": "collect", "Traverser le": "fight",
+}
+function IconeAction({ verbe }) {
+  const type = TYPE_ICONE_PAR_VERBE[verbe] || "other"
+  const props = { width:20, height:20, viewBox:"0 0 24 24", fill:"none", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round" }
+  const c = { talk:"var(--df-cyan)", fight:"var(--df-red)", go:"var(--df-gold)", bring:"#C9A24B", collect:"#7FC96B", other:"var(--df-text-3)" }[type]
+  if (type === "talk") return (<svg {...props} stroke={c}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>)
+  if (type === "fight") return (<svg {...props} stroke={c}><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/></svg>)
+  if (type === "go") return (<svg {...props} stroke={c}><path d="M12 21s-6-5.7-6-10a6 6 0 0 1 12 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>)
+  if (type === "bring") return (<svg {...props} stroke={c}><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v2"/></svg>)
+  return (<svg {...props} stroke={c}><path d="M11 2 3 9l4 4 7-8z"/><path d="m14 13 4 4 3-3-4-4z"/><path d="M7 13 3 21l8-4"/></svg>)
 }
 
 function QuetesPage({ token, onSelect, onBack }) {
@@ -2280,9 +2299,11 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
   const [data, setData] = useState(null)
   const [favoriEnCours, setFavoriEnCours] = useState(false)
   const [messageConnexion, setMessageConnexion] = useState(false)
+  const [cartesOuvertes, setCartesOuvertes] = useState({})
 
   useEffect(() => {
     setData(null)
+    setCartesOuvertes({})
     const headers = token ? { Authorization:`Bearer ${token}` } : {}
     fetch(`${API}/quetes/${id}`, { headers }).then(r=>r.json()).then(setData)
   }, [id, token])
@@ -2292,6 +2313,7 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
 
   const doneCount = data.etapes.filter(e=>e.fait).length
   const pct = data.etapes.length ? Math.round((doneCount / data.etapes.length) * 100) : 0
+  const lieuAffiche = data.lieu_precis || data.sous_zone || data.zone || null
 
   const toggleFavori = () => {
     if (!token) { setMessageConnexion(true); return }
@@ -2321,37 +2343,60 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
     })
   }
 
+  const toggleCarte = (cle) => setCartesOuvertes(prev => ({ ...prev, [cle]: !prev[cle] }))
+
   return (
     <div translate="no" style={{ padding:"1.5rem 2rem 3rem", maxWidth:1240, margin:"0 auto" }}>
       <button onClick={onBack} style={mp.backBtn}>← Retour</button>
 
       <header className="df-block" style={{ position:"relative", padding:24 }}>
-        <div style={{ position:"absolute", top:20, right:22, textAlign:"right" }}>
-          <span onClick={toggleFavori} title={data.favori?"Retirer des favoris":"Ajouter aux favoris"}
-            style={{ fontSize:26, lineHeight:1, cursor:favoriEnCours?"default":"pointer", color:data.favori?"var(--df-gold)":"var(--df-text-off)", opacity:favoriEnCours?0.5:1, userSelect:"none" }}>
-            {data.favori ? "★" : "☆"}
-          </span>
-          {messageConnexion && (
-            <div style={{ marginTop:4, fontSize:11, color:"var(--df-text-2)", maxWidth:150 }}>
-              Connecte-toi pour suivre ta progression
-              <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:"var(--df-text-3)", cursor:"pointer" }}>✕</span>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:16, flexWrap:"wrap" }}>
+          <div style={{ flex:1, minWidth:240 }}>
+            <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+              <h1 className="df-title-gold" style={{ fontSize:"clamp(22px, 4vw, 30px)", margin:0, maxWidth:640 }}>{data.nom}</h1>
+              <span onClick={toggleFavori} title={data.favori?"Retirer des favoris":"Ajouter aux favoris"}
+                style={{ fontSize:24, lineHeight:1, cursor:favoriEnCours?"default":"pointer", color:data.favori?"var(--df-gold)":"var(--df-text-off)", opacity:favoriEnCours?0.5:1, userSelect:"none", flexShrink:0 }}>
+                {data.favori ? "★" : "☆"}
+              </span>
             </div>
-          )}
-        </div>
-
-        <h1 className="df-title-gold" style={{ fontSize:"clamp(22px, 4vw, 30px)", margin:0, maxWidth:640 }}>{data.nom}</h1>
-        <div style={{ color:"var(--df-text-2)", fontSize:14, marginTop:8 }}>
-          Niv. {data.niveau_min}{data.niveau_max > data.niveau_min ? `-${data.niveau_max}` : ""} · {CATEGORIE_QUETE_LABELS[data.categorie]}
-          {data.zone && <> · {data.zone}</>}
-          {data.pnj && <> · PNJ : {data.pnj}</>}
-        </div>
-
-        {(data.lieu_precis || data.sous_zone || data.coord_x != null) && (
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:8 }}>
-            <span style={{ color:"var(--df-text-2)", fontSize:13.5 }}>{data.lieu_precis || data.sous_zone}</span>
-            <BoutonTravel x={data.coord_x} y={data.coord_y} />
+            {data.categorie === "repetable" && (
+              <span style={{ display:"inline-block", marginTop:8, fontSize:11, fontWeight:700, letterSpacing:0.5, borderRadius:999, padding:"3px 11px", background:"rgba(140,150,178,0.15)", color:"var(--df-text-2)" }}>
+                Répétable
+              </span>
+            )}
+            {messageConnexion && (
+              <div style={{ marginTop:8, fontSize:11, color:"var(--df-text-2)" }}>
+                Connecte-toi pour suivre ta progression
+                <span onClick={()=>setMessageConnexion(false)} style={{ marginLeft:6, color:"var(--df-text-3)", cursor:"pointer" }}>✕</span>
+              </div>
+            )}
           </div>
-        )}
+
+          <div style={{ background:"rgba(12,15,29,0.5)", border:"1px solid rgba(255,198,61,0.15)", borderRadius:12, padding:"12px 16px", display:"flex", flexDirection:"column", gap:8, minWidth:230 }}>
+            {data.coord_x != null && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:13 }}>
+                <span style={{ color:"var(--df-text-3)", minWidth:80 }}>Lancement</span>
+                <BoutonTravel x={data.coord_x} y={data.coord_y} />
+              </div>
+            )}
+            {lieuAffiche && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:13 }}>
+                <span style={{ color:"var(--df-text-3)", minWidth:80 }}>Lieu</span>
+                <span style={{ color:"var(--df-text)", fontWeight:600 }}>{lieuAffiche}</span>
+              </div>
+            )}
+            <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:13 }}>
+              <span style={{ color:"var(--df-text-3)", minWidth:80 }}>Niveau</span>
+              <span style={{ color:"var(--df-text)", fontWeight:600 }}>{data.niveau_min}{data.niveau_max > data.niveau_min ? `-${data.niveau_max}` : ""}</span>
+            </div>
+            {data.pnj && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:13 }}>
+                <span style={{ color:"var(--df-text-3)", minWidth:80 }}>PNJ</span>
+                <span style={{ color:"var(--df-text)", fontWeight:600 }}>{data.pnj}</span>
+              </div>
+            )}
+          </div>
+        </div>
 
         {data.guide && (
           <div style={{ marginTop:12, maxWidth:640 }}>
@@ -2371,8 +2416,31 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
           </div>
         )}
 
+        {(data.prerequis_quetes.length > 0 || data.prerequis_objets.length > 0) && (
+          <div style={{ background:"rgba(255,198,61,0.06)", border:"1px solid rgba(255,198,61,0.3)", borderRadius:12, padding:"14px 18px", marginTop:16 }}>
+            <div style={{ fontSize:11.5, fontWeight:700, letterSpacing:1.5, color:"var(--df-gold)", textTransform:"uppercase", marginBottom:8 }}>Prérequis</div>
+            {data.prerequis_quetes.map(p => (
+              <div key={p.id} onClick={()=>onSelect(p.id)} style={{ display:"flex", alignItems:"center", gap:10, fontSize:14, padding:"5px 0", cursor:"pointer" }}>
+                <span style={{ color:p.ok?"var(--df-green)":"var(--df-text-3)", fontWeight:700 }}>{p.ok?"✓":"○"}</span>
+                <span style={{ color:"var(--df-cyan)" }}>{p.nom}</span>
+              </div>
+            ))}
+            {data.prerequis_objets.map((o,i) => (
+              <div key={i} onClick={()=>o.objet_id && onSelectObjet(o.objet_id)}
+                style={{ display:"flex", alignItems:"center", gap:10, fontSize:14, padding:"5px 0", cursor:o.objet_id?"pointer":"default" }}>
+                {o.img
+                  ? <img src={o.img} alt={o.nom} style={{ width:20, height:20, objectFit:"contain" }} />
+                  : <div style={{ width:20, height:20, background:"var(--df-bg)", borderRadius:4 }} />
+                }
+                <span style={{ color:o.objet_id?"var(--df-cyan)":"var(--df-text)" }}>{o.nom || `Objet #${o.objet_id}`}</span>
+                <span style={{ color:"var(--df-gold)", marginLeft:"auto" }}>×{o.quantite}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {data.etapes.length > 0 && (
-          <div style={{ background:"rgba(12,15,29,0.6)", borderRadius:12, padding:"14px 18px", marginTop:18 }}>
+          <div style={{ background:"rgba(12,15,29,0.6)", borderRadius:12, padding:"14px 18px", marginTop:16 }}>
             <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, marginBottom:8 }}>
               <span style={{ color:"var(--df-text-2)" }}>Progression</span>
               <span style={{ color:"var(--df-gold)", fontWeight:700 }}>{doneCount} / {data.etapes.length} · {pct}%</span>
@@ -2386,48 +2454,70 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
         <div>
           {data.etapes.length > 0 && (
             <section className="df-block">
-              <h2 className="df-block-title">Étapes</h2>
+              <h2 className="df-block-title">Feuille de route</h2>
               {data.etapes.map((e,i) => (
-                <div key={e.id} onClick={()=>toggleEtape(e)}
-                  style={{ display:"flex", alignItems:"flex-start", gap:15, padding:"22px 4px", borderBottom:i<data.etapes.length-1?"1px solid rgba(255,255,255,0.07)":"none", cursor:"pointer" }}>
-                  <div className={"df-check" + (e.fait?" on":"")} style={{ marginTop:2, flexShrink:0 }}>{e.fait?"✓":""}</div>
-                  <div style={{ flex:1 }}>
-                    {e.actions?.length > 0 ? e.actions.map((a,ai) => (
-                      <div key={ai} style={{
-                        display:"flex", flexWrap:"wrap", alignItems:"center", gap:9,
-                        marginTop:ai>0?14:0, paddingTop:ai>0?14:0,
-                        borderTop:ai>0?"1px dashed rgba(255,255,255,0.09)":"none",
-                      }}>
-                        {ai===0
-                          ? <span style={{ color:"var(--df-text-3)", fontWeight:700, fontSize:14.5 }}>{i+1}.</span>
-                          : <span style={{ width:18 }} />
-                        }
-                        <span style={{ fontSize:17 }}>{a.icone}</span>
-                        <span style={{ fontSize:14.5, color:e.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:e.fait?"line-through":"none" }}>
-                          {a.verbe && <>{a.verbe} </>}
-                          <strong style={{ color:e.fait?"var(--df-text-3)":"var(--df-gold)" }}>{a.cible}</strong>
-                          {a.cible_secondaire && <span style={{ color:"var(--df-text-3)", fontWeight:400 }}> à {a.cible_secondaire}</span>}
-                        </span>
-                        {a.lieu && <span style={{ fontSize:12.5, color:"var(--df-text-3)" }}>({a.lieu})</span>}
-                        <BoutonTravel x={a.coord_x} y={a.coord_y} />
-                      </div>
-                    )) : (
-                      <div style={{ fontSize:14.5, color:e.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:e.fait?"line-through":"none", lineHeight:1.5 }}>
-                        <span style={{ color:"var(--df-text-3)", fontWeight:700, marginRight:4 }}>{i+1}.</span>{e.nom}
-                      </div>
-                    )}
-                    {(e.a_xp || e.a_kamas || e.items.length > 0) && (
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:12 }}>
-                        {e.a_xp && <span style={{ fontSize:11.5, color:"var(--df-cyan)" }}>+ XP</span>}
-                        {e.a_kamas && <span style={{ fontSize:11.5, color:"var(--df-gold)" }}>+ Kamas</span>}
-                        {e.items.map((it,ii) => (
-                          <span key={ii} onClick={ev=>{ ev.stopPropagation(); it.id && onSelectObjet(it.id) }}
-                            style={{ fontSize:11.5, color:"var(--df-green)", cursor:it.id?"pointer":"default" }}>
-                            {it.quantite>1?`${it.quantite}× `:""}{it.nom || `Objet #${it.id}`}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                <div key={e.id}
+                  style={{ border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:16, marginBottom:i<data.etapes.length-1?14:0, background:"rgba(12,15,29,0.35)", opacity:e.fait?0.6:1 }}>
+                  <div style={{ display:"flex", alignItems:"flex-start", gap:14 }}>
+                    <div className={"df-check" + (e.fait?" on":"")} onClick={()=>toggleEtape(e)} style={{ marginTop:2, flexShrink:0 }}>{e.fait?"✓":""}</div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ color:"var(--df-text-3)", fontSize:12, fontWeight:700 }}>ÉTAPE {i + 1}</div>
+                      {e.actions?.length > 0 ? e.actions.map((a,ai) => {
+                        const cleCarte = `${e.id}-${ai}`
+                        return (
+                          <div key={ai} style={{ marginTop:ai>0?14:6, paddingTop:ai>0?14:0, borderTop:ai>0?"1px dashed rgba(255,255,255,0.09)":"none" }}>
+                            <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                              <div style={{ width:38, height:38, flexShrink:0, borderRadius:10, background:"rgba(12,15,29,0.7)", border:"1px solid rgba(255,198,61,0.25)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                                <IconeAction verbe={a.verbe} />
+                              </div>
+                              <div style={{ flex:1, minWidth:0 }}>
+                                <div style={{ fontSize:15, color:e.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:e.fait?"line-through":"none" }}>
+                                  {a.verbe && <>{a.verbe} </>}
+                                  <strong style={{ color:e.fait?"var(--df-text-3)":"var(--df-gold)" }}>{a.cible}</strong>
+                                  {a.cible_secondaire && <span style={{ color:"var(--df-text-3)", fontWeight:400 }}> à {a.cible_secondaire}</span>}
+                                </div>
+                                <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:8, flexWrap:"wrap" }}>
+                                  <BoutonTravel x={a.coord_x} y={a.coord_y} />
+                                  {a.lieu && <span style={{ color:"var(--df-text-3)", fontSize:12.5 }}>{a.lieu}</span>}
+                                </div>
+                                {a.carte_img && (
+                                  <>
+                                    <button onClick={()=>toggleCarte(cleCarte)}
+                                      style={{ background:"none", border:"none", color:"var(--df-cyan)", fontSize:12.5, fontWeight:600, fontFamily:"inherit", cursor:"pointer", marginTop:10, padding:0 }}>
+                                      {cartesOuvertes[cleCarte] ? "▾ Masquer la carte" : "▸ Voir la carte"}
+                                    </button>
+                                    {cartesOuvertes[cleCarte] && (
+                                      <div style={{ marginTop:10, borderRadius:12, overflow:"hidden", border:"1px solid rgba(255,198,61,0.2)" }}>
+                                        <img src={a.carte_img} alt={a.lieu || "Carte"} style={{ display:"block", width:"100%", height:"auto" }} />
+                                        <div style={{ padding:"6px 10px", background:"rgba(12,15,29,0.7)", color:"var(--df-text-3)", fontSize:10.5 }}>
+                                          Repère {a.coord_x != null ? `[${a.coord_x}, ${a.coord_y}]` : ""} · pas de point exact dessiné (donnée non officielle)
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }) : (
+                        <div style={{ fontSize:14.5, color:e.fait?"var(--df-text-3)":"var(--df-text)", textDecoration:e.fait?"line-through":"none", lineHeight:1.5, marginTop:6 }}>
+                          {e.nom}
+                        </div>
+                      )}
+                      {(e.a_xp || e.a_kamas || e.items.length > 0) && (
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:12 }}>
+                          {e.a_xp && <span style={{ fontSize:11.5, color:"var(--df-cyan)" }}>+ XP</span>}
+                          {e.a_kamas && <span style={{ fontSize:11.5, color:"var(--df-gold)" }}>+ Kamas</span>}
+                          {e.items.map((it,ii) => (
+                            <span key={ii} onClick={()=>it.id && onSelectObjet(it.id)}
+                              style={{ fontSize:11.5, color:"var(--df-green)", cursor:it.id?"pointer":"default" }}>
+                              {it.quantite>1?`${it.quantite}× `:""}{it.nom || `Objet #${it.id}`}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -2441,29 +2531,6 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
         </div>
 
         <div>
-          {(data.prerequis_quetes.length > 0 || data.prerequis_objets.length > 0) && (
-            <section className="df-block">
-              <h2 className="df-block-title">Prérequis</h2>
-              {data.prerequis_quetes.map(p => (
-                <div key={p.id} onClick={()=>onSelect(p.id)} style={{ display:"flex", alignItems:"center", gap:10, fontSize:14, padding:"7px 0", cursor:"pointer" }}>
-                  <span style={{ color:p.ok?"var(--df-green)":"var(--df-text-3)", fontWeight:700 }}>{p.ok?"✓":"○"}</span>
-                  <span style={{ color:"var(--df-cyan)" }}>{p.nom}</span>
-                </div>
-              ))}
-              {data.prerequis_objets.map((o,i) => (
-                <div key={i} onClick={()=>o.objet_id && onSelectObjet(o.objet_id)}
-                  style={{ display:"flex", alignItems:"center", gap:10, fontSize:14, padding:"7px 0", cursor:o.objet_id?"pointer":"default" }}>
-                  {o.img
-                    ? <img src={o.img} alt={o.nom} style={{ width:22, height:22, objectFit:"contain" }} />
-                    : <div style={{ width:22, height:22, background:"var(--df-bg)", borderRadius:4 }} />
-                  }
-                  <span style={{ color:o.objet_id?"var(--df-cyan)":"var(--df-text)" }}>{o.nom || `Objet #${o.objet_id}`}</span>
-                  <span style={{ color:"var(--df-gold)", marginLeft:"auto" }}>×{o.quantite}</span>
-                </div>
-              ))}
-            </section>
-          )}
-
           {data.ressources?.length > 0 && (
             <section className="df-block">
               <h2 className="df-block-title">Ressources à prévoir</h2>
