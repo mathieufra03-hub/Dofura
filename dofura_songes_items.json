@@ -1,0 +1,411 @@
+[
+  {
+    "item_id": 20658,
+    "nom": "Légende de Rykke Errel",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 32133,
+    "nom": "Légende de Thanatena",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 22418,
+    "nom": "Légende de Corruption",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 32131,
+    "nom": "Légende de Mériana",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20653,
+    "nom": "Légende de Mille Lieues",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 32130,
+    "nom": "Légende du Miroir",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 32134,
+    "nom": "Légende d'Helséphine",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20656,
+    "nom": "Légende du Cul Botté",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20660,
+    "nom": "Légende de Jahash Jurgen",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 22416,
+    "nom": "Légende de Guerre",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 32129,
+    "nom": "Légende d'Oto Mustam",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 22417,
+    "nom": "Légende de Servitude",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20651,
+    "nom": "Légende du Trompe-la-Mort",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20650,
+    "nom": "Légende de Crocobur",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 32135,
+    "nom": "Légende d'Henual",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20648,
+    "nom": "Légende de Brumaire",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20649,
+    "nom": "Légende de Brâm Barbe-Monde",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20655,
+    "nom": "Légende de Fallanster",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20657,
+    "nom": "Légende du Destin",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20652,
+    "nom": "Légende de Dame Jhessica",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 22415,
+    "nom": "Légende de Misère",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20659,
+    "nom": "Légende de Buhorado",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 32132,
+    "nom": "Légende de Menalt",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20654,
+    "nom": "Légende de Dodge",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20661,
+    "nom": "Légende de Ganymède",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 32162,
+    "nom": "Légende d'Amayiro",
+    "categorie": "legende",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20967,
+    "nom": "Légende animale de Bakushana",
+    "categorie": "legende_animale",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20964,
+    "nom": "Légende animale de Kwakarticho",
+    "categorie": "legende_animale",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20965,
+    "nom": "Légende animale de Poukachi",
+    "categorie": "legende_animale",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 20966,
+    "nom": "Légende animale de Magicrabe",
+    "categorie": "legende_animale",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": "paradoxe"
+  },
+  {
+    "item_id": 22156,
+    "nom": "Bouclirêve Onirique",
+    "categorie": "cosmetique",
+    "paliers": [
+      1
+    ],
+    "intensite_min": null
+  },
+  {
+    "item_id": 22157,
+    "nom": "Bouclirêve Fantastique",
+    "categorie": "cosmetique",
+    "paliers": [
+      2
+    ],
+    "intensite_min": null
+  },
+  {
+    "item_id": 22158,
+    "nom": "Bouclirêve Imaginaire",
+    "categorie": "cosmetique",
+    "paliers": [
+      3
+    ],
+    "intensite_min": null
+  },
+  {
+    "item_id": 22159,
+    "nom": "Bouclirêve Brumeux",
+    "categorie": "cosmetique",
+    "paliers": [
+      4
+    ],
+    "intensite_min": null
+  },
+  {
+    "item_id": 22160,
+    "nom": "Bouclirêve Infini",
+    "categorie": "cosmetique",
+    "paliers": [
+      5
+    ],
+    "intensite_min": null
+  },
+  {
+    "item_id": 22161,
+    "nom": "Bouclirêve Étoile",
+    "categorie": "cosmetique",
+    "paliers": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "intensite_min": null
+  },
+  {
+    "item_id": 32092,
+    "nom": "Diplôme de Feur",
+    "categorie": "cosmetique",
+    "paliers": [
+      3,
+      4,
+      5
+    ],
+    "intensite_min": null
+  },
+  {
+    "item_id": 21968,
+    "nom": "Rune astrale légendaire",
+    "categorie": "rune_astrale",
+    "paliers": [
+      4,
+      5
+    ],
+    "intensite_min": null
+  }
+]

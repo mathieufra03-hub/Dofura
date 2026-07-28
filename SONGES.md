@@ -102,7 +102,7 @@ Autres constats :
 | Légendes animales (4) | — | — | 0,016 % | 0,014 % | 0,017 % |
 | Bouclirêve Étoile | 0,001 % | 0,003 % | 0,003 % | 0,002 % | 0,003 % |
 | Bouclirêve du palier | 0,001 % | 0,003 % | 0,003 % | 0,002 % | 0,003 % |
-| Diplôme de Feu | — | — | 0,003 % | 0,002 % | 0,003 % |
+| Diplôme de Feur | — | — | 0,003 % | 0,002 % | 0,003 % |
 | Rune astrale légendaire | — | — | — | 0,965 % | 3,36 % |
 | Rune astrale merveilleuse | — | — | — | 2,88 % | 6,72 % |
 | Rune astrale épatante | — | — | 3,12 % | 5,76 % | — |
@@ -127,7 +127,7 @@ Le mode **Souvenir** sert à rejouer des combats sans drop ni récompense : jama
 
 ## 4. Items trackables
 
-Environ 37 items. Recherche textuelle nécessaire, pas de grille de boutons.
+38 items. Recherche textuelle nécessaire, pas de grille de boutons.
 
 ### Légendes — 26 items, catégorie `legende`
 
@@ -139,9 +139,11 @@ Toutes portent le préfixe "Légende de/du/d'" dans le jeu.
 
 Bakushana · Kwakarticho · Poukachi · Magicrabe
 
+Toutes portent le préfixe fixe "Légende animale de" dans le jeu (contrairement aux légendes classiques, pas de variante de/du/d').
+
 ### Cosmétiques — 7 items, catégorie `cosmetique`
 
-Bouclirêve Onirique (palier I) · Fantastique (II) · Imaginaire (III) · Brumeux (IV) · Infini (V) · Bouclirêve Étoile (tous paliers) · Diplôme de Feu (paliers III+)
+Bouclirêve Onirique (palier I) · Fantastique (II) · Imaginaire (III) · Brumeux (IV) · Infini (V) · Bouclirêve Étoile (tous paliers) · Diplôme de Feur (paliers III+, jeu de mots Ankama — pas une faute de frappe)
 
 ### Runes astrales — 1 item, catégorie `rune_astrale`
 
@@ -396,10 +398,10 @@ Le champ `user_id` est présent sur toutes les tables du tracker.
 
 ## 12. À compléter
 
-- [ ] `item_id` réels des 37 items trackables dans la base encyclopédique
+- [x] `item_id` réels des 38 items trackables dans la base encyclopédique — voir `dofura_songes_items.json`
 - [ ] Taux des 45 autres combinaisons intensité × palier (relevé en jeu uniquement)
 - [ ] Sauvegardes automatiques de la base
-- [ ] Vérifier si le Diplôme de Feu appartient à la panoplie d'apparat ou aux costumes
+- [ ] Vérifier si le Diplôme de Feur appartient à la panoplie d'apparat ou aux costumes
 
 ---
 
