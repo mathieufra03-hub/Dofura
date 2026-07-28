@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 from pydantic import BaseModel
 import sqlite3
 import uvicorn
@@ -7,6 +9,9 @@ import os
 import json
 import re
 import subprocess
+import tempfile
+import shutil
+import hmac
 import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -56,6 +61,12 @@ app.add_middleware(
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-local-secret-a-changer-en-prod")
 JWT_ALGO = "HS256"
 JWT_DUREE_JOURS = 30
+
+# Jeton de sauvegarde admin (regle 12 CLAUDE.md, jamais de secret en dur) —
+# AUCUNE valeur par defaut ici, contrairement a JWT_SECRET : sans ADMIN_TOKEN
+# defini dans l'environnement, /admin/backup doit rester desactive plutot
+# que de retomber sur une valeur devinable.
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 
 # Definis ici (avant toute route) car detail_donjon() plus bas utilise deja
 # utilisateur_optionnel — les dependances FastAPI sont resolues a la
@@ -2188,6 +2199,50 @@ def retirer_favori(element_type: str, element_id: str, user: dict = Depends(util
     conn.commit()
     conn.close()
     return {"favori": False}
+
+@app.get("/admin/backup")
+def sauvegarde_admin(x_admin_token: str = Header(default="", alias="X-Admin-Token")):
+    """Sauvegarde manuelle de la base (regle 10 CLAUDE.md). Protegee par
+    ADMIN_TOKEN : si la variable n'est pas definie sur ce deploiement,
+    l'endpoint reste desactive quel que soit le token fourni — jamais de
+    comparaison qui pourrait accidentellement matcher un token vide.
+    Token passe en en-tete (X-Admin-Token) plutot qu'en parametre d'URL :
+    un query param finit facilement dans les logs d'acces serveur/proxy et
+    l'historique du navigateur, un en-tete non."""
+    if not ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="Sauvegarde desactivee : ADMIN_TOKEN non configure sur ce deploiement.")
+    # Comparaison a temps constant (hmac.compare_digest) : une comparaison
+    # '!=' normale sort plus vite des le premier caractere different, ce qui
+    # fuit en theorie la longueur du prefixe correct via le temps de reponse.
+    if not hmac.compare_digest(x_admin_token, ADMIN_TOKEN):
+        raise HTTPException(status_code=403, detail="Token invalide.")
+    if not os.path.exists(DB_PATH):
+        raise HTTPException(status_code=404, detail="Base de donnees introuvable.")
+
+    nom_fichier = f"dofura-backup-{datetime.now().strftime('%Y-%m-%d')}.db"
+    # Repertoire prive par appel (mkdtemp = 0700 sur POSIX, non liste/traversable
+    # par un autre utilisateur du serveur) plutot qu'un fichier directement dans
+    # le dossier temp partage : la sauvegarde contient les hash de mots de passe.
+    dossier_backup = tempfile.mkdtemp(prefix="dofura-backup-")
+    chemin_backup = os.path.join(dossier_backup, nom_fichier)
+
+    # API de sauvegarde sqlite3 (conn.backup()) plutot qu'une copie de
+    # fichier brute : produit une copie coherente meme si la base source
+    # est en cours d'ecriture au moment de l'appel.
+    source = sqlite3.connect(DB_PATH)
+    destination = sqlite3.connect(chemin_backup)
+    with destination:
+        source.backup(destination)
+    source.close()
+    destination.close()
+    os.chmod(chemin_backup, 0o600)
+
+    return FileResponse(
+        chemin_backup,
+        filename=nom_fichier,
+        media_type="application/octet-stream",
+        background=BackgroundTask(shutil.rmtree, dossier_backup, ignore_errors=True),
+    )
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
