@@ -216,7 +216,8 @@ CREATE TABLE songe_drops (
 
 CREATE TABLE songe_items_trackables (
     item_id       INTEGER PRIMARY KEY,     -- FK vers la table objets
-    categorie     TEXT NOT NULL,           -- 'legende' | 'legende_animale' | 'cosmetique' | 'rune_astrale'
+    categorie     TEXT NOT NULL,           -- 'legende' | 'legende_animale' | 'cosmetique' | 'rune_astrale' — AFFICHAGE uniquement
+    cle_taux      TEXT NOT NULL,           -- FK logique vers songe_taux.cle_taux — CALCUL uniquement
     paliers       TEXT NOT NULL,           -- JSON, ex. "[3,4,5]"
     intensite_min TEXT                     -- 'paradoxe' pour les légendes, NULL sinon
 );
@@ -225,11 +226,16 @@ CREATE TABLE songe_taux (
     intensite     TEXT NOT NULL,
     niveau        INTEGER NOT NULL,
     palier        INTEGER NOT NULL,
-    categorie     TEXT NOT NULL,
+    cle_taux      TEXT NOT NULL,
     taux          REAL NOT NULL,           -- en pourcentage, ex. 0.006
-    PRIMARY KEY (intensite, niveau, palier, categorie)
+    PRIMARY KEY (intensite, niveau, palier, cle_taux)
 );
 ```
+
+**`categorie` vs `cle_taux` — ne pas confondre :**
+- `categorie` (4 valeurs) sert à l'**affichage** et aux filtres de l'interface (légende / légende animale / cosmétique / rune astrale) — c'est le regroupement que voit le joueur.
+- `cle_taux` (plus fin, une valeur par profil de taux réellement distinct dans la table 3.5 : `legende`, `legende_animale`, `bouclireve_palier`, `bouclireve_etoile`, `diplome_feur`, `rune_astrale_legendaire`) sert au **calcul** — c'est la clé de jointure vers `songe_taux`. Elle existe parce que plusieurs items d'une même `categorie` affichée (les 5 Bouclirêve de palier + le Bouclirêve Étoile, tous en `cosmetique`) n'ont pas le même taux : une jointure sur `categorie` mélangerait leurs profils.
+- Toute jointure item → taux **doit** utiliser `cle_taux`, jamais `categorie`.
 
 ### Quatre règles de conception à ne pas contourner
 

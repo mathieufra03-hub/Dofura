@@ -1,0 +1,254 @@
+[
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 3,
+    "cle_taux": "legende",
+    "taux": 0.005
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "legende",
+    "taux": 0.005
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 5,
+    "cle_taux": "legende",
+    "taux": 0.006
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 3,
+    "cle_taux": "legende_animale",
+    "taux": 0.016
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "legende_animale",
+    "taux": 0.014
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 5,
+    "cle_taux": "legende_animale",
+    "taux": 0.017
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 1,
+    "cle_taux": "bouclireve_etoile",
+    "taux": 0.001
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 2,
+    "cle_taux": "bouclireve_etoile",
+    "taux": 0.003
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 3,
+    "cle_taux": "bouclireve_etoile",
+    "taux": 0.003
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "bouclireve_etoile",
+    "taux": 0.002
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 5,
+    "cle_taux": "bouclireve_etoile",
+    "taux": 0.003
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 1,
+    "cle_taux": "bouclireve_palier",
+    "taux": 0.001
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 2,
+    "cle_taux": "bouclireve_palier",
+    "taux": 0.003
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 3,
+    "cle_taux": "bouclireve_palier",
+    "taux": 0.003
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "bouclireve_palier",
+    "taux": 0.002
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 5,
+    "cle_taux": "bouclireve_palier",
+    "taux": 0.003
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 3,
+    "cle_taux": "diplome_feur",
+    "taux": 0.003
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "diplome_feur",
+    "taux": 0.002
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 5,
+    "cle_taux": "diplome_feur",
+    "taux": 0.003
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "rune_astrale_legendaire",
+    "taux": 0.965
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 5,
+    "cle_taux": "rune_astrale_legendaire",
+    "taux": 3.36
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "rune_astrale_merveilleuse",
+    "taux": 2.88
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 5,
+    "cle_taux": "rune_astrale_merveilleuse",
+    "taux": 6.72
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 3,
+    "cle_taux": "rune_astrale_epatante",
+    "taux": 3.12
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "rune_astrale_epatante",
+    "taux": 5.76
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 3,
+    "cle_taux": "rune_astrale_majeure",
+    "taux": 6.24
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "rune_astrale_majeure",
+    "taux": 8.64
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 1,
+    "cle_taux": "rune_astrale_moyenne",
+    "taux": 2.4
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 2,
+    "cle_taux": "rune_astrale_moyenne",
+    "taux": 5.28
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 1,
+    "cle_taux": "rune_astrale_mineure",
+    "taux": 4.8
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 2,
+    "cle_taux": "rune_astrale_mineure",
+    "taux": 7.92
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 1,
+    "cle_taux": "reflet_onirique",
+    "taux": 100
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 2,
+    "cle_taux": "reflet_onirique",
+    "taux": 100
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 3,
+    "cle_taux": "reflet_onirique",
+    "taux": 100
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 4,
+    "cle_taux": "reflet_onirique",
+    "taux": 100
+  },
+  {
+    "intensite": "paradoxe",
+    "niveau": 1,
+    "palier": 5,
+    "cle_taux": "reflet_onirique",
+    "taux": 100
+  }
+]

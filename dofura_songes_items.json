@@ -3,6 +3,7 @@
     "item_id": 20658,
     "nom": "Légende de Rykke Errel",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -14,6 +15,7 @@
     "item_id": 32133,
     "nom": "Légende de Thanatena",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -25,6 +27,7 @@
     "item_id": 22418,
     "nom": "Légende de Corruption",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -36,6 +39,7 @@
     "item_id": 32131,
     "nom": "Légende de Mériana",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -47,6 +51,7 @@
     "item_id": 20653,
     "nom": "Légende de Mille Lieues",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -58,6 +63,7 @@
     "item_id": 32130,
     "nom": "Légende du Miroir",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -69,6 +75,7 @@
     "item_id": 32134,
     "nom": "Légende d'Helséphine",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -80,6 +87,7 @@
     "item_id": 20656,
     "nom": "Légende du Cul Botté",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -91,6 +99,7 @@
     "item_id": 20660,
     "nom": "Légende de Jahash Jurgen",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -102,6 +111,7 @@
     "item_id": 22416,
     "nom": "Légende de Guerre",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -113,6 +123,7 @@
     "item_id": 32129,
     "nom": "Légende d'Oto Mustam",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -124,6 +135,7 @@
     "item_id": 22417,
     "nom": "Légende de Servitude",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -135,6 +147,7 @@
     "item_id": 20651,
     "nom": "Légende du Trompe-la-Mort",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -146,6 +159,7 @@
     "item_id": 20650,
     "nom": "Légende de Crocobur",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -157,6 +171,7 @@
     "item_id": 32135,
     "nom": "Légende d'Henual",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -168,6 +183,7 @@
     "item_id": 20648,
     "nom": "Légende de Brumaire",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -179,6 +195,7 @@
     "item_id": 20649,
     "nom": "Légende de Brâm Barbe-Monde",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -190,6 +207,7 @@
     "item_id": 20655,
     "nom": "Légende de Fallanster",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -201,6 +219,7 @@
     "item_id": 20657,
     "nom": "Légende du Destin",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -212,6 +231,7 @@
     "item_id": 20652,
     "nom": "Légende de Dame Jhessica",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -223,6 +243,7 @@
     "item_id": 22415,
     "nom": "Légende de Misère",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -234,6 +255,7 @@
     "item_id": 20659,
     "nom": "Légende de Buhorado",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -245,6 +267,7 @@
     "item_id": 32132,
     "nom": "Légende de Menalt",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -256,6 +279,7 @@
     "item_id": 20654,
     "nom": "Légende de Dodge",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -267,6 +291,7 @@
     "item_id": 20661,
     "nom": "Légende de Ganymède",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -278,6 +303,7 @@
     "item_id": 32162,
     "nom": "Légende d'Amayiro",
     "categorie": "legende",
+    "cle_taux": "legende",
     "paliers": [
       3,
       4,
@@ -289,6 +315,7 @@
     "item_id": 20967,
     "nom": "Légende animale de Bakushana",
     "categorie": "legende_animale",
+    "cle_taux": "legende_animale",
     "paliers": [
       3,
       4,
@@ -300,6 +327,7 @@
     "item_id": 20964,
     "nom": "Légende animale de Kwakarticho",
     "categorie": "legende_animale",
+    "cle_taux": "legende_animale",
     "paliers": [
       3,
       4,
@@ -311,6 +339,7 @@
     "item_id": 20965,
     "nom": "Légende animale de Poukachi",
     "categorie": "legende_animale",
+    "cle_taux": "legende_animale",
     "paliers": [
       3,
       4,
@@ -322,6 +351,7 @@
     "item_id": 20966,
     "nom": "Légende animale de Magicrabe",
     "categorie": "legende_animale",
+    "cle_taux": "legende_animale",
     "paliers": [
       3,
       4,
@@ -333,6 +363,7 @@
     "item_id": 22156,
     "nom": "Bouclirêve Onirique",
     "categorie": "cosmetique",
+    "cle_taux": "bouclireve_palier",
     "paliers": [
       1
     ],
@@ -342,6 +373,7 @@
     "item_id": 22157,
     "nom": "Bouclirêve Fantastique",
     "categorie": "cosmetique",
+    "cle_taux": "bouclireve_palier",
     "paliers": [
       2
     ],
@@ -351,6 +383,7 @@
     "item_id": 22158,
     "nom": "Bouclirêve Imaginaire",
     "categorie": "cosmetique",
+    "cle_taux": "bouclireve_palier",
     "paliers": [
       3
     ],
@@ -360,6 +393,7 @@
     "item_id": 22159,
     "nom": "Bouclirêve Brumeux",
     "categorie": "cosmetique",
+    "cle_taux": "bouclireve_palier",
     "paliers": [
       4
     ],
@@ -369,6 +403,7 @@
     "item_id": 22160,
     "nom": "Bouclirêve Infini",
     "categorie": "cosmetique",
+    "cle_taux": "bouclireve_palier",
     "paliers": [
       5
     ],
@@ -378,6 +413,7 @@
     "item_id": 22161,
     "nom": "Bouclirêve Étoile",
     "categorie": "cosmetique",
+    "cle_taux": "bouclireve_etoile",
     "paliers": [
       1,
       2,
@@ -391,6 +427,7 @@
     "item_id": 32092,
     "nom": "Diplôme de Feur",
     "categorie": "cosmetique",
+    "cle_taux": "diplome_feur",
     "paliers": [
       3,
       4,
@@ -402,6 +439,7 @@
     "item_id": 21968,
     "nom": "Rune astrale légendaire",
     "categorie": "rune_astrale",
+    "cle_taux": "rune_astrale_legendaire",
     "paliers": [
       4,
       5

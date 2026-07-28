@@ -23,6 +23,10 @@ with open("dofura_quetes.json", "r", encoding="utf-8") as f:
     quetes = json.load(f)
 with open("dofura_succes.json", "r", encoding="utf-8") as f:
     succes = json.load(f)
+with open("dofura_songes_items.json", "r", encoding="utf-8") as f:
+    songes_items = json.load(f)
+with open("dofura_songes_taux.json", "r", encoding="utf-8") as f:
+    songes_taux = json.load(f)
 print(f"[init_db] JSON charges. Connexion a la base : {DB_PATH}")
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
@@ -40,15 +44,25 @@ TABLES_ENCYCLOPEDIE = {
     "quetes_etapes_items", "quetes_etapes_actions", "quetes_ressources",
     "quetes_prerequis_quetes", "quetes_prerequis_objets", "quetes_donjons",
     "succes", "succes_objectifs", "succes_recompenses_items", "succes_donjons",
+    # Suivi de Songes (SONGES.md §5) : donnees de reference 100% regenerees
+    # depuis dofura_songes_items.json / dofura_songes_taux.json, pas de donnee
+    # utilisateur — donc autorisees ici comme le reste de l'encyclopedie.
+    "songe_items_trackables", "songe_taux",
 }
 
 # users / progression_joueur / favoris portent de la donnee utilisateur reelle
 # (comptes, cases cochees, favoris) qui ne se regenere depuis AUCUN fichier
 # source — un DROP dessus serait une perte definitive et irrecuperable.
+# Idem pour les 6 tables songe_* de donnees joueur (SONGES.md §5) : runs,
+# drops, personnages, teams — rien de tout ca ne peut se reconstruire.
 # Elles ne doivent JAMAIS apparaitre dans TABLES_ENCYCLOPEDIE ni dans le
 # schema DROP ci-dessous ; elles ne sont creees plus bas qu'en
 # CREATE TABLE IF NOT EXISTS, jamais precedees d'un DROP.
-TABLES_UTILISATEUR_INTERDITES = {"users", "progression_joueur", "favoris"}
+TABLES_UTILISATEUR_INTERDITES = {
+    "users", "progression_joueur", "favoris",
+    "songe_personnages", "songe_teams", "songe_team_membres",
+    "songe_runs", "songe_run_participants", "songe_drops",
+}
 
 print("[init_db] Creation du schema (DROP + CREATE des tables encyclopediques)...")
 SCHEMA_ENCYCLOPEDIE = """
@@ -78,6 +92,8 @@ DROP TABLE IF EXISTS succes;
 DROP TABLE IF EXISTS succes_objectifs;
 DROP TABLE IF EXISTS succes_recompenses_items;
 DROP TABLE IF EXISTS succes_donjons;
+DROP TABLE IF EXISTS songe_items_trackables;
+DROP TABLE IF EXISTS songe_taux;
 CREATE TABLE monstres (
     id INTEGER PRIMARY KEY,
     nom TEXT,
@@ -291,6 +307,21 @@ CREATE TABLE succes_donjons (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     succes_id INTEGER,
     donjon_id INTEGER
+);
+CREATE TABLE songe_items_trackables (
+    item_id       INTEGER PRIMARY KEY,
+    categorie     TEXT NOT NULL,
+    cle_taux      TEXT NOT NULL,
+    paliers       TEXT NOT NULL,
+    intensite_min TEXT
+);
+CREATE TABLE songe_taux (
+    intensite     TEXT NOT NULL,
+    niveau        INTEGER NOT NULL,
+    palier        INTEGER NOT NULL,
+    cle_taux      TEXT NOT NULL,
+    taux          REAL NOT NULL,
+    PRIMARY KEY (intensite, niveau, palier, cle_taux)
 );
 """
 
@@ -515,17 +546,30 @@ for s in succes:
             VALUES (?, ?)
         """, (s.get("id"), donjon_id))
 
+for it in songes_items:
+    cur.execute("""
+        INSERT OR REPLACE INTO songe_items_trackables (item_id, categorie, cle_taux, paliers, intensite_min)
+        VALUES (?, ?, ?, ?, ?)
+    """, (it.get("item_id"), it.get("categorie"), it.get("cle_taux"), json.dumps(it.get("paliers")), it.get("intensite_min")))
+
+for t in songes_taux:
+    cur.execute("""
+        INSERT OR REPLACE INTO songe_taux (intensite, niveau, palier, cle_taux, taux)
+        VALUES (?, ?, ?, ?, ?)
+    """, (t.get("intensite"), t.get("niveau"), t.get("palier"), t.get("cle_taux"), t.get("taux")))
+
 
 # ============================================================
 # Comptes utilisateurs / progression / favoris (chantier Phase 4)
+# + tables donnee-joueur du Suivi de Songes (SONGES.md §5)
 # ⚠️ CREATE TABLE IF NOT EXISTS UNIQUEMENT — jamais de DROP TABLE ici.
 # Contrairement a tout ce qui precede (encyclopedie, regeneree a chaque
-# demarrage depuis les JSON sources, voir regle 9 CLAUDE.md), ces 3 tables
+# demarrage depuis les JSON sources, voir regle 9 CLAUDE.md), ces tables
 # portent de la donnee utilisateur reelle qui doit survivre aux redemarrages.
 # Ce script entier n'est desormais relance qu'une fois par base (voir la
 # verification "base deja peuplee" dans main.py) : sur Railway, avec DB_PATH
 # pointant vers le volume persistant, ces tables ne sont donc plus recreees
-# ni re-semees a chaque redeploiement. Ces 3 noms sont dans
+# ni re-semees a chaque redeploiement. Tous ces noms sont dans
 # TABLES_UTILISATEUR_INTERDITES ci-dessus, verifiee avant le DROP du schema
 # encyclopedique — double garde-fou volontaire (liste blanche + ce commentaire).
 cur.executescript("""
@@ -552,6 +596,52 @@ CREATE TABLE IF NOT EXISTS favoris (
     date_ajout TEXT DEFAULT (datetime('now')),
     PRIMARY KEY (user_id, element_type, element_id),
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS songe_personnages (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER,
+    nom           TEXT NOT NULL,
+    classe        TEXT,
+    serveur       TEXT,
+    cree_le       TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS songe_teams (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER,
+    nom           TEXT NOT NULL,
+    cree_le       TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS songe_team_membres (
+    team_id       INTEGER NOT NULL REFERENCES songe_teams(id) ON DELETE CASCADE,
+    perso_id      INTEGER NOT NULL REFERENCES songe_personnages(id) ON DELETE CASCADE,
+    PRIMARY KEY (team_id, perso_id)
+);
+CREATE TABLE IF NOT EXISTS songe_runs (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id            INTEGER,
+    date_run           TEXT DEFAULT (datetime('now')),
+    intensite          TEXT NOT NULL,
+    niveau             INTEGER NOT NULL,
+    terminee           INTEGER NOT NULL DEFAULT 1,
+    salle_atteinte     INTEGER NOT NULL DEFAULT 26,
+    nb_combats         INTEGER NOT NULL,
+    source_nb_combats  TEXT NOT NULL,
+    team_id            INTEGER,
+    note               TEXT
+);
+CREATE TABLE IF NOT EXISTS songe_run_participants (
+    run_id        INTEGER NOT NULL REFERENCES songe_runs(id) ON DELETE CASCADE,
+    perso_id      INTEGER NOT NULL REFERENCES songe_personnages(id),
+    PRIMARY KEY (run_id, perso_id)
+);
+CREATE TABLE IF NOT EXISTS songe_drops (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id        INTEGER NOT NULL REFERENCES songe_runs(id) ON DELETE CASCADE,
+    perso_id      INTEGER NOT NULL REFERENCES songe_personnages(id),
+    item_id       INTEGER NOT NULL,
+    quantite      INTEGER NOT NULL DEFAULT 1,
+    palier        INTEGER,
+    cree_le       TEXT DEFAULT (datetime('now'))
 );
 """)
 
