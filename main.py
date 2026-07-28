@@ -10,7 +10,36 @@ import subprocess
 import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
-subprocess.run(["python", "init_db.py"])
+
+# Chemin de la base en variable d'environnement (SONGES.md §2) : sur Railway,
+# DB_PATH pointe vers le volume persistant monte sur /data. En local, aucune
+# variable n'est definie donc on retombe sur l'ancien chemin relatif.
+DB_PATH = os.getenv("DB_PATH", "dofura.db")
+
+def base_deja_peuplee(chemin_db):
+    """Vrai si le fichier existe et contient au moins une table encyclopedique
+    peuplee. Les tables encyclopediques sont toutes remplies dans la meme
+    passe par init_db.py (un seul commit final) : verifier 'monstres' suffit
+    a savoir si tout l'import a eu lieu."""
+    if not os.path.exists(chemin_db):
+        return False
+    try:
+        conn = sqlite3.connect(chemin_db)
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM monstres")
+        count = cur.fetchone()[0]
+        conn.close()
+        return count > 0
+    except sqlite3.Error:
+        return False
+
+print(f"[DB] Chemin de la base : {DB_PATH}")
+if base_deja_peuplee(DB_PATH):
+    print(f"[DB] Base existante et deja peuplee trouvee sur {DB_PATH} — import ignore (donnees preservees).")
+else:
+    print(f"[DB] Base absente ou vide sur {DB_PATH} — creation du schema et import depuis les JSON sources...")
+    subprocess.run(["python", "init_db.py"])
+    print("[DB] Schema cree et import termine.")
 
 app = FastAPI()
 
@@ -265,7 +294,7 @@ def effet_visible(effet):
     return bool(effet.get("visibleInTooltip") or effet.get("visibleInBuffUi") or effet.get("visibleInFightLog"))
 
 def get_db():
-    conn = sqlite3.connect("dofura.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 

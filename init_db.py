@@ -1,6 +1,11 @@
 import json
 import sqlite3
 import bcrypt
+import os
+
+DB_PATH = os.getenv("DB_PATH", "dofura.db")
+
+print("[init_db] Chargement des fichiers JSON sources...")
 with open("dofura_monstres.json", "r", encoding="utf-8") as f:
     monstres = json.load(f)
 with open("dofura_items.json", "r", encoding="utf-8") as f:
@@ -17,8 +22,10 @@ with open("dofura_quetes.json", "r", encoding="utf-8") as f:
     quetes = json.load(f)
 with open("dofura_succes.json", "r", encoding="utf-8") as f:
     succes = json.load(f)
-conn = sqlite3.connect("dofura.db")
+print(f"[init_db] JSON charges. Connexion a la base : {DB_PATH}")
+conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
+print("[init_db] Creation du schema (DROP + CREATE des tables encyclopediques)...")
 cur.executescript("""
 DROP TABLE IF EXISTS monstres;
 DROP TABLE IF EXISTS grades;
@@ -261,6 +268,7 @@ CREATE TABLE succes_donjons (
     donjon_id INTEGER
 );
 """)
+print("[init_db] Schema cree. Import des donnees dans les tables...")
 def safe_int(val):
     if isinstance(val, dict):
         return list(val.values())[0] if val else None
@@ -468,10 +476,11 @@ for s in succes:
 # ⚠️ CREATE TABLE IF NOT EXISTS UNIQUEMENT — jamais de DROP TABLE ici.
 # Contrairement a tout ce qui precede (encyclopedie, regeneree a chaque
 # demarrage depuis les JSON sources, voir regle 9 CLAUDE.md), ces 3 tables
-# portent de la donnee utilisateur reelle qui doit survivre aux redemarrages
-# locaux. ATTENTION : sur Railway (pas de volume persistant, voir CLAUDE.md
-# "Chantiers en cours #1"), tout dofura.db reste ephemere au redeploiement
-# tant que ce chantier n'est pas fait — teste en local uniquement pour l'instant.
+# portent de la donnee utilisateur reelle qui doit survivre aux redemarrages.
+# Ce script entier n'est desormais relance qu'une fois par base (voir la
+# verification "base deja peuplee" dans main.py) : sur Railway, avec DB_PATH
+# pointant vers le volume persistant, ces tables ne sont donc plus recreees
+# ni re-semees a chaque redeploiement.
 cur.executescript("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -511,4 +520,4 @@ if not cur.fetchone():
 
 conn.commit()
 conn.close()
-print("Base de donnees creee avec succes !")
+print("[init_db] Import termine, base de donnees creee avec succes !")

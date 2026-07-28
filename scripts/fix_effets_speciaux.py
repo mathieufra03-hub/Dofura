@@ -1,9 +1,9 @@
-import json, urllib.request, time, sqlite3
+import json, urllib.request, time, sqlite3, os
 
 EFFECTS_SPECIAUX = {'792','793','1017','1018','1019','1160','2017','2160','2792','2793','2794','2960'}
 
 # Récupère tous les sort_id de la DB
-conn = sqlite3.connect('dofura.db')
+conn = sqlite3.connect(os.getenv("DB_PATH", "dofura.db"))
 cur = conn.cursor()
 cur.execute("SELECT DISTINCT sort_id FROM sorts")
 sort_ids = [r[0] for r in cur.fetchall()]

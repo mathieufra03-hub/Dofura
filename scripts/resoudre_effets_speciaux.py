@@ -17,8 +17,8 @@ with open('dofura_sorts.json', encoding='utf-8') as f:
 
 dice_nums_speciaux = set()
 # Relit main.py pour trouver les diceNum problématiques via la DB
-import sqlite3
-conn = sqlite3.connect('dofura.db')
+import sqlite3, os
+conn = sqlite3.connect(os.getenv("DB_PATH", "dofura.db"))
 cur = conn.cursor()
 cur.execute("SELECT DISTINCT sort_id FROM sorts")
 sort_ids = [r[0] for r in cur.fetchall()]
