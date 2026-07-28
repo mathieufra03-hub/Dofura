@@ -2,6 +2,7 @@ import json
 import sqlite3
 import bcrypt
 import os
+import re
 
 DB_PATH = os.getenv("DB_PATH", "dofura.db")
 
@@ -25,8 +26,32 @@ with open("dofura_succes.json", "r", encoding="utf-8") as f:
 print(f"[init_db] JSON charges. Connexion a la base : {DB_PATH}")
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
+# ============================================================
+# Liste blanche des tables autorisees au DROP (protection donnees users)
+# ============================================================
+# Ce script DROP + CREATE tout ce qui suit a chaque import : c'est normal,
+# ce sont des tables encyclopediques 100% regenerees depuis les JSON sources
+# (regle 9 CLAUDE.md). Seules les tables de cette liste ont le droit d'etre
+# dans le bloc DROP TABLE du schema ci-dessous.
+TABLES_ENCYCLOPEDIE = {
+    "monstres", "grades", "drops", "sorts", "zones", "objets", "objets_effets",
+    "recettes", "panoplies", "panoplies_effets", "donjons", "donjons_monstres",
+    "donjons_objets_requis", "zones_areas", "quetes", "quetes_etapes",
+    "quetes_etapes_items", "quetes_etapes_actions", "quetes_ressources",
+    "quetes_prerequis_quetes", "quetes_prerequis_objets", "quetes_donjons",
+    "succes", "succes_objectifs", "succes_recompenses_items", "succes_donjons",
+}
+
+# users / progression_joueur / favoris portent de la donnee utilisateur reelle
+# (comptes, cases cochees, favoris) qui ne se regenere depuis AUCUN fichier
+# source — un DROP dessus serait une perte definitive et irrecuperable.
+# Elles ne doivent JAMAIS apparaitre dans TABLES_ENCYCLOPEDIE ni dans le
+# schema DROP ci-dessous ; elles ne sont creees plus bas qu'en
+# CREATE TABLE IF NOT EXISTS, jamais precedees d'un DROP.
+TABLES_UTILISATEUR_INTERDITES = {"users", "progression_joueur", "favoris"}
+
 print("[init_db] Creation du schema (DROP + CREATE des tables encyclopediques)...")
-cur.executescript("""
+SCHEMA_ENCYCLOPEDIE = """
 DROP TABLE IF EXISTS monstres;
 DROP TABLE IF EXISTS grades;
 DROP TABLE IF EXISTS drops;
@@ -267,7 +292,27 @@ CREATE TABLE succes_donjons (
     succes_id INTEGER,
     donjon_id INTEGER
 );
-""")
+"""
+
+# Verification avant execution : chaque DROP TABLE du schema doit cibler une
+# table de la liste blanche, jamais une table utilisateur protegee. Arrete
+# tout avant la moindre requete si le schema a ete modifie par erreur.
+tables_droppees = set(re.findall(r"DROP TABLE IF EXISTS (\w+);", SCHEMA_ENCYCLOPEDIE))
+tables_interdites_touchees = tables_droppees & TABLES_UTILISATEUR_INTERDITES
+if tables_interdites_touchees:
+    raise RuntimeError(
+        f"[init_db] ARRET : DROP TABLE detecte sur des tables utilisateur protegees "
+        f"{sorted(tables_interdites_touchees)} — donnees irrecuperables, import annule."
+    )
+tables_hors_liste_blanche = tables_droppees - TABLES_ENCYCLOPEDIE
+if tables_hors_liste_blanche:
+    raise RuntimeError(
+        f"[init_db] ARRET : DROP TABLE sur des tables absentes de la liste blanche "
+        f"{sorted(tables_hors_liste_blanche)} — a valider avant d'ajouter au schema."
+    )
+print(f"[init_db] Liste blanche verifiee : {len(tables_droppees)} tables encyclopediques a recreer, aucune table utilisateur touchee.")
+
+cur.executescript(SCHEMA_ENCYCLOPEDIE)
 print("[init_db] Schema cree. Import des donnees dans les tables...")
 def safe_int(val):
     if isinstance(val, dict):
@@ -480,7 +525,9 @@ for s in succes:
 # Ce script entier n'est desormais relance qu'une fois par base (voir la
 # verification "base deja peuplee" dans main.py) : sur Railway, avec DB_PATH
 # pointant vers le volume persistant, ces tables ne sont donc plus recreees
-# ni re-semees a chaque redeploiement.
+# ni re-semees a chaque redeploiement. Ces 3 noms sont dans
+# TABLES_UTILISATEUR_INTERDITES ci-dessus, verifiee avant le DROP du schema
+# encyclopedique — double garde-fou volontaire (liste blanche + ce commentaire).
 cur.executescript("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
