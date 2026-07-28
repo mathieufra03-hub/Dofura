@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 from pydantic import BaseModel
+from typing import Optional, List
 import sqlite3
 import uvicorn
 import os
@@ -15,6 +16,7 @@ import hmac
 import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
+from config import songes as songes_config
 
 # Chemin de la base en variable d'environnement (SONGES.md §2) : sur Railway,
 # DB_PATH pointe vers le volume persistant monte sur /data. En local, aucune
@@ -2199,6 +2201,573 @@ def retirer_favori(element_type: str, element_id: str, user: dict = Depends(util
     conn.commit()
     conn.close()
     return {"favori": False}
+
+
+# ============================================================
+# Suivi de Songes (SONGES.md §8) — etape 2 : endpoints uniquement
+# ============================================================
+# Regle de securite (demande explicite Popo) : user_id vient TOUJOURS du
+# token JWT (Depends(utilisateur_courant)), jamais d'un champ de la requete
+# client. Chaque acces a un personnage/team/run verifie explicitement
+# "AND user_id = ?" (ou une jointure equivalente) — un ID d'un autre joueur
+# renvoie 404, jamais les donnees. Pas de PRAGMA foreign_keys actif dans ce
+# projet (verifie : aucune occurrence dans le code) => ON DELETE CASCADE du
+# schema SQL n'est PAS applique automatiquement par SQLite, toutes les
+# suppressions en cascade (team->membres, run->participants/drops) sont
+# faites a la main ci-dessous.
+
+ORDRE_INTENSITE = {"reve": 0, "paradoxe": 1, "cauchemar": 2}
+
+def item_eligible_intensite(intensite_min, intensite_demandee):
+    """SONGES.md §3.6 : legendes/legendes animales exigent Paradoxe ou
+    Cauchemar (jamais Reve). intensite_min=None = eligible partout."""
+    if not intensite_min:
+        return True
+    return ORDRE_INTENSITE.get(intensite_demandee, -1) >= ORDRE_INTENSITE.get(intensite_min, 99)
+
+def paliers_atteints(salle_atteinte):
+    """Un palier compte comme 'atteint' des que le joueur y entre, meme mort
+    en cours de palier : SONGES.md §3.3 ne donne que des totaux par palier
+    (valeurs '≈'), rien de plus fin — credit le palier entame au complet
+    plutot que de sous-estimer systematiquement les tirages reels."""
+    return [p for p, info in songes_config.PALIERS.items() if salle_atteinte >= info["salles"][0]]
+
+def calculer_nb_combats(salle_atteinte):
+    return sum(songes_config.COMBATS_PAR_PALIER[p] for p in paliers_atteints(salle_atteinte))
+
+def tirages_eligibles(item_paliers, salle_atteinte, nb_participants_scope):
+    """SONGES.md §7 : formule des tirages eligibles — seuls les paliers ou
+    l'item est eligible ET que la run a atteints comptent, multiplies par le
+    nombre de participants du perimetre demande (chaque personnage a sa
+    propre chance de drop)."""
+    paliers_run = set(paliers_atteints(salle_atteinte))
+    return sum(songes_config.COMBATS_PAR_PALIER[p] for p in item_paliers if p in paliers_run) * nb_participants_scope
+
+def charger_taux(conn, intensite, niveau, cle_taux):
+    cur = conn.cursor()
+    cur.execute("SELECT palier, taux FROM songe_taux WHERE intensite = ? AND niveau = ? AND cle_taux = ?",
+                (intensite, niveau, cle_taux))
+    return {row["palier"]: row["taux"] for row in cur.fetchall()}
+
+def estimer_esperance_runs(item_paliers, taux_par_palier, nb_participants):
+    """Esperance du nombre de runs pour au moins un drop, en supposant une
+    run complete (tous les paliers eligibles de l'item atteints) — SONGES.md
+    §9. Retourne None si le taux d'AU MOINS UN palier eligible est absent de
+    songe_taux : jamais d'estimation partielle/extrapolee (regle 4 §5), le
+    endpoint doit alors annoncer explicitement "donnees non disponibles"."""
+    if any(p not in taux_par_palier for p in item_paliers):
+        return None
+    p_aucun_drop_un_participant = 1.0
+    for p in item_paliers:
+        probabilite = taux_par_palier[p] / 100  # taux stocke "en pourcentage" (ex. 0.006 = 0,006 %)
+        combats = songes_config.COMBATS_PAR_PALIER[p]
+        p_aucun_drop_un_participant *= (1 - probabilite) ** combats
+    p_au_moins_un_drop = 1 - (p_aucun_drop_un_participant ** nb_participants)
+    if p_au_moins_un_drop <= 0:
+        return None
+    return 1 / p_au_moins_un_drop
+
+def _perso_ids_appartiennent(conn, perso_ids, user_id):
+    """Verifie que TOUS les perso_ids donnes appartiennent a user_id — jamais
+    de confiance aveugle dans des IDs envoyes par le client (regle de securite
+    demandee explicitement pour ce chantier)."""
+    uniques = set(perso_ids)
+    if not uniques:
+        return True
+    placeholders = ",".join("?" * len(uniques))
+    cur = conn.cursor()
+    cur.execute(f"SELECT COUNT(*) FROM songe_personnages WHERE id IN ({placeholders}) AND user_id = ?",
+                (*uniques, user_id))
+    return cur.fetchone()[0] == len(uniques)
+
+def _team_detail(conn, team_id):
+    cur = conn.cursor()
+    cur.execute("SELECT id, nom, cree_le FROM songe_teams WHERE id = ?", (team_id,))
+    team = cur.fetchone()
+    cur.execute("""
+        SELECT p.id, p.nom FROM songe_team_membres tm
+        JOIN songe_personnages p ON p.id = tm.perso_id
+        WHERE tm.team_id = ? ORDER BY p.nom
+    """, (team_id,))
+    membres = cur.fetchall()
+    return {"id": team["id"], "nom": team["nom"], "cree_le": team["cree_le"],
+            "membres": [{"perso_id": m["id"], "nom": m["nom"]} for m in membres]}
+
+class PersonnageBody(BaseModel):
+    nom: str
+    classe: Optional[str] = None
+    serveur: Optional[str] = None
+
+class TeamBody(BaseModel):
+    nom: str
+    perso_ids: List[int] = []
+
+class DropBody(BaseModel):
+    perso_id: int
+    item_id: int
+    quantite: int = 1
+    palier: Optional[int] = None
+
+class RunBody(BaseModel):
+    intensite: str
+    niveau: int
+    terminee: bool = True
+    salle_atteinte: int = songes_config.NB_SALLES_PAR_RUN
+    participants: List[int]
+    drops: List[DropBody] = []
+    team_id: Optional[int] = None
+    note: Optional[str] = None
+    nb_combats: Optional[int] = None  # saisie manuelle explicite, sinon estime
+
+@app.get("/songes/config")
+def songes_recuperer_config():
+    """Toutes les constantes de config/songes.py (SONGES.md §6) — le
+    frontend ne code rien en dur, tout vient d'ici."""
+    return {
+        "nb_salles_par_run": songes_config.NB_SALLES_PAR_RUN,
+        "combats_par_palier": songes_config.COMBATS_PAR_PALIER,
+        "paliers": songes_config.PALIERS,
+        "intensites": songes_config.INTENSITES,
+        "intensite_defaut": {
+            "intensite": songes_config.INTENSITE_DEFAUT[0],
+            "niveau": songes_config.INTENSITE_DEFAUT[1],
+        },
+    }
+
+@app.get("/songes/items-trackables")
+def songes_items_trackables():
+    """Les 38 items trackables (SONGES.md §4), enrichis nom/image depuis
+    l'encyclopedie. Public : donnee de reference, pas de donnee joueur."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT si.item_id, o.nom, o.img, si.categorie, si.paliers, si.intensite_min
+        FROM songe_items_trackables si
+        JOIN objets o ON o.id = si.item_id
+        ORDER BY si.categorie, o.nom
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    return {"items": [
+        {
+            "item_id": r["item_id"], "nom": r["nom"], "img": r["img"],
+            "categorie": r["categorie"], "paliers": json.loads(r["paliers"]),
+            "intensite_min": r["intensite_min"],
+        } for r in rows
+    ]}
+
+@app.get("/songes/personnages")
+def songes_liste_personnages(user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nom, classe, serveur, cree_le FROM songe_personnages WHERE user_id = ? ORDER BY nom",
+                (user["id"],))
+    rows = cur.fetchall()
+    conn.close()
+    return {"personnages": [dict(r) for r in rows]}
+
+@app.post("/songes/personnages")
+def songes_creer_personnage(body: PersonnageBody, user: dict = Depends(utilisateur_courant)):
+    if not body.nom.strip():
+        raise HTTPException(status_code=400, detail="Nom requis")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO songe_personnages (user_id, nom, classe, serveur) VALUES (?, ?, ?, ?)",
+                (user["id"], body.nom.strip(), body.classe, body.serveur))
+    perso_id = cur.lastrowid
+    conn.commit()
+    cur.execute("SELECT id, nom, classe, serveur, cree_le FROM songe_personnages WHERE id = ?", (perso_id,))
+    row = cur.fetchone()
+    conn.close()
+    return dict(row)
+
+@app.get("/songes/teams")
+def songes_liste_teams(user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM songe_teams WHERE user_id = ? ORDER BY nom", (user["id"],))
+    ids = [r["id"] for r in cur.fetchall()]
+    teams = [_team_detail(conn, tid) for tid in ids]
+    conn.close()
+    return {"teams": teams}
+
+@app.post("/songes/teams")
+def songes_creer_team(body: TeamBody, user: dict = Depends(utilisateur_courant)):
+    if not body.nom.strip():
+        raise HTTPException(status_code=400, detail="Nom requis")
+    conn = get_db()
+    if not _perso_ids_appartiennent(conn, body.perso_ids, user["id"]):
+        conn.close()
+        raise HTTPException(status_code=400, detail="Un des personnages ne vous appartient pas")
+    cur = conn.cursor()
+    cur.execute("INSERT INTO songe_teams (user_id, nom) VALUES (?, ?)", (user["id"], body.nom.strip()))
+    team_id = cur.lastrowid
+    for perso_id in set(body.perso_ids):
+        cur.execute("INSERT INTO songe_team_membres (team_id, perso_id) VALUES (?, ?)", (team_id, perso_id))
+    conn.commit()
+    detail = _team_detail(conn, team_id)
+    conn.close()
+    return detail
+
+@app.put("/songes/teams/{team_id}")
+def songes_modifier_team(team_id: int, body: TeamBody, user: dict = Depends(utilisateur_courant)):
+    if not body.nom.strip():
+        raise HTTPException(status_code=400, detail="Nom requis")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM songe_teams WHERE id = ? AND user_id = ?", (team_id, user["id"]))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Team introuvable")
+    if not _perso_ids_appartiennent(conn, body.perso_ids, user["id"]):
+        conn.close()
+        raise HTTPException(status_code=400, detail="Un des personnages ne vous appartient pas")
+    cur.execute("UPDATE songe_teams SET nom = ? WHERE id = ?", (body.nom.strip(), team_id))
+    cur.execute("DELETE FROM songe_team_membres WHERE team_id = ?", (team_id,))
+    for perso_id in set(body.perso_ids):
+        cur.execute("INSERT INTO songe_team_membres (team_id, perso_id) VALUES (?, ?)", (team_id, perso_id))
+    conn.commit()
+    detail = _team_detail(conn, team_id)
+    conn.close()
+    return detail
+
+@app.delete("/songes/teams/{team_id}")
+def songes_supprimer_team(team_id: int, user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM songe_teams WHERE id = ? AND user_id = ?", (team_id, user["id"]))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Team introuvable")
+    cur.execute("DELETE FROM songe_team_membres WHERE team_id = ?", (team_id,))
+    cur.execute("DELETE FROM songe_teams WHERE id = ?", (team_id,))
+    conn.commit()
+    conn.close()
+    return {"supprime": True}
+
+@app.post("/songes/runs")
+def songes_creer_run(body: RunBody, user: dict = Depends(utilisateur_courant)):
+    if body.intensite not in songes_config.INTENSITES:
+        raise HTTPException(status_code=400, detail=f"Intensite inconnue : {body.intensite}")
+    if body.niveau not in songes_config.INTENSITES[body.intensite]["niveaux"]:
+        raise HTTPException(status_code=400, detail=f"Niveau {body.niveau} invalide pour {body.intensite}")
+    if not (1 <= body.salle_atteinte <= songes_config.NB_SALLES_PAR_RUN):
+        raise HTTPException(status_code=400, detail=f"salle_atteinte doit etre entre 1 et {songes_config.NB_SALLES_PAR_RUN}")
+    if not body.participants:
+        raise HTTPException(status_code=400, detail="Au moins un participant requis")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    if not _perso_ids_appartiennent(conn, body.participants, user["id"]):
+        conn.close()
+        raise HTTPException(status_code=400, detail="Un des participants ne vous appartient pas")
+
+    if body.team_id is not None:
+        cur.execute("SELECT id FROM songe_teams WHERE id = ? AND user_id = ?", (body.team_id, user["id"]))
+        if not cur.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail="Team introuvable")
+
+    participants_set = set(body.participants)
+    for drop in body.drops:
+        if drop.perso_id not in participants_set:
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"Le drop du personnage {drop.perso_id} ne fait pas partie des participants")
+        if drop.quantite < 1:
+            conn.close()
+            raise HTTPException(status_code=400, detail="quantite doit etre >= 1")
+        if drop.palier is not None and drop.palier not in songes_config.PALIERS:
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"palier invalide : {drop.palier}")
+        # Valide contre songe_items_trackables, PAS contre objets (l'encyclopedie
+        # entiere) : un item hors des 38 trackables n'a ni cle_taux ni paliers
+        # d'eligibilite, tous les calculs de tirages/estimation seraient faux.
+        cur.execute("SELECT 1 FROM songe_items_trackables WHERE item_id = ?", (drop.item_id,))
+        if not cur.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"item_id non trackable (absent de songe_items_trackables) : {drop.item_id}")
+
+    if body.nb_combats is not None:
+        if body.nb_combats < 0:
+            conn.close()
+            raise HTTPException(status_code=400, detail="nb_combats doit etre >= 0")
+        nb_combats = body.nb_combats
+        source_nb_combats = "saisi"
+    else:
+        nb_combats = calculer_nb_combats(body.salle_atteinte)
+        source_nb_combats = "estime"
+
+    cur.execute("""
+        INSERT INTO songe_runs (user_id, intensite, niveau, terminee, salle_atteinte,
+                                 nb_combats, source_nb_combats, team_id, note)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (user["id"], body.intensite, body.niveau, int(body.terminee), body.salle_atteinte,
+          nb_combats, source_nb_combats, body.team_id, body.note))
+    run_id = cur.lastrowid
+
+    for perso_id in participants_set:
+        cur.execute("INSERT INTO songe_run_participants (run_id, perso_id) VALUES (?, ?)", (run_id, perso_id))
+
+    for drop in body.drops:
+        cur.execute("""
+            INSERT INTO songe_drops (run_id, perso_id, item_id, quantite, palier)
+            VALUES (?, ?, ?, ?, ?)
+        """, (run_id, drop.perso_id, drop.item_id, drop.quantite, drop.palier))
+
+    conn.commit()
+    conn.close()
+    return {
+        "id": run_id, "intensite": body.intensite, "niveau": body.niveau,
+        "terminee": body.terminee, "salle_atteinte": body.salle_atteinte,
+        "nb_combats": nb_combats, "source_nb_combats": source_nb_combats,
+        "participants": sorted(participants_set),
+        "drops": [d.model_dump() for d in body.drops],
+    }
+
+@app.delete("/songes/runs/{run_id}")
+def songes_supprimer_run(run_id: int, user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM songe_runs WHERE id = ? AND user_id = ?", (run_id, user["id"]))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Run introuvable")
+    cur.execute("DELETE FROM songe_drops WHERE run_id = ?", (run_id,))
+    cur.execute("DELETE FROM songe_run_participants WHERE run_id = ?", (run_id,))
+    cur.execute("DELETE FROM songe_runs WHERE id = ?", (run_id,))
+    conn.commit()
+    conn.close()
+    return {"supprime": True}
+
+@app.get("/songes/historique")
+def songes_historique(page: int = 1, page_size: int = 20, user: dict = Depends(utilisateur_courant)):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 100)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT COUNT(*) FROM songe_drops d
+        JOIN songe_runs r ON r.id = d.run_id
+        WHERE r.user_id = ?
+    """, (user["id"],))
+    total = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT d.id, d.run_id, d.quantite, d.palier, d.cree_le,
+               d.item_id, o.nom AS item_nom, o.img AS item_img,
+               d.perso_id, p.nom AS perso_nom,
+               r.intensite, r.niveau
+        FROM songe_drops d
+        JOIN songe_runs r ON r.id = d.run_id
+        JOIN songe_personnages p ON p.id = d.perso_id
+        JOIN objets o ON o.id = d.item_id
+        WHERE r.user_id = ?
+        ORDER BY d.cree_le DESC, d.id DESC
+        LIMIT ? OFFSET ?
+    """, (user["id"], page_size, (page - 1) * page_size))
+    rows = cur.fetchall()
+    conn.close()
+    return {
+        "total": total, "page": page, "page_size": page_size,
+        "drops": [dict(r) for r in rows],
+    }
+
+@app.get("/songes/stats")
+def songes_stats(intensite: str, niveau: int, perso_id: Optional[int] = None,
+                  team_id: Optional[int] = None, user: dict = Depends(utilisateur_courant)):
+    if intensite not in songes_config.INTENSITES:
+        raise HTTPException(status_code=400, detail=f"Intensite inconnue : {intensite}")
+    if niveau not in songes_config.INTENSITES[intensite]["niveaux"]:
+        raise HTTPException(status_code=400, detail=f"Niveau {niveau} invalide pour {intensite}")
+    if perso_id is not None and team_id is not None:
+        raise HTTPException(status_code=400, detail="Choisir perso_id OU team_id, pas les deux")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    if perso_id is not None:
+        cur.execute("SELECT id FROM songe_personnages WHERE id = ? AND user_id = ?", (perso_id, user["id"]))
+        if not cur.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="Personnage introuvable")
+        scope_perso_ids = [perso_id]
+        scope_type = "perso"
+    elif team_id is not None:
+        cur.execute("SELECT id FROM songe_teams WHERE id = ? AND user_id = ?", (team_id, user["id"]))
+        if not cur.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="Team introuvable")
+        cur.execute("SELECT perso_id FROM songe_team_membres WHERE team_id = ?", (team_id,))
+        scope_perso_ids = [r["perso_id"] for r in cur.fetchall()]
+        scope_type = "team"
+    else:
+        cur.execute("SELECT id FROM songe_personnages WHERE user_id = ?", (user["id"],))
+        scope_perso_ids = [r["id"] for r in cur.fetchall()]
+        scope_type = "tous"
+
+    scope_set = set(scope_perso_ids)
+
+    cur.execute("""
+        SELECT r.id, r.salle_atteinte, r.date_run
+        FROM songe_runs r
+        WHERE r.user_id = ? AND r.intensite = ? AND r.niveau = ?
+        ORDER BY r.date_run ASC, r.id ASC
+    """, (user["id"], intensite, niveau))
+    runs = cur.fetchall()
+
+    participants_par_run = {}
+    if runs and scope_set:
+        run_ids = [r["id"] for r in runs]
+        placeholders = ",".join("?" * len(run_ids))
+        cur.execute(f"SELECT run_id, perso_id FROM songe_run_participants WHERE run_id IN ({placeholders})", run_ids)
+        for row in cur.fetchall():
+            participants_par_run.setdefault(row["run_id"], set()).add(row["perso_id"])
+
+    # Runs enrichies (ordre chronologique), restreintes a celles ou au moins
+    # un personnage du perimetre demande a participe.
+    runs_enrichies = []
+    for r in runs:
+        nb_scope = len(participants_par_run.get(r["id"], set()) & scope_set)
+        if nb_scope == 0:
+            continue
+        runs_enrichies.append({"id": r["id"], "salle_atteinte": r["salle_atteinte"], "nb_scope": nb_scope})
+
+    drops_par_item = {}
+    if scope_set:
+        placeholders = ",".join("?" * len(scope_set))
+        cur.execute(f"""
+            SELECT d.item_id, d.run_id, d.quantite
+            FROM songe_drops d
+            JOIN songe_runs r ON r.id = d.run_id
+            WHERE r.user_id = ? AND r.intensite = ? AND r.niveau = ?
+              AND d.perso_id IN ({placeholders})
+        """, (user["id"], intensite, niveau, *scope_set))
+        for row in cur.fetchall():
+            drops_par_item.setdefault(row["item_id"], []).append(row)
+
+    cur.execute("SELECT item_id, categorie, cle_taux, paliers, intensite_min FROM songe_items_trackables")
+    items_trackables = cur.fetchall()
+
+    item_ids = [it["item_id"] for it in items_trackables]
+    objets_info = {}
+    if item_ids:
+        placeholders = ",".join("?" * len(item_ids))
+        cur.execute(f"SELECT id, nom, img FROM objets WHERE id IN ({placeholders})", item_ids)
+        objets_info = {r["id"]: {"nom": r["nom"], "img": r["img"]} for r in cur.fetchall()}
+
+    resultats = []
+    par_categorie = {}
+
+    for it in items_trackables:
+        if not item_eligible_intensite(it["intensite_min"], intensite):
+            continue
+        item_paliers = json.loads(it["paliers"])
+        taux = charger_taux(conn, intensite, niveau, it["cle_taux"])
+
+        drops_par_run = {}
+        for d in drops_par_item.get(it["item_id"], []):
+            drops_par_run[d["run_id"]] = drops_par_run.get(d["run_id"], 0) + d["quantite"]
+
+        tirages_total = 0
+        courant = 0
+        record_secheresse = 0
+        for r in runs_enrichies:
+            t = tirages_eligibles(item_paliers, r["salle_atteinte"], r["nb_scope"])
+            tirages_total += t
+            courant += t
+            if r["id"] in drops_par_run:
+                record_secheresse = max(record_secheresse, courant)
+                courant = 0
+        record_secheresse = max(record_secheresse, courant)
+        tirages_depuis_dernier_drop = courant
+
+        drops_total = sum(d["quantite"] for d in drops_par_item.get(it["item_id"], []))
+        moyenne = (tirages_total / drops_total) if drops_total > 0 else None
+
+        esperance = estimer_esperance_runs(item_paliers, taux, len(scope_set)) if scope_set else None
+        indicateur = None
+        if esperance is not None:
+            tirages_par_run_moyen = tirages_eligibles(item_paliers, songes_config.NB_SALLES_PAR_RUN, len(scope_set))
+            if tirages_par_run_moyen:
+                esperance_tirages = esperance * tirages_par_run_moyen
+                ratio = tirages_depuis_dernier_drop / esperance_tirages
+                if ratio >= 1.5:
+                    indicateur = "mauvaise_passe"
+                elif ratio <= 0.5:
+                    indicateur = "bonne_forme"
+                else:
+                    indicateur = "normal"
+
+        info_objet = objets_info.get(it["item_id"], {})
+        resultats.append({
+            "item_id": it["item_id"], "nom": info_objet.get("nom"), "img": info_objet.get("img"),
+            "categorie": it["categorie"],
+            "tirages_depuis_dernier_drop": tirages_depuis_dernier_drop,
+            "record_secheresse_tirages": record_secheresse,
+            "tirages_total": tirages_total,
+            "drops_total": drops_total,
+            "moyenne_tirages_par_drop": moyenne,
+            "estimation_runs_theorique": round(esperance, 1) if esperance is not None else None,
+            "indicateur_malchance": indicateur,
+        })
+
+        cat = it["categorie"]
+        agg = par_categorie.setdefault(cat, {"tirages_total": 0, "drops_total": 0})
+        agg["tirages_total"] += tirages_total
+        agg["drops_total"] += drops_total
+
+    moyennes_par_categorie = [
+        {"categorie": cat, "tirages_total": v["tirages_total"], "drops_total": v["drops_total"],
+         "moyenne": (v["tirages_total"] / v["drops_total"]) if v["drops_total"] > 0 else None}
+        for cat, v in par_categorie.items()
+    ]
+
+    conn.close()
+    return {
+        "intensite": intensite, "niveau": niveau,
+        "scope": {"type": scope_type, "perso_ids": sorted(scope_set)},
+        "items": resultats,
+        "moyennes_par_categorie": moyennes_par_categorie,
+    }
+
+@app.get("/songes/estimation")
+def songes_estimation(item_id: int, intensite: str, niveau: int, nb_participants: int = 1):
+    """Public, aucune donnee joueur : calcul pur depuis songe_taux + config.
+    Doit repondre explicitement "donnees non disponibles" (disponible=False)
+    si la combinaison intensite x palier n'existe pas en base — jamais
+    d'extrapolation (regle 4 SONGES.md §5)."""
+    if intensite not in songes_config.INTENSITES:
+        raise HTTPException(status_code=400, detail=f"Intensite inconnue : {intensite}")
+    if niveau not in songes_config.INTENSITES[intensite]["niveaux"]:
+        raise HTTPException(status_code=400, detail=f"Niveau {niveau} invalide pour {intensite}")
+    if nb_participants < 1:
+        raise HTTPException(status_code=400, detail="nb_participants doit etre >= 1")
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT categorie, cle_taux, paliers, intensite_min FROM songe_items_trackables WHERE item_id = ?", (item_id,))
+    item = cur.fetchone()
+    if not item:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Item non trackable")
+
+    reponse_base = {"item_id": item_id, "intensite": intensite, "niveau": niveau, "nb_participants": nb_participants}
+
+    if not item_eligible_intensite(item["intensite_min"], intensite):
+        conn.close()
+        return {**reponse_base, "disponible": False, "esperance_runs": None,
+                "message": f"Cet item n'est pas éligible en intensité {intensite}."}
+
+    item_paliers = json.loads(item["paliers"])
+    taux = charger_taux(conn, intensite, niveau, item["cle_taux"])
+    conn.close()
+
+    esperance = estimer_esperance_runs(item_paliers, taux, nb_participants)
+    if esperance is None:
+        return {**reponse_base, "disponible": False, "esperance_runs": None,
+                "message": "Données non disponibles pour cette combinaison intensité × palier."}
+    return {**reponse_base, "disponible": True, "esperance_runs": round(esperance, 1), "message": None}
 
 @app.get("/admin/backup")
 def sauvegarde_admin(x_admin_token: str = Header(default="", alias="X-Admin-Token")):

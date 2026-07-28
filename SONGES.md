@@ -237,7 +237,7 @@ CREATE TABLE songe_taux (
 - `cle_taux` (plus fin, une valeur par profil de taux réellement distinct dans la table 3.5 : `legende`, `legende_animale`, `bouclireve_palier`, `bouclireve_etoile`, `diplome_feur`, `rune_astrale_legendaire`) sert au **calcul** — c'est la clé de jointure vers `songe_taux`. Elle existe parce que plusieurs items d'une même `categorie` affichée (les 5 Bouclirêve de palier + le Bouclirêve Étoile, tous en `cosmetique`) n'ont pas le même taux : une jointure sur `categorie` mélangerait leurs profils.
 - Toute jointure item → taux **doit** utiliser `cle_taux`, jamais `categorie`.
 
-### Quatre règles de conception à ne pas contourner
+### Cinq règles de conception à ne pas contourner
 
 **1. `songe_run_participants` est figé à la saisie.** La team n'est qu'un raccourci de remplissage. Si le joueur modifie sa team six mois plus tard, ses anciennes runs ne doivent pas changer.
 
@@ -246,6 +246,8 @@ CREATE TABLE songe_taux (
 **3. `source_nb_combats` est obligatoire.** Il distingue une valeur estimée d'une valeur saisie, pour permettre un recalcul propre si la constante change.
 
 **4. `songe_taux` n'est pas rempli par extrapolation.** Seules les valeurs relevées en jeu y figurent. Une combinaison absente signifie "inconnu", jamais "estimé".
+
+**5. ⚠️ `ON DELETE CASCADE` du schéma ci-dessus n'est PAS appliqué par SQLite sur ce projet.** `PRAGMA foreign_keys` n'est activé nulle part dans le code (vérifié : 0 occurrence dans `main.py`/`init_db.py`) — SQLite ignore alors silencieusement toutes les clauses `ON DELETE CASCADE`, y compris `songe_team_membres`→`songe_teams` et `songe_run_participants`/`songe_drops`→`songe_runs`. **Toute suppression doit donc gérer la cascade à la main** (supprimer les lignes filles avant la ligne parente), comme le font `DELETE /songes/teams/{id}` et `DELETE /songes/runs/{id}` dans `main.py`. Activer le pragma globalement est un chantier séparé (impact sur toutes les tables `REFERENCES` existantes, pas seulement Songes) — volontairement non fait ici.
 
 ---
 
