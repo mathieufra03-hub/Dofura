@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react"
+import SongesPage from "./pages/SongesPage"
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
@@ -39,8 +40,10 @@ const C = {
 // vers Ressources en attendant le vrai hub Métiers (chantier futur #11
 // CLAUDE.md) — sans ça, les 3 639 ressources deviendraient injoignables
 // depuis l'interface.
-const navLinks = ["Équipements", "Métiers", "Donjons", "Bestiaire", "Quêtes"]
-const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres", "Métiers":"ressource", "Quêtes":"quete" }
+// "Songes" (SONGES.md) n'est pas une catégorie d'encyclopédie mais un outil
+// de suivi joueur — 6e entrée volontairement distincte des 5 fusionnées ci-dessus.
+const navLinks = ["Équipements", "Métiers", "Donjons", "Bestiaire", "Quêtes", "Songes"]
+const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres", "Métiers":"ressource", "Quêtes":"quete", "Songes":"songes" }
 
 // Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
 // ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
@@ -3447,6 +3450,8 @@ export default function App() {
           videMessage="Aucune ressource ne correspond à ces filtres."
           compteurSingulier="ressource" compteurPluriel="ressources"
           onSelect={handleSelectObjet} onBack={handleHome} />
+      ) : browsing === "songes" ? (
+        <SongesPage token={token} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : (
         <>
           <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelectMonstre} loading={loading} />
