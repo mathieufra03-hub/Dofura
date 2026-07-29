@@ -389,8 +389,7 @@ function BasculeSongeInterrompu({ nbSallesParRun, songeEchoue, setSongeEchoue, s
 // Écran d'ajout de drop
 // ============================================================
 
-function SongesAjoutDrop({ config, itemsTrackables, equipeActive, songeEchoue, setSongeEchoue,
-  salleAtteinte, setSalleAtteinte, dropsEnCours, setDropsEnCours, onValider, onAnnuler }) {
+function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDropsEnCours, onValider, onAnnuler }) {
   const [recherche, setRecherche] = useState("")
   const [categorieFiltre, setCategorieFiltre] = useState(null)
   const [itemSelectionne, setItemSelectionne] = useState(null)
@@ -420,7 +419,7 @@ function SongesAjoutDrop({ config, itemsTrackables, equipeActive, songeEchoue, s
   return (
     <div style={sp.page}>
       <button onClick={onAnnuler} style={sp.backBtn}>← Retour</button>
-      <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>J'ai drop quelque chose</h1>
+      <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>J'ai drop</h1>
 
       <div style={sp.card}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(20,26,46,0.95)", border: "1px solid rgba(77,216,230,0.5)", borderRadius: 10, padding: "9px 14px", marginBottom: 12 }}>
@@ -492,9 +491,6 @@ function SongesAjoutDrop({ config, itemsTrackables, equipeActive, songeEchoue, s
           </div>
         )}
 
-        <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
-          salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
-
         <button onClick={onValider} style={{ ...sp.btnVert, width: "100%", marginTop: 16 }}>
           Valider le drop
         </button>
@@ -514,20 +510,15 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   songeEchoue, setSongeEchoue, salleAtteinte, setSalleAtteinte, dropsEnCours,
   vagueFinale, setVagueFinale, nombreTours, setNombreTours,
   chronoSecondes, chronoEnMarche, onChronoDemarrerPause, onChronoReinitialiser,
-  onSongeTermine, onOuvrirGestion, onOuvrirAjoutDrop, enregistrement, erreur, onSelectObjet }) {
+  onSongeTermine, onOuvrirGestion, onOuvrirAjoutDrop, onOuvrirMesDrops, enregistrement, erreur, onSelectObjet }) {
 
   // Sécheresse de la catégorie affichée : voir /songes/stats
   // (categories_secheresse) — calcul dédié côté backend, pas un simple
   // minimum client (les cosmétiques n'ont pas tous les mêmes paliers
-  // éligibles). Les tirages restent une info secondaire, approximée ici
-  // par le minimum sur les items de la catégorie (acceptable pour un
-  // simple sous-titre, contrairement au chiffre principal).
+  // éligibles). Seul le chiffre principal est affiché (retour d'usage,
+  // refonte du 29 juillet 2026 : plus de sous-titre "tirages").
   const infoCategorie = stats?.categories_secheresse?.find(c => c.categorie === categorieAffichee) || null
   const secheresseSonges = infoCategorie ? infoCategorie.songes_depuis_dernier_drop : null
-  const itemsCategorie = stats?.items?.filter(i => i.categorie === categorieAffichee) || []
-  const secheresseTirages = itemsCategorie.length > 0 ? Math.min(...itemsCategorie.map(i => i.tirages_depuis_dernier_drop)) : null
-
-  const vaguesRequises = config.vagues_requises?.[intensiteNiveau.intensite] || 1
 
   const totalPagesHistorique = Math.max(Math.ceil((historique.total || 0) / 10), 1)
 
@@ -551,9 +542,12 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   return (
     <div style={sp.page}>
       <button onClick={onBack} style={sp.backBtn}>← Retour</button>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
         <h1 className="df-section-title" style={{ fontSize: 20, margin: 0 }}>Suivi de Songes</h1>
-        <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          <button onClick={onOuvrirMesDrops} style={sp.lienDiscret}>🎁 Mes drops</button>
+          <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
+        </div>
       </div>
 
       {/* 1. Sélecteur de catégorie, au-dessus du compteur */}
@@ -565,7 +559,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         ))}
       </div>
 
-      {/* 2. Compteur principal : nombre de songes, tirages en secondaire, reference theorique */}
+      {/* 2. Compteur principal : uniquement le gros chiffre, rien d'autre (retour d'usage) */}
       <div style={{ ...sp.card, textAlign: "center", padding: "26px 20px" }}>
         <div style={{ fontSize: 12, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
           Sans {CATEGORIE_MOT_SINGULIER[categorieAffichee]} depuis
@@ -573,15 +567,9 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         {secheresseSonges == null ? (
           <div style={{ color: "var(--df-text-3)", fontSize: 14 }}>Aucune donnée pour cette intensité pour l'instant.</div>
         ) : (
-          <>
-            <div style={{ fontSize: "clamp(38px, 11vw, 58px)", fontWeight: 800, color: "var(--df-red)", lineHeight: 1 }}>
-              {formaterNombre(secheresseSonges)}
-            </div>
-            <div style={{ fontSize: 13, color: "var(--df-text-2)", marginTop: 4 }}>
-              songe{secheresseSonges !== 1 ? "s" : ""}
-              {secheresseTirages != null ? ` · ${formaterNombre(secheresseTirages)} tirage${secheresseTirages !== 1 ? "s" : ""}` : ""}
-            </div>
-          </>
+          <div style={{ fontSize: "clamp(38px, 11vw, 58px)", fontWeight: 800, color: "var(--df-red)", lineHeight: 1 }}>
+            {formaterNombre(secheresseSonges)}
+          </div>
         )}
       </div>
 
@@ -601,14 +589,36 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
             ))
           )}
         </select>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(20,26,46,0.95)", border: "1px solid rgba(255,198,61,0.4)", borderRadius: 999, padding: "6px 8px 6px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(20,26,46,0.95)", border: "1px solid rgba(255,198,61,0.4)", borderRadius: 999, padding: "6px 8px 6px 14px", marginLeft: "auto" }}>
           <span style={{ fontSize: 13, color: "var(--df-text)", fontVariantNumeric: "tabular-nums", minWidth: 56 }}>
             {formaterDuree(chronoSecondes)}
           </span>
-          <button onClick={onChronoDemarrerPause} style={{ ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5 }}>
+          <button onClick={onChronoDemarrerPause} style={{
+            ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5, fontWeight: 700, border: "none",
+            background: chronoEnMarche ? "var(--df-red)" : "var(--df-green)",
+            color: chronoEnMarche ? "#fff" : "#0A2118",
+          }}>
             {chronoEnMarche ? "Pause" : "Démarrer"}
           </button>
           <button onClick={onChronoReinitialiser} title="Réinitialiser" style={{ ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5 }}>↺</button>
+        </div>
+      </div>
+
+      {/* Combat final a vagues (SONGES.md §3.2) et nombre de tours : optionnels,
+          disponibles a chaque validation, au-dessus du bouton Songe terminé.
+          Pas de plafond sur la vague finale — le combat comporte des vagues
+          bonus au-dela du minimum requis pour gagner, le joueur choisit
+          librement (retour d'usage, refonte du 29 juillet 2026). */}
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <label style={{ fontSize: 12, color: "var(--df-text-3)" }}>Vague finale (optionnel)</label>
+          <input type="number" min={1} value={vagueFinale} onChange={e => setVagueFinale(e.target.value)}
+            style={{ width: 56, ...sp.champ, padding: "5px 8px", fontSize: 12.5 }} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <label style={{ fontSize: 12, color: "var(--df-text-3)" }}>Nombre de tours (optionnel)</label>
+          <input type="number" min={1} value={nombreTours} onChange={e => setNombreTours(e.target.value)}
+            style={{ width: 56, ...sp.champ, padding: "5px 8px", fontSize: 12.5 }} />
         </div>
       </div>
 
@@ -618,7 +628,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
           Songe terminé
         </button>
         <button onClick={onOuvrirAjoutDrop} style={sp.btnOrContour}>
-          J'ai drop quelque chose
+          J'ai drop
         </button>
       </div>
 
@@ -636,24 +646,6 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
           Enregistrer ce songe
         </button>
       )}
-
-      {/* Combat final a vagues (SONGES.md §3.2) : optionnel, disponible a
-          chaque validation, pas seulement en cas d'interruption. */}
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <label style={{ fontSize: 12, color: "var(--df-text-3)" }}>Vague finale (optionnel)</label>
-          <select value={vagueFinale} onChange={e => setVagueFinale(e.target.value)}
-            style={{ ...sp.select, borderRadius: 8, padding: "5px 10px", fontSize: 12.5 }}>
-            <option value="">—</option>
-            {Array.from({ length: vaguesRequises }, (_, i) => i + 1).map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <label style={{ fontSize: 12, color: "var(--df-text-3)" }}>Nombre de tours (optionnel)</label>
-          <input type="number" min={1} value={nombreTours} onChange={e => setNombreTours(e.target.value)}
-            style={{ width: 56, ...sp.champ, padding: "5px 8px", fontSize: 12.5 }} />
-        </div>
-      </div>
 
       {erreur && <div style={{ color: "var(--df-red)", fontSize: 12.5, marginTop: 10 }}>{erreur}</div>}
 
@@ -724,6 +716,84 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
 }
 
 // ============================================================
+// Page dédiée "Mes drops" (refonte interface, 29 juillet 2026)
+// ============================================================
+
+function SongesMesDropsPage({ token, personnages, onBack, onSelectObjet }) {
+  const [categorieFiltre, setCategorieFiltre] = useState(null)
+  const [persoFiltre, setPersoFiltre] = useState(null)
+  const [page, setPage] = useState(1)
+  const [donnees, setDonnees] = useState({ total: 0, drops: [] })
+  const [chargement, setChargement] = useState(true)
+
+  useEffect(() => { setPage(1) }, [categorieFiltre, persoFiltre])
+
+  useEffect(() => {
+    setChargement(true)
+    const params = new URLSearchParams({ page, page_size: 20 })
+    if (categorieFiltre) params.set("categorie", categorieFiltre)
+    if (persoFiltre) params.set("perso_id", persoFiltre)
+    fetch(`${API}/songes/drops?${params}`, { headers: authHeaders(token) })
+      .then(r => r.json()).then(d => { setDonnees(d); setChargement(false) })
+  }, [token, categorieFiltre, persoFiltre, page])
+
+  const totalPages = Math.max(Math.ceil((donnees.total || 0) / 20), 1)
+
+  return (
+    <div style={sp.page}>
+      <button onClick={onBack} style={sp.backBtn}>← Retour</button>
+      <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>🎁 Mes drops</h1>
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
+        <span onClick={() => setCategorieFiltre(null)} style={sp.pill(categorieFiltre === null)}>Toutes</span>
+        {ORDRE_CATEGORIES.map(c => (
+          <span key={c} onClick={() => setCategorieFiltre(c)} style={sp.pill(categorieFiltre === c)}>
+            {CATEGORIE_LABELS_SELECTEUR[c]}
+          </span>
+        ))}
+        <select value={persoFiltre || ""} onChange={e => setPersoFiltre(e.target.value ? Number(e.target.value) : null)}
+          style={{ ...sp.select, marginLeft: "auto" }}>
+          <option value="">Tous les personnages</option>
+          {personnages.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
+        </select>
+      </div>
+
+      {chargement ? (
+        <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Chargement...</div>
+      ) : donnees.drops.length === 0 ? (
+        <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Aucun drop ne correspond.</div>
+      ) : (
+        donnees.drops.map(d => (
+          <div key={d.id} style={{ background: "rgba(20,26,46,0.9)", border: "1px solid rgba(255,198,61,0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span onClick={() => onSelectObjet(d.item_id)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: "1 1 240px", minWidth: 0 }}>
+                {d.item_img ? <img src={d.item_img} alt="" style={{ width: 26, height: 26, objectFit: "contain" }} /> : null}
+                <span style={{ fontSize: 13.5, color: "var(--df-gold)", fontWeight: 700 }}>
+                  {d.item_nom}{d.quantite > 1 ? ` ×${d.quantite}` : ""}
+                </span>
+                <span style={{ fontSize: 11.5, color: "var(--df-text-3)" }}>
+                  — {d.perso_nom} · {d.intensite.charAt(0).toUpperCase() + d.intensite.slice(1)} {NOMS_PALIERS_ROMAINS[d.niveau] || d.niveau}
+                  {d.palier ? ` · palier ${NOMS_PALIERS_ROMAINS[d.palier]}` : ""}
+                </span>
+              </span>
+              <span style={{ fontSize: 11.5, color: "var(--df-text-3)", whiteSpace: "nowrap" }}>{formaterDate(d.date_drop)}</span>
+            </div>
+          </div>
+        ))
+      )}
+
+      {totalPages > 1 && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ ...sp.btnFantome, opacity: page <= 1 ? 0.5 : 1 }}>← Précédent</button>
+          <span style={{ fontSize: 12, color: "var(--df-text-2)" }}>Page {page} / {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ ...sp.btnFantome, opacity: page >= totalPages ? 0.5 : 1 }}>Suivant →</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
 // Racine
 // ============================================================
 
@@ -748,7 +818,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
     return ORDRE_CATEGORIES.includes(v) ? v : "legende"
   })
 
-  const [mode, setMode] = useState("principal") // "principal" | "ajout-drop" | "gestion"
+  const [mode, setMode] = useState("principal") // "principal" | "ajout-drop" | "gestion" | "mes-drops"
   const [dropsEnCours, setDropsEnCours] = useState([])
   const [songeEchoue, setSongeEchoue] = useState(false)
   const [salleAtteinte, setSalleAtteinte] = useState(26)
@@ -908,6 +978,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   }
 
   const ouvrirAjoutDrop = () => { setErreur(""); setMode("ajout-drop") }
+  const ouvrirMesDrops = () => setMode("mes-drops")
   const retourAuPrincipal = () => { setErreur(""); setMode("principal") }
 
   if (!token) return <SongesConnexionRequise onBack={onBack} />
@@ -936,11 +1007,14 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   }
 
   if (mode === "ajout-drop") {
-    return <SongesAjoutDrop config={config} itemsTrackables={itemsTrackables} equipeActive={equipeActive}
-      songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue} salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte}
+    return <SongesAjoutDrop itemsTrackables={itemsTrackables} equipeActive={equipeActive}
       dropsEnCours={dropsEnCours} setDropsEnCours={setDropsEnCours}
       onValider={retourAuPrincipal}
       onAnnuler={retourAuPrincipal} />
+  }
+
+  if (mode === "mes-drops") {
+    return <SongesMesDropsPage token={token} personnages={personnages} onBack={retourAuPrincipal} onSelectObjet={onSelectObjet} />
   }
 
   return (
@@ -959,7 +1033,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
       chronoSecondes={chronoSecondes} chronoEnMarche={chronoEnMarche}
       onChronoDemarrerPause={chronoDemarrerPause} onChronoReinitialiser={chronoReinitialiser}
       onSongeTermine={enregistrerRun}
-      onOuvrirGestion={() => setMode("gestion")} onOuvrirAjoutDrop={ouvrirAjoutDrop}
+      onOuvrirGestion={() => setMode("gestion")} onOuvrirAjoutDrop={ouvrirAjoutDrop} onOuvrirMesDrops={ouvrirMesDrops}
       enregistrement={enregistrement} erreur={erreur} onSelectObjet={onSelectObjet}
     />
   )

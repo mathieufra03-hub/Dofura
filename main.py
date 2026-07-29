@@ -2466,10 +2466,8 @@ def songes_creer_run(body: RunBody, user: dict = Depends(utilisateur_courant)):
         raise HTTPException(status_code=400, detail="Au moins un participant requis")
     if body.duree_secondes is not None and body.duree_secondes < 0:
         raise HTTPException(status_code=400, detail="duree_secondes doit etre >= 0")
-    if body.vague_finale is not None:
-        max_vagues = songes_config.VAGUES_REQUISES.get(body.intensite)
-        if max_vagues is None or not (1 <= body.vague_finale <= max_vagues):
-            raise HTTPException(status_code=400, detail=f"vague_finale doit etre entre 1 et {max_vagues} pour {body.intensite}")
+    if body.vague_finale is not None and body.vague_finale < 1:
+        raise HTTPException(status_code=400, detail="vague_finale doit etre >= 1")
     if body.nombre_tours is not None and body.nombre_tours < 1:
         raise HTTPException(status_code=400, detail="nombre_tours doit etre >= 1")
 
@@ -2615,6 +2613,62 @@ def songes_historique(page: int = 1, page_size: int = 20, user: dict = Depends(u
         "duree_secondes": r["duree_secondes"], "vague_finale": r["vague_finale"], "nombre_tours": r["nombre_tours"],
     } for r in runs]
     return {"total": total, "page": page, "page_size": page_size, "songes": songes}
+
+@app.get("/songes/drops")
+def songes_liste_drops(categorie: Optional[str] = None, perso_id: Optional[int] = None,
+                        page: int = 1, page_size: int = 20, user: dict = Depends(utilisateur_courant)):
+    """Page dediee "Mes drops" (refonte interface) : liste plate de tous
+    les drops de l'utilisateur, plus recent d'abord, filtrable par
+    categorie et par personnage. Distincte de /songes/historique (qui
+    reste groupe par songe, sur l'ecran principal)."""
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 100)
+    conn = get_db()
+    cur = conn.cursor()
+
+    conditions = ["r.user_id = ?"]
+    params = [user["id"]]
+    if categorie:
+        conditions.append("si.categorie = ?")
+        params.append(categorie)
+    if perso_id:
+        conditions.append("d.perso_id = ?")
+        params.append(perso_id)
+    where_clause = " AND ".join(conditions)
+
+    cur.execute(f"""
+        SELECT COUNT(*)
+        FROM songe_drops d
+        JOIN songe_runs r ON r.id = d.run_id
+        LEFT JOIN songe_items_trackables si ON si.item_id = d.item_id
+        WHERE {where_clause}
+    """, params)
+    total = cur.fetchone()[0]
+
+    cur.execute(f"""
+        SELECT d.id, d.item_id, o.nom AS item_nom, o.img AS item_img, si.categorie,
+               d.perso_id, p.nom AS perso_nom, d.quantite, d.palier, d.cree_le,
+               d.run_id, r.intensite, r.niveau
+        FROM songe_drops d
+        JOIN songe_runs r ON r.id = d.run_id
+        JOIN songe_personnages p ON p.id = d.perso_id
+        JOIN objets o ON o.id = d.item_id
+        LEFT JOIN songe_items_trackables si ON si.item_id = d.item_id
+        WHERE {where_clause}
+        ORDER BY d.cree_le DESC, d.id DESC
+        LIMIT ? OFFSET ?
+    """, params + [page_size, (page - 1) * page_size])
+    rows = cur.fetchall()
+    conn.close()
+
+    return {"total": total, "page": page, "page_size": page_size, "drops": [
+        {
+            "id": r["id"], "item_id": r["item_id"], "item_nom": r["item_nom"], "item_img": r["item_img"],
+            "categorie": r["categorie"], "perso_id": r["perso_id"], "perso_nom": r["perso_nom"],
+            "quantite": r["quantite"], "palier": r["palier"], "date_drop": r["cree_le"],
+            "run_id": r["run_id"], "intensite": r["intensite"], "niveau": r["niveau"],
+        } for r in rows
+    ]}
 
 @app.delete("/songes/drops/{drop_id}")
 def songes_supprimer_drop(drop_id: int, user: dict = Depends(utilisateur_courant)):

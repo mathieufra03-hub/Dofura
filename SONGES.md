@@ -341,6 +341,7 @@ C'est le calcul qui distingue un tracker sérieux d'un compteur naïf, et aucun 
 | DELETE | `/songes/runs/{id}` | Supprimer un songe (n'importe lequel, pas que le dernier — voir §10) |
 | DELETE | `/songes/drops/{id}` | Supprimer un drop individuel, sans toucher au reste du songe |
 | GET | `/songes/historique` | Songes enregistrés, paginés, du plus récent au plus ancien, drops imbriqués (voir §10) |
+| GET | `/songes/drops` | Liste plate de tous les drops de l'utilisateur, paginée, filtrable par `categorie`/`perso_id` — page dédiée "Mes drops" (voir §10) |
 | GET | `/songes/journal` | Entrées archivées par "Tout supprimer" — lecture seule (voir §10) |
 | DELETE | `/songes/tout` | Supprime tous les songes/participants/drops de l'utilisateur, archive les drops dans `songe_journal` au préalable (voir §10) |
 | GET | `/songes/stats` | Statistiques calculées (voir §9) |
@@ -366,7 +367,20 @@ C'est le calcul qui distingue un tracker sérieux d'un compteur naïf, et aucun 
 
 Le backend calcule `nb_combats` depuis `salle_atteinte` et `COMBATS_PAR_PALIER`. `source_nb_combats` vaut `estime`, sauf saisie manuelle explicite.
 
-`duree_secondes`, `vague_finale`, `nombre_tours` sont **tous optionnels** (`null` si non renseignés, refonte interface du 29 juillet 2026) : chronomètre de base, vague atteinte au combat final (bornée par `VAGUES_REQUISES[intensite]`, §3.2/§6) et nombre de tours. Validés côté backend (`duree_secondes >= 0`, `1 <= vague_finale <= VAGUES_REQUISES[intensite]`, `nombre_tours >= 1`) sans jamais bloquer leur absence. `GET /songes/config` expose désormais aussi `vagues_requises` pour que le frontend borne son sélecteur sans rien coder en dur. `GET /songes/historique` renvoie les 3 champs sur chaque songe (affichés dans la ligne de résumé de l'historique s'ils sont renseignés).
+`duree_secondes`, `vague_finale`, `nombre_tours` sont **tous optionnels** (`null` si non renseignés, refonte interface du 29 juillet 2026) : chronomètre de base, vague atteinte au combat final et nombre de tours. Validés côté backend (`duree_secondes >= 0`, `vague_finale >= 1`, `nombre_tours >= 1`) sans jamais bloquer leur absence. **`vague_finale` n'est volontairement pas plafonnée** (retour d'usage du 29 juillet 2026, revenant sur un plafond initial à `VAGUES_REQUISES[intensite]`) : le combat final comporte des vagues bonus au-delà du minimum requis pour gagner (ex. Paradoxe I peut aller bien au-delà de 3), le joueur choisit librement la valeur qu'il a réellement atteinte. `VAGUES_REQUISES`/`vagues_requises` (config et `GET /songes/config`) restent en place à titre documentaire (le minimum réel pour gagner, §3.2) mais ne bornent plus aucune saisie. `GET /songes/historique` renvoie les 3 champs sur chaque songe (affichés dans la ligne de résumé de l'historique s'ils sont renseignés).
+
+`GET /songes/drops` — page dédiée "Mes drops" (liste plate, pas groupée par songe), paramètres `categorie`/`perso_id` optionnels + `page`/`page_size` :
+
+```json
+{
+  "total": 12, "page": 1, "page_size": 20,
+  "drops": [
+    { "id": 12, "item_id": 20658, "item_nom": "...", "item_img": "...", "categorie": "cosmetique",
+      "perso_id": 1, "perso_nom": "Krosaure", "quantite": 1, "palier": 5, "date_drop": "...",
+      "run_id": 7, "intensite": "paradoxe", "niveau": 1 }
+  ]
+}
+```
 
 `GET /songes/historique` — réponse (un "songe" = une ligne de `songe_runs`, drops imbriqués) :
 
@@ -442,21 +456,27 @@ Sous le compteur, la référence théorique vient de `/songes/estimation?categor
 
 ### Écran principal — une page, pas un formulaire
 
-1. **Bouton retour** — flèche `← Retour` en haut à gauche de l'encadré principal (refonte du 29 juillet 2026), vers l'accueil du site.
+1. **Bouton retour** — flèche `← Retour` en haut à gauche de l'encadré principal, vers l'accueil du site. En haut à droite : lien `🎁 Mes drops` (nouvelle page dédiée, voir plus bas) et `⚙ Personnages & teams`.
 2. **Sélecteur de catégorie** — Légendes / Légendes animales / Cosmétiques / Runes, au-dessus du compteur. Change le compteur.
-3. **Compteur principal** — titre adapté à la catégorie ("Sans légende depuis", "Sans cosmétique depuis"...) ; chiffre géant = **nombre de songes** depuis le dernier drop de la catégorie (§9) ; tirages en petit en dessous, secondaire. **La référence théorique ("il en faut ~X en moyenne...") a été retirée** (retour d'usage du 29 juillet 2026, jugée pas assez fiable/utile en pratique) — `/songes/estimation` reste disponible côté API mais n'est plus consommée par cet écran.
-4. **Contexte** — trois éléments compacts : team, intensité, et un **chronomètre optionnel** (Démarrer/Pause + réinitialiser) que les joueurs peuvent utiliser librement ; il s'arrête (et se réinitialise) automatiquement quand le songe est validé via `Songe terminé`. Sa valeur est envoyée en `duree_secondes` si non nulle, sinon `null` (jamais imposé).
-5. **Action** — `Songe terminé` (vert, le plus gros, cas à 95 %) et `J'ai drop quelque chose` (contour or). Un indicateur `X drop(s) en attente` apparaît sous les actions dès qu'au moins un drop a été ajouté sur l'écran d'ajout de drop sans que le songe ait encore été validé.
-6. **Si le songe n'est pas terminé** : un seul champ, la salle atteinte (1-26).
-7. **Champs optionnels à chaque validation** (pas seulement en cas d'interruption) — "Vague finale" (bornée 1..`VAGUES_REQUISES[intensite]`, combat final à vagues §3.2) et "Nombre de tours", tous deux sans influence l'un sur l'autre.
+3. **Compteur principal** — titre adapté à la catégorie ("Sans légende depuis", "Sans cosmétique depuis"...) ; **uniquement le chiffre géant** (nombre de songes depuis le dernier drop de la catégorie, §9), rien d'autre en dessous. Le sous-titre "songes · X tirages" et la référence théorique ("il en faut ~X en moyenne...") ont tous deux été retirés (retours d'usage du 29 juillet 2026, jugés pas assez lisibles/fiables en pratique) — `/songes/estimation` reste disponible côté API mais n'est plus consommée par cet écran.
+4. **Contexte** — team et intensité à gauche, puis un **chronomètre optionnel** aligné à la limite droite de la ligne (`margin-left: auto`) : Démarrer (bouton vert) / Pause (bouton rouge, une fois lancé) + réinitialiser. Les joueurs l'utilisent librement ; il s'arrête (et se réinitialise) automatiquement quand le songe est validé via `Songe terminé`. Sa valeur est envoyée en `duree_secondes` si non nulle, sinon `null` (jamais imposé).
+5. **Champs optionnels, au-dessus du bouton `Songe terminé`** — "Vague finale" et "Nombre de tours", deux champs numériques libres (`min 1`, **sans plafond** — voir §8 sur la raison), disponibles à chaque validation et pas seulement en cas d'interruption, sans influence l'un sur l'autre.
+6. **Action** — `Songe terminé` (vert, le plus gros, cas à 95 %) et `J'ai drop` (contour or, texte raccourci lors de la refonte du 29 juillet 2026 — anciennement "J'ai drop quelque chose"). Un indicateur `X drop(s) en attente` apparaît sous les actions dès qu'au moins un drop a été ajouté sur l'écran d'ajout de drop sans que le songe ait encore été validé.
+7. **Si le songe n'est pas terminé** : un seul champ, la salle atteinte (1-26).
 8. **Historique des songes** — tous les songes enregistrés, du plus récent au plus ancien (pas seulement les drops) : numéro, date, intensité, team, salle atteinte, drops éventuels, plus durée/vague finale/nombre de tours quand renseignés (ex. `Paradoxe I · farm songe · 29/07/26 16:06 · durée : 19 min · Vague finale : 3`). Chaque songe est supprimable individuellement (pas que le dernier) ; chaque drop d'un songe a sa propre croix de suppression, avec confirmation. Les numéros de songe ne sont **jamais renumérotés** après suppression — un trou est normal. Pagination ou défilement (la liste peut devenir longue).
 9. **Annulation rapide** — lien visible pour annuler le tout dernier songe enregistré (raccourci ; l'historique du point 8 permet aussi de supprimer n'importe quel autre songe).
 
 ### Écran d'ajout de drop
 
-Champ de recherche + filtres par catégorie (Légendes/Légendes animales/Cosmétiques/Rune astrale, avec leurs comptes réels) + sélection du personnage parmi les participants du songe + palier optionnel, jamais bloquant + plusieurs drops possibles sur un même songe.
+Titre `J'ai drop` (raccourci depuis "J'ai drop quelque chose", 29 juillet 2026). Champ de recherche + filtres par catégorie (Légendes/Légendes animales/Cosmétiques/Rune astrale, avec leurs comptes réels) + sélection du personnage parmi les participants du songe + palier optionnel, jamais bloquant + plusieurs drops possibles sur un même songe.
 
-**Ajouter un drop ne valide plus le songe** (refonte du 29 juillet 2026) : le bouton `Valider le drop` (ex-`Valider le songe`) et le lien `← Retour` (ex-`← Retour sans enregistrer`) ramènent tous les deux à l'écran principal **sans rien envoyer au backend** — les drops ajoutés restent en mémoire (`dropsEnCours`), affichés par l'indicateur "X drop(s) en attente" du point 5 ci-dessus. Seul `Songe terminé` sur l'écran principal envoie réellement `POST /songes/runs` avec les drops accumulés. La bascule "songe interrompu"/salle atteinte reste accessible et persistante entre les deux écrans tant que le songe n'a pas été validé ou explicitement quitté.
+**Ajouter un drop ne valide plus le songe** (refonte du 29 juillet 2026) : le bouton `Valider le drop` (ex-`Valider le songe`) et le lien `← Retour` (ex-`← Retour sans enregistrer`) ramènent tous les deux à l'écran principal **sans rien envoyer au backend** — les drops ajoutés restent en mémoire (`dropsEnCours`), affichés par l'indicateur "X drop(s) en attente" du point 6 ci-dessus. Seul `Songe terminé` sur l'écran principal envoie réellement `POST /songes/runs` avec les drops accumulés.
+
+**Le lien "Le songe s'est arrêté en cours de route ?" n'apparaît plus sur cet écran** (retiré le 29 juillet 2026 — un drop suppose que le songe continue, la bascule "songe interrompu" n'a de sens que sur l'écran principal où elle reste disponible).
+
+### Page dédiée "Mes drops"
+
+Nouvelle page (29 juillet 2026), accessible depuis le lien `🎁 Mes drops` en haut de l'écran principal. Liste **plate** de tous les drops de l'utilisateur (pas groupée par songe, contrairement à l'historique des songes ci-dessus) — icône, nom cliquable vers la fiche objet, personnage, intensité/palier, date. Barre de filtre en haut : pastilles de catégorie (Toutes/Légendes/Légendes animales/Cosmétiques/Runes, même composant que le sélecteur de catégorie de l'écran principal) + menu déroulant personnage. Pagination (20/page). Alimentée par `GET /songes/drops` (§8) — endpoint dédié plutôt qu'un simple aplatissement de `/songes/historique`, pour une pagination correcte indépendante du nombre de songes.
 
 ### Panneau de gestion (personnages/teams inchangé — voir ci-dessous)
 
@@ -510,3 +530,4 @@ Le champ `user_id` est présent sur toutes les tables du tracker.
 
 - **29 juillet 2026 — Refonte interface (v3)** : vocabulaire "songe" partout côté utilisateur ("run" reste interne) ; compteur principal en nombre de songes (plus tirages en secondaire) avec sélecteur de catégorie et référence théorique obligatoire ; historique des songes complet (pas seulement les drops), suppression individuelle d'un songe ou d'un drop ; "Tout supprimer" avec archivage préalable dans `songe_journal` (nouvelle table protégée) ; préparation (structure vide) des messages d'ambiance dans `config/messages_songes.py`. Le panneau de gestion personnages/teams n'a pas changé.
 - **29 juillet 2026 — Refonte interface (v4)** : bouton retour en haut à gauche de l'écran principal ; suppression de la référence théorique affichée dans le compteur (jugée pas assez fiable en pratique après usage réel) ; chronomètre optionnel (Démarrer/Pause/Réinitialiser) à côté des pastilles team/intensité, arrêté et réinitialisé automatiquement à la validation du songe, durée affichée dans l'historique ; deux champs optionnels supplémentaires disponibles à chaque validation — "Vague finale" (bornée par la nouvelle constante `VAGUES_REQUISES`, §6) et "Nombre de tours" ; l'ajout d'un drop ne valide plus le songe (boutons renommés `Valider le drop`/`← Retour`), seul `Songe terminé` sur l'écran principal envoie réellement la requête, avec un indicateur "X drop(s) en attente" tant que ce n'est pas fait. Colonnes `duree_secondes`/`vague_finale`/`nombre_tours` ajoutées à `songe_runs` par migration idempotente dans `init_db.py` (`PRAGMA table_info` + `ALTER TABLE ADD COLUMN`), appliquée à la base locale après backup.
+- **29 juillet 2026 — Refonte interface (v5)** : retour d'usage sur le v4, corrigé le jour même. "Vague finale" déplafonnée (le combat final comporte des vagues bonus au-delà du minimum requis pour gagner — `VAGUES_REQUISES` reste en config à titre documentaire mais ne borne plus la saisie, qui devient un champ numérique libre comme "Nombre de tours") ; chronomètre déplacé à la limite droite de sa ligne (`margin-left: auto`), bouton vert "Démarrer"/rouge "Pause" selon l'état ; "Vague finale"/"Nombre de tours" remontés au-dessus du bouton `Songe terminé` (au lieu d'être après la bascule "songe interrompu") ; bouton/titre "J'ai drop quelque chose" raccourci en "J'ai drop" ; toggle "Le songe s'est arrêté en cours de route ?" retiré de l'écran d'ajout de drop (n'a de sens que sur l'écran principal) ; suppression du sous-titre "songe · X tirages" sous le compteur principal, qui n'affiche plus que le chiffre. Nouvelle page dédiée **"Mes drops"** (lien `🎁 Mes drops` sur l'écran principal) : liste plate de tous les drops, filtrable par catégorie et personnage, alimentée par le nouvel endpoint `GET /songes/drops` (§8) — distincte de l'historique des songes, qui reste groupé par songe et inchangé sur l'écran principal.
