@@ -2323,6 +2323,9 @@ class RunBody(BaseModel):
     team_id: Optional[int] = None
     note: Optional[str] = None
     nb_combats: Optional[int] = None  # saisie manuelle explicite, sinon estime
+    duree_secondes: Optional[int] = None  # chronometre optionnel, refonte interface
+    vague_finale: Optional[int] = None    # combat final a vagues, optionnel
+    nombre_tours: Optional[int] = None    # optionnel, sans lien avec vague_finale
 
 @app.get("/songes/config")
 def songes_recuperer_config():
@@ -2337,6 +2340,7 @@ def songes_recuperer_config():
             "intensite": songes_config.INTENSITE_DEFAUT[0],
             "niveau": songes_config.INTENSITE_DEFAUT[1],
         },
+        "vagues_requises": songes_config.VAGUES_REQUISES,
     }
 
 @app.get("/songes/items-trackables")
@@ -2460,6 +2464,14 @@ def songes_creer_run(body: RunBody, user: dict = Depends(utilisateur_courant)):
         raise HTTPException(status_code=400, detail=f"salle_atteinte doit etre entre 1 et {songes_config.NB_SALLES_PAR_RUN}")
     if not body.participants:
         raise HTTPException(status_code=400, detail="Au moins un participant requis")
+    if body.duree_secondes is not None and body.duree_secondes < 0:
+        raise HTTPException(status_code=400, detail="duree_secondes doit etre >= 0")
+    if body.vague_finale is not None:
+        max_vagues = songes_config.VAGUES_REQUISES.get(body.intensite)
+        if max_vagues is None or not (1 <= body.vague_finale <= max_vagues):
+            raise HTTPException(status_code=400, detail=f"vague_finale doit etre entre 1 et {max_vagues} pour {body.intensite}")
+    if body.nombre_tours is not None and body.nombre_tours < 1:
+        raise HTTPException(status_code=400, detail="nombre_tours doit etre >= 1")
 
     conn = get_db()
     cur = conn.cursor()
@@ -2505,10 +2517,12 @@ def songes_creer_run(body: RunBody, user: dict = Depends(utilisateur_courant)):
 
     cur.execute("""
         INSERT INTO songe_runs (user_id, intensite, niveau, terminee, salle_atteinte,
-                                 nb_combats, source_nb_combats, team_id, note)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                 nb_combats, source_nb_combats, team_id, note,
+                                 duree_secondes, vague_finale, nombre_tours)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (user["id"], body.intensite, body.niveau, int(body.terminee), body.salle_atteinte,
-          nb_combats, source_nb_combats, body.team_id, body.note))
+          nb_combats, source_nb_combats, body.team_id, body.note,
+          body.duree_secondes, body.vague_finale, body.nombre_tours))
     run_id = cur.lastrowid
 
     for perso_id in participants_set:
@@ -2528,6 +2542,7 @@ def songes_creer_run(body: RunBody, user: dict = Depends(utilisateur_courant)):
         "nb_combats": nb_combats, "source_nb_combats": source_nb_combats,
         "participants": sorted(participants_set),
         "drops": [d.model_dump() for d in body.drops],
+        "duree_secondes": body.duree_secondes, "vague_finale": body.vague_finale, "nombre_tours": body.nombre_tours,
     }
 
 @app.delete("/songes/runs/{run_id}")
@@ -2561,7 +2576,8 @@ def songes_historique(page: int = 1, page_size: int = 20, user: dict = Depends(u
 
     cur.execute("""
         SELECT r.id, r.date_run, r.intensite, r.niveau, r.terminee, r.salle_atteinte,
-               r.nb_combats, r.source_nb_combats, t.nom AS team_nom
+               r.nb_combats, r.source_nb_combats, t.nom AS team_nom,
+               r.duree_secondes, r.vague_finale, r.nombre_tours
         FROM songe_runs r
         LEFT JOIN songe_teams t ON t.id = r.team_id
         WHERE r.user_id = ?
@@ -2596,6 +2612,7 @@ def songes_historique(page: int = 1, page_size: int = 20, user: dict = Depends(u
         "terminee": bool(r["terminee"]), "salle_atteinte": r["salle_atteinte"],
         "nb_combats": r["nb_combats"], "source_nb_combats": r["source_nb_combats"],
         "team_nom": r["team_nom"], "drops": drops_par_run.get(r["id"], []),
+        "duree_secondes": r["duree_secondes"], "vague_finale": r["vague_finale"], "nombre_tours": r["nombre_tours"],
     } for r in runs]
     return {"total": total, "page": page, "page_size": page_size, "songes": songes}
 

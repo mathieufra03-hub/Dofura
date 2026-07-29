@@ -59,6 +59,13 @@ function formaterDate(iso) {
   return d.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
 }
 
+function formaterDuree(secondes) {
+  if (secondes == null) return null
+  const m = Math.floor(secondes / 60)
+  const s = secondes % 60
+  return m > 0 ? `${m} min ${s} s` : `${s} s`
+}
+
 function IconeRecherche() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -383,7 +390,7 @@ function BasculeSongeInterrompu({ nbSallesParRun, songeEchoue, setSongeEchoue, s
 // ============================================================
 
 function SongesAjoutDrop({ config, itemsTrackables, equipeActive, songeEchoue, setSongeEchoue,
-  salleAtteinte, setSalleAtteinte, dropsEnCours, setDropsEnCours, onValider, onAnnuler, enregistrement, erreur }) {
+  salleAtteinte, setSalleAtteinte, dropsEnCours, setDropsEnCours, onValider, onAnnuler }) {
   const [recherche, setRecherche] = useState("")
   const [categorieFiltre, setCategorieFiltre] = useState(null)
   const [itemSelectionne, setItemSelectionne] = useState(null)
@@ -412,7 +419,7 @@ function SongesAjoutDrop({ config, itemsTrackables, equipeActive, songeEchoue, s
 
   return (
     <div style={sp.page}>
-      <button onClick={onAnnuler} style={sp.backBtn}>← Retour sans enregistrer</button>
+      <button onClick={onAnnuler} style={sp.backBtn}>← Retour</button>
       <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>J'ai drop quelque chose</h1>
 
       <div style={sp.card}>
@@ -488,10 +495,8 @@ function SongesAjoutDrop({ config, itemsTrackables, equipeActive, songeEchoue, s
         <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
           salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
 
-        {erreur && <div style={{ color: "var(--df-red)", fontSize: 12.5, marginTop: 10 }}>{erreur}</div>}
-
-        <button disabled={enregistrement} onClick={onValider} style={{ ...sp.btnVert, width: "100%", marginTop: 16, opacity: enregistrement ? 0.6 : 1 }}>
-          Valider le songe
+        <button onClick={onValider} style={{ ...sp.btnVert, width: "100%", marginTop: 16 }}>
+          Valider le drop
         </button>
       </div>
     </div>
@@ -502,11 +507,13 @@ function SongesAjoutDrop({ config, itemsTrackables, equipeActive, songeEchoue, s
 // Écran principal
 // ============================================================
 
-function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
-  intensiteNiveau, changerIntensite, categorieAffichee, changerCategorie, stats, reference,
+function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
+  intensiteNiveau, changerIntensite, categorieAffichee, changerCategorie, stats,
   historique, pageHistorique, setPageHistorique,
   dernierRunId, onAnnulerDernierSonge, onSupprimerSonge, onSupprimerDrop,
-  songeEchoue, setSongeEchoue, salleAtteinte, setSalleAtteinte,
+  songeEchoue, setSongeEchoue, salleAtteinte, setSalleAtteinte, dropsEnCours,
+  vagueFinale, setVagueFinale, nombreTours, setNombreTours,
+  chronoSecondes, chronoEnMarche, onChronoDemarrerPause, onChronoReinitialiser,
   onSongeTermine, onOuvrirGestion, onOuvrirAjoutDrop, enregistrement, erreur, onSelectObjet }) {
 
   // Sécheresse de la catégorie affichée : voir /songes/stats
@@ -519,6 +526,8 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
   const secheresseSonges = infoCategorie ? infoCategorie.songes_depuis_dernier_drop : null
   const itemsCategorie = stats?.items?.filter(i => i.categorie === categorieAffichee) || []
   const secheresseTirages = itemsCategorie.length > 0 ? Math.min(...itemsCategorie.map(i => i.tirages_depuis_dernier_drop)) : null
+
+  const vaguesRequises = config.vagues_requises?.[intensiteNiveau.intensite] || 1
 
   const totalPagesHistorique = Math.max(Math.ceil((historique.total || 0) / 10), 1)
 
@@ -541,6 +550,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
 
   return (
     <div style={sp.page}>
+      <button onClick={onBack} style={sp.backBtn}>← Retour</button>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
         <h1 className="df-section-title" style={{ fontSize: 20, margin: 0 }}>Suivi de Songes</h1>
         <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
@@ -571,17 +581,12 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
               songe{secheresseSonges !== 1 ? "s" : ""}
               {secheresseTirages != null ? ` · ${formaterNombre(secheresseTirages)} tirage${secheresseTirages !== 1 ? "s" : ""}` : ""}
             </div>
-            <div style={{ fontSize: 12.5, color: "var(--df-text-3)", marginTop: 8, fontStyle: "italic" }}>
-              {reference == null ? "…" : reference.disponible
-                ? `il en faut ~${formaterNombre(reference.esperance_runs)} en moyenne pour cette composition`
-                : "référence non disponible"}
-            </div>
           </>
         )}
       </div>
 
-      {/* 3. Pastilles team + intensité */}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
+      {/* 3. Pastilles team + intensité + chronomètre optionnel */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 18 }}>
         <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={sp.select}>
           {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
         </select>
@@ -596,6 +601,15 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
             ))
           )}
         </select>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(20,26,46,0.95)", border: "1px solid rgba(255,198,61,0.4)", borderRadius: 999, padding: "6px 8px 6px 14px" }}>
+          <span style={{ fontSize: 13, color: "var(--df-text)", fontVariantNumeric: "tabular-nums", minWidth: 56 }}>
+            {formaterDuree(chronoSecondes)}
+          </span>
+          <button onClick={onChronoDemarrerPause} style={{ ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5 }}>
+            {chronoEnMarche ? "Pause" : "Démarrer"}
+          </button>
+          <button onClick={onChronoReinitialiser} title="Réinitialiser" style={{ ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5 }}>↺</button>
+        </div>
       </div>
 
       {/* 4. Actions */}
@@ -608,6 +622,12 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
         </button>
       </div>
 
+      {dropsEnCours.length > 0 && (
+        <div style={{ fontSize: 12.5, color: "var(--df-gold)", marginTop: 8 }}>
+          {dropsEnCours.length} drop{dropsEnCours.length > 1 ? "s" : ""} en attente
+        </div>
+      )}
+
       {/* 5. Salle atteinte, si le songe n'est pas terminé */}
       <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
         salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
@@ -616,6 +636,24 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
           Enregistrer ce songe
         </button>
       )}
+
+      {/* Combat final a vagues (SONGES.md §3.2) : optionnel, disponible a
+          chaque validation, pas seulement en cas d'interruption. */}
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <label style={{ fontSize: 12, color: "var(--df-text-3)" }}>Vague finale (optionnel)</label>
+          <select value={vagueFinale} onChange={e => setVagueFinale(e.target.value)}
+            style={{ ...sp.select, borderRadius: 8, padding: "5px 10px", fontSize: 12.5 }}>
+            <option value="">—</option>
+            {Array.from({ length: vaguesRequises }, (_, i) => i + 1).map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <label style={{ fontSize: 12, color: "var(--df-text-3)" }}>Nombre de tours (optionnel)</label>
+          <input type="number" min={1} value={nombreTours} onChange={e => setNombreTours(e.target.value)}
+            style={{ width: 56, ...sp.champ, padding: "5px 8px", fontSize: 12.5 }} />
+        </div>
+      </div>
 
       {erreur && <div style={{ color: "var(--df-red)", fontSize: 12.5, marginTop: 10 }}>{erreur}</div>}
 
@@ -643,6 +681,9 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
                 </div>
                 <div style={{ color: "var(--df-text-3)", fontSize: 11.5, marginTop: 2 }}>
                   {s.intensite.charAt(0).toUpperCase() + s.intensite.slice(1)} {NOMS_PALIERS_ROMAINS[s.niveau] || s.niveau} · {s.team_nom || "—"} · {formaterDate(s.date_run)}
+                  {s.duree_secondes != null ? ` · durée : ${formaterDuree(s.duree_secondes)}` : ""}
+                  {s.vague_finale != null ? ` · Vague finale : ${s.vague_finale}` : ""}
+                  {s.nombre_tours != null ? ` · ${s.nombre_tours} tour${s.nombre_tours > 1 ? "s" : ""}` : ""}
                 </div>
               </div>
               <button onClick={() => clicSupprimerSonge(s.id)} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
@@ -711,15 +752,30 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   const [dropsEnCours, setDropsEnCours] = useState([])
   const [songeEchoue, setSongeEchoue] = useState(false)
   const [salleAtteinte, setSalleAtteinte] = useState(26)
+  const [vagueFinale, setVagueFinale] = useState("")
+  const [nombreTours, setNombreTours] = useState("")
   const [dernierRunId, setDernierRunId] = useState(null)
   const [stats, setStats] = useState(null)
-  const [reference, setReference] = useState(null)
   const [historique, setHistorique] = useState({ songes: [], total: 0 })
   const [pageHistorique, setPageHistorique] = useState(1)
   const [journal, setJournal] = useState({ entrees: [], total: 0 })
   const [pageJournal, setPageJournal] = useState(1)
   const [enregistrement, setEnregistrement] = useState(false)
   const [erreur, setErreur] = useState("")
+
+  // Chronometre optionnel (refonte interface) : session uniquement, jamais
+  // persiste (reset au rechargement de page, comme le reste de l'etat de
+  // session — teamId/intensite sont les seules exceptions, deja en
+  // localStorage). S'arrete et se reinitialise a chaque songe enregistre.
+  const [chronoSecondes, setChronoSecondes] = useState(0)
+  const [chronoEnMarche, setChronoEnMarche] = useState(false)
+  useEffect(() => {
+    if (!chronoEnMarche) return
+    const id = setInterval(() => setChronoSecondes(s => s + 1), 1000)
+    return () => clearInterval(id)
+  }, [chronoEnMarche])
+  const chronoDemarrerPause = () => setChronoEnMarche(m => !m)
+  const chronoReinitialiser = () => { setChronoEnMarche(false); setChronoSecondes(0) }
 
   // Config + items trackables : publics, charges une seule fois (jamais en
   // dur — SONGES.md exigence non negociable).
@@ -779,20 +835,6 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   }
   useEffect(rafraichirStats, [token, teamId, intensiteNiveau]) // eslint-disable-line
 
-  // Référence théorique de la catégorie affichée : publique, dépend de la
-  // taille de l'équipe active (composition) — SONGES.md §9, jamais affichée
-  // sans elle. "disponible: false" -> "référence non disponible", jamais
-  // d'extrapolation cliente.
-  useEffect(() => {
-    if (!intensiteNiveau || !categorieAffichee) { setReference(null); return }
-    const tailleEquipe = equipeActive?.membres.length || 1
-    const params = new URLSearchParams({
-      categorie: categorieAffichee, intensite: intensiteNiveau.intensite,
-      niveau: intensiteNiveau.niveau, nb_participants: tailleEquipe,
-    })
-    fetch(`${API}/songes/estimation?${params}`).then(r => r.json()).then(setReference).catch(() => setReference(null))
-  }, [categorieAffichee, intensiteNiveau, equipeActive])
-
   const rafraichirHistorique = (page = pageHistorique) => {
     if (!token) return
     fetch(`${API}/songes/historique?page=${page}&page_size=10`, { headers: authHeaders(token) })
@@ -810,15 +852,19 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   useEffect(() => { if (mode === "gestion") rafraichirJournal(1); setPageJournal(1) }, [mode]) // eslint-disable-line
   useEffect(() => { if (mode === "gestion") rafraichirJournal(pageJournal) }, [pageJournal]) // eslint-disable-line
 
-  const enregistrerRun = ({ terminee, salleAtteinteVal, drops }) => {
+  const enregistrerRun = () => {
     if (!equipeActive || equipeActive.membres.length === 0) return
     setEnregistrement(true); setErreur("")
+    const terminee = !songeEchoue
     const participants = equipeActive.membres.map(m => m.perso_id)
     const body = {
       intensite: intensiteNiveau.intensite, niveau: intensiteNiveau.niveau,
-      terminee, salle_atteinte: terminee ? config.nb_salles_par_run : salleAtteinteVal,
+      terminee, salle_atteinte: terminee ? config.nb_salles_par_run : salleAtteinte,
       participants, team_id: teamId,
-      drops: drops.map(d => ({ perso_id: d.perso_id, item_id: d.item_id, quantite: d.quantite, palier: d.palier })),
+      drops: dropsEnCours.map(d => ({ perso_id: d.perso_id, item_id: d.item_id, quantite: d.quantite, palier: d.palier })),
+      duree_secondes: chronoSecondes > 0 ? chronoSecondes : null,
+      vague_finale: vagueFinale ? Number(vagueFinale) : null,
+      nombre_tours: nombreTours ? Number(nombreTours) : null,
     }
     fetch(`${API}/songes/runs`, { method: "POST", headers: authHeaders(token, true), body: JSON.stringify(body) })
       .then(async r => { if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || "Erreur d'enregistrement") }; return r.json() })
@@ -826,6 +872,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
         setDernierRunId(d.id)
         setSongeEchoue(false); setSalleAtteinte(config.nb_salles_par_run)
         setDropsEnCours([]); setMode("principal")
+        chronoReinitialiser(); setVagueFinale(""); setNombreTours("")
         rafraichirStats(); rafraichirHistorique(1); setPageHistorique(1)
       })
       .catch(e => setErreur(e.message))
@@ -861,7 +908,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   }
 
   const ouvrirAjoutDrop = () => { setErreur(""); setMode("ajout-drop") }
-  const annulerAjoutDrop = () => { setDropsEnCours([]); setSongeEchoue(false); setSalleAtteinte(config.nb_salles_par_run); setErreur(""); setMode("principal") }
+  const retourAuPrincipal = () => { setErreur(""); setMode("principal") }
 
   if (!token) return <SongesConnexionRequise onBack={onBack} />
   // !intensiteNiveau : evite un rendu avec intensiteNiveau encore null entre
@@ -892,20 +939,26 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
     return <SongesAjoutDrop config={config} itemsTrackables={itemsTrackables} equipeActive={equipeActive}
       songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue} salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte}
       dropsEnCours={dropsEnCours} setDropsEnCours={setDropsEnCours}
-      onValider={() => enregistrerRun({ terminee: !songeEchoue, salleAtteinteVal: salleAtteinte, drops: dropsEnCours })}
-      onAnnuler={annulerAjoutDrop} enregistrement={enregistrement} erreur={erreur} />
+      onValider={retourAuPrincipal}
+      onAnnuler={retourAuPrincipal} />
   }
 
   return (
     <SongesEcranPrincipal config={config} teams={teams}
-      teamId={teamId} changerTeam={changerTeam} intensiteNiveau={intensiteNiveau} changerIntensite={changerIntensite}
+      teamId={teamId} changerTeam={changerTeam} onBack={onBack}
+      intensiteNiveau={intensiteNiveau} changerIntensite={changerIntensite}
       categorieAffichee={categorieAffichee} changerCategorie={changerCategorie}
-      stats={stats} reference={reference}
+      stats={stats}
       historique={historique} pageHistorique={pageHistorique} setPageHistorique={setPageHistorique}
       dernierRunId={dernierRunId} onAnnulerDernierSonge={annulerDernierSonge}
       onSupprimerSonge={supprimerSonge} onSupprimerDrop={supprimerDrop}
       songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue} salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte}
-      onSongeTermine={() => enregistrerRun({ terminee: !songeEchoue, salleAtteinteVal: salleAtteinte, drops: [] })}
+      dropsEnCours={dropsEnCours}
+      vagueFinale={vagueFinale} setVagueFinale={setVagueFinale}
+      nombreTours={nombreTours} setNombreTours={setNombreTours}
+      chronoSecondes={chronoSecondes} chronoEnMarche={chronoEnMarche}
+      onChronoDemarrerPause={chronoDemarrerPause} onChronoReinitialiser={chronoReinitialiser}
+      onSongeTermine={enregistrerRun}
       onOuvrirGestion={() => setMode("gestion")} onOuvrirAjoutDrop={ouvrirAjoutDrop}
       enregistrement={enregistrement} erreur={erreur} onSelectObjet={onSelectObjet}
     />

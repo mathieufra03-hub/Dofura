@@ -27,3 +27,8 @@ INTENSITES = {
 }
 
 INTENSITE_DEFAUT = ("paradoxe", 1)
+
+# Combat final a vagues (SONGES.md §3.2) : nombre de vagues a vaincre pour
+# la victoire, selon l'intensite. Sert a borner le champ optionnel
+# "vague finale" (refonte interface, 29 juillet 2026).
+VAGUES_REQUISES = {"reve": 1, "paradoxe": 3, "cauchemar": 3}

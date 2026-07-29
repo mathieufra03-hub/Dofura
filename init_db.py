@@ -654,6 +654,23 @@ CREATE TABLE IF NOT EXISTS songe_journal (
 );
 """)
 
+# Migration idempotente (refonte interface, 29 juillet 2026) : songe_runs
+# est une table protegee deja existante en prod — CREATE TABLE IF NOT EXISTS
+# ci-dessus ne lui ajoute pas de nouvelles colonnes si elle existe deja.
+# Verifie via PRAGMA avant chaque ALTER TABLE pour rester idempotent (ne
+# doit jamais planter au 2e demarrage une fois les colonnes ajoutees).
+cur.execute("PRAGMA table_info(songe_runs)")
+colonnes_songe_runs = {row[1] for row in cur.fetchall()}
+migrations_songe_runs = {
+    "duree_secondes": "INTEGER",  # chronometre optionnel
+    "vague_finale": "INTEGER",    # combat final a vagues, optionnel
+    "nombre_tours": "INTEGER",    # optionnel
+}
+for colonne, type_sql in migrations_songe_runs.items():
+    if colonne not in colonnes_songe_runs:
+        print(f"[init_db] Migration : ajout de la colonne songe_runs.{colonne}")
+        cur.execute(f"ALTER TABLE songe_runs ADD COLUMN {colonne} {type_sql}")
+
 # Compte de test seme au demarrage (idempotent) : mot de passe connu, permet
 # de tester favoris/progression sans avoir monte l'inscription publique.
 # Identifiants documentes dans CLAUDE.md (section Compte de test).
