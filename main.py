@@ -1799,6 +1799,12 @@ DOFUS_IDS_EXCLUS = {
     8072,   # Kaliptus, retire sur demande Popo (voir CLAUDE.md)
     29134,  # "Dofus Sylvestre" verrouille (criterions non vide, 0 recompense) — voir 29136
     29135,  # "Dofus Verdoyant" verrouille (criterions non vide, 0 recompense) — variante de la meme chaine
+    30356,  # "Jyfus" — Dofus anniversaire offert par les gardiens Ankama (texte de l'objet),
+            # jamais obtenable par le jeu normal, meme nature que Kaliptus — retire sur demande Popo.
+    20987,  # "Dofus Cacao" en double (chantier style global) : 20833 et 20987 partagent nom/niveau/
+            # image identiques, seule la description differe legerement — aucun champ distinctif
+            # trouve (ni criterions, ni recompense de quete/succes des deux cotes), doublon de
+            # donnees assume comme tel. 20833 garde comme entree canonique (plus petit ID).
 }
 DOFUS_PRIMORDIAUX_COULEURS = {
     737: "var(--df-dofus-emeraude)",
@@ -1808,6 +1814,14 @@ DOFUS_PRIMORDIAUX_COULEURS = {
     7114: "var(--df-dofus-ebene)",
     7115: "var(--df-dofus-ivoire)",
 }
+
+# Positionnement manuel demande par Popo (chantier style global, 29 juillet 2026) :
+# le Dofus Sylvestre (29136) doit apparaitre en toute derniere position de la liste,
+# juste a cote du Dom de Pin (27803) — ORDER BY niveau, nom seul ne le permet pas
+# (les deux sont niveau 180, mais "Dofus Sylvestre" < "Dom de Pin" alphabetiquement,
+# donc pas adjacents). Le troisieme critere de tri pousse specifiquement cet ID
+# apres tous les autres de son palier de niveau, sans toucher au tri des 30 autres.
+DOFUS_ID_TRI_DERNIER = 29136
 
 
 def _etat_etapes_quetes(cur, user_id, quete_ids):
@@ -1833,8 +1847,10 @@ def liste_dofus(user: dict = Depends(utilisateur_optionnel)):
     conn = get_db()
     cur = conn.cursor()
     placeholders_exclus = ",".join("?" for _ in DOFUS_IDS_EXCLUS)
-    cur.execute(f"SELECT id, nom, niveau, img FROM objets WHERE type_nom = 'Dofus' AND id NOT IN ({placeholders_exclus}) ORDER BY niveau, nom",
-                list(DOFUS_IDS_EXCLUS))
+    cur.execute(f"""SELECT id, nom, niveau, img FROM objets
+                    WHERE type_nom = 'Dofus' AND id NOT IN ({placeholders_exclus})
+                    ORDER BY niveau, (id = ?), nom""",
+                list(DOFUS_IDS_EXCLUS) + [DOFUS_ID_TRI_DERNIER])
     dofus_rows = cur.fetchall()
     dofus_ids = [r["id"] for r in dofus_rows]
 

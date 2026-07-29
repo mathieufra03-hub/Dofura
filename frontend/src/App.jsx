@@ -197,7 +197,10 @@ const DOFUS_PRIMORDIAUX = [
   { key:"pourpre",   color:"var(--df-dofus-pourpre)" },
   { key:"turquoise", color:"var(--df-dofus-turquoise)" },
   { key:"ocre",      color:"var(--df-dofus-ocre)" },
-  { key:"ebene",     color:"var(--df-dofus-ebene)" },
+  // Ébène : remplissage volontairement sombre (identité noire), halo dédié plus vif
+  // pour l'effet lumineux (chantier style global, 29 juillet 2026) — sans ce halo
+  // distinct, un remplissage sombre + glow de la même teinte serait invisible.
+  { key:"ebene",     color:"var(--df-dofus-ebene)", glow:"var(--df-dofus-ebene-glow)" },
   { key:"ivoire",    color:"var(--df-dofus-ivoire)" },
 ]
 
@@ -213,7 +216,7 @@ function DofusSeparator() {
           <span title={d.key} style={{
             width:9, height:12, margin:"0 3px", display:"block",
             borderRadius:"50% 50% 50% 50% / 62% 62% 38% 38%",
-            background:d.color, boxShadow:`0 0 8px ${d.color}`,
+            background:d.color, boxShadow:`0 0 8px ${d.glow || d.color}`,
           }} />
         </span>
       ))}
@@ -376,21 +379,44 @@ function EncycloGrid({ onNav }) {
 }
 
 // Œuf-jauge (maquette dofura-home-v4.jsx) : se remplit par le bas selon la
-// progression, 100% = plein + halo. L'image officielle du Dofus (champ img
-// depuis la base) est centrée par-dessus, comme prévu au §6 des specs
-// ("sur le vrai site : vraies images officielles"). Dofus non trackable
-// (aucune quête/succès reconnu·e côté DofusDB — voir main.py /dofus) :
-// contour éteint, pas de %, jamais un faux 0% permanent.
+// progression, 100% = plein + halo. Retour Popo (chantier style global,
+// 29 juillet 2026) : la jauge ne remplit plus l'œuf d'un aplat de couleur
+// (le vert de l'Émeraude en particulier "dénotait" trop) — c'est désormais
+// l'image officielle du Dofus elle-même qui se révèle progressivement du bas
+// vers le haut (tamisée/grisée pour la partie pas encore acquise), via deux
+// copies de la même image superposées : une tamisée en permanence, une pleine
+// couleur découpée à la hauteur pct par un second clip-path imbriqué dans le
+// clip de la silhouette de l'œuf. Dofus non trackable (aucune quête/succès
+// reconnu·e côté DofusDB — voir main.py /dofus) : contour éteint, pas de %,
+// jamais un faux 0% permanent.
 const OEUF_PATH = "M50 4 C74 4 92 44 92 78 C92 106 74 122 50 122 C26 122 8 106 8 78 C8 44 26 4 50 4 Z"
-function OeufJauge({ id, couleur, pct, taille, trackable }) {
+function OeufJauge({ id, img, couleur, pct, taille, trackable }) {
   const c = couleur || "#C9A24B"
   return (
     <svg width={taille} height={taille * 1.26} viewBox="0 0 100 126"
       style={{ filter: pct===100 ? `drop-shadow(0 0 8px ${c})` : "none", flexShrink:0, display:"block", margin:"0 auto" }}>
-      <defs><clipPath id={"df-oeuf-clip-"+id}><path d={OEUF_PATH} /></clipPath></defs>
-      <path d={OEUF_PATH} fill="rgba(27,33,56,0.9)" />
-      {trackable && pct > 0 && (
-        <rect x="0" y={126 - 126*(pct/100)} width="100" height={126*(pct/100)} fill={c} clipPath={`url(#df-oeuf-clip-${id})`} />
+      <defs>
+        <clipPath id={"df-oeuf-clip-"+id}><path d={OEUF_PATH} /></clipPath>
+        {trackable && pct > 0 && (
+          <clipPath id={"df-fill-clip-"+id}><rect x="0" y={126 - 126*(pct/100)} width="100" height={126*(pct/100)} /></clipPath>
+        )}
+      </defs>
+      {/* Plus de silhouette d'œuf pleine en arrière-plan (retour Popo : ça
+          faisait "vieil œuf" derrière l'artwork réel) — seul le Dofus lui-même
+          reste visible, le fond de la carte (.df-card) suffit comme arrière-plan. */}
+      {img && (
+        <g clipPath={`url(#df-oeuf-clip-${id})`}>
+          {/* Version tamisée : le Dofus "pas encore chargé", toujours visible en arrière-plan */}
+          <image href={img} x="4" y="5" width="92" height="116" preserveAspectRatio="xMidYMid meet"
+            opacity={trackable ? 1 : 0.35}
+            style={{ filter: trackable ? "grayscale(0.75) brightness(0.4)" : "grayscale(1)" }} />
+          {/* Version pleine, révélée du bas vers le haut selon pct — "le Dofus en lui-même qui charge" */}
+          {trackable && pct > 0 && (
+            <g clipPath={`url(#df-fill-clip-${id})`}>
+              <image href={img} x="4" y="5" width="92" height="116" preserveAspectRatio="xMidYMid meet" />
+            </g>
+          )}
+        </g>
       )}
     </svg>
   )
@@ -411,8 +437,7 @@ function CarreDofus({ d, taille, petit, onClick }) {
       {d.img
         ? (
           <div style={{ position:"relative", width:taille, height:taille*1.26, margin:"0 auto" }}>
-            <OeufJauge id={d.id} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
-            <img src={d.img} alt={d.nom} style={{ position:"absolute", inset:0, margin:"auto", maxWidth:"92%", maxHeight:"92%", opacity:d.trackable?1:0.35 }} />
+            <OeufJauge id={d.id} img={d.img} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
           </div>
         )
         : <OeufJauge id={d.id} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
@@ -643,8 +668,7 @@ function DofusDetailPage({ id, token, onSelectQuete, onSelectSucces, onSelectDon
 
       <header className="df-block" style={{ display:"flex", alignItems:"center", gap:22, padding:24, flexWrap:"wrap" }}>
         <div style={{ position:"relative", width:84, height:84*1.26, flexShrink:0 }}>
-          <OeufJauge id={data.id} couleur={data.couleur} pct={data.pct} taille={84} trackable={data.trackable} />
-          {data.img && <img src={data.img} alt={data.nom} style={{ position:"absolute", inset:0, margin:"auto", maxWidth:"92%", maxHeight:"92%", opacity:data.trackable?1:0.35 }} />}
+          <OeufJauge id={data.id} img={data.img} couleur={data.couleur} pct={data.pct} taille={84} trackable={data.trackable} />
         </div>
         <div style={{ flex:1, minWidth:200 }}>
           <h1 className="df-title-gold" style={{ fontSize:"clamp(22px, 4vw, 30px)", margin:0 }}>{data.nom}</h1>
@@ -3402,7 +3426,10 @@ export default function App() {
       {/* Fond Krosmoz : absolute (jamais fixed, voir CLAUDE.md piège fantômes de texte au scroll) */}
       <div className="df-nebula" />
       <StarField />
-      <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.32)", pointerEvents:"none" }} />
+      {/* Assombrissement reduit (chantier style global, 29 juillet 2026, etait 0.32) pour
+          laisser davantage ressortir le bleu/violet du fond sans nuire a la lisibilite du
+          texte — les blocs de contenu gardent leur propre fond opaque (--df-card-bg etc.) */}
+      <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.22)", pointerEvents:"none" }} />
 
       <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>
         <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} user={user} onLogin={handleLogin} onLogout={handleLogout} />

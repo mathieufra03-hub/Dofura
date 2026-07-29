@@ -47,7 +47,8 @@
   --df-dofus-pourpre: #E0485E;
   --df-dofus-turquoise: #3FC9E0;
   --df-dofus-ocre: #E8A33D;
-  --df-dofus-ebene: #6B5E8C;
+  --df-dofus-ebene: #150F22;       /* noir profond teinte violet, encore assombri sur retour Popo (etait #2A1F42, pas assez sombre) */
+  --df-dofus-ebene-glow: #9B7BFF;  /* halo dedie a l'Ebene, distinct du remplissage sombre (identite noire conservee) */
   --df-dofus-ivoire: #F0EBDD;
 
   /* --- Rayons & espacements --- */
@@ -71,12 +72,17 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Ambiance renforcée (chantier style global, 29 juillet 2026) : les teintes
+     bleu/bleu-violacé sont montées en opacité et légèrement désaturées vers
+     l'indigo (moins de rose/magenta), base #0C0F1D inchangée — voir la
+     surcouche d'assombrissement (App.jsx) réduite en parallèle pour laisser
+     passer davantage de couleur sans sacrifier la lisibilité du texte. */
   background:
-    radial-gradient(ellipse 720px 520px at 78% 12%, rgba(55,199,224,0.40), transparent 65%),
-    radial-gradient(ellipse 700px 540px at 6% 42%, rgba(179,63,201,0.34), transparent 65%),
-    radial-gradient(ellipse 620px 420px at 32% 2%, rgba(90,63,201,0.32), transparent 65%),
-    radial-gradient(ellipse 600px 450px at 85% 78%, rgba(196,75,199,0.22), transparent 65%),
-    radial-gradient(ellipse 550px 420px at 8% 92%, rgba(55,199,224,0.20), transparent 65%);
+    radial-gradient(ellipse 760px 540px at 78% 12%, rgba(55,199,224,0.48), transparent 65%),
+    radial-gradient(ellipse 700px 540px at 6% 42%, rgba(140,70,201,0.38), transparent 65%),
+    radial-gradient(ellipse 680px 460px at 32% 2%, rgba(90,63,201,0.44), transparent 65%),
+    radial-gradient(ellipse 600px 450px at 85% 78%, rgba(150,75,201,0.26), transparent 65%),
+    radial-gradient(ellipse 580px 440px at 8% 92%, rgba(55,199,224,0.28), transparent 65%);
 }
 
 /* Champ d'étoiles — points générés en JS (position aléatoire), scintillement CSS.
