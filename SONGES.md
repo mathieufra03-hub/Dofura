@@ -3,6 +3,9 @@
 > Spécification fonctionnelle et technique de la feature "Suivi de Songes".
 > Destiné à Claude Code. Phase 1 uniquement (tracker personnel).
 > Version 2 — juillet 2026. Toutes les données de jeu ont été relevées en jeu et vérifiées.
+> Version 3 (29 juillet 2026) : refonte interface suite aux retours d'usage — voir §9/§10 et le changelog en bas de fichier.
+
+**⚠️ Vocabulaire (règle absolue depuis la refonte interface) : dans toute l'interface, on ne dit jamais "run" mais "songe".** Un songe = la partie complète (26 salles). "Run" reste uniquement en base (`songe_runs`, `run_id`...) et dans le code (variables, noms de fonctions) — jamais dans un texte visible par le joueur.
 
 ---
 
@@ -230,6 +233,17 @@ CREATE TABLE songe_taux (
     taux          REAL NOT NULL,           -- en pourcentage, ex. 0.006
     PRIMARY KEY (intensite, niveau, palier, cle_taux)
 );
+
+-- Refonte interface (29 juillet 2026) : archive alimentee UNIQUEMENT par
+-- "Tout supprimer" (§10). Donnee utilisateur reelle, protegee au meme titre
+-- que les 6 tables songe_* ci-dessus (jamais de DROP, voir regle 5 plus bas).
+CREATE TABLE songe_journal (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL,
+    item_id       INTEGER NOT NULL,        -- FK vers la table objets
+    palier        INTEGER,
+    date_drop     TEXT                     -- date du drop ORIGINAL (songe_drops.cree_le conserve), pas la date d'archivage
+);
 ```
 
 **`categorie` vs `cle_taux` — ne pas confondre :**
@@ -237,7 +251,7 @@ CREATE TABLE songe_taux (
 - `cle_taux` (plus fin, une valeur par profil de taux réellement distinct dans la table 3.5 : `legende`, `legende_animale`, `bouclireve_palier`, `bouclireve_etoile`, `diplome_feur`, `rune_astrale_legendaire`) sert au **calcul** — c'est la clé de jointure vers `songe_taux`. Elle existe parce que plusieurs items d'une même `categorie` affichée (les 5 Bouclirêve de palier + le Bouclirêve Étoile, tous en `cosmetique`) n'ont pas le même taux : une jointure sur `categorie` mélangerait leurs profils.
 - Toute jointure item → taux **doit** utiliser `cle_taux`, jamais `categorie`.
 
-### Cinq règles de conception à ne pas contourner
+### Six règles de conception à ne pas contourner
 
 **1. `songe_run_participants` est figé à la saisie.** La team n'est qu'un raccourci de remplissage. Si le joueur modifie sa team six mois plus tard, ses anciennes runs ne doivent pas changer.
 
@@ -248,6 +262,8 @@ CREATE TABLE songe_taux (
 **4. `songe_taux` n'est pas rempli par extrapolation.** Seules les valeurs relevées en jeu y figurent. Une combinaison absente signifie "inconnu", jamais "estimé".
 
 **5. ⚠️ `ON DELETE CASCADE` du schéma ci-dessus n'est PAS appliqué par SQLite sur ce projet.** `PRAGMA foreign_keys` n'est activé nulle part dans le code (vérifié : 0 occurrence dans `main.py`/`init_db.py`) — SQLite ignore alors silencieusement toutes les clauses `ON DELETE CASCADE`, y compris `songe_team_membres`→`songe_teams` et `songe_run_participants`/`songe_drops`→`songe_runs`. **Toute suppression doit donc gérer la cascade à la main** (supprimer les lignes filles avant la ligne parente), comme le font `DELETE /songes/teams/{id}` et `DELETE /songes/runs/{id}` dans `main.py`. Activer le pragma globalement est un chantier séparé (impact sur toutes les tables `REFERENCES` existantes, pas seulement Songes) — volontairement non fait ici.
+
+**6. `songe_journal` n'entre dans AUCUN calcul.** Ni sécheresse, ni tirages, ni moyenne, ni estimation — ces entrées archivées sont un simple souvenir consultable (section "Journal" distincte de l'interface), jamais une donnée statistique. Les endpoints `/songes/stats` et `/songes/estimation` ne la lisent jamais.
 
 ---
 
@@ -313,11 +329,14 @@ C'est le calcul qui distingue un tracker sérieux d'un compteur naïf, et aucun 
 | GET | `/songes/items-trackables` | Items trackables enrichis (nom, image) depuis l'encyclopédie |
 | GET / POST | `/songes/personnages` | Lister / créer un personnage |
 | GET / POST / PUT / DELETE | `/songes/teams` | Gérer les préréglages de team |
-| POST | `/songes/runs` | Enregistrer une run et ses drops |
-| DELETE | `/songes/runs/{id}` | Annuler la dernière run saisie |
-| GET | `/songes/historique` | Historique paginé des drops |
+| POST | `/songes/runs` | Enregistrer un songe et ses drops |
+| DELETE | `/songes/runs/{id}` | Supprimer un songe (n'importe lequel, pas que le dernier — voir §10) |
+| DELETE | `/songes/drops/{id}` | Supprimer un drop individuel, sans toucher au reste du songe |
+| GET | `/songes/historique` | Songes enregistrés, paginés, du plus récent au plus ancien, drops imbriqués (voir §10) |
+| GET | `/songes/journal` | Entrées archivées par "Tout supprimer" — lecture seule (voir §10) |
+| DELETE | `/songes/tout` | Supprime tous les songes/participants/drops de l'utilisateur, archive les drops dans `songe_journal` au préalable (voir §10) |
 | GET | `/songes/stats` | Statistiques calculées (voir §9) |
-| GET | `/songes/estimation` | Espérance de runs pour un item et une composition donnés |
+| GET | `/songes/estimation` | Espérance de songes pour un item **ou une catégorie entière** et une composition donnés (voir §9) |
 
 `POST /songes/runs` — corps attendu :
 
@@ -336,17 +355,47 @@ C'est le calcul qui distingue un tracker sérieux d'un compteur naïf, et aucun 
 
 Le backend calcule `nb_combats` depuis `salle_atteinte` et `COMBATS_PAR_PALIER`. `source_nb_combats` vaut `estime`, sauf saisie manuelle explicite.
 
+`GET /songes/historique` — réponse (un "songe" = une ligne de `songe_runs`, drops imbriqués) :
+
+```json
+{
+  "total": 42, "page": 1, "page_size": 20,
+  "songes": [
+    {
+      "id": 7, "date_run": "...", "intensite": "paradoxe", "niveau": 1,
+      "terminee": true, "salle_atteinte": 26, "team_nom": "Team farm",
+      "drops": [
+        { "id": 12, "item_id": 20658, "item_nom": "...", "item_img": "...",
+          "perso_id": 1, "perso_nom": "Krosaure", "quantite": 1, "palier": 5 }
+      ]
+    }
+  ]
+}
+```
+
+`id` (le "numéro de songe" affiché) n'est **jamais renuméroté** après une suppression — un trou dans la numérotation est normal et attendu (§10).
+
+`GET /songes/estimation` — accepte `item_id` **ou** `categorie` (jamais les deux) :
+- `item_id=20658` → espérance pour cet item précis (ex. ~1400 songes solo pour une légende précise).
+- `categorie=legende` → espérance pour **n'importe lequel** des 26 items de la catégorie (ex. ~55 songes solo) — hypothèse de drops indépendants entre items, cf. table 3.5. `disponible: false` si un seul item de la catégorie manque de données de taux pour la combinaison intensité × palier demandée.
+
 ---
 
 ## 9. Statistiques
 
 Toutes segmentées par intensité, disponibles en deux vues : **par personnage** et **par team**.
 
-- **Sécheresse actuelle** : tirages éligibles écoulés depuis le dernier drop, par item ou par catégorie
-- **Record de sécheresse** : plus longue série de l'historique
+- **Sécheresse actuelle** : `/songes/stats` renvoie, par item trackable, à la fois `songes_depuis_dernier_drop` (nombre de songes éligibles écoulés) et `tirages_depuis_dernier_drop` (le détail plus fin). Un songe ne compte que s'il a atteint au moins un palier où l'item est éligible (§7) — un songe avorté avant palier III ne compte pas pour une légende.
+- **Record de sécheresse** : plus longue série de l'historique (en tirages)
 - **Moyenne personnelle** : tirages / drops, par catégorie
-- **Estimateur** : espérance du nombre de runs pour un item donné, calculée depuis `songe_taux` et la composition de team. Ne dépend d'aucune donnée communautaire, fonctionne dès le premier jour.
+- **Estimateur** : espérance du nombre de songes pour un item **ou une catégorie entière** (§8), calculée depuis `songe_taux` et la composition de team. Ne dépend d'aucune donnée communautaire, fonctionne dès le premier jour.
 - **Indicateur de malchance** : comparaison entre la sécheresse actuelle et l'espérance théorique
+
+### Compteur principal (refonte interface, §10)
+
+Le chiffre affiché en gros sur l'écran principal est le **nombre de songes** depuis le dernier drop de la **catégorie sélectionnée** (pas d'un item précis — l'item épinglé reste hors périmètre de cette passe), renvoyé par `/songes/stats` dans `categories_secheresse`. Un songe compte pour la catégorie s'il a atteint au moins un palier éligible pour **au moins un** item de la catégorie, et le compteur repart de zéro dès que **n'importe quel** item de la catégorie y dropped. Calcul dédié (pas un simple minimum par item) car les 7 cosmétiques n'ont pas tous les mêmes paliers éligibles (contrairement aux légendes/légendes animales, homogènes) — un minimum sous-estimerait la sécheresse "cosmétique" réelle. Les tirages passent en information secondaire, plus petits, sous le chiffre (dérivés du détail par item de `/songes/stats`, minimum sur la catégorie — approximation acceptée pour cette info secondaire).
+
+Sous le compteur, la référence théorique vient de `/songes/estimation?categorie=...` — **jamais affichée sans elle**, un chiffre de sécheresse seul ne veut rien dire. Si `disponible: false` (combinaison intensité × palier inconnue), afficher explicitement "référence non disponible", jamais une extrapolation.
 
 ### Ordres de grandeur (Paradoxe I, ~13 combats éligibles par run)
 
@@ -357,7 +406,7 @@ Toutes segmentées par intensité, disponibles en deux vues : **par personnage**
 | Une animale précise | ~450 runs | ~110 runs |
 | Bouclirêve Étoile | ~2 300 runs | ~570 runs |
 
-⚠️ Les compteurs afficheront naturellement des valeurs à quatre chiffres (`1 847 tirages sans légende`). C'est **attendu**, ce n'est pas un bug. L'interface doit le contextualiser, sinon l'utilisateur croit que le site est cassé.
+⚠️ Les compteurs afficheront naturellement des valeurs à quatre chiffres en tirages (`1 847 tirages sans légende`). C'est **attendu**, ce n'est pas un bug — le compteur principal en nombre de songes (ci-dessus) reste lui à des ordres de grandeur bien plus lisibles (dizaines à centaines).
 
 ---
 
@@ -380,18 +429,32 @@ Toutes segmentées par intensité, disponibles en deux vues : **par personnage**
 
 ### Écran principal — une page, pas un formulaire
 
-1. **Chiffre héros** — la sécheresse, en très grand. Le joueur peut épingler un item précis ; c'est alors sa sécheresse sur cet item qui s'affiche.
-2. **Contexte** — deux pastilles compactes : team et intensité, conservant la dernière valeur utilisée.
-3. **Action** — `Run terminée` (vert, le plus gros, cas à 95 %) et `J'ai drop quelque chose` (contour or).
-4. **Historique** — liste chronologique, chaque entrée renvoyant vers la fiche item de l'encyclopédie.
+1. **Sélecteur de catégorie** — Légendes / Légendes animales / Cosmétiques / Runes, au-dessus du compteur. Change le compteur ET la référence théorique.
+2. **Compteur principal** — titre adapté à la catégorie ("Sans légende depuis", "Sans cosmétique depuis"...) ; chiffre géant = **nombre de songes** depuis le dernier drop de la catégorie (§9) ; tirages en petit en dessous, secondaire ; référence théorique sous le tout (`/songes/estimation?categorie=...`, ou "référence non disponible" si la combinaison intensité × palier est inconnue — jamais d'invention).
+3. **Contexte** — deux pastilles compactes : team et intensité, conservant la dernière valeur utilisée.
+4. **Action** — `Songe terminé` (vert, le plus gros, cas à 95 %) et `J'ai drop quelque chose` (contour or).
+5. **Si le songe n'est pas terminé** : un seul champ, la salle atteinte (1-26).
+6. **Historique des songes** — tous les songes enregistrés, du plus récent au plus ancien (pas seulement les drops) : numéro, date, intensité, team, salle atteinte, drops éventuels. Chaque songe est supprimable individuellement (pas que le dernier) ; chaque drop d'un songe a sa propre croix de suppression, avec confirmation. Les numéros de songe ne sont **jamais renumérotés** après suppression — un trou est normal. Pagination ou défilement (la liste peut devenir longue).
+7. **Annulation rapide** — lien visible pour annuler le tout dernier songe enregistré (raccourci ; l'historique du point 6 permet aussi de supprimer n'importe quel autre songe).
 
 ### Écran d'ajout de drop
 
-Champ de recherche + filtres par catégorie + sélection du personnage concerné.
+Champ de recherche + filtres par catégorie (Légendes/Légendes animales/Cosmétiques/Rune astrale, avec leurs comptes réels) + sélection du personnage parmi les participants du songe + palier optionnel, jamais bloquant + plusieurs drops possibles sur un même songe.
+
+### Panneau de gestion (personnages/teams inchangé — voir ci-dessous)
+
+Le panneau de création/édition de personnages et teams n'est pas concerné par cette refonte. Deux ajouts, dans ce même panneau, jamais sur l'écran principal :
+
+- **"Tout supprimer"** — bouton dans une zone dédiée, confirmation explicite OUI/NON avec un texte annonçant clairement l'irréversibilité. Supprime tous les songes/participants/drops de l'utilisateur (jamais les personnages ni les teams). Chaque drop est archivé dans `songe_journal` avant suppression (§5 règle 6).
+- **Section "Journal"** — lecture seule, visuellement séparée du reste (grisée/atténuée), avec une mention explicite que ces entrées ne comptent plus dans aucune statistique. Alimentée par `GET /songes/journal`.
+
+### Messages d'ambiance (préparation, pas encore actifs)
+
+`config/messages_songes.py` : structure prête (tranches de sécheresse en **nombre de songes** — `0_20`, `20_60`, `60_150`, `150_plus`, `drop_recent`, `drop_en_avance`), listes **vides**. Textes à rédiger par Popo plus tard ; ne pas inventer de message. Le fichier n'est pas encore branché à l'interface.
 
 ### Deux exigences non négociables
 
-- **Deux clics maximum** pour enregistrer une run sans drop
+- **Deux clics maximum** pour enregistrer un songe sans drop
 - **Bouton d'annulation** visible sur la dernière action enregistrée
 
 ---
@@ -410,6 +473,8 @@ Le champ `user_id` est présent sur toutes les tables du tracker.
 - [ ] Taux des 45 autres combinaisons intensité × palier (relevé en jeu uniquement)
 - [ ] Sauvegardes automatiques de la base
 - [ ] Vérifier si le Diplôme de Feur appartient à la panoplie d'apparat ou aux costumes
+- [ ] Icônes de classe sur le sélecteur de personnage (écran d'ajout de drop) — dès que les fichiers d'icônes sont disponibles
+- [ ] Rédiger les messages d'ambiance de `config/messages_songes.py` (actuellement vide, structure prête)
 
 ---
 
@@ -421,3 +486,9 @@ Le champ `user_id` est présent sur toutes les tables du tracker.
 - Scripts lancés depuis la racine du projet
 - Après modification d'un `dofura_*.json` en local : relancer `python init_db.py`
 - Principe DRY : un composant paramétré plutôt que des duplications
+
+---
+
+## 14. Changelog
+
+- **29 juillet 2026 — Refonte interface (v3)** : vocabulaire "songe" partout côté utilisateur ("run" reste interne) ; compteur principal en nombre de songes (plus tirages en secondaire) avec sélecteur de catégorie et référence théorique obligatoire ; historique des songes complet (pas seulement les drops), suppression individuelle d'un songe ou d'un drop ; "Tout supprimer" avec archivage préalable dans `songe_journal` (nouvelle table protégée) ; préparation (structure vide) des messages d'ambiance dans `config/messages_songes.py`. Le panneau de gestion personnages/teams n'a pas changé.

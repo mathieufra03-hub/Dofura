@@ -2249,19 +2249,24 @@ def charger_taux(conn, intensite, niveau, cle_taux):
                 (intensite, niveau, cle_taux))
     return {row["palier"]: row["taux"] for row in cur.fetchall()}
 
-def estimer_esperance_runs(item_paliers, taux_par_palier, nb_participants):
-    """Esperance du nombre de runs pour au moins un drop, en supposant une
-    run complete (tous les paliers eligibles de l'item atteints) — SONGES.md
-    §9. Retourne None si le taux d'AU MOINS UN palier eligible est absent de
-    songe_taux : jamais d'estimation partielle/extrapolee (regle 4 §5), le
-    endpoint doit alors annoncer explicitement "donnees non disponibles"."""
-    if any(p not in taux_par_palier for p in item_paliers):
-        return None
+def estimer_esperance_runs(items, nb_participants):
+    """Esperance du nombre de runs pour qu'AU MOINS UN des items donnes drop,
+    en supposant des runs completes (tous les paliers eligibles atteints) —
+    SONGES.md §9. `items` est une liste de (item_paliers, taux_par_palier) ;
+    un seul item = cas normal (estimation precise), plusieurs = reference
+    "n'importe lequel de cette categorie" (les drops sont supposes
+    independants entre items, hypothese raisonnable pour une table de butin).
+    Retourne None si le taux d'AU MOINS UN palier eligible d'AU MOINS UN item
+    est absent de songe_taux : jamais d'estimation partielle/extrapolee
+    (regle 4 §5), l'endpoint doit alors annoncer "donnees non disponibles"."""
     p_aucun_drop_un_participant = 1.0
-    for p in item_paliers:
-        probabilite = taux_par_palier[p] / 100  # taux stocke "en pourcentage" (ex. 0.006 = 0,006 %)
-        combats = songes_config.COMBATS_PAR_PALIER[p]
-        p_aucun_drop_un_participant *= (1 - probabilite) ** combats
+    for item_paliers, taux_par_palier in items:
+        if any(p not in taux_par_palier for p in item_paliers):
+            return None
+        for p in item_paliers:
+            probabilite = taux_par_palier[p] / 100  # taux stocke "en pourcentage" (ex. 0.006 = 0,006 %)
+            combats = songes_config.COMBATS_PAR_PALIER[p]
+            p_aucun_drop_un_participant *= (1 - probabilite) ** combats
     p_au_moins_un_drop = 1 - (p_aucun_drop_un_participant ** nb_participants)
     if p_au_moins_un_drop <= 0:
         return None
@@ -2542,36 +2547,122 @@ def songes_supprimer_run(run_id: int, user: dict = Depends(utilisateur_courant))
 
 @app.get("/songes/historique")
 def songes_historique(page: int = 1, page_size: int = 20, user: dict = Depends(utilisateur_courant)):
+    """Historique des SONGES (refonte interface — vocabulaire "songe" cote
+    utilisateur, "run" reste le terme interne/BDD), du plus recent au plus
+    ancien, drops eventuels imbriques. Les id de songe ne sont JAMAIS
+    renumerotes apres suppression — un trou dans la numerotation est normal."""
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT COUNT(*) FROM songe_drops d
-        JOIN songe_runs r ON r.id = d.run_id
-        WHERE r.user_id = ?
-    """, (user["id"],))
+
+    cur.execute("SELECT COUNT(*) FROM songe_runs WHERE user_id = ?", (user["id"],))
     total = cur.fetchone()[0]
 
     cur.execute("""
-        SELECT d.id, d.run_id, d.quantite, d.palier, d.cree_le,
-               d.item_id, o.nom AS item_nom, o.img AS item_img,
-               d.perso_id, p.nom AS perso_nom,
-               r.intensite, r.niveau
-        FROM songe_drops d
-        JOIN songe_runs r ON r.id = d.run_id
-        JOIN songe_personnages p ON p.id = d.perso_id
-        JOIN objets o ON o.id = d.item_id
+        SELECT r.id, r.date_run, r.intensite, r.niveau, r.terminee, r.salle_atteinte,
+               r.nb_combats, r.source_nb_combats, t.nom AS team_nom
+        FROM songe_runs r
+        LEFT JOIN songe_teams t ON t.id = r.team_id
         WHERE r.user_id = ?
-        ORDER BY d.cree_le DESC, d.id DESC
+        ORDER BY r.date_run DESC, r.id DESC
+        LIMIT ? OFFSET ?
+    """, (user["id"], page_size, (page - 1) * page_size))
+    runs = cur.fetchall()
+
+    drops_par_run = {}
+    run_ids = [r["id"] for r in runs]
+    if run_ids:
+        placeholders = ",".join("?" * len(run_ids))
+        cur.execute(f"""
+            SELECT d.id, d.run_id, d.item_id, o.nom AS item_nom, o.img AS item_img,
+                   d.perso_id, p.nom AS perso_nom, d.quantite, d.palier
+            FROM songe_drops d
+            JOIN objets o ON o.id = d.item_id
+            JOIN songe_personnages p ON p.id = d.perso_id
+            WHERE d.run_id IN ({placeholders})
+            ORDER BY d.id
+        """, run_ids)
+        for row in cur.fetchall():
+            drops_par_run.setdefault(row["run_id"], []).append({
+                "id": row["id"], "item_id": row["item_id"], "item_nom": row["item_nom"],
+                "item_img": row["item_img"], "perso_id": row["perso_id"], "perso_nom": row["perso_nom"],
+                "quantite": row["quantite"], "palier": row["palier"],
+            })
+
+    conn.close()
+    songes = [{
+        "id": r["id"], "date_run": r["date_run"], "intensite": r["intensite"], "niveau": r["niveau"],
+        "terminee": bool(r["terminee"]), "salle_atteinte": r["salle_atteinte"],
+        "nb_combats": r["nb_combats"], "source_nb_combats": r["source_nb_combats"],
+        "team_nom": r["team_nom"], "drops": drops_par_run.get(r["id"], []),
+    } for r in runs]
+    return {"total": total, "page": page, "page_size": page_size, "songes": songes}
+
+@app.delete("/songes/drops/{drop_id}")
+def songes_supprimer_drop(drop_id: int, user: dict = Depends(utilisateur_courant)):
+    """Suppression d'un drop individuel (pas tout le songe) — SONGES.md
+    refonte interface point 3. Ne touche pas songe_journal : contrairement a
+    "tout supprimer", une correction ponctuelle n'a pas vocation a etre
+    archivee."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT d.id FROM songe_drops d JOIN songe_runs r ON r.id = d.run_id
+        WHERE d.id = ? AND r.user_id = ?
+    """, (drop_id, user["id"]))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Drop introuvable")
+    cur.execute("DELETE FROM songe_drops WHERE id = ?", (drop_id,))
+    conn.commit()
+    conn.close()
+    return {"supprime": True}
+
+@app.get("/songes/journal")
+def songes_journal(page: int = 1, page_size: int = 20, user: dict = Depends(utilisateur_courant)):
+    """Entrees archivees par "Tout supprimer" (songe_journal) — lecture
+    seule, ne rentrent dans AUCUN calcul de stats/estimation."""
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 100)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM songe_journal WHERE user_id = ?", (user["id"],))
+    total = cur.fetchone()[0]
+    cur.execute("""
+        SELECT j.id, j.item_id, o.nom AS item_nom, o.img AS item_img, j.palier, j.date_drop
+        FROM songe_journal j
+        JOIN objets o ON o.id = j.item_id
+        WHERE j.user_id = ?
+        ORDER BY j.date_drop DESC, j.id DESC
         LIMIT ? OFFSET ?
     """, (user["id"], page_size, (page - 1) * page_size))
     rows = cur.fetchall()
     conn.close()
-    return {
-        "total": total, "page": page, "page_size": page_size,
-        "drops": [dict(r) for r in rows],
-    }
+    return {"total": total, "page": page, "page_size": page_size, "entrees": [dict(r) for r in rows]}
+
+@app.delete("/songes/tout")
+def songes_tout_supprimer(user: dict = Depends(utilisateur_courant)):
+    """Supprime tous les songes/participants/drops de l'utilisateur — PAS ses
+    personnages ni ses teams (le panneau de gestion n'est pas concerne).
+    Chaque drop est d'abord archive dans songe_journal (user_id, item_id,
+    palier, date du drop original) avant suppression : ces entrees ne
+    comptent plus dans aucun calcul, elles restent juste consultables
+    (SONGES.md, refonte interface point 4)."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO songe_journal (user_id, item_id, palier, date_drop)
+        SELECT r.user_id, d.item_id, d.palier, d.cree_le
+        FROM songe_drops d JOIN songe_runs r ON r.id = d.run_id
+        WHERE r.user_id = ?
+    """, (user["id"],))
+    cur.execute("DELETE FROM songe_drops WHERE run_id IN (SELECT id FROM songe_runs WHERE user_id = ?)", (user["id"],))
+    cur.execute("DELETE FROM songe_run_participants WHERE run_id IN (SELECT id FROM songe_runs WHERE user_id = ?)", (user["id"],))
+    cur.execute("DELETE FROM songe_runs WHERE user_id = ?", (user["id"],))
+    conn.commit()
+    conn.close()
+    return {"supprime": True}
 
 @app.get("/songes/stats")
 def songes_stats(intensite: str, niveau: int, perso_id: Optional[int] = None,
@@ -2670,22 +2761,28 @@ def songes_stats(intensite: str, niveau: int, perso_id: Optional[int] = None,
             drops_par_run[d["run_id"]] = drops_par_run.get(d["run_id"], 0) + d["quantite"]
 
         tirages_total = 0
-        courant = 0
+        courant_tirages = 0
+        courant_songes = 0
         record_secheresse = 0
         for r in runs_enrichies:
             t = tirages_eligibles(item_paliers, r["salle_atteinte"], r["nb_scope"])
+            if t == 0:
+                continue  # run non eligible pour cet item (palier pas atteint) : ne compte pas comme "songe joue"
             tirages_total += t
-            courant += t
+            courant_tirages += t
+            courant_songes += 1
             if r["id"] in drops_par_run:
-                record_secheresse = max(record_secheresse, courant)
-                courant = 0
-        record_secheresse = max(record_secheresse, courant)
-        tirages_depuis_dernier_drop = courant
+                record_secheresse = max(record_secheresse, courant_tirages)
+                courant_tirages = 0
+                courant_songes = 0
+        record_secheresse = max(record_secheresse, courant_tirages)
+        tirages_depuis_dernier_drop = courant_tirages
+        songes_depuis_dernier_drop = courant_songes
 
         drops_total = sum(d["quantite"] for d in drops_par_item.get(it["item_id"], []))
         moyenne = (tirages_total / drops_total) if drops_total > 0 else None
 
-        esperance = estimer_esperance_runs(item_paliers, taux, len(scope_set)) if scope_set else None
+        esperance = estimer_esperance_runs([(item_paliers, taux)], len(scope_set)) if scope_set else None
         indicateur = None
         if esperance is not None:
             tirages_par_run_moyen = tirages_eligibles(item_paliers, songes_config.NB_SALLES_PAR_RUN, len(scope_set))
@@ -2703,6 +2800,7 @@ def songes_stats(intensite: str, niveau: int, perso_id: Optional[int] = None,
         resultats.append({
             "item_id": it["item_id"], "nom": info_objet.get("nom"), "img": info_objet.get("img"),
             "categorie": it["categorie"],
+            "songes_depuis_dernier_drop": songes_depuis_dernier_drop,
             "tirages_depuis_dernier_drop": tirages_depuis_dernier_drop,
             "record_secheresse_tirages": record_secheresse,
             "tirages_total": tirages_total,
@@ -2723,20 +2821,67 @@ def songes_stats(intensite: str, niveau: int, perso_id: Optional[int] = None,
         for cat, v in par_categorie.items()
     ]
 
+    # Secheresse PAR CATEGORIE (compteur principal, refonte interface) : un
+    # songe compte pour la categorie s'il a atteint au moins un palier
+    # eligible pour AU MOINS UN item de la categorie, et le compteur
+    # reinitialise des que N'IMPORTE QUEL item de la categorie y dropped.
+    # Necessaire en plus du detail par item : les 7 cosmetiques n'ont pas
+    # tous les memes paliers eligibles (contrairement aux legendes/legendes
+    # animales, homogenes) — un simple min() sur les items sous-estimerait
+    # la secheresse "cosmetique" reelle.
+    items_par_categorie = {}
+    for it in items_trackables:
+        if not item_eligible_intensite(it["intensite_min"], intensite):
+            continue
+        items_par_categorie.setdefault(it["categorie"], []).append(it)
+
+    categories_secheresse = []
+    for cat, items_cat in items_par_categorie.items():
+        item_ids_cat = {it["item_id"] for it in items_cat}
+        paliers_cat = {it["item_id"]: json.loads(it["paliers"]) for it in items_cat}
+
+        drops_par_run_cat = {}
+        for iid in item_ids_cat:
+            for d in drops_par_item.get(iid, []):
+                drops_par_run_cat[d["run_id"]] = drops_par_run_cat.get(d["run_id"], 0) + d["quantite"]
+
+        courant_tirages_cat = 0
+        courant_songes_cat = 0
+        for r in runs_enrichies:
+            t_cat = sum(tirages_eligibles(paliers_cat[iid], r["salle_atteinte"], r["nb_scope"]) for iid in item_ids_cat)
+            if t_cat == 0:
+                continue
+            courant_tirages_cat += t_cat
+            courant_songes_cat += 1
+            if r["id"] in drops_par_run_cat:
+                courant_tirages_cat = 0
+                courant_songes_cat = 0
+
+        categories_secheresse.append({
+            "categorie": cat, "songes_depuis_dernier_drop": courant_songes_cat,
+        })
+
     conn.close()
     return {
         "intensite": intensite, "niveau": niveau,
         "scope": {"type": scope_type, "perso_ids": sorted(scope_set)},
         "items": resultats,
         "moyennes_par_categorie": moyennes_par_categorie,
+        "categories_secheresse": categories_secheresse,
     }
 
 @app.get("/songes/estimation")
-def songes_estimation(item_id: int, intensite: str, niveau: int, nb_participants: int = 1):
+def songes_estimation(item_id: Optional[int] = None, categorie: Optional[str] = None,
+                       intensite: str = "", niveau: int = 0, nb_participants: int = 1):
     """Public, aucune donnee joueur : calcul pur depuis songe_taux + config.
-    Doit repondre explicitement "donnees non disponibles" (disponible=False)
-    si la combinaison intensite x palier n'existe pas en base — jamais
-    d'extrapolation (regle 4 SONGES.md §5)."""
+    Fournir item_id (un item precis) OU categorie (n'importe quel item de la
+    categorie — ex. 'legende' agrege les 26, pour la reference "n'importe
+    laquelle" du compteur principal, SONGES.md refonte interface point 1),
+    jamais les deux. Doit repondre explicitement "donnees non disponibles"
+    (disponible=False) si la combinaison intensite x palier est inconnue
+    pour au moins un item concerne — jamais d'extrapolation (regle 4 §5)."""
+    if (item_id is None) == (categorie is None):
+        raise HTTPException(status_code=400, detail="Fournir item_id OU categorie (un seul des deux)")
     if intensite not in songes_config.INTENSITES:
         raise HTTPException(status_code=400, detail=f"Intensite inconnue : {intensite}")
     if niveau not in songes_config.INTENSITES[intensite]["niveaux"]:
@@ -2746,24 +2891,33 @@ def songes_estimation(item_id: int, intensite: str, niveau: int, nb_participants
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT categorie, cle_taux, paliers, intensite_min FROM songe_items_trackables WHERE item_id = ?", (item_id,))
-    item = cur.fetchone()
-    if not item:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Item non trackable")
 
-    reponse_base = {"item_id": item_id, "intensite": intensite, "niveau": niveau, "nb_participants": nb_participants}
+    if item_id is not None:
+        cur.execute("SELECT categorie, cle_taux, paliers, intensite_min FROM songe_items_trackables WHERE item_id = ?", (item_id,))
+        item = cur.fetchone()
+        if not item:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Item non trackable")
+        items = [item]
+        reponse_base = {"item_id": item_id, "categorie": None, "intensite": intensite, "niveau": niveau, "nb_participants": nb_participants}
+    else:
+        cur.execute("SELECT categorie, cle_taux, paliers, intensite_min FROM songe_items_trackables WHERE categorie = ?", (categorie,))
+        items = cur.fetchall()
+        if not items:
+            conn.close()
+            raise HTTPException(status_code=404, detail=f"Categorie inconnue ou sans item trackable : {categorie}")
+        reponse_base = {"item_id": None, "categorie": categorie, "intensite": intensite, "niveau": niveau, "nb_participants": nb_participants}
 
-    if not item_eligible_intensite(item["intensite_min"], intensite):
+    items_eligibles = [it for it in items if item_eligible_intensite(it["intensite_min"], intensite)]
+    if not items_eligibles:
         conn.close()
         return {**reponse_base, "disponible": False, "esperance_runs": None,
-                "message": f"Cet item n'est pas éligible en intensité {intensite}."}
+                "message": f"Aucun item de cette sélection n'est éligible en intensité {intensite}."}
 
-    item_paliers = json.loads(item["paliers"])
-    taux = charger_taux(conn, intensite, niveau, item["cle_taux"])
+    items_taux = [(json.loads(it["paliers"]), charger_taux(conn, intensite, niveau, it["cle_taux"])) for it in items_eligibles]
     conn.close()
 
-    esperance = estimer_esperance_runs(item_paliers, taux, nb_participants)
+    esperance = estimer_esperance_runs(items_taux, nb_participants)
     if esperance is None:
         return {**reponse_base, "disponible": False, "esperance_runs": None,
                 "message": "Données non disponibles pour cette combinaison intensité × palier."}

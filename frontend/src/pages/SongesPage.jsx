@@ -6,16 +6,38 @@ import { useState, useEffect, useMemo } from "react"
 // fois dans main.jsx) — voir la charte couleurs SONGES.md §10, qui
 // correspond exactement aux tokens existants (--df-bg, --df-cyan,
 // --df-green, --df-red, --df-card-bg), aucune nouvelle couleur inventée.
+//
+// VOCABULAIRE (refonte interface, 29 juillet 2026) : on ne dit jamais "run"
+// dans un texte visible par le joueur, seulement "songe". "run"/"Run"
+// reste dans le code (noms de variables/fonctions, endpoints) — voir
+// SONGES.md intro.
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const LS_TEAM = "dofura_songes_team_id"
 const LS_INTENSITE = "dofura_songes_intensite"
+const LS_CATEGORIE = "dofura_songes_categorie"
 
+// Labels du sélecteur d'items trackables (écran d'ajout de drop, inchangé
+// par cette refonte).
 const CATEGORIE_LABELS = {
   legende: "Légendes",
   legende_animale: "Légendes animales",
   cosmetique: "Cosmétiques",
   rune_astrale: "Rune astrale",
+}
+// Labels du sélecteur de catégorie du compteur principal (refonte interface
+// point 1) — texte legerement different ("Runes" au pluriel generique).
+const CATEGORIE_LABELS_SELECTEUR = {
+  legende: "Légendes",
+  legende_animale: "Légendes animales",
+  cosmetique: "Cosmétiques",
+  rune_astrale: "Runes",
+}
+const CATEGORIE_MOT_SINGULIER = {
+  legende: "légende",
+  legende_animale: "légende animale",
+  cosmetique: "cosmétique",
+  rune_astrale: "rune",
 }
 const ORDRE_CATEGORIES = ["legende", "legende_animale", "cosmetique", "rune_astrale"]
 const NOMS_PALIERS_ROMAINS = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V" }
@@ -71,7 +93,7 @@ function SongesConnexionRequise({ onBack }) {
       <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
         <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 10px" }}>Suivi de Songes</h1>
         <p style={{ color: "var(--df-text-2)", fontSize: 14, margin: 0 }}>
-          Connecte-toi pour compter tes runs et enregistrer tes drops — tes données te suivent sur tous tes appareils.
+          Connecte-toi pour compter tes songes et enregistrer tes drops — tes données te suivent sur tous tes appareils.
         </p>
       </div>
     </div>
@@ -81,6 +103,14 @@ function SongesConnexionRequise({ onBack }) {
 function SongesChargement() {
   return <div style={{ padding: "3rem 2rem", textAlign: "center", color: "var(--df-text-2)", fontSize: 14 }}>Chargement...</div>
 }
+
+// ============================================================
+// Panneau de gestion personnages/teams — INCHANGÉ par cette refonte
+// (demande explicite Popo : "convient tel quel"). Les nouveaux blocs
+// "Tout supprimer" / "Journal" sont ajoutés à côté, pas dedans — voir
+// SongesZoneDangereuse / SongesJournalSection plus bas, assemblés au
+// point de montage dans SongesPage (racine), jamais dans ce composant.
+// ============================================================
 
 function FormNouveauPersonnage({ token, onCree }) {
   const [nom, setNom] = useState("")
@@ -249,15 +279,91 @@ function FormEditionTeam({ token, team, personnages, onTermine }) {
 }
 
 // ============================================================
-// Bascule "run interrompue" — partagée entre l'écran principal et
-// l'écran d'ajout de drop (SONGES.md §10 point 4 : un seul champ).
+// Zone dangereuse ("Tout supprimer") + Journal — nouveaux, refonte
+// interface point 4. Rendus À CÔTÉ de SongesGestion (jamais dedans), pour
+// ne pas y toucher.
 // ============================================================
 
-function BasculeRunInterrompue({ nbSallesParRun, runEchouee, setRunEchouee, salleAtteinte, setSalleAtteinte }) {
-  if (!runEchouee) {
+function SongesZoneDangereuse({ onToutSupprimer }) {
+  const [confirmation, setConfirmation] = useState(false)
+  const [enCours, setEnCours] = useState(false)
+
+  const confirmer = () => {
+    setEnCours(true)
+    onToutSupprimer().finally(() => { setEnCours(false); setConfirmation(false) })
+  }
+
+  return (
+    <div style={{ ...sp.card, borderColor: "rgba(242,109,109,0.4)" }}>
+      <div className="df-block-title" style={{ color: "var(--df-red)", marginBottom: 4 }}>Zone dangereuse</div>
+      {!confirmation ? (
+        <>
+          <p style={{ color: "var(--df-text-2)", fontSize: 13, margin: "6px 0 12px" }}>
+            Supprime tous tes songes, leurs participants et leurs drops. Tes personnages et tes teams ne sont pas
+            touchés. Chaque drop est archivé dans le Journal avant suppression.
+          </p>
+          <button onClick={() => setConfirmation(true)} style={{ ...sp.btnFantome, color: "var(--df-red)", borderColor: "rgba(242,109,109,0.5)" }}>
+            Tout supprimer
+          </button>
+        </>
+      ) : (
+        <>
+          <p style={{ color: "var(--df-red)", fontSize: 13.5, fontWeight: 700, margin: "6px 0 12px" }}>
+            Action irréversible : tous tes songes et drops seront définitivement supprimés (tes personnages et teams
+            resteront). Confirmer ?
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button disabled={enCours} onClick={confirmer} style={{ ...sp.btnVertPetit, background: "var(--df-red)", opacity: enCours ? 0.6 : 1 }}>
+              Oui, tout supprimer
+            </button>
+            <button disabled={enCours} onClick={() => setConfirmation(false)} style={sp.btnFantome}>Non, annuler</button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function SongesJournalSection({ journal, page, setPage }) {
+  const totalPages = Math.max(Math.ceil((journal.total || 0) / 10), 1)
+  return (
+    <div style={{ ...sp.card, opacity: 0.72 }}>
+      <div className="df-block-title" style={{ marginBottom: 4 }}>Journal</div>
+      <p style={{ color: "var(--df-text-3)", fontSize: 12, margin: "0 0 10px" }}>
+        Drops archivés par un "Tout supprimer" précédent — ne comptent plus dans aucune statistique, simple souvenir consultable.
+      </p>
+      {journal.entrees.length === 0 ? (
+        <p style={{ color: "var(--df-text-3)", fontSize: 13, margin: "6px 0" }}>Aucune entrée archivée.</p>
+      ) : journal.entrees.map(e => (
+        <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          {e.item_img ? <img src={e.item_img} alt="" style={{ width: 22, height: 22, objectFit: "contain", filter: "grayscale(70%)" }} /> : null}
+          <span style={{ fontSize: 13, color: "var(--df-text-2)" }}>{e.item_nom}</span>
+          <span style={{ fontSize: 11.5, color: "var(--df-text-3)" }}>
+            {e.palier ? `palier ${NOMS_PALIERS_ROMAINS[e.palier]} · ` : ""}{formaterDate(e.date_drop)}
+          </span>
+        </div>
+      ))}
+      {totalPages > 1 && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ ...sp.btnFantome, opacity: page <= 1 ? 0.5 : 1 }}>← Précédent</button>
+          <span style={{ fontSize: 12, color: "var(--df-text-2)" }}>Page {page} / {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ ...sp.btnFantome, opacity: page >= totalPages ? 0.5 : 1 }}>Suivant →</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+// Bascule "songe interrompu" — partagée entre l'écran principal et
+// l'écran d'ajout de drop (SONGES.md §10 point 5 : un seul champ).
+// ============================================================
+
+function BasculeSongeInterrompu({ nbSallesParRun, songeEchoue, setSongeEchoue, salleAtteinte, setSalleAtteinte }) {
+  if (!songeEchoue) {
     return (
-      <button onClick={() => setRunEchouee(true)} style={{ ...sp.lienDiscret, marginTop: 10 }}>
-        La run s'est arrêtée en cours de route ?
+      <button onClick={() => setSongeEchoue(true)} style={{ ...sp.lienDiscret, marginTop: 10 }}>
+        Le songe s'est arrêté en cours de route ?
       </button>
     )
   }
@@ -267,7 +373,7 @@ function BasculeRunInterrompue({ nbSallesParRun, runEchouee, setRunEchouee, sall
       <input type="number" min={1} max={nbSallesParRun} value={salleAtteinte}
         onChange={e => setSalleAtteinte(Math.min(nbSallesParRun, Math.max(1, Number(e.target.value) || 1)))}
         style={{ width: 64, ...sp.champ, padding: "6px 8px" }} />
-      <button onClick={() => setRunEchouee(false)} style={sp.lienDiscret}>Annuler</button>
+      <button onClick={() => setSongeEchoue(false)} style={sp.lienDiscret}>Annuler</button>
     </div>
   )
 }
@@ -276,7 +382,7 @@ function BasculeRunInterrompue({ nbSallesParRun, runEchouee, setRunEchouee, sall
 // Écran d'ajout de drop
 // ============================================================
 
-function SongesAjoutDrop({ config, itemsTrackables, equipeActive, runEchouee, setRunEchouee,
+function SongesAjoutDrop({ config, itemsTrackables, equipeActive, songeEchoue, setSongeEchoue,
   salleAtteinte, setSalleAtteinte, dropsEnCours, setDropsEnCours, onValider, onAnnuler, enregistrement, erreur }) {
   const [recherche, setRecherche] = useState("")
   const [categorieFiltre, setCategorieFiltre] = useState(null)
@@ -367,7 +473,7 @@ function SongesAjoutDrop({ config, itemsTrackables, equipeActive, runEchouee, se
 
         {dropsEnCours.length > 0 && (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 11.5, color: "var(--df-text-3)", marginBottom: 6 }}>Drops de cette run ({dropsEnCours.length})</div>
+            <div style={{ fontSize: 11.5, color: "var(--df-text-3)", marginBottom: 6 }}>Drops de ce songe ({dropsEnCours.length})</div>
             {dropsEnCours.map((d, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
                 {d._img ? <img src={d._img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} /> : null}
@@ -379,13 +485,13 @@ function SongesAjoutDrop({ config, itemsTrackables, equipeActive, runEchouee, se
           </div>
         )}
 
-        <BasculeRunInterrompue nbSallesParRun={config.nb_salles_par_run} runEchouee={runEchouee} setRunEchouee={setRunEchouee}
+        <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
           salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
 
         {erreur && <div style={{ color: "var(--df-red)", fontSize: 12.5, marginTop: 10 }}>{erreur}</div>}
 
         <button disabled={enregistrement} onClick={onValider} style={{ ...sp.btnVert, width: "100%", marginTop: 16, opacity: enregistrement ? 0.6 : 1 }}>
-          Valider la run
+          Valider le songe
         </button>
       </div>
     </div>
@@ -396,31 +502,42 @@ function SongesAjoutDrop({ config, itemsTrackables, equipeActive, runEchouee, se
 // Écran principal
 // ============================================================
 
-function SongesEcranPrincipal({ config, itemsTrackables, teams, teamId, changerTeam,
-  intensiteNiveau, changerIntensite, equipeActive, stats, historique, pageHistorique, setPageHistorique,
-  dernierRunId, onAnnulerDerniereRun, runEchouee, setRunEchouee, salleAtteinte, setSalleAtteinte,
-  onRunTerminee, onOuvrirGestion, onOuvrirAjoutDrop, enregistrement, erreur, onSelectObjet }) {
+function SongesEcranPrincipal({ config, teams, teamId, changerTeam,
+  intensiteNiveau, changerIntensite, categorieAffichee, changerCategorie, stats, reference,
+  historique, pageHistorique, setPageHistorique,
+  dernierRunId, onAnnulerDernierSonge, onSupprimerSonge, onSupprimerDrop,
+  songeEchoue, setSongeEchoue, salleAtteinte, setSalleAtteinte,
+  onSongeTermine, onOuvrirGestion, onOuvrirAjoutDrop, enregistrement, erreur, onSelectObjet }) {
 
-  // Sécheresse "légende" : min des tirages_depuis_dernier_drop sur les items
-  // legende (tous eligibles aux memes paliers => min = tirages depuis le
-  // dernier drop de N'IMPORTE QUELLE légende, pas d'un item précis — l'item
-  // épinglé est explicitement hors périmètre de cette passe, SONGES.md §10).
-  const itemsLegende = stats?.items?.filter(i => i.categorie === "legende") || []
-  const secheresseTirages = itemsLegende.length > 0 ? Math.min(...itemsLegende.map(i => i.tirages_depuis_dernier_drop)) : null
-
-  // Estimation du nombre de runs correspondant, calculee cote client depuis
-  // /songes/config (aucune valeur de jeu recopiee en dur) — approximative
-  // (suppose des runs completes), affichee avec un "≈" explicite.
-  const runsEstimes = useMemo(() => {
-    if (secheresseTirages == null || !config) return null
-    const legendeRef = itemsTrackables.find(i => i.categorie === "legende")
-    if (!legendeRef) return null
-    const tailleEquipe = equipeActive?.membres.length || 1
-    const tiragesParRun = legendeRef.paliers.reduce((s, p) => s + (config.combats_par_palier[p] || 0), 0) * tailleEquipe
-    return tiragesParRun > 0 ? Math.round(secheresseTirages / tiragesParRun) : null
-  }, [secheresseTirages, config, itemsTrackables, equipeActive])
+  // Sécheresse de la catégorie affichée : voir /songes/stats
+  // (categories_secheresse) — calcul dédié côté backend, pas un simple
+  // minimum client (les cosmétiques n'ont pas tous les mêmes paliers
+  // éligibles). Les tirages restent une info secondaire, approximée ici
+  // par le minimum sur les items de la catégorie (acceptable pour un
+  // simple sous-titre, contrairement au chiffre principal).
+  const infoCategorie = stats?.categories_secheresse?.find(c => c.categorie === categorieAffichee) || null
+  const secheresseSonges = infoCategorie ? infoCategorie.songes_depuis_dernier_drop : null
+  const itemsCategorie = stats?.items?.filter(i => i.categorie === categorieAffichee) || []
+  const secheresseTirages = itemsCategorie.length > 0 ? Math.min(...itemsCategorie.map(i => i.tirages_depuis_dernier_drop)) : null
 
   const totalPagesHistorique = Math.max(Math.ceil((historique.total || 0) / 10), 1)
+
+  // Confirmation en 2 clics (pas de window.confirm() : coupe avec la charte
+  // graphique custom et bloquerait l'automatisation de test navigateur).
+  // Premier clic sur un id -> affiche "Confirmer ?" ; second clic sur le
+  // MEME id -> supprime. Cliquer ailleurs annule implicitement (l'id
+  // courant change).
+  const [confirmerSongeId, setConfirmerSongeId] = useState(null)
+  const [confirmerDropId, setConfirmerDropId] = useState(null)
+
+  const clicSupprimerSonge = (id) => {
+    if (confirmerSongeId === id) { onSupprimerSonge(id); setConfirmerSongeId(null) }
+    else { setConfirmerSongeId(id); setConfirmerDropId(null) }
+  }
+  const clicSupprimerDrop = (id) => {
+    if (confirmerDropId === id) { onSupprimerDrop(id); setConfirmerDropId(null) }
+    else { setConfirmerDropId(id); setConfirmerSongeId(null) }
+  }
 
   return (
     <div style={sp.page}>
@@ -429,26 +546,41 @@ function SongesEcranPrincipal({ config, itemsTrackables, teams, teamId, changerT
         <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
       </div>
 
-      {/* 1. Sécheresse en très grand */}
+      {/* 1. Sélecteur de catégorie, au-dessus du compteur */}
+      <div style={{ marginBottom: 10 }}>
+        {ORDRE_CATEGORIES.map(c => (
+          <span key={c} onClick={() => changerCategorie(c)} style={sp.pill(categorieAffichee === c)}>
+            {CATEGORIE_LABELS_SELECTEUR[c]}
+          </span>
+        ))}
+      </div>
+
+      {/* 2. Compteur principal : nombre de songes, tirages en secondaire, reference theorique */}
       <div style={{ ...sp.card, textAlign: "center", padding: "26px 20px" }}>
         <div style={{ fontSize: 12, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
-          Sécheresse légendes
+          Sans {CATEGORIE_MOT_SINGULIER[categorieAffichee]} depuis
         </div>
-        {secheresseTirages == null ? (
+        {secheresseSonges == null ? (
           <div style={{ color: "var(--df-text-3)", fontSize: 14 }}>Aucune donnée pour cette intensité pour l'instant.</div>
         ) : (
           <>
             <div style={{ fontSize: "clamp(38px, 11vw, 58px)", fontWeight: 800, color: "var(--df-red)", lineHeight: 1 }}>
-              {formaterNombre(secheresseTirages)}
+              {formaterNombre(secheresseSonges)}
             </div>
-            <div style={{ fontSize: 13, color: "var(--df-text-2)", marginTop: 6 }}>
-              tirages sans légende{runsEstimes != null ? ` · ≈ ${formaterNombre(runsEstimes)} run${runsEstimes !== 1 ? "s" : ""}` : ""}
+            <div style={{ fontSize: 13, color: "var(--df-text-2)", marginTop: 4 }}>
+              songe{secheresseSonges !== 1 ? "s" : ""}
+              {secheresseTirages != null ? ` · ${formaterNombre(secheresseTirages)} tirage${secheresseTirages !== 1 ? "s" : ""}` : ""}
+            </div>
+            <div style={{ fontSize: 12.5, color: "var(--df-text-3)", marginTop: 8, fontStyle: "italic" }}>
+              {reference == null ? "…" : reference.disponible
+                ? `il en faut ~${formaterNombre(reference.esperance_runs)} en moyenne pour cette composition`
+                : "référence non disponible"}
             </div>
           </>
         )}
       </div>
 
-      {/* 2. Pastilles team + intensité */}
+      {/* 3. Pastilles team + intensité */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
         <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={sp.select}>
           {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
@@ -466,51 +598,74 @@ function SongesEcranPrincipal({ config, itemsTrackables, teams, teamId, changerT
         </select>
       </div>
 
-      {/* 3. Actions */}
+      {/* 4. Actions */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <button disabled={enregistrement} onClick={onRunTerminee} style={{ ...sp.btnVert, opacity: enregistrement ? 0.6 : 1 }}>
-          Run terminée
+        <button disabled={enregistrement} onClick={onSongeTermine} style={{ ...sp.btnVert, opacity: enregistrement ? 0.6 : 1 }}>
+          Songe terminé
         </button>
         <button onClick={onOuvrirAjoutDrop} style={sp.btnOrContour}>
           J'ai drop quelque chose
         </button>
       </div>
 
-      {/* 4. Salle atteinte, si la run n'est pas terminée */}
-      <BasculeRunInterrompue nbSallesParRun={config.nb_salles_par_run} runEchouee={runEchouee} setRunEchouee={setRunEchouee}
+      {/* 5. Salle atteinte, si le songe n'est pas terminé */}
+      <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
         salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
-      {runEchouee && (
-        <button disabled={enregistrement} onClick={onRunTerminee} style={{ ...sp.btnVertPetit, marginTop: 10 }}>
-          Enregistrer cette run
+      {songeEchoue && (
+        <button disabled={enregistrement} onClick={onSongeTermine} style={{ ...sp.btnVertPetit, marginTop: 10 }}>
+          Enregistrer ce songe
         </button>
       )}
 
       {erreur && <div style={{ color: "var(--df-red)", fontSize: 12.5, marginTop: 10 }}>{erreur}</div>}
 
-      {/* 6. Annulation de la dernière run */}
+      {/* 7. Annulation rapide du dernier songe */}
       {dernierRunId && (
         <div style={{ marginTop: 14 }}>
-          <button onClick={onAnnulerDerniereRun} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
-            Annuler la dernière run enregistrée (Run #{dernierRunId})
+          <button onClick={onAnnulerDernierSonge} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
+            Annuler le dernier songe enregistré (Songe #{dernierRunId})
           </button>
         </div>
       )}
 
-      {/* 5. Historique */}
+      {/* 6. Historique des songes */}
       <div style={{ marginTop: 26 }}>
-        <div className="df-block-title">Historique</div>
-        {historique.drops.length === 0 ? (
-          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucun drop enregistré pour l'instant.</div>
-        ) : historique.drops.map(d => (
-          <div key={d.id} onClick={() => onSelectObjet(d.item_id)}
-            style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(20,26,46,0.9)", border: "1px solid rgba(255,198,61,0.13)", borderRadius: 10, padding: "10px 14px", marginBottom: 8, cursor: "pointer" }}>
-            {d.item_img ? <img src={d.item_img} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} /> : <div style={{ width: 28, height: 28 }} />}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: "var(--df-gold)", fontWeight: 700, fontSize: 13.5 }}>{d.item_nom}{d.quantite > 1 ? ` ×${d.quantite}` : ""}</div>
-              <div style={{ color: "var(--df-text-3)", fontSize: 11.5 }}>
-                Run #{d.run_id} · {d.perso_nom}{d.palier ? ` · palier ${NOMS_PALIERS_ROMAINS[d.palier]}` : ""} · {formaterDate(d.cree_le)}
+        <div className="df-block-title">Historique des songes</div>
+        {historique.songes.length === 0 ? (
+          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucun songe enregistré pour l'instant.</div>
+        ) : historique.songes.map(s => (
+          <div key={s.id} style={{ background: "rgba(20,26,46,0.9)", border: "1px solid rgba(255,198,61,0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ color: "var(--df-gold)", fontWeight: 700, fontSize: 13.5 }}>
+                  Songe #{s.id}
+                  {!s.terminee && <span style={{ color: "var(--df-text-3)", fontWeight: 400 }}> (interrompu, salle {s.salle_atteinte})</span>}
+                </div>
+                <div style={{ color: "var(--df-text-3)", fontSize: 11.5, marginTop: 2 }}>
+                  {s.intensite.charAt(0).toUpperCase() + s.intensite.slice(1)} {NOMS_PALIERS_ROMAINS[s.niveau] || s.niveau} · {s.team_nom || "—"} · {formaterDate(s.date_run)}
+                </div>
               </div>
+              <button onClick={() => clicSupprimerSonge(s.id)} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
+                {confirmerSongeId === s.id ? "Confirmer la suppression ?" : "Supprimer"}
+              </button>
             </div>
+            {s.drops.length > 0 && (
+              <div style={{ marginTop: 10, borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: 8 }}>
+                {s.drops.map(d => (
+                  <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+                    <span onClick={() => onSelectObjet(d.item_id)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: 1, minWidth: 0 }}>
+                      {d.item_img ? <img src={d.item_img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} /> : null}
+                      <span style={{ fontSize: 13, color: "var(--df-text)" }}>{d.item_nom}{d.quantite > 1 ? ` ×${d.quantite}` : ""}</span>
+                      <span style={{ fontSize: 11.5, color: "var(--df-text-3)" }}>— {d.perso_nom}{d.palier ? ` · palier ${NOMS_PALIERS_ROMAINS[d.palier]}` : ""}</span>
+                    </span>
+                    <span onClick={() => clicSupprimerDrop(d.id)} title="Supprimer ce drop"
+                      style={{ color: "var(--df-red)", cursor: "pointer", fontWeight: 700, padding: "0 4px", fontSize: confirmerDropId === d.id ? 11 : 13, whiteSpace: "nowrap" }}>
+                      {confirmerDropId === d.id ? "Confirmer ?" : "✕"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         {totalPagesHistorique > 1 && (
@@ -547,15 +702,22 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
     if (v) { try { return JSON.parse(v) } catch { /* valeur corrompue, ignoree */ } }
     return null
   })
+  const [categorieAffichee, setCategorieAffichee] = useState(() => {
+    const v = localStorage.getItem(LS_CATEGORIE)
+    return ORDRE_CATEGORIES.includes(v) ? v : "legende"
+  })
 
   const [mode, setMode] = useState("principal") // "principal" | "ajout-drop" | "gestion"
   const [dropsEnCours, setDropsEnCours] = useState([])
-  const [runEchouee, setRunEchouee] = useState(false)
+  const [songeEchoue, setSongeEchoue] = useState(false)
   const [salleAtteinte, setSalleAtteinte] = useState(26)
   const [dernierRunId, setDernierRunId] = useState(null)
   const [stats, setStats] = useState(null)
-  const [historique, setHistorique] = useState({ drops: [], total: 0 })
+  const [reference, setReference] = useState(null)
+  const [historique, setHistorique] = useState({ songes: [], total: 0 })
   const [pageHistorique, setPageHistorique] = useState(1)
+  const [journal, setJournal] = useState({ entrees: [], total: 0 })
+  const [pageJournal, setPageJournal] = useState(1)
   const [enregistrement, setEnregistrement] = useState(false)
   const [erreur, setErreur] = useState("")
 
@@ -604,11 +766,12 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
     setIntensiteNiveau(v)
     localStorage.setItem(LS_INTENSITE, JSON.stringify(v))
   }
+  const changerCategorie = (cat) => { setCategorieAffichee(cat); localStorage.setItem(LS_CATEGORIE, cat) }
 
   const equipeActive = teams.find(t => t.id === teamId) || null
 
   // Stats (pour la sécheresse) : rechargées à chaque changement de team/
-  // intensité, et après toute création/suppression de run.
+  // intensité, et après toute création/suppression de songe ou de drop.
   const rafraichirStats = () => {
     if (!token || !teamId || !intensiteNiveau) return
     const params = new URLSearchParams({ intensite: intensiteNiveau.intensite, niveau: intensiteNiveau.niveau, team_id: teamId })
@@ -616,12 +779,36 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   }
   useEffect(rafraichirStats, [token, teamId, intensiteNiveau]) // eslint-disable-line
 
+  // Référence théorique de la catégorie affichée : publique, dépend de la
+  // taille de l'équipe active (composition) — SONGES.md §9, jamais affichée
+  // sans elle. "disponible: false" -> "référence non disponible", jamais
+  // d'extrapolation cliente.
+  useEffect(() => {
+    if (!intensiteNiveau || !categorieAffichee) { setReference(null); return }
+    const tailleEquipe = equipeActive?.membres.length || 1
+    const params = new URLSearchParams({
+      categorie: categorieAffichee, intensite: intensiteNiveau.intensite,
+      niveau: intensiteNiveau.niveau, nb_participants: tailleEquipe,
+    })
+    fetch(`${API}/songes/estimation?${params}`).then(r => r.json()).then(setReference).catch(() => setReference(null))
+  }, [categorieAffichee, intensiteNiveau, equipeActive])
+
   const rafraichirHistorique = (page = pageHistorique) => {
     if (!token) return
     fetch(`${API}/songes/historique?page=${page}&page_size=10`, { headers: authHeaders(token) })
       .then(r => r.json()).then(setHistorique)
   }
   useEffect(() => rafraichirHistorique(pageHistorique), [token, pageHistorique]) // eslint-disable-line
+
+  const rafraichirJournal = (page = pageJournal) => {
+    if (!token) return
+    fetch(`${API}/songes/journal?page=${page}&page_size=10`, { headers: authHeaders(token) })
+      .then(r => r.json()).then(setJournal)
+  }
+  // Le Journal n'est utile que dans le panneau de gestion : charge seulement
+  // en y entrant, pas a chaque rendu de l'ecran principal.
+  useEffect(() => { if (mode === "gestion") rafraichirJournal(1); setPageJournal(1) }, [mode]) // eslint-disable-line
+  useEffect(() => { if (mode === "gestion") rafraichirJournal(pageJournal) }, [pageJournal]) // eslint-disable-line
 
   const enregistrerRun = ({ terminee, salleAtteinteVal, drops }) => {
     if (!equipeActive || equipeActive.membres.length === 0) return
@@ -637,7 +824,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
       .then(async r => { if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || "Erreur d'enregistrement") }; return r.json() })
       .then(d => {
         setDernierRunId(d.id)
-        setRunEchouee(false); setSalleAtteinte(config.nb_salles_par_run)
+        setSongeEchoue(false); setSalleAtteinte(config.nb_salles_par_run)
         setDropsEnCours([]); setMode("principal")
         rafraichirStats(); rafraichirHistorique(1); setPageHistorique(1)
       })
@@ -645,14 +832,36 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
       .finally(() => setEnregistrement(false))
   }
 
-  const annulerDerniereRun = () => {
+  const annulerDernierSonge = () => {
     if (!dernierRunId) return
     fetch(`${API}/songes/runs/${dernierRunId}`, { method: "DELETE", headers: authHeaders(token) })
       .then(() => { setDernierRunId(null); rafraichirStats(); rafraichirHistorique(1); setPageHistorique(1) })
   }
 
+  const supprimerSonge = (id) => {
+    fetch(`${API}/songes/runs/${id}`, { method: "DELETE", headers: authHeaders(token) })
+      .then(() => {
+        if (dernierRunId === id) setDernierRunId(null)
+        rafraichirStats(); rafraichirHistorique()
+      })
+  }
+
+  const supprimerDrop = (dropId) => {
+    fetch(`${API}/songes/drops/${dropId}`, { method: "DELETE", headers: authHeaders(token) })
+      .then(() => { rafraichirStats(); rafraichirHistorique() })
+  }
+
+  const toutSupprimer = () => {
+    return fetch(`${API}/songes/tout`, { method: "DELETE", headers: authHeaders(token) })
+      .then(() => {
+        setDernierRunId(null)
+        rafraichirStats(); rafraichirHistorique(1); setPageHistorique(1)
+        rafraichirJournal(1); setPageJournal(1)
+      })
+  }
+
   const ouvrirAjoutDrop = () => { setErreur(""); setMode("ajout-drop") }
-  const annulerAjoutDrop = () => { setDropsEnCours([]); setRunEchouee(false); setSalleAtteinte(config.nb_salles_par_run); setErreur(""); setMode("principal") }
+  const annulerAjoutDrop = () => { setDropsEnCours([]); setSongeEchoue(false); setSalleAtteinte(config.nb_salles_par_run); setErreur(""); setMode("principal") }
 
   if (!token) return <SongesConnexionRequise onBack={onBack} />
   // !intensiteNiveau : evite un rendu avec intensiteNiveau encore null entre
@@ -667,25 +876,36 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   }
 
   if (mode === "gestion") {
-    return <SongesGestion token={token} personnages={personnages} teams={teams}
-      onRafraichir={chargerPersonnagesEtTeams} onTerminer={() => setMode("principal")} />
+    return (
+      <>
+        <SongesGestion token={token} personnages={personnages} teams={teams}
+          onRafraichir={chargerPersonnagesEtTeams} onTerminer={() => setMode("principal")} />
+        <div style={{ ...sp.page, paddingTop: 0 }}>
+          <SongesZoneDangereuse onToutSupprimer={toutSupprimer} />
+          <SongesJournalSection journal={journal} page={pageJournal} setPage={setPageJournal} />
+        </div>
+      </>
+    )
   }
 
   if (mode === "ajout-drop") {
     return <SongesAjoutDrop config={config} itemsTrackables={itemsTrackables} equipeActive={equipeActive}
-      runEchouee={runEchouee} setRunEchouee={setRunEchouee} salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte}
+      songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue} salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte}
       dropsEnCours={dropsEnCours} setDropsEnCours={setDropsEnCours}
-      onValider={() => enregistrerRun({ terminee: !runEchouee, salleAtteinteVal: salleAtteinte, drops: dropsEnCours })}
+      onValider={() => enregistrerRun({ terminee: !songeEchoue, salleAtteinteVal: salleAtteinte, drops: dropsEnCours })}
       onAnnuler={annulerAjoutDrop} enregistrement={enregistrement} erreur={erreur} />
   }
 
   return (
-    <SongesEcranPrincipal config={config} itemsTrackables={itemsTrackables} teams={teams}
+    <SongesEcranPrincipal config={config} teams={teams}
       teamId={teamId} changerTeam={changerTeam} intensiteNiveau={intensiteNiveau} changerIntensite={changerIntensite}
-      equipeActive={equipeActive} stats={stats} historique={historique} pageHistorique={pageHistorique} setPageHistorique={setPageHistorique}
-      dernierRunId={dernierRunId} onAnnulerDerniereRun={annulerDerniereRun}
-      runEchouee={runEchouee} setRunEchouee={setRunEchouee} salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte}
-      onRunTerminee={() => enregistrerRun({ terminee: !runEchouee, salleAtteinteVal: salleAtteinte, drops: [] })}
+      categorieAffichee={categorieAffichee} changerCategorie={changerCategorie}
+      stats={stats} reference={reference}
+      historique={historique} pageHistorique={pageHistorique} setPageHistorique={setPageHistorique}
+      dernierRunId={dernierRunId} onAnnulerDernierSonge={annulerDernierSonge}
+      onSupprimerSonge={supprimerSonge} onSupprimerDrop={supprimerDrop}
+      songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue} salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte}
+      onSongeTermine={() => enregistrerRun({ terminee: !songeEchoue, salleAtteinteVal: salleAtteinte, drops: [] })}
       onOuvrirGestion={() => setMode("gestion")} onOuvrirAjoutDrop={ouvrirAjoutDrop}
       enregistrement={enregistrement} erreur={erreur} onSelectObjet={onSelectObjet}
     />

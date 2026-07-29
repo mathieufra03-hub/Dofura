@@ -55,13 +55,15 @@ TABLES_ENCYCLOPEDIE = {
 # source — un DROP dessus serait une perte definitive et irrecuperable.
 # Idem pour les 6 tables songe_* de donnees joueur (SONGES.md §5) : runs,
 # drops, personnages, teams — rien de tout ca ne peut se reconstruire.
+# songe_journal (refonte interface "Tout supprimer") : archive de drops
+# passes, alimentee uniquement par l'appli — memes raisons, meme protection.
 # Elles ne doivent JAMAIS apparaitre dans TABLES_ENCYCLOPEDIE ni dans le
 # schema DROP ci-dessous ; elles ne sont creees plus bas qu'en
 # CREATE TABLE IF NOT EXISTS, jamais precedees d'un DROP.
 TABLES_UTILISATEUR_INTERDITES = {
     "users", "progression_joueur", "favoris",
     "songe_personnages", "songe_teams", "songe_team_membres",
-    "songe_runs", "songe_run_participants", "songe_drops",
+    "songe_runs", "songe_run_participants", "songe_drops", "songe_journal",
 }
 
 print("[init_db] Creation du schema (DROP + CREATE des tables encyclopediques)...")
@@ -642,6 +644,13 @@ CREATE TABLE IF NOT EXISTS songe_drops (
     quantite      INTEGER NOT NULL DEFAULT 1,
     palier        INTEGER,
     cree_le       TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS songe_journal (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL,
+    item_id       INTEGER NOT NULL,
+    palier        INTEGER,
+    date_drop     TEXT
 );
 """)
 
