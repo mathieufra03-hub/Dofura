@@ -544,10 +544,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
       <button onClick={onBack} style={sp.backBtn}>← Retour</button>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
         <h1 className="df-section-title" style={{ fontSize: 20, margin: 0 }}>Suivi de Songes</h1>
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <button onClick={onOuvrirMesDrops} style={sp.lienDiscret}>🎁 Mes drops</button>
-          <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
-        </div>
+        <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
       </div>
 
       {/* 1. Sélecteur de catégorie, au-dessus du compteur */}
@@ -660,7 +657,10 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
 
       {/* 6. Historique des songes */}
       <div style={{ marginTop: 26 }}>
-        <div className="df-block-title">Historique des songes</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div className="df-block-title" style={{ margin: 0 }}>Historique des songes</div>
+          <button onClick={onOuvrirMesDrops} style={sp.lienDiscret}>🎁 Mes drops</button>
+        </div>
         {historique.songes.length === 0 ? (
           <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucun songe enregistré pour l'instant.</div>
         ) : historique.songes.map(s => (
