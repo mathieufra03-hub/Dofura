@@ -127,5 +127,9 @@
 
 **Objectif dérivé (auto-coché)** — une case à cocher dont l'état n'est pas stocké directement, mais recalculé à chaque affichage à partir d'une autre donnée déjà suivie ailleurs — impossible à cocher à la main, elle "regarde" simplement si l'autre condition est déjà remplie. *Chantier Succès : un objectif "quête" d'un succès ne se coche jamais lui-même en base — il est marqué fait dès que toutes les étapes de la quête liée le sont, recalculé à chaque chargement de la fiche.*
 
+**Panneau latéral (overlay)** — un cadre qui s'affiche PAR-DESSUS la page actuelle (flottant, position fixe à l'écran) plutôt que de remplacer son contenu comme une nouvelle page. La page de dessous reste visible et intacte derrière, prête à être retrouvée telle quelle à la fermeture. *Chantier Grimoire : cliquer un équipement/monstre/panoplie dans le Grimoire ouvre sa fiche dans un panneau à droite de l'écran — la recherche et les filtres restent visibles et inchangés derrière, contrairement à l'ancien comportement qui changeait complètement de page.*
+
+**Pile (stack)** — une structure "dernier arrivé, premier sorti" : on empile des éléments les uns sur les autres, et on ne peut retirer que celui du dessus. Utile pour un historique de navigation qu'on peut redérouler en arrière, étape par étape. *Chantier Grimoire : ouvrir une panoplie puis cliquer sur une pièce l'empile par-dessus dans le panneau — "← Retour" retire le dernier étage de la pile (revient à la panoplie), tandis que "✕" vide toute la pile d'un coup (ferme complètement).*
+
 ---
 *Termes suivants : à ajouter au fil des sessions (règle 17).*

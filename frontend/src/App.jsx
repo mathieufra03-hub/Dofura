@@ -32,18 +32,16 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-// Structure de nav validée (§2 des specs) : 5 catégories fusionnées.
-// Équipements englobe Panoplies, Métiers englobe Ressources (+ future carte),
-// Bestiaire fusionne Monstres + Zones. Ces pages existent toujours (accès
-// via la grille Encyclopédie de l'accueil ou les liens croisés des fiches),
-// elles ne sont juste plus des onglets de premier niveau. "Métiers" pointe
-// vers Ressources en attendant le vrai hub Métiers (chantier futur #11
-// CLAUDE.md) — sans ça, les 3 639 ressources deviendraient injoignables
-// depuis l'interface.
+// Structure de nav (chantier Grimoire, 29 juillet 2026) : Équipements,
+// Ressources (ex-"Métiers" — le mot "métiers" n'est plus utilisé nulle part
+// dans l'interface, remplacé par "ressources"), Bestiaire et Panoplies
+// fusionnés en une seule entrée "Grimoire". Ces anciennes pages ne sont plus
+// accessibles depuis la navigation (ni la barre du haut, ni la grille
+// Encyclopédie) — seul le Grimoire y mène desormais, voir GrimoirePage.
 // "Songes" (SONGES.md) n'est pas une catégorie d'encyclopédie mais un outil
-// de suivi joueur — 6e entrée volontairement distincte des 5 fusionnées ci-dessus.
-const navLinks = ["Équipements", "Métiers", "Donjons", "Bestiaire", "Quêtes", "Songes"]
-const NAV_LABEL_VERS_CIBLE = { "Équipements":"equipement", "Donjons":"donjon", "Bestiaire":"monstres", "Métiers":"ressource", "Quêtes":"quete", "Songes":"songes" }
+// de suivi joueur — entrée volontairement distincte du Grimoire.
+const navLinks = ["Grimoire", "Donjons", "Quêtes", "Songes"]
+const NAV_LABEL_VERS_CIBLE = { "Grimoire":"grimoire", "Donjons":"donjon", "Quêtes":"quete", "Songes":"songes" }
 
 // Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
 // ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
@@ -348,17 +346,16 @@ function Footer() {
 // de l'accueil reste le seul point d'entree pour PARCOURIR la liste tant
 // que l'espace perso (§8, Phase 4) n'existe pas ; les liens contextuels
 // (fiche donjon -> succes, fiche succes -> quete) restent le complement,
-// pas le seul acces. Metiers pointe vers Ressources en attendant le vrai
-// hub Metiers (meme raison que NAV_LABEL_VERS_CIBLE).
+// pas le seul acces. Grimoire (chantier Grimoire, 29 juillet 2026) remplace
+// les anciennes entrées Équipements/Métiers(→Ressources)/Bestiaire, fusionnées
+// dans une seule page — voir GrimoirePage.
 function EncycloGrid({ onNav }) {
   const items = [
-    { label:"Équipements",       desc:"Armes, coiffes, capes... et leurs panoplies",    action:()=>onNav("equipement") },
-    { label:"Métiers",           desc:"Récolte, craft et ressources",                   action:()=>onNav("ressource") },
+    { label:"Grimoire des Secrets", desc:"Équipements, ressources, monstres et panoplies", action:()=>onNav("grimoire") },
     { label:"Donjons",           desc:"Boss, salles, stratégies et succès",             action:()=>onNav("donjon") },
-    { label:"Bestiaire",         desc:"Toutes les créatures, par zone et sous-zone",    action:()=>onNav("monstres") },
     { label:"Quêtes",            desc:"Étapes, prérequis et récompenses",               action:()=>onNav("quete") },
     { label:"Succès",            desc:"Objectifs, points et récompenses",               action:()=>onNav("succes") },
-    { label:"Carte interactive", desc:"Positions des ressources et métiers", lit:true,  action:null },
+    { label:"Carte interactive", desc:"Positions des ressources", lit:true,  action:null },
   ]
   return (
     <div style={{ padding:"0 2rem 60px", maxWidth:1240, margin:"0 auto" }}>
@@ -1879,6 +1876,526 @@ function PanoplieDetailPage({ id, onSelectObjet, onBack }) {
       ) : (
         <div style={{ fontSize:12, color:C.txt3, padding:"8px 4px" }}>Panoplie cosmétique, sans bonus statistique.</div>
       )}
+    </div>
+  )
+}
+
+// ============================================================
+// Grimoire des Secrets (chantier Grimoire, phase 1 — structure uniquement,
+// filtres specialises en phase 2). Fusionne Équipements/Ressources/
+// Bestiaire/Panoplies en une seule page : recherche globale groupee par
+// type ("Tout", onglet par defaut) ou filtree sur un seul type via les
+// onglets. Cliquer un resultat ouvre un PANNEAU LATERAL par-dessus la
+// liste plutot qu'une nouvelle page (regle centrale des specs) — la
+// recherche/les onglets vivent dans GrimoirePage et ne sont jamais
+// reinitialises a l'ouverture/fermeture du panneau, donc "fermer" ramene
+// exactement a l'etat de recherche precedent. Reutilise tel quel les
+// endpoints /objets, /monstres, /panoplies (aucun nouvel endpoint
+// necessaire pour la structure) et les fiches detail existantes
+// (ObjetDetailPage, MonstrePage, PanoplieDetailPage) — simplement rendues
+// dans le panneau au lieu d'une page pleine, meme code, DRY.
+const GRIMOIRE_TYPES = [
+  { id:"equipement", label:"Équipements", endpoint:"objets",    params:{ categorie:"equipement" } },
+  { id:"ressource",  label:"Ressources",  endpoint:"objets",    params:{ categorie:"ressource" } },
+  { id:"monstre",    label:"Monstres",    endpoint:"monstres",  params:{} },
+  { id:"panoplie",   label:"Panoplies",   endpoint:"panoplies", params:{} },
+]
+const GRIMOIRE_PREVIEW = 6
+
+function grimoireListe(d, typeId) {
+  return typeId === "monstre" ? d.monstres : typeId === "panoplie" ? d.panoplies : d.objets
+}
+
+// Carte uniforme (§CONTRAINTES : "cartes visuellement uniformes, meme
+// quand les donnees different selon le type") — un seul composant, la
+// sous-ligne et le badge s'adaptent au type plutot que 4 cartes copiees-collees.
+function GrimoireTuile({ item, typeId, onClick }) {
+  const img = item.img || item.image_url || null
+  const sousLigne = typeId === "monstre"
+    ? `Niv. ${item.niveau ?? "—"}`
+    : typeId === "panoplie"
+    ? `Niv. ${item.niveau} — ${item.nb_objets} pièce${item.nb_objets!==1?"s":""}`
+    : `Niv. ${item.niveau} — ${item.type_nom || "—"}`
+  const badge = typeId === "equipement" && item.legendaire ? "LÉG."
+    : typeId === "panoplie" && item.cosmetique ? "COSM."
+    : typeId === "monstre" && item.categorie && item.categorie !== "monstre" ? CATEGORIE_BADGE_TEXTE[item.categorie]
+    : null
+  return (
+    <div className="df-tile" onClick={onClick}>
+      {img
+        ? <img src={img} alt={item.nom} style={{ width:44, height:44, objectFit:"contain", margin:"0 auto 10px", display:"block" }} />
+        : <div style={{ width:44, height:44, borderRadius:10, margin:"0 auto 10px", background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)" }} />
+      }
+      <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:12.5, lineHeight:1.25, minHeight:31, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>{item.nom}</div>
+      <div style={{ color:"var(--df-text-3)", fontSize:11, marginTop:4 }}>{sousLigne}</div>
+      {badge && <span className="df-tile-badge">{badge}</span>}
+    </div>
+  )
+}
+
+// Panneau lateral : reutilise les fiches detail existantes telles quelles
+// (memes props, meme composant), juste dans un cadre flottant plutot
+// qu'une page pleine. Pile de navigation interne (ex. panoplie -> objet
+// membre -> ...) : le "← Retour" de la fiche depile un niveau, le "✕" ferme
+// tout d'un coup quel que soit la profondeur. Sur mobile, le panneau
+// occupe l'ecran entier (100vw) — meme mecanique, juste plus large.
+function GrimoirePanel({ pile, onBack, onClose, onPushObjet, onPushMonstre, onPushPanoplie, onSelectDonjon }) {
+  if (pile.length === 0) return null
+  const actuel = pile[pile.length - 1]
+  return (
+    <>
+      <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(6,8,16,0.6)", zIndex:300 }} />
+      <div style={{
+        position:"fixed", top:0, right:0, height:"100vh", width:"min(860px, 100vw)",
+        background:"var(--df-panel-bg)", borderLeft:"1px solid rgba(255,198,61,0.25)",
+        boxShadow:"-12px 0 40px rgba(0,0,0,0.5)", zIndex:301, overflowY:"auto",
+      }}>
+        {/* position:fixed (pas absolute) : reste ancré en haut à droite du
+            viewport quel que soit le defilement interne du panneau. */}
+        <button onClick={onClose} title="Fermer" style={{
+          position:"fixed", top:14, right:14, zIndex:302, width:32, height:32, borderRadius:"50%",
+          background:"rgba(20,26,46,0.9)", border:"1px solid rgba(255,198,61,0.4)", color:"var(--df-gold)",
+          fontSize:16, cursor:"pointer", lineHeight:"30px",
+        }}>✕</button>
+        {actuel.type === "objet" && (
+          <ObjetDetailPage id={actuel.id} onSelect={onPushObjet} onSelectPanoplie={onPushPanoplie}
+            onSelectMonstre={onPushMonstre} onSelectDonjon={onSelectDonjon} onBack={onBack} />
+        )}
+        {actuel.type === "monstre" && (
+          <MonstrePage id={actuel.id} onSelectDonjon={onSelectDonjon} onBack={onBack} />
+        )}
+        {actuel.type === "panoplie" && (
+          <PanoplieDetailPage id={actuel.id} onSelectObjet={onPushObjet} onBack={onBack} />
+        )}
+      </div>
+    </>
+  )
+}
+
+// Construit les parametres cote backend adaptes au type (chantier Grimoire,
+// phase 2 — filtres specialises) : chaque type reprend a l'identique le
+// jeu de filtres de son ancienne page dediee (ObjetsPage/BestiairePage/
+// PanopliesPage). Un seul point de construction, reutilise en mode "Tout"
+// (juste le niveau, filtre commun) et en mode onglet specifique (jeu complet).
+function grimoireParams(typeId, f) {
+  if (typeId === "equipement" || typeId === "ressource") {
+    return {
+      categorie: typeId, tri:"az",
+      type: (f.types||[]).join(","),
+      niveau_min: f.niveauMin ?? 1, niveau_max: f.niveauMax ?? 999,
+      effets: typeId==="equipement" ? (f.effets||[]).join(",") : "",
+      panoplie: typeId==="equipement" ? !!f.panoplieSeule : false,
+      legendaire: typeId==="equipement" ? !!f.legendaire : false,
+    }
+  }
+  if (typeId === "monstre") {
+    return {
+      tri:"az",
+      region:(f.regions||[]).join(","), sous_zone:(f.sousZones||[]).join(","), categorie:(f.categoriesMonstre||[]).join(","),
+      niveau_min: f.niveauMin ?? 1, niveau_max: f.niveauMax ?? 999,
+    }
+  }
+  // panoplie : pas de plage de niveau continue cote backend (tranche_niveau
+  // categorielle) — le filtre "niveau" commun du mode Tout ne s'applique
+  // donc pas aux panoplies, limite assumee et documentee (voir pause phase 1).
+  return { type: f.panoplieType || "", tranche_niveau: f.trancheNiveau || "" }
+}
+
+function GrimoirePage({ onBack, onSelectDonjon }) {
+  const [activeTab, setActiveTab] = useState("tout")
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const [pile, setPile] = useState([]) // panneau lateral : [] = ferme
+  const [showFilters, setShowFilters] = useState(false)
+
+  const [toutResultats, setToutResultats] = useState(() => Object.fromEntries(GRIMOIRE_TYPES.map(t => [t.id, { total:0, items:[] }])))
+  const [resultats, setResultats] = useState({ total:0, items:[] })
+  const [loading, setLoading] = useState(true)
+
+  // Filtres specialises par type (phase 2) — un seul jeu d'etats, mais
+  // chaque filtre n'est envoye au backend que pour le(s) type(s) auquel il
+  // s'applique (voir grimoireParams). Reinitialises a chaque changement
+  // d'onglet, comme le faisaient les anciennes pages dediees.
+  const [niveauMin, setNiveauMin] = useState(1)
+  const [niveauMax, setNiveauMax] = useState(999)
+  const [niveauBounds, setNiveauBounds] = useState(null)
+  const [types, setTypes] = useState([])                 // equipement + ressource
+  const [effets, setEffets] = useState([])                // equipement uniquement
+  const [panoplieSeule, setPanoplieSeule] = useState(false) // equipement uniquement
+  const [legendaire, setLegendaire] = useState(false)     // equipement uniquement
+  const [regions, setRegions] = useState([])              // monstre
+  const [sousZones, setSousZones] = useState([])          // monstre
+  const [categoriesMonstre, setCategoriesMonstre] = useState([]) // monstre
+  const [panoplieType, setPanoplieType] = useState("")    // panoplie
+  const [trancheNiveau, setTrancheNiveau] = useState("")  // panoplie
+
+  const [typesDispo, setTypesDispo] = useState([])
+  const [effetsDispo, setEffetsDispo] = useState([])
+  const [regionsDispo, setRegionsDispo] = useState([])
+  const [sousZonesDispo, setSousZonesDispo] = useState([])
+  const [categoriesDispo, setCategoriesDispo] = useState([])
+  const [sansNiveauDispo, setSansNiveauDispo] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  // Changement d'onglet : filtres remis a zero + options du panneau
+  // rechargees pour le type nouvellement actif (comme la categorie sur
+  // l'ancienne ObjetsPage). "Tout" recupere les bornes de niveau des 3
+  // types qui en ont une (equipement/ressource/monstre) et prend la plage
+  // la plus large — seul filtre commun aux 4 types (§ARCHITECTURE point 4).
+  useEffect(() => {
+    setPage(1)
+    setTypes([]); setEffets([]); setPanoplieSeule(false); setLegendaire(false)
+    setRegions([]); setSousZones([]); setCategoriesMonstre([])
+    setPanoplieType(""); setTrancheNiveau("")
+    setNiveauBounds(null)
+
+    if (activeTab === "equipement" || activeTab === "ressource") {
+      fetch(`${API}/objets/filtres?categorie=${activeTab}`).then(r=>r.json()).then(d => {
+        setTypesDispo(d.types); setEffetsDispo(d.effets)
+        setNiveauBounds({ min:d.niveau_min, max:d.niveau_max })
+        setNiveauMin(d.niveau_min); setNiveauMax(d.niveau_max)
+      })
+    } else if (activeTab === "monstre") {
+      fetch(`${API}/monstres/filtres`).then(r=>r.json()).then(d => {
+        setRegionsDispo(d.regions); setCategoriesDispo(d.categories); setSousZonesDispo([])
+        setNiveauBounds({ min:d.niveau_min, max:d.niveau_max })
+        setNiveauMin(d.niveau_min); setNiveauMax(d.niveau_max)
+      })
+    } else if (activeTab === "panoplie") {
+      fetch(`${API}/panoplies/filtres`).then(r=>r.json()).then(d => setSansNiveauDispo(d.sans_niveau))
+    }
+    // Pas de filtre en mode "Tout" (retour Popo, 30 juillet 2026) : le niveau
+    // n'a pas de sens commun entre 4 types a des echelles trop differentes,
+    // et un classement alphabetique demanderait un nouveau parametre backend
+    // sur les 3 endpoints pour un gain limite face a la recherche texte deja
+    // disponible — juge pas assez utile pour l'effort, laisse volontairement
+    // sans filtre.
+  }, [activeTab])
+
+  // Cascade region -> sous-zones (monstre uniquement), identique a l'ancienne
+  // BestiairePage : aucune sous-zone proposee tant qu'aucune region n'est cochee.
+  const sousZonesRequeteId = useRef(0)
+  useEffect(() => {
+    if (activeTab !== "monstre") return
+    const requeteId = ++sousZonesRequeteId.current
+    if (regions.length === 0) { setSousZonesDispo([]); setSousZones([]); return }
+    fetch(`${API}/monstres/filtres?region=${encodeURIComponent(regions.join(","))}`).then(r=>r.json()).then(d => {
+      if (requeteId !== sousZonesRequeteId.current) return
+      setSousZonesDispo(d.sous_zones)
+      setSousZones(sz => sz.filter(s => d.sous_zones.includes(s)))
+    })
+  }, [regions, activeTab])
+
+  const requeteId = useRef(0)
+
+  // Onglet "Tout" : 4 apercus en parallele (comptage + quelques resultats
+  // par type) — mêmes endpoints que les onglets individuels, juste avec une
+  // page_size reduite. Aucun filtre applique (voir effet ci-dessus).
+  useEffect(() => {
+    if (activeTab !== "tout") return
+    const id = ++requeteId.current
+    setLoading(true)
+    Promise.all(GRIMOIRE_TYPES.map(t => {
+      const params = new URLSearchParams({ ...grimoireParams(t.id, {}), search, page:1, page_size:GRIMOIRE_PREVIEW })
+      return fetch(`${API}/${t.endpoint}?${params}`).then(r=>r.json())
+    })).then(reponses => {
+      if (id !== requeteId.current) return
+      const parType = {}
+      GRIMOIRE_TYPES.forEach((t, i) => { parType[t.id] = { total: reponses[i].total, items: grimoireListe(reponses[i], t.id) } })
+      setToutResultats(parType)
+      setLoading(false)
+    }).catch(() => { if (id === requeteId.current) setLoading(false) })
+  }, [activeTab, search])
+
+  // Onglet specifique : pagination complete sur un seul type + jeu de
+  // filtres complet pour ce type, comme les anciennes pages dediees.
+  // "panoplie" n'a pas de bornes de niveau (tranche categorielle), donc pas
+  // d'attente sur niveauBounds pour ce type-la.
+  useEffect(() => {
+    if (activeTab === "tout") return
+    if (activeTab !== "panoplie" && !niveauBounds) return
+    const type = GRIMOIRE_TYPES.find(t => t.id === activeTab)
+    const id = ++requeteId.current
+    setLoading(true)
+    const params = new URLSearchParams({
+      ...grimoireParams(type.id, { types, niveauMin, niveauMax, effets, panoplieSeule, legendaire, regions, sousZones, categoriesMonstre, panoplieType, trancheNiveau }),
+      search, page, page_size: PAGE_SIZE,
+    })
+    fetch(`${API}/${type.endpoint}?${params}`).then(r=>r.json()).then(d => {
+      if (id !== requeteId.current) return
+      setResultats({ total: d.total, items: grimoireListe(d, type.id) })
+      setLoading(false)
+    }).catch(() => { if (id === requeteId.current) setLoading(false) })
+  }, [activeTab, search, page, types, niveauMin, niveauMax, effets, panoplieSeule, legendaire, regions, sousZones, categoriesMonstre, panoplieType, trancheNiveau, niveauBounds])
+
+  const toggleType = (t) => { setTypes(ts => ts.includes(t) ? ts.filter(x=>x!==t) : [...ts, t]); setPage(1) }
+  const toggleEffet = (e) => { setEffets(es => es.includes(e) ? es.filter(x=>x!==e) : [...es, e]); setPage(1) }
+  const toggleRegion = (r) => { setRegions(rs => rs.includes(r) ? rs.filter(x=>x!==r) : [...rs, r]); setPage(1) }
+  const toggleSousZone = (s) => { setSousZones(ss => ss.includes(s) ? ss.filter(x=>x!==s) : [...ss, s]); setPage(1) }
+  const toggleCategorieMonstre = (c) => { setCategoriesMonstre(cs => cs.includes(c) ? cs.filter(x=>x!==c) : [...cs, c]); setPage(1) }
+  const libelleCategorieMonstre = (v) => categoriesDispo.find(c=>c.valeur===v)?.label || v
+  const libelleTrancheNiveau = (v) => v === SANS_VALEUR ? "Sans niveau" : (TRANCHES_NIVEAU.find(t=>t.valeur===v)?.label || v)
+
+  const pushPanel = (type, id) => setPile(p => [...p, { type, id }])
+  const backPanel = () => setPile(p => p.length > 1 ? p.slice(0, -1) : [])
+  const closePanel = () => setPile([])
+
+  const onClicResultat = (typeId, id) => {
+    const type = typeId === "equipement" || typeId === "ressource" ? "objet" : typeId
+    pushPanel(type, id)
+  }
+
+  const reinitialiserFiltres = () => {
+    setTypes([]); setEffets([]); setPanoplieSeule(false); setLegendaire(false)
+    setRegions([]); setSousZones([]); setCategoriesMonstre([])
+    setPanoplieType(""); setTrancheNiveau("")
+    if (niveauBounds) { setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max) }
+    setPage(1)
+  }
+
+  const chipNiveau = niveauBounds && (niveauMin > niveauBounds.min || niveauMax < niveauBounds.max)
+    ? [{ label:`Niv. ${niveauMin}-${niveauMax}`, off:()=>{ setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max) } }]
+    : []
+  const chips = activeTab === "tout" ? []
+    : (activeTab === "equipement" || activeTab === "ressource") ? [
+      ...types.map(t => ({ label:t, off:()=>toggleType(t) })),
+      ...chipNiveau,
+      ...(activeTab==="equipement" ? effets.map(e => ({ label:e, off:()=>toggleEffet(e) })) : []),
+      ...(activeTab==="equipement" && panoplieSeule ? [{ label:"Avec panoplie", off:()=>{ setPanoplieSeule(false); setPage(1) } }] : []),
+      ...(activeTab==="equipement" && legendaire ? [{ label:"Légendaire", off:()=>{ setLegendaire(false); setPage(1) } }] : []),
+    ] : activeTab === "monstre" ? [
+      ...regions.map(r => ({ label:r, off:()=>toggleRegion(r) })),
+      ...sousZones.map(s => ({ label:s, off:()=>toggleSousZone(s) })),
+      ...categoriesMonstre.map(c => ({ label:libelleCategorieMonstre(c), off:()=>toggleCategorieMonstre(c) })),
+      ...chipNiveau,
+    ] : [
+      ...(panoplieType ? [{ label: panoplieType==="bonus" ? "Avec bonus" : "Cosmétiques", off:()=>{ setPanoplieType(""); setPage(1) } }] : []),
+      ...(trancheNiveau ? [{ label: libelleTrancheNiveau(trancheNiveau), off:()=>{ setTrancheNiveau(""); setPage(1) } }] : []),
+    ]
+
+  const totalPages = Math.max(Math.ceil(resultats.total / PAGE_SIZE), 1)
+  const activeType = GRIMOIRE_TYPES.find(t => t.id === activeTab)
+  const montrerNiveau = niveauBounds && (activeTab === "equipement" || activeTab === "ressource" || activeTab === "monstre")
+  const montrerFiltres = activeTab !== "tout"
+
+  return (
+    <div style={mp.page}>
+      <button onClick={onBack} style={mp.backBtn}>← Retour</button>
+
+      <div style={{ marginBottom:6 }}>
+        <h1 className="df-section-title" style={{ fontSize:"clamp(24px, 4vw, 32px)", margin:0 }}>Grimoire des Secrets</h1>
+        <div style={{ color:"var(--df-text-3)", fontSize:12.5, marginTop:4 }}>encyclopédie générale</div>
+      </div>
+
+      <div style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(20,26,46,0.95)", border:"1px solid rgba(77,216,230,0.5)", borderRadius:12, padding:"11px 16px", margin:"18px 0 14px" }}>
+        <SearchIcon />
+        <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
+          placeholder="Rechercher un équipement, une ressource, un monstre, une panoplie..."
+          style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"var(--df-text)", fontSize:14 }} />
+      </div>
+
+      <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:14 }}>
+        <button onClick={()=>setActiveTab("tout")} className="df-chip-filter"
+          style={activeTab==="tout" ? { background:"rgba(77,216,230,0.18)", color:"var(--df-cyan)", borderColor:"var(--df-cyan)" } : undefined}>
+          Tout
+        </button>
+        {GRIMOIRE_TYPES.map(t => (
+          <button key={t.id} onClick={()=>setActiveTab(t.id)} className="df-chip-filter"
+            style={activeTab===t.id ? { background:"rgba(77,216,230,0.18)", color:"var(--df-cyan)", borderColor:"var(--df-cyan)" } : undefined}>
+            {t.label}
+          </button>
+        ))}
+        {montrerFiltres && (
+          <button className="df-filters-toggle" onClick={()=>setShowFilters(s=>!s)}
+            style={{ marginLeft:"auto", background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.6)", borderRadius:12, padding:"9px 16px", fontSize:13.5, fontWeight:600, cursor:"pointer" }}>
+            Filtres{chips.length>0?` (${chips.length})`:""}
+          </button>
+        )}
+      </div>
+
+      {chips.length > 0 && (
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16, alignItems:"center" }}>
+          {chips.map((c,i) => (
+            <button key={i} className="df-chip-filter" onClick={c.off}>{c.label} <span className="x">✕</span></button>
+          ))}
+          <button onClick={reinitialiserFiltres} style={{ background:"none", border:"none", color:"var(--df-text-3)", fontSize:12.5, cursor:"pointer", textDecoration:"underline" }}>
+            Tout effacer
+          </button>
+        </div>
+      )}
+
+      <div className={montrerFiltres ? "df-list-wrap" : undefined}>
+        {montrerFiltres && (
+        <aside className={"df-filters-panel" + (showFilters?" df-filters-open":"")}
+          style={{ background:"rgba(20,26,46,0.92)", border:"1px solid rgba(255,198,61,0.2)", borderRadius:16, padding:20 }}>
+
+          {montrerNiveau && (
+            <>
+              <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Niveau</div>
+              <input type="range" min={niveauBounds.min} max={niveauBounds.max} value={niveauMin}
+                onChange={e=>{ setNiveauMin(Math.min(Number(e.target.value), niveauMax)); setPage(1) }}
+                style={{ width:"100%", accentColor:"var(--df-cyan)" }} />
+              <input type="range" min={niveauBounds.min} max={niveauBounds.max} value={niveauMax}
+                onChange={e=>{ setNiveauMax(Math.max(Number(e.target.value), niveauMin)); setPage(1) }}
+                style={{ width:"100%", accentColor:"var(--df-cyan)" }} />
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"var(--df-text-3)", marginTop:2 }}>
+                <span>Min : {niveauMin}</span><span>Max : {niveauMax}</span>
+              </div>
+            </>
+          )}
+
+          {(activeTab === "equipement" || activeTab === "ressource") && (
+            <>
+              <div className="df-section-title" style={ftitle}>Type</div>
+              {typesDispo.map(t => (
+                <label key={t} style={fchk}>
+                  <input type="checkbox" checked={types.includes(t)} onChange={()=>toggleType(t)} style={fchkInput} />
+                  {t}
+                </label>
+              ))}
+            </>
+          )}
+
+          {activeTab === "equipement" && effetsDispo.length > 0 && (
+            <>
+              <div className="df-section-title" style={ftitle}>Effets recherchés</div>
+              <div>
+                {effetsDispo.map(e => (
+                  <button key={e} className={"df-chip-fx" + (effets.includes(e)?" on":"")} onClick={()=>toggleEffet(e)}>{e}</button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {activeTab === "equipement" && (
+            <>
+              <div className="df-section-title" style={ftitle}>Options</div>
+              <label style={fchk}>
+                <input type="checkbox" checked={panoplieSeule} onChange={()=>{ setPanoplieSeule(p=>!p); setPage(1) }} style={fchkInput} />
+                Avec panoplie
+              </label>
+              <label style={fchk}>
+                <input type="checkbox" checked={legendaire} onChange={()=>{ setLegendaire(l=>!l); setPage(1) }} style={fchkInput} />
+                Légendaire uniquement
+              </label>
+            </>
+          )}
+
+          {activeTab === "monstre" && (
+            <>
+              <div className="df-section-title" style={ftitle}>Zone</div>
+              {regionsDispo.map(r => (
+                <label key={r} style={fchk}>
+                  <input type="checkbox" checked={regions.includes(r)} onChange={()=>toggleRegion(r)} style={fchkInput} />
+                  {r}
+                </label>
+              ))}
+
+              <div className="df-section-title" style={ftitle}>Sous-zone</div>
+              {sousZonesDispo.length === 0
+                ? <div style={{ color:"var(--df-text-3)", fontSize:11.5, fontStyle:"italic" }}>Coche une zone pour affiner par sous-zone</div>
+                : sousZonesDispo.map(s => (
+                    <label key={s} style={{ ...fchk, paddingLeft:22, fontSize:12.5, color:"var(--df-text-2)" }}>
+                      <input type="checkbox" checked={sousZones.includes(s)} onChange={()=>toggleSousZone(s)} style={{ ...fchkInput, accentColor:"var(--df-cyan)" }} />
+                      {s}
+                    </label>
+                  ))
+              }
+
+              <div className="df-section-title" style={ftitle}>Catégorie</div>
+              {categoriesDispo.map(c => (
+                <label key={c.valeur} style={fchk}>
+                  <input type="checkbox" checked={categoriesMonstre.includes(c.valeur)} onChange={()=>toggleCategorieMonstre(c.valeur)} style={fchkInput} />
+                  {c.label}
+                </label>
+              ))}
+            </>
+          )}
+
+          {activeTab === "panoplie" && (
+            <>
+              <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Type</div>
+              <select value={panoplieType} onChange={e=>{ setPanoplieType(e.target.value); setPage(1) }} style={{ ...mp.select, width:"100%" }}>
+                <option value="">Toutes</option>
+                <option value="bonus">Avec bonus</option>
+                <option value="cosmetique">Cosmétiques</option>
+              </select>
+
+              <div className="df-section-title" style={ftitle}>Niveau</div>
+              <select value={trancheNiveau} onChange={e=>{ setTrancheNiveau(e.target.value); setPage(1) }} style={{ ...mp.select, width:"100%" }}>
+                <option value="">Tous niveaux</option>
+                {TRANCHES_NIVEAU.map(tr => <option key={tr.valeur} value={tr.valeur}>{tr.label}</option>)}
+                {sansNiveauDispo && <option value={SANS_VALEUR}>Sans niveau</option>}
+              </select>
+            </>
+          )}
+        </aside>
+        )}
+
+        <div>
+          {activeTab === "tout" ? (
+            !loading && GRIMOIRE_TYPES.every(t => toutResultats[t.id].total === 0) ? (
+              <div style={mp.videEtat}>Aucun résultat pour cette recherche.</div>
+            ) : (
+              GRIMOIRE_TYPES.map(t => {
+                const r = toutResultats[t.id]
+                if (r.total === 0) return null
+                return (
+                  <div key={t.id} style={{ marginBottom:26 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+                      <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>{t.label} {r.total}</span>
+                      <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
+                      {r.total > GRIMOIRE_PREVIEW && (
+                        <button onClick={()=>setActiveTab(t.id)} style={{ background:"none", border:"none", color:"var(--df-cyan)", fontSize:12.5, fontWeight:600, cursor:"pointer" }}>
+                          Voir tout →
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
+                      {r.items.map(item => (
+                        <GrimoireTuile key={item.id} item={item} typeId={t.id} onClick={()=>onClicResultat(t.id, item.id)} />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })
+            )
+          ) : (
+            <>
+              {!loading && resultats.items.length === 0 ? (
+                <div style={mp.videEtat}>
+                  Aucun résultat pour cette recherche.
+                  {chips.length > 0 && <div style={{ marginTop:10 }}>
+                    <button onClick={reinitialiserFiltres} style={mp.resetBtn}>Réinitialiser les filtres</button>
+                  </div>}
+                </div>
+              ) : (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
+                  {resultats.items.map(item => (
+                    <GrimoireTuile key={item.id} item={item} typeId={activeType.id} onClick={()=>onClicResultat(activeType.id, item.id)} />
+                  ))}
+                </div>
+              )}
+              {totalPages > 1 && (
+                <div style={mp.pagination}>
+                  <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+                  <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+                  <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      <GrimoirePanel pile={pile} onBack={backPanel} onClose={closePanel}
+        onPushObjet={id=>pushPanel("objet", id)} onPushMonstre={id=>pushPanel("monstre", id)} onPushPanoplie={id=>pushPanel("panoplie", id)}
+        onSelectDonjon={onSelectDonjon} />
     </div>
   )
 }
@@ -3453,30 +3970,16 @@ export default function App() {
         <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedDofus ? (
         <DofusDetailPage id={selectedDofus} token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onSelectDonjon={handleSelectDonjon} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
-      ) : browsing === "monstres" ? (
-        <BestiairePage onSelect={handleSelectMonstre} onBack={handleHome} />
+      ) : browsing === "grimoire" ? (
+        <GrimoirePage onBack={handleHome} onSelectDonjon={handleSelectDonjon} />
       ) : browsing === "donjon" ? (
         <DonjonsPage onSelect={handleSelectDonjon} onBack={handleHome} />
-      ) : browsing === "panoplie" ? (
-        <PanopliesPage onSelect={handleSelectPanoplie} onBack={handleHome} />
       ) : browsing === "zone" ? (
         <RegionsPage onSelect={handleSelectRegion} onSelectSousZone={handleSelectSousZone} onBack={handleHome} />
       ) : browsing === "quete" ? (
         <QuetesPage token={token} onSelect={handleSelectQuete} onBack={handleHome} />
       ) : browsing === "succes" ? (
         <SuccesPage token={token} onSelect={handleSelectSucces} onBack={handleHome} />
-      ) : browsing === "equipement" ? (
-        <ObjetsPage categorie="equipement" titre="Équipements"
-          placeholder="Rechercher un équipement..."
-          videMessage="Aucun équipement ne correspond à ces filtres."
-          compteurSingulier="équipement" compteurPluriel="équipements"
-          onSelect={handleSelectObjet} onBack={handleHome} />
-      ) : browsing === "ressource" ? (
-        <ObjetsPage categorie="ressource" titre="Ressources"
-          placeholder="Rechercher une ressource..."
-          videMessage="Aucune ressource ne correspond à ces filtres."
-          compteurSingulier="ressource" compteurPluriel="ressources"
-          onSelect={handleSelectObjet} onBack={handleHome} />
       ) : browsing === "songes" ? (
         <SongesPage token={token} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : (
