@@ -1,7 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import SongesPage from "./pages/SongesPage"
+import { DOFUS_COULEURS } from "./dofusCouleurs"
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
+
+// "#rrggbb" -> "rgba(r, g, b, alpha)" — chantier Chasse au Dofus (fonds
+// thematiques par Dofus, 30 juillet 2026).
+function hexVersRgba(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16)
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 const STATS = [
   { key: "pv",         label: "PV",     icon: "/assets/icons/stats/health.webp"    },
@@ -387,11 +396,19 @@ function EncycloGrid({ onNav }) {
 // reconnu·e côté DofusDB — voir main.py /dofus) : contour éteint, pas de %,
 // jamais un faux 0% permanent.
 const OEUF_PATH = "M50 4 C74 4 92 44 92 78 C92 106 74 122 50 122 C26 122 8 106 8 78 C8 44 26 4 50 4 Z"
-function OeufJauge({ id, img, couleur, pct, taille, trackable }) {
+function OeufJauge({ id, img, couleur, theme, pct, taille, trackable }) {
   const c = couleur || "#C9A24B"
+  // Halo lumineux leger et permanent, couleur dominante de l'oeuf (chantier
+  // Chasse au Dofus, 30 juillet 2026) — plus sobre (opacite reduite) pour
+  // les Dofus non suivis. drop-shadow (pas box-shadow) pour suivre la
+  // silhouette reelle de l'oeuf, pas un carre. S'ajoute (ne remplace pas)
+  // au halo dore existant quand le Dofus est a 100%.
+  const filtres = []
+  if (theme) filtres.push(`drop-shadow(0 0 ${trackable ? 7 : 4}px ${hexVersRgba(theme, trackable ? 0.5 : 0.22)})`)
+  if (pct === 100) filtres.push(`drop-shadow(0 0 8px ${c})`)
   return (
     <svg width={taille} height={taille * 1.26} viewBox="0 0 100 126"
-      style={{ filter: pct===100 ? `drop-shadow(0 0 8px ${c})` : "none", flexShrink:0, display:"block", margin:"0 auto" }}>
+      style={{ filter: filtres.length ? filtres.join(" ") : "none", flexShrink:0, display:"block", margin:"0 auto" }}>
       <defs>
         <clipPath id={"df-oeuf-clip-"+id}><path d={OEUF_PATH} /></clipPath>
         {trackable && pct > 0 && (
@@ -421,6 +438,7 @@ function OeufJauge({ id, img, couleur, pct, taille, trackable }) {
 
 function CarreDofus({ d, taille, petit, onClick }) {
   const cliquable = !!onClick
+  const theme = DOFUS_COULEURS[d.id]
   return (
     <div onClick={cliquable ? onClick : undefined}
       className={"df-card"} style={{
@@ -428,16 +446,22 @@ function CarreDofus({ d, taille, petit, onClick }) {
         cursor: cliquable ? "pointer" : "default",
         borderColor: d.obtenu ? "rgba(255,198,61,0.75)" : undefined,
         boxShadow: d.obtenu ? "0 0 16px rgba(255,198,61,0.22)" : undefined,
+        // Degrade thematique discret (chantier Chasse au Dofus, 30 juillet
+        // 2026) : superpose au fond de carte habituel (meme rgba que .df-card
+        // en CSS), plus sobre (opacite reduite) pour les Dofus non suivis.
+        background: theme
+          ? `radial-gradient(circle at 50% 28%, ${hexVersRgba(theme, d.trackable ? 0.16 : 0.07)}, transparent 72%), rgba(20,26,46,0.92)`
+          : undefined,
       }}
       title={!d.trackable ? "Aucune quête ni succès reconnu(e) pour ce Dofus — pas de suivi automatique possible" : undefined}
     >
       {d.img
         ? (
           <div style={{ position:"relative", width:taille, height:taille*1.26, margin:"0 auto" }}>
-            <OeufJauge id={d.id} img={d.img} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
+            <OeufJauge id={d.id} img={d.img} couleur={d.couleur} theme={theme} pct={d.pct} taille={taille} trackable={d.trackable} />
           </div>
         )
-        : <OeufJauge id={d.id} couleur={d.couleur} pct={d.pct} taille={taille} trackable={d.trackable} />
+        : <OeufJauge id={d.id} couleur={d.couleur} theme={theme} pct={d.pct} taille={taille} trackable={d.trackable} />
       }
       <div style={{ fontSize:petit?11.5:12.5, fontWeight:700, color:"var(--df-text)", margin:"9px 0 1px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{d.nom}</div>
       <div style={{ fontSize:10.5, color:"var(--df-text-3)" }}>Niv. {d.niveau}</div>
@@ -455,11 +479,40 @@ function CarreDofus({ d, taille, petit, onClick }) {
 // La Chasse aux Dofus (§6 specs, section signature de la home). Branché sur
 // /dofus (main.py) : progression calculée depuis les vraies relations
 // Dofus↔quête/succès en base, jamais une valeur inventée.
-function ChasseDofus({ token, onSelectDofus }) {
+// Panneau lateral pour la fiche d'un Dofus (chantier Chasse au Dofus,
+// 30 juillet 2026 — meme principe que le panneau du Grimoire) : la fiche
+// s'ouvre par-dessus la grille, qui reste affichee et defilee derriere.
+// Un seul niveau (pas de pile) : les liens croises de DofusDetailPage
+// (quete/succes/donjon/monstre) sortent tous du perimetre Chasse au Dofus,
+// donc vers les pages pleines existantes comme avant — rien a empiler ici.
+function DofusPanel({ dofusId, token, onClose, onSelectQuete, onSelectSucces, onSelectDonjon, onSelectMonstre }) {
+  if (!dofusId) return null
+  return (
+    <>
+      <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(6,8,16,0.6)", zIndex:300 }} />
+      <div style={{
+        position:"fixed", top:0, right:0, height:"100vh", width:"min(860px, 100vw)",
+        background:"var(--df-panel-bg)", borderLeft:"1px solid rgba(255,198,61,0.25)",
+        boxShadow:"-12px 0 40px rgba(0,0,0,0.5)", zIndex:301, overflowY:"auto",
+      }}>
+        <button onClick={onClose} title="Fermer" style={{
+          position:"fixed", top:14, right:14, zIndex:302, width:32, height:32, borderRadius:"50%",
+          background:"rgba(20,26,46,0.9)", border:"1px solid rgba(255,198,61,0.4)", color:"var(--df-gold)",
+          fontSize:16, cursor:"pointer", lineHeight:"30px",
+        }}>✕</button>
+        <DofusDetailPage id={dofusId} token={token} onSelectQuete={onSelectQuete} onSelectSucces={onSelectSucces}
+          onSelectDonjon={onSelectDonjon} onSelectMonstre={onSelectMonstre} onBack={onClose} />
+      </div>
+    </>
+  )
+}
+
+function ChasseDofus({ token, onSelectQuete, onSelectSucces, onSelectDonjon, onSelectMonstre }) {
   const [dofus, setDofus] = useState([])
   const [total, setTotal] = useState(0)
   const [obtenus, setObtenus] = useState(null)
   const [masquerObtenus, setMasquerObtenus] = useState(false)
+  const [dofusOuvert, setDofusOuvert] = useState(null) // id affiche dans le panneau, ou null si ferme
 
   useEffect(() => {
     const headers = token ? { Authorization:`Bearer ${token}` } : {}
@@ -500,16 +553,19 @@ function ChasseDofus({ token, onSelectDofus }) {
       <div style={{ color:"var(--df-text)", fontSize:16, fontWeight:600, margin:"26px 0 16px", letterSpacing:0.5 }}>⭐ Les six Primordiaux</div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(170px, 1fr))", gap:16, filter:token?"none":"grayscale(1)", opacity:token?1:0.55 }}>
         {primordiaux.map(d => (
-          <CarreDofus key={d.id} d={d} taille={78} onClick={()=>onSelectDofus(d.id)} />
+          <CarreDofus key={d.id} d={d} taille={78} onClick={()=>setDofusOuvert(d.id)} />
         ))}
       </div>
 
       <div style={{ color:"var(--df-text)", fontSize:16, fontWeight:600, margin:"26px 0 16px", letterSpacing:0.5 }}>Tous les autres Dofus — triés par niveau requis</div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(140px, 1fr))", gap:14, filter:token?"none":"grayscale(1)", opacity:token?1:0.55 }}>
         {autres.map(d => (
-          <CarreDofus key={d.id} d={d} taille={56} petit onClick={()=>onSelectDofus(d.id)} />
+          <CarreDofus key={d.id} d={d} taille={56} petit onClick={()=>setDofusOuvert(d.id)} />
         ))}
       </div>
+
+      <DofusPanel dofusId={dofusOuvert} token={token} onClose={()=>setDofusOuvert(null)}
+        onSelectQuete={onSelectQuete} onSelectSucces={onSelectSucces} onSelectDonjon={onSelectDonjon} onSelectMonstre={onSelectMonstre} />
     </div>
   )
 }
@@ -663,9 +719,16 @@ function DofusDetailPage({ id, token, onSelectQuete, onSelectSucces, onSelectDon
     <div translate="no" style={{ padding:"1.5rem 2rem 3rem", maxWidth:1240, margin:"0 auto" }}>
       <button onClick={onBack} style={mp.backBtn}>← Retour</button>
 
-      <header className="df-block" style={{ display:"flex", alignItems:"center", gap:22, padding:24, flexWrap:"wrap" }}>
+      <header className="df-block" style={{
+        display:"flex", alignItems:"center", gap:22, padding:24, flexWrap:"wrap",
+        // Degrade thematique discret sur le panneau de detail (chantier
+        // Chasse au Dofus, 30 juillet 2026) — meme logique que la carte.
+        background: DOFUS_COULEURS[data.id]
+          ? `radial-gradient(circle at 90px 50%, ${hexVersRgba(DOFUS_COULEURS[data.id], data.trackable ? 0.14 : 0.06)}, transparent 65%), rgba(20,26,46,0.92)`
+          : undefined,
+      }}>
         <div style={{ position:"relative", width:84, height:84*1.26, flexShrink:0 }}>
-          <OeufJauge id={data.id} img={data.img} couleur={data.couleur} pct={data.pct} taille={84} trackable={data.trackable} />
+          <OeufJauge id={data.id} img={data.img} couleur={data.couleur} theme={DOFUS_COULEURS[data.id]} pct={data.pct} taille={84} trackable={data.trackable} />
         </div>
         <div style={{ flex:1, minWidth:200 }}>
           <h1 className="df-title-gold" style={{ fontSize:"clamp(22px, 4vw, 30px)", margin:0 }}>{data.nom}</h1>
@@ -3881,7 +3944,6 @@ export default function App() {
   const [selectedSousZone, setSelectedSousZone] = useState(null)
   const [selectedQuete, setSelectedQuete]       = useState(null)
   const [selectedSucces, setSelectedSucces]     = useState(null)
-  const [selectedDofus, setSelectedDofus]       = useState(null)
   const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete" | "succes"
   const [almanax, setAlmanax]   = useState(null)
   const [token, setToken] = useState(() => localStorage.getItem("dofura_token") || null)
@@ -3925,7 +3987,7 @@ export default function App() {
     setToken(null)
   }
 
-  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setSelectedSucces(null); setSelectedDofus(null); setBrowsing(null); setQuery(""); setResults([]) }
+  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setSelectedSucces(null); setBrowsing(null); setQuery(""); setResults([]) }
   const handleSelectMonstre  = (id) => { resetNav(); setSelectedMonstre(id) }
   const handleSelectObjet    = (id) => { resetNav(); setSelectedObjet(id) }
   const handleSelectDonjon   = (id) => { resetNav(); setSelectedDonjon(id) }
@@ -3934,7 +3996,6 @@ export default function App() {
   const handleSelectSousZone = (nom) => { resetNav(); setSelectedSousZone(nom) }
   const handleSelectQuete    = (id) => { resetNav(); setSelectedQuete(id) }
   const handleSelectSucces   = (id) => { resetNav(); setSelectedSucces(id) }
-  const handleSelectDofus    = (id) => { resetNav(); setSelectedDofus(id) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
 
@@ -3968,8 +4029,6 @@ export default function App() {
         <QuetePage id={selectedQuete} token={token} onSelect={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
       ) : selectedSucces ? (
         <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
-      ) : selectedDofus ? (
-        <DofusDetailPage id={selectedDofus} token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onSelectDonjon={handleSelectDonjon} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
       ) : browsing === "grimoire" ? (
         <GrimoirePage onBack={handleHome} onSelectDonjon={handleSelectDonjon} />
       ) : browsing === "donjon" ? (
@@ -3986,7 +4045,7 @@ export default function App() {
         <>
           <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelectMonstre} loading={loading} />
           <EncycloGrid onNav={handleNav} />
-          <ChasseDofus token={token} onSelectDofus={handleSelectDofus} />
+          <ChasseDofus token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onSelectDonjon={handleSelectDonjon} onSelectMonstre={handleSelectMonstre} />
         </>
       )}
         </div>
