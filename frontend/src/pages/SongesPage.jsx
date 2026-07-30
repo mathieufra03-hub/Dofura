@@ -145,7 +145,7 @@ function FormNouveauPersonnage({ token, onCree }) {
         style={{ ...sp.champ, flex: "1 1 120px" }} />
       <input value={serveur} onChange={e => setServeur(e.target.value)} placeholder="Serveur (optionnel)"
         style={{ ...sp.champ, flex: "1 1 120px" }} />
-      <button disabled={enCours || !nom.trim()} onClick={creer} style={{ ...sp.btnVertPetit, opacity: (enCours || !nom.trim()) ? 0.5 : 1 }}>
+      <button disabled={enCours || !nom.trim()} onClick={creer} className="df-hover-lift" style={{ ...sp.btnVertPetit, opacity: (enCours || !nom.trim()) ? 0.5 : 1 }}>
         + Ajouter
       </button>
     </div>
@@ -177,13 +177,13 @@ function FormNouvelleTeam({ token, personnages, onCree }) {
         style={{ ...sp.champ, marginBottom: 10 }} />
       <div style={{ marginBottom: 10 }}>
         {personnages.map(p => (
-          <span key={p.id} onClick={() => toggleMembre(p.id)} style={sp.pill(membres.includes(p.id))}>
+          <span key={p.id} onClick={() => toggleMembre(p.id)} className="df-hover-lift" style={sp.pill(membres.includes(p.id))}>
             {membres.includes(p.id) ? "✓ " : ""}{p.nom}
           </span>
         ))}
       </div>
       <button disabled={enCours || !nom.trim() || membres.length === 0} onClick={creer}
-        style={{ ...sp.btnVertPetit, opacity: (enCours || !nom.trim() || membres.length === 0) ? 0.5 : 1 }}>
+        className="df-hover-lift" style={{ ...sp.btnVertPetit, opacity: (enCours || !nom.trim() || membres.length === 0) ? 0.5 : 1 }}>
         Créer la team
       </button>
     </div>
@@ -217,7 +217,7 @@ function SongesGestion({ token, personnages, teams, onRafraichir, onTerminer, on
         {personnages.length === 0 ? (
           <p style={{ color: "var(--df-text-3)", fontSize: 13, margin: "6px 0" }}>Aucun personnage pour l'instant.</p>
         ) : (
-          <div>{personnages.map(p => <span key={p.id} style={sp.pill(false)}>{p.nom}{p.classe ? ` (${p.classe})` : ""}</span>)}</div>
+          <div>{personnages.map(p => <span key={p.id} className="df-hover-lift" style={sp.pill(false)}>{p.nom}{p.classe ? ` (${p.classe})` : ""}</span>)}</div>
         )}
         <FormNouveauPersonnage token={token} onCree={onRafraichir} />
       </div>
@@ -239,8 +239,8 @@ function SongesGestion({ token, personnages, teams, onRafraichir, onTerminer, on
                     <div style={{ color: "var(--df-text-3)", fontSize: 12 }}>{t.membres.map(m => m.nom).join(", ") || "Aucun membre"}</div>
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => setTeamEnEdition(t.id)} style={sp.btnFantome}>Modifier</button>
-                    <button onClick={() => supprimerTeam(t.id)} style={{ ...sp.btnFantome, color: "var(--df-red)", borderColor: "rgba(242,109,109,0.5)" }}>Supprimer</button>
+                    <button onClick={() => setTeamEnEdition(t.id)} className="df-hover-lift" style={sp.btnFantome}>Modifier</button>
+                    <button onClick={() => supprimerTeam(t.id)} className="df-hover-lift" style={{ ...sp.btnFantome, color: "var(--df-red)", borderColor: "rgba(242,109,109,0.5)" }}>Supprimer</button>
                   </div>
                 </div>
               )}
@@ -274,12 +274,12 @@ function FormEditionTeam({ token, team, personnages, onTermine }) {
       <input value={nom} onChange={e => setNom(e.target.value)} style={{ ...sp.champ, marginBottom: 8 }} />
       <div style={{ marginBottom: 8 }}>
         {personnages.map(p => (
-          <span key={p.id} onClick={() => toggleMembre(p.id)} style={sp.pill(membres.includes(p.id))}>
+          <span key={p.id} onClick={() => toggleMembre(p.id)} className="df-hover-lift" style={sp.pill(membres.includes(p.id))}>
             {membres.includes(p.id) ? "✓ " : ""}{p.nom}
           </span>
         ))}
       </div>
-      <button disabled={enCours} onClick={enregistrer} style={sp.btnVertPetit}>Enregistrer</button>
+      <button disabled={enCours} onClick={enregistrer} className="df-hover-lift" style={sp.btnVertPetit}>Enregistrer</button>
       <button onClick={onTermine} style={{ ...sp.lienDiscret, marginLeft: 12 }}>Annuler</button>
     </div>
   )
@@ -309,7 +309,7 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
             Supprime tous tes songes, leurs participants et leurs drops. Tes personnages et tes teams ne sont pas
             touchés. Chaque drop est archivé dans le Journal avant suppression.
           </p>
-          <button onClick={() => setConfirmation(true)} style={{ ...sp.btnFantome, color: "var(--df-red)", borderColor: "rgba(242,109,109,0.5)" }}>
+          <button onClick={() => setConfirmation(true)} className="df-hover-lift" style={{ ...sp.btnFantome, color: "var(--df-red)", borderColor: "rgba(242,109,109,0.5)" }}>
             Tout supprimer
           </button>
         </>
@@ -320,10 +320,10 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
             resteront). Confirmer ?
           </p>
           <div style={{ display: "flex", gap: 10 }}>
-            <button disabled={enCours} onClick={confirmer} style={{ ...sp.btnVertPetit, background: "var(--df-red)", opacity: enCours ? 0.6 : 1 }}>
+            <button disabled={enCours} onClick={confirmer} className="df-hover-lift" style={{ ...sp.btnVertPetit, background: "var(--df-red)", opacity: enCours ? 0.6 : 1 }}>
               Oui, tout supprimer
             </button>
-            <button disabled={enCours} onClick={() => setConfirmation(false)} style={sp.btnFantome}>Non, annuler</button>
+            <button disabled={enCours} onClick={() => setConfirmation(false)} className="df-hover-lift" style={sp.btnFantome}>Non, annuler</button>
           </div>
         </>
       )}
@@ -352,9 +352,9 @@ function SongesJournalSection({ journal, page, setPage }) {
       ))}
       {totalPages > 1 && (
         <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ ...sp.btnFantome, opacity: page <= 1 ? 0.5 : 1 }}>← Précédent</button>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="df-hover-lift" style={{ ...sp.btnFantome, opacity: page <= 1 ? 0.5 : 1 }}>← Précédent</button>
           <span style={{ fontSize: 12, color: "var(--df-text-2)" }}>Page {page} / {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ ...sp.btnFantome, opacity: page >= totalPages ? 0.5 : 1 }}>Suivant →</button>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="df-hover-lift" style={{ ...sp.btnFantome, opacity: page >= totalPages ? 0.5 : 1 }}>Suivant →</button>
         </div>
       )}
     </div>
@@ -432,7 +432,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
           {ORDRE_CATEGORIES.map(c => {
             const n = itemsTrackables.filter(i => i.categorie === c).length
             return (
-              <span key={c} onClick={() => setCategorieFiltre(f => f === c ? null : c)} style={sp.pill(categorieFiltre === c)}>
+              <span key={c} onClick={() => setCategorieFiltre(f => f === c ? null : c)} className="df-hover-lift" style={sp.pill(categorieFiltre === c)}>
                 {CATEGORIE_LABELS[c]} ({n})
               </span>
             )
@@ -459,7 +459,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
             <div style={{ marginBottom: 10 }}>
               <div style={{ fontSize: 11.5, color: "var(--df-text-3)", marginBottom: 6 }}>Quel personnage a drop ?</div>
               {equipeActive.membres.map(m => (
-                <span key={m.perso_id} onClick={() => setPersonnageId(m.perso_id)} style={sp.pill(personnageId === m.perso_id)}>
+                <span key={m.perso_id} onClick={() => setPersonnageId(m.perso_id)} className="df-hover-lift" style={sp.pill(personnageId === m.perso_id)}>
                   {m.nom}
                 </span>
               ))}
@@ -470,7 +470,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
                 <option value="">—</option>
                 {(itemSelectionne.paliers || []).map(p => <option key={p} value={p}>{NOMS_PALIERS_ROMAINS[p]}</option>)}
               </select>
-              <button disabled={!personnageId} onClick={ajouterDrop} style={{ ...sp.btnVertPetit, marginLeft: "auto", opacity: personnageId ? 1 : 0.5 }}>
+              <button disabled={!personnageId} onClick={ajouterDrop} className="df-hover-lift" style={{ ...sp.btnVertPetit, marginLeft: "auto", opacity: personnageId ? 1 : 0.5 }}>
                 Ajouter ce drop
               </button>
             </div>
@@ -491,7 +491,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
           </div>
         )}
 
-        <button onClick={onValider} style={{ ...sp.btnVert, width: "100%", marginTop: 16 }}>
+        <button onClick={onValider} className="df-hover-lift" style={{ ...sp.btnVert, width: "100%", marginTop: 16 }}>
           Valider le drop
         </button>
       </div>
@@ -550,7 +550,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
       {/* 1. Sélecteur de catégorie, au-dessus du compteur */}
       <div style={{ marginBottom: 10 }}>
         {ORDRE_CATEGORIES.map(c => (
-          <span key={c} onClick={() => changerCategorie(c)} style={sp.pill(categorieAffichee === c)}>
+          <span key={c} onClick={() => changerCategorie(c)} className="df-hover-lift" style={sp.pill(categorieAffichee === c)}>
             {CATEGORIE_LABELS_SELECTEUR[c]}
           </span>
         ))}
@@ -597,7 +597,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
           }}>
             {chronoEnMarche ? "Pause" : "Démarrer"}
           </button>
-          <button onClick={onChronoReinitialiser} title="Réinitialiser" style={{ ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5 }}>↺</button>
+          <button onClick={onChronoReinitialiser} title="Réinitialiser" className="df-hover-lift" style={{ ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5 }}>↺</button>
         </div>
       </div>
 
@@ -621,10 +621,10 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
 
       {/* 4. Actions */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <button disabled={enregistrement} onClick={onSongeTermine} style={{ ...sp.btnVert, opacity: enregistrement ? 0.6 : 1 }}>
+        <button disabled={enregistrement} onClick={onSongeTermine} className="df-hover-lift" style={{ ...sp.btnVert, opacity: enregistrement ? 0.6 : 1 }}>
           Songe terminé
         </button>
-        <button onClick={onOuvrirAjoutDrop} style={sp.btnOrContour}>
+        <button onClick={onOuvrirAjoutDrop} className="df-hover-lift" style={sp.btnOrContour}>
           J'ai drop
         </button>
       </div>
@@ -639,7 +639,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
       <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
         salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
       {songeEchoue && (
-        <button disabled={enregistrement} onClick={onSongeTermine} style={{ ...sp.btnVertPetit, marginTop: 10 }}>
+        <button disabled={enregistrement} onClick={onSongeTermine} className="df-hover-lift" style={{ ...sp.btnVertPetit, marginTop: 10 }}>
           Enregistrer ce songe
         </button>
       )}
@@ -704,10 +704,10 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         {totalPagesHistorique > 1 && (
           <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
             <button disabled={pageHistorique <= 1} onClick={() => setPageHistorique(p => p - 1)}
-              style={{ ...sp.btnFantome, opacity: pageHistorique <= 1 ? 0.5 : 1 }}>← Précédent</button>
+              className="df-hover-lift" style={{ ...sp.btnFantome, opacity: pageHistorique <= 1 ? 0.5 : 1 }}>← Précédent</button>
             <span style={{ fontSize: 12, color: "var(--df-text-2)" }}>Page {pageHistorique} / {totalPagesHistorique}</span>
             <button disabled={pageHistorique >= totalPagesHistorique} onClick={() => setPageHistorique(p => p + 1)}
-              style={{ ...sp.btnFantome, opacity: pageHistorique >= totalPagesHistorique ? 0.5 : 1 }}>Suivant →</button>
+              className="df-hover-lift" style={{ ...sp.btnFantome, opacity: pageHistorique >= totalPagesHistorique ? 0.5 : 1 }}>Suivant →</button>
           </div>
         )}
       </div>
@@ -745,9 +745,9 @@ function SongesMesDropsPage({ token, personnages, onBack, onSelectObjet }) {
       <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>🎁 Mes drops</h1>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
-        <span onClick={() => setCategorieFiltre(null)} style={sp.pill(categorieFiltre === null)}>Toutes</span>
+        <span onClick={() => setCategorieFiltre(null)} className="df-hover-lift" style={sp.pill(categorieFiltre === null)}>Toutes</span>
         {ORDRE_CATEGORIES.map(c => (
-          <span key={c} onClick={() => setCategorieFiltre(c)} style={sp.pill(categorieFiltre === c)}>
+          <span key={c} onClick={() => setCategorieFiltre(c)} className="df-hover-lift" style={sp.pill(categorieFiltre === c)}>
             {CATEGORIE_LABELS_SELECTEUR[c]}
           </span>
         ))}
@@ -784,9 +784,9 @@ function SongesMesDropsPage({ token, personnages, onBack, onSelectObjet }) {
 
       {totalPages > 1 && (
         <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ ...sp.btnFantome, opacity: page <= 1 ? 0.5 : 1 }}>← Précédent</button>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="df-hover-lift" style={{ ...sp.btnFantome, opacity: page <= 1 ? 0.5 : 1 }}>← Précédent</button>
           <span style={{ fontSize: 12, color: "var(--df-text-2)" }}>Page {page} / {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ ...sp.btnFantome, opacity: page >= totalPages ? 0.5 : 1 }}>Suivant →</button>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="df-hover-lift" style={{ ...sp.btnFantome, opacity: page >= totalPages ? 0.5 : 1 }}>Suivant →</button>
         </div>
       )}
     </div>

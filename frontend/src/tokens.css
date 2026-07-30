@@ -323,8 +323,17 @@
 .df-pill.on { background: rgba(255,198,61,0.18); border-color: var(--df-gold); color: var(--df-gold); }
 .df-pill:hover { border-color: var(--df-gold); color: var(--df-gold); }
 
+/* Survol léger commun (refonte visuelle §5, IDENTITE.md) : léger agrandissement +
+   translation vers le haut, transition 400-600ms cubic-bezier(.2,.8,.2,1) — classe
+   utilitaire indépendante de tout composant précis, à ajouter en className à côté
+   d'un style existant (pilules/boutons du tracker Songes pour l'instant, voir
+   SongesPage.jsx — pas encore étendue aux autres pages, voir IDENTITE.md §5). */
+.df-hover-lift { transition: transform .5s cubic-bezier(.2,.8,.2,1), border-color .5s cubic-bezier(.2,.8,.2,1), background .5s cubic-bezier(.2,.8,.2,1); }
+.df-hover-lift:hover { transform: translateY(-2px) scale(1.03); }
+.df-hover-lift:disabled:hover { transform: none; }
+
 /* Respect du mode "mouvement réduit" (accessibilité) */
 @media (prefers-reduced-motion: reduce) {
-  .df-card, .df-card:hover, .df-tile, .df-tile:hover { transition: none; transform: none; }
+  .df-card, .df-card:hover, .df-tile, .df-tile:hover, .df-hover-lift, .df-hover-lift:hover { transition: none; transform: none; }
   .df-star, .df-search-glow { animation: none; }
 }

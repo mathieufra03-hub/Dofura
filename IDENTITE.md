@@ -1,17 +1,33 @@
 # IDENTITE.md — Refonte visuelle Dofura
 
-> Chantier du 30 juillet 2026. Fichier de référence : `maquette/dofura-maquette-v2.html`
-> (lu intégralement, CSS repris comme source de vérité — voir CLAUDE.md règle 1, plan validé par
-> Popo avant code). Fait en deux temps, pause après le premier, les deux validés par Popo.
+> Chantier ouvert le 30 juillet 2026, sur deux passes successives. Fichier de référence :
+> `maquette/dofura-maquette-v2.html` (lu intégralement, CSS repris comme source de vérité — voir
+> CLAUDE.md règle 1, plan validé par Popo avant code à chaque fois).
+>
+> **Passe 1** (30 juillet, matin) : tokens + page d'accueil (v1) + navigation à 4 entrées +
+> habillage du tracker Songes — faite en deux temps, pause après le premier, les deux validés,
+> commit poussé.
+> **Passe 2** (30 juillet, après-midi) : révision de la page d'accueil (hero centré, chiffres dans
+> leur propre section, nouvelle section "trois intensités" avec phrases de caractérisation) +
+> retravail complet de la navbar (recherche, icônes, Discord, "Mon compte") + spec d'animation au
+> survol commune à toutes les cartes/vignettes. Faite en trois temps, pause après chacun — ce
+> fichier est mis à jour en place à chaque passe plutôt que dupliqué, pour rester une référence
+> vivante de l'état ACTUEL de la charte, pas un journal chronologique (ce rôle-là est déjà tenu par
+> CLAUDE.md, chantiers en cours/fermés).
 
 ## Ce que ce chantier a changé
 
-1. **Tokens** (`frontend/src/tokens.css`) — nouvelle palette "astrale".
+1. **Tokens** (`frontend/src/tokens.css`) — nouvelle palette "astrale". Confirmée inchangée en
+   passe 2 (déjà conforme à la demande dès la passe 1).
 2. **Page d'accueil** (`frontend/src/pages/AccueilPage.jsx` + `frontend/src/pageAccueil.css`) —
-   nouvelle page, remplace l'ancien Hero/EncycloGrid/ChasseDofus sur la route par défaut.
-3. **Navigation** (`Navbar` dans `App.jsx`) — réduite à 4 entrées.
+   nouvelle page, remplace l'ancien Hero/EncycloGrid/ChasseDofus sur la route par défaut. Révisée
+   en passe 2 (hero centré, section chiffres séparée, section intensités réécrite).
+3. **Navigation** (`Navbar` dans `App.jsx`) — réduite à 4 entrées en passe 1, restructurée en
+   passe 2 (recherche, icônes, Mon compte, Discord — voir §3).
 4. **Tracker Songes** (`frontend/src/pages/SongesPage.jsx`) — habillage seulement (couleurs), 0
    changement de logique.
+5. **Animations d'interaction** (§5, nouveau en passe 2) — règle commune de survol pour toutes les
+   cartes/vignettes cliquables du site.
 
 Ce que ce chantier n'a **pas** touché (volontairement, hors périmètre) : les pages Grimoire,
 Donjons, Quêtes, Succès, Chasse au Dofus, ni le panneau de connexion (`LoginPanel`) — toutes
@@ -103,23 +119,75 @@ pas dans la demande initiale.
   jusqu'à la bande "Dix intensités" plus bas sur la même page (`id="df-home-tiers"`,
   `scrollIntoView({ behavior:"smooth" })`).
 
+### Révision passe 2 : hero centré, chiffres détachés, intensités réécrites
+
+**Hero centré** : `.hero-in` passe en `display:flex; flex-direction:column; align-items:center;
+text-align:center`, kicker/cta-row en `justify-content:center`, `h1`/`.lede` en `margin:0 auto` —
+le chevauchement titre/bas d'image (`margin-top` négatif sur `.hero-in`) est conservé tel quel,
+seul l'alignement horizontal change.
+
+**Chiffres détachés dans leur propre section** (`.stats-sec`, juste après `</header>`, avant la
+section des 3 cartes) : ils ne vivent plus dans `.hero-in`. Chaque `--stats-note--` porte
+désormais la mention obligatoire **"Statistiques relevées en Paradoxe I"** sous la barre de
+chiffres (texte donné tel quel par Popo, pas une donnée à vérifier — c'est lui qui définit à quelle
+intensité ces chiffres de référence se rapportent). Rangée en **zigzag** (`.fig:nth-child(2) {
+margin-top: 26px }`, désactivé en dessous de 640px où les cartes s'empilent) plutôt qu'en barre
+plate — lecture de "les trois chiffres... décalés" : chaque carte de chiffre garde son propre
+traitement `backdrop-filter` (au lieu d'une seule barre continue avec séparateurs internes comme en
+passe 1), section remontée par un `margin-top` négatif sur son `.wrap` pour rester visuellement
+reliée au bas du hero sans redevenir "collée" au titre.
+
+**Section "trois intensités" réécrite** (même bande `#df-home-tiers`, contenu changé) : les
+descriptions factuelles ("Trois paliers. Ni légendes, ni runes astrales.") remplacées par les
+phrases de caractérisation fournies par Popo (Rêve/Paradoxe/Cauchemar), la ligne de métriques
+(`% de butin`) gardée sous chaque phrase. Le paragraphe d'intro de la section explique une fois le
+mot **"run"** ("Une run correspond à un songe complet, du palier I jusqu'au combat final") — la
+seule page du site où ce mot apparaît : le tracker Songes lui-même ne dit jamais que "songe" (voir
+`SongesPage.jsx`, commentaire d'en-tête) — cette page d'accueil est une exception assumée et
+volontaire à cette règle, pas un oubli.
+
 ## 3. Navigation (Navbar)
 
-Réduite à 4 entrées : **Le Puits · Les Taux · Le Grimoire · Se connecter** — reprend
-`nav`/`.brand`/`.links`/`.ghost` de la maquette (sticky, `height:68px`, fond translucide
-`rgba(3,12,17,.7)` + `backdrop-filter: blur(20px) saturate(1.4)`, lien actif souligné cyan).
+Réduite à 4 entrées : **Le Puits · Les Taux · Le Grimoire · Se connecter/Mon compte** — reprend
+`nav`/`.brand`/`.links`/`.ghost` de la maquette (sticky, fond translucide `rgba(3,12,17,.7)` +
+`backdrop-filter: blur(20px) saturate(1.4)`, lien actif souligné cyan).
 
-- **Le Puits** → tracker Songes (`browsing === "songes"`).
-- **Les Taux** → pas de page dédiée. Clic déclenche `handleLesTaux` (`App.jsx`) : retour à
-  l'accueil + incrémente un compteur `scrollTauxSignal` passé en prop à `AccueilPage`, qui fait
-  défiler jusqu'à `#df-home-tiers` dans un `useEffect` (fonctionne même si on est déjà sur
-  l'accueil, contrairement à un simple `scrollIntoView` synchrone qui n'aurait rien à attendre).
-- **Le Grimoire** → `GrimoirePage`, inchangé.
-- **Se connecter** → même mécanisme qu'avant (`LoginPanel`, JWT en `localStorage`), seul le
-  bouton déclencheur est restylé en pilule cyan translucide (`.ghost` de la maquette) ; le
-  panneau de connexion lui-même (formulaire) garde son ancienne palette dorée, **volontairement
-  pas retouché** — hors périmètre de "nav + tracker Songes" (voir intro), rough edge visuel connu
-  et assumé en attendant le chantier futur #1.
+**Disposition en grille CSS 3 colonnes** (`grid-template-columns: 1fr auto 1fr`) plutôt que
+flex+space-between : le menu central reste vraiment centré même si les zones gauche (logo) et
+droite (compte/Discord) n'ont pas la même largeur — un flex row n'aurait pas garanti ça.
+
+- **Logo** : agrandi (22px→27px) et plus espacé (`letter-spacing` 0.16em→0.24em), dégradé
+  or→cyan→violet inchangé (déjà fait en passe 1).
+- **Le Puits / Les Taux / Le Grimoire** : agrandis (13.5px→15.5px), chacun avec une icône en trait
+  fin (`stroke-width:1.6`, pas d'emoji) — **les mêmes tracés SVG que les 3 cartes de l'accueil**
+  (`IconePuits`/`IconeTaux`/`IconeGrimoireNav`, dupliqués plutôt que partagés entre les deux
+  fichiers pour rester cohérent avec le reste du style du projet — pas de dossier de composants
+  partagés dans ce codebase). Comportements de clic inchangés (voir ci-dessous).
+- **Recherche discrète** (`NavSearch`, à côté du menu) : réutilise le state `query`/`results`/
+  `loading` déjà câblé dans `App()` pour l'ancien `Hero` (mort depuis la refonte de l'accueil,
+  jamais supprimé — voir §2) — même endpoint `/monstres?search=`, donc **recherche monstres
+  uniquement** pour l'instant, pas le Grimoire complet (équipements/ressources/panoplies). Clic sur
+  un résultat → `MonstrePage` comme avant. Étendre au Grimoire complet serait un chantier à part
+  (changerait l'API consommée), pas fait ici.
+- **Mon compte** (visible seulement connecté) : petit panneau (`MonComptePanel`) affichant juste le
+  pseudo — `/auth/me` ne renvoie que `id`/`pseudo` (vérifié dans `main.py`), la vraie gestion de
+  compte est la Phase 4 de la roadmap CLAUDE.md, pas commencée. Panneau volontairement minimal,
+  pas une anticipation de fonctionnalités qui n'existent pas côté backend.
+- **Connexion/Déconnexion** : mécanisme inchangé (`LoginPanel`, JWT en `localStorage`) ; le panneau
+  de connexion (formulaire) garde son ancienne palette dorée, **volontairement pas retouché** —
+  seul son bouton déclencheur est à la charte, rough edge visuel assumé en attendant le chantier
+  futur #1.
+- **Discord** (extrême droite) : icône `IconeDiscord` (tracé simple-icons, licence MIT) — seule
+  icône en aplat plutôt qu'en trait fin de tout le site, un contour fin de la marque Discord ne se
+  reconnaîtrait plus. Infobulle custom au survol ("Discord — contact & signalement de bug"), même
+  mécanique JS (état local `survol`) que le reste de la navbar plutôt qu'un `:hover` CSS.
+  **⚠️ URL placeholder** (`https://discord.gg/TODO-lien-a-fournir`) : Popo n'a pas encore donné le
+  vrai lien d'invitation, jamais deviné (règle 13 + consigne système anti-invention d'URL) — à
+  remplacer avant la mise en prod.
+- **Almanax** : supprimé de l'affichage (bandeau `AlmanaxBanner` plus rendu, ni son `useEffect` de
+  fetch — contrairement à Hero/EncycloGrid/ChasseDofus, il n'y avait aucun autre consommateur de
+  cette donnée à préserver, donc l'effet de fetch a été retiré, pas juste débranché ; la fonction
+  `AlmanaxBanner` elle-même reste définie, comme les autres composants "sortis mais pas supprimés").
 
 **Sortis de la nav, code intact** : Donjons, Quêtes, et tout ce que le chantier Grimoire (29
 juillet 2026) fusionnait déjà (Équipements/Ressources/Bestiaire/Panoplies). Toujours accessibles
@@ -141,6 +209,35 @@ SONGES.md pour la logique elle-même). Seuls des remplacements mécaniques de co
   remplacées une par une par leurs équivalents tokenisés : `rgba(var(--df-cyan-rgb), X)`,
   `rgba(var(--df-gold-rgb), X)`, `rgba(var(--df-card-bg), X)` — mêmes valeurs d'opacité `X`
   conservées à chaque fois, seule la couleur de base change.
+
+## 5. Animations d'interaction (survol)
+
+Règle commune à toutes les cartes/vignettes cliquables du site (nouveau en passe 2) : léger
+agrandissement + translation vers le haut + surbrillance de l'accent, transition 400-600 ms,
+`cubic-bezier(.2,.8,.2,1)`.
+
+- **Accueil** : les 3 cartes (Le Puits/Les Taux/Le Grimoire) — `.df-home .card:hover` passe de
+  `translateY(-6px)` seul à `translateY(-6px) scale(1.015)`, transition déjà à `.55s
+  cubic-bezier(.2,.8,.2,1)` (dans la fourchette demandée, hérité de la passe 1 sans besoin d'y
+  toucher), surbrillance de bordure/fond déjà présente (`border-color`, `background`).
+- **Tracker Songes** : nouvelle classe utilitaire `.df-hover-lift` dans `tokens.css`
+  (`translateY(-2px) scale(1.03)`, `.5s cubic-bezier(.2,.8,.2,1)`, neutralisée sur les boutons
+  `:disabled` et sous `prefers-reduced-motion: reduce`) — ajoutée en `className` à côté du style
+  existant sur les 30 pilules/boutons de `SongesPage.jsx` (`sp.pill(...)`, `sp.btnVert`,
+  `sp.btnVertPetit`, `sp.btnOrContour`, `sp.btnFantome`) via une poignée de remplacements groupés
+  sur les préfixes communs plutôt que 30 éditions une par une. CSS pur (`:hover` natif), pas de JS
+  ajouté : la vérification par navigateur automatisé de ce chantier tourne avec
+  `prefers-reduced-motion: reduce` actif au niveau OS (confirmé via `matchMedia` en JS), donc le
+  mouvement ne s'est pas vu à l'écran pendant le test — comportement voulu (la règle
+  reduced-motion coupe bien la transition), pas un bug ; un navigateur normal sans cette
+  préférence verra l'animation. Aucune fonction/handler touché, purement visuel.
+- **Pas encore fait** : les vignettes du Grimoire (`.df-tile` dans `tokens.css`, encore sur
+  l'ancienne transition `0.15s ease` sans easing/scale) et les autres pages hors périmètre de ce
+  chantier (Donjons, Quêtes, Succès...). La demande dit "sur toutes les cartes et vignettes
+  d'images du site" — un balayage sitewide dépasserait le découpage en 3 temps validé pour ce
+  chantier (accueil / nav / tracker) et toucherait des pages que la règle 2 de CLAUDE.md ("un
+  chantier à la fois") place plutôt dans le chantier futur #1 ("Refonte graphique complète").
+  Signalé à Popo plutôt que tranché seul.
 
 ## Pièges rencontrés pendant ce chantier
 

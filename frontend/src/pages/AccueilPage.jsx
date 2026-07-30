@@ -73,13 +73,17 @@ export default function AccueilPage({ onNav, scrollTauxSignal }) {
             </a>
             <a href="#" className="cta-2" onClick={allerAuxTaux}>Voir les taux relevés</a>
           </div>
-          <div className="figs">
-            <div className="fig"><div className="n a">0,006 %</div><div className="l">une légende, par combat</div></div>
-            <div className="fig"><div className="n g">350</div><div className="l">songes en team de 4</div></div>
-            <div className="fig"><div className="n c">~500 h</div><div className="l">de jeu, en moyenne</div></div>
-          </div>
         </div>
       </header>
+
+      <section className="stats-sec rise"><div className="wrap">
+        <div className="figs">
+          <div className="fig"><div className="n a">0,006 %</div><div className="l">une légende, par combat</div></div>
+          <div className="fig"><div className="n g">350</div><div className="l">songes en team de 4</div></div>
+          <div className="fig"><div className="n c">~500 h</div><div className="l">de jeu, en moyenne</div></div>
+        </div>
+        <p className="stats-note">Statistiques relevées en Paradoxe I</p>
+      </div></section>
 
       <section><div className="wrap">
         <div className="sec-head rise">
@@ -113,22 +117,22 @@ export default function AccueilPage({ onNav, scrollTauxSignal }) {
         <div className="sec-head rise">
           <div className="kicker"><i /><span>Dix intensités</span></div>
           <h2>Du Rêve au Cauchemar</h2>
-          <p>Chaque intensité a ses propres taux. Le suivi les sépare — une légende en Paradoxe I et en Cauchemar III, ce n'est pas la même histoire.</p>
+          <p>Chaque intensité a ses propres taux. Une run correspond à un songe complet, du palier I jusqu'au combat final — dans l'outil, on ne dit que "songe", mais une légende en Paradoxe I et en Cauchemar III, ce n'est pas la même histoire.</p>
         </div>
         <div className="tiers">
           <div className="tier rise" style={{ "--c": "var(--df-reve)" }}>
             <div className="t">Rêve</div>
-            <div className="d">Trois paliers. Ni légendes, ni runes astrales.</div>
+            <div className="d">Tu joues pour te détendre, sans prise de tête. Viens rêver dans les bras de Draconiros.</div>
             <div className="m">50 % → 100 % de butin</div>
           </div>
           <div className="tier rise" style={{ "--c": "var(--df-violet)" }}>
             <div className="t">Paradoxe</div>
-            <div className="d">Quatre paliers. Le terrain de farm de la communauté.</div>
+            <div className="d">Tu veux du butin sans y laisser ta soirée. C'est ici que la communauté farme.</div>
             <div className="m">120 % → 190 % de butin</div>
           </div>
           <div className="tier rise" style={{ "--c": "var(--df-cauchemar)" }}>
             <div className="t">Cauchemar</div>
-            <div className="d">Trois paliers. Pour ceux qui aiment perdre à la salle 24.</div>
+            <div className="d">Tu aimes perdre à la salle 24. Draconiros aussi.</div>
             <div className="m">220 % → 300 % de butin</div>
           </div>
         </div>
