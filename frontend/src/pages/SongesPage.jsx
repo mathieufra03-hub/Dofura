@@ -79,14 +79,14 @@ const sp = {
   page: { padding: "1.5rem 1.25rem 3rem", maxWidth: 720, margin: "0 auto" },
   backBtn: { background: "transparent", border: "1px solid var(--df-border-cyan)", borderRadius: 6, padding: "5px 12px", fontSize: 12, color: "var(--df-cyan)", cursor: "pointer", marginBottom: 18 },
   card: { background: "rgba(var(--df-card-bg), 0.92)", border: "1px solid var(--df-border-gold)", borderRadius: 16, padding: "20px 20px", marginBottom: 16 },
-  champ: { width: "100%", boxSizing: "border-box", background: "rgba(20,26,46,0.9)", border: "1px solid rgba(77,216,230,0.35)", borderRadius: 8, padding: "9px 12px", fontSize: 13.5, color: "var(--df-text)", outline: "none" },
-  select: { background: "rgba(20,26,46,0.95)", color: "var(--df-text)", border: "1px solid rgba(255,198,61,0.4)", borderRadius: 999, padding: "8px 14px", fontSize: 13, cursor: "pointer", outline: "none" },
+  champ: { width: "100%", boxSizing: "border-box", background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-cyan-rgb), 0.35)", borderRadius: 8, padding: "9px 12px", fontSize: 13.5, color: "var(--df-text)", outline: "none" },
+  select: { background: "rgba(var(--df-card-bg), 0.95)", color: "var(--df-text)", border: "1px solid rgba(var(--df-gold-rgb), 0.4)", borderRadius: 999, padding: "8px 14px", fontSize: 13, cursor: "pointer", outline: "none" },
   btnVert: { background: "var(--df-green)", color: "#0A2118", border: "none", borderRadius: 12, padding: "16px 20px", fontSize: 16, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
   btnVertPetit: { background: "var(--df-green)", color: "#0A2118", border: "none", borderRadius: 10, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
-  btnOrContour: { background: "rgba(255,198,61,0.08)", color: "var(--df-gold)", border: "2px solid var(--df-gold)", borderRadius: 12, padding: "16px 20px", fontSize: 15, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
-  btnFantome: { background: "rgba(77,216,230,0.07)", color: "var(--df-cyan)", border: "1px solid rgba(77,216,230,0.6)", borderRadius: 10, padding: "8px 16px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  btnOrContour: { background: "rgba(var(--df-gold-rgb), 0.08)", color: "var(--df-gold)", border: "2px solid var(--df-gold)", borderRadius: 12, padding: "16px 20px", fontSize: 15, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
+  btnFantome: { background: "rgba(var(--df-cyan-rgb), 0.07)", color: "var(--df-cyan)", border: "1px solid rgba(var(--df-cyan-rgb), 0.6)", borderRadius: 10, padding: "8px 16px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
   lienDiscret: { fontSize: 12, color: "var(--df-text-3)", cursor: "pointer", textDecoration: "underline", background: "none", border: "none", padding: 0, fontFamily: "inherit" },
-  pill: (actif) => ({ display: "inline-block", margin: "0 6px 6px 0", background: actif ? "rgba(77,216,230,0.18)" : "rgba(77,216,230,0.06)", color: actif ? "var(--df-cyan)" : "var(--df-text-2)", border: `1px solid ${actif ? "var(--df-cyan)" : "rgba(77,216,230,0.35)"}`, borderRadius: 999, padding: "7px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }),
+  pill: (actif) => ({ display: "inline-block", margin: "0 6px 6px 0", background: actif ? "rgba(var(--df-cyan-rgb), 0.18)" : "rgba(var(--df-cyan-rgb), 0.06)", color: actif ? "var(--df-cyan)" : "var(--df-text-2)", border: `1px solid ${actif ? "var(--df-cyan)" : "rgba(var(--df-cyan-rgb), 0.35)"}`, borderRadius: 999, padding: "7px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }),
 }
 
 // ============================================================
@@ -422,7 +422,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
       <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>J'ai drop</h1>
 
       <div style={sp.card}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(20,26,46,0.95)", border: "1px solid rgba(77,216,230,0.5)", borderRadius: 10, padding: "9px 14px", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(var(--df-card-bg), 0.95)", border: "1px solid rgba(var(--df-cyan-rgb), 0.5)", borderRadius: 10, padding: "9px 14px", marginBottom: 12 }}>
           <IconeRecherche />
           <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher un item trackable..."
             style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "var(--df-text)", fontSize: 14 }} />
@@ -444,7 +444,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
             <div style={{ padding: 16, textAlign: "center", color: "var(--df-text-3)", fontSize: 13 }}>Aucun item ne correspond.</div>
           ) : itemsFiltres.map(i => (
             <div key={i.item_id} onClick={() => setItemSelectionne(i)}
-              style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", background: itemSelectionne?.item_id === i.item_id ? "rgba(77,216,230,0.14)" : "transparent", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", background: itemSelectionne?.item_id === i.item_id ? "rgba(var(--df-cyan-rgb), 0.14)" : "transparent", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               {i.img ? <img src={i.img} alt="" style={{ width: 26, height: 26, objectFit: "contain" }} /> : <div style={{ width: 26, height: 26 }} />}
               <span style={{ fontSize: 13.5, color: itemSelectionne?.item_id === i.item_id ? "var(--df-cyan)" : "var(--df-text)" }}>{i.nom}</span>
             </div>
@@ -586,7 +586,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
             ))
           )}
         </select>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(20,26,46,0.95)", border: "1px solid rgba(255,198,61,0.4)", borderRadius: 999, padding: "6px 8px 6px 14px", marginLeft: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(var(--df-card-bg), 0.95)", border: "1px solid rgba(var(--df-gold-rgb), 0.4)", borderRadius: 999, padding: "6px 8px 6px 14px", marginLeft: "auto" }}>
           <span style={{ fontSize: 13, color: "var(--df-text)", fontVariantNumeric: "tabular-nums", minWidth: 56 }}>
             {formaterDuree(chronoSecondes)}
           </span>
@@ -664,7 +664,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         {historique.songes.length === 0 ? (
           <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucun songe enregistré pour l'instant.</div>
         ) : historique.songes.map(s => (
-          <div key={s.id} style={{ background: "rgba(20,26,46,0.9)", border: "1px solid rgba(255,198,61,0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
+          <div key={s.id} style={{ background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-gold-rgb), 0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
               <div>
                 <div style={{ color: "var(--df-gold)", fontWeight: 700, fontSize: 13.5 }}>
@@ -764,7 +764,7 @@ function SongesMesDropsPage({ token, personnages, onBack, onSelectObjet }) {
         <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Aucun drop ne correspond.</div>
       ) : (
         donnees.drops.map(d => (
-          <div key={d.id} style={{ background: "rgba(20,26,46,0.9)", border: "1px solid rgba(255,198,61,0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
+          <div key={d.id} style={{ background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-gold-rgb), 0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span onClick={() => onSelectObjet(d.item_id)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: "1 1 240px", minWidth: 0 }}>
                 {d.item_img ? <img src={d.item_img} alt="" style={{ width: 26, height: 26, objectFit: "contain" }} /> : null}

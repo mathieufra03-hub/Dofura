@@ -9,7 +9,11 @@
     <title>frontend</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Refonte visuelle (30 juillet 2026) : preload du seul visuel d'accueil
+         (image "plate" du hero) — la 2e image (section citation) reste chargée
+         en différé, voir AccueilPage.jsx. -->
+    <link rel="preload" as="image" href="/assets/hero/draconiros-plate.webp" fetchpriority="high">
   </head>
   <body>
     <div id="root"></div>

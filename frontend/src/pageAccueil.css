@@ -1,0 +1,165 @@
+/* ============================================================
+   DOFURA — Page d'accueil ("Le Puits")
+   Refonte visuelle (30 juillet 2026). Port fidèle de
+   maquette/dofura-maquette-v2.html — CSS de la maquette pris comme
+   source de vérité, pas réinventé (règle du chantier).
+
+   Tout est scopé sous .df-home (ancêtre) pour ne JAMAIS fuiter sur les
+   autres pages du site, qui gardent leur propre style tant que le reste
+   de la refonte (navigation, tracker Songes) n'est pas fait — voir
+   IDENTITE.md. La barre de nav elle-même n'est PAS ici : elle reste
+   l'ancien composant Navbar pour cette première phase (nav = phase 2).
+
+   Reset/bg/font-family de base déjà globaux (index.css) — seul le
+   poids de police 300 par défaut est propre à cette page (phase 1
+   uniquement, pas encore étendu au reste du site).
+   ============================================================ */
+
+.df-home { color: var(--df-text); font-weight: 300; line-height: 1.7; overflow-x: hidden; -webkit-font-smoothing: antialiased; position: relative; }
+
+/* Particules d'étoiles : pas de calque dédié ici — le site a déjà un champ
+   d'étoiles global (StarField, App.jsx) rendu derrière toutes les pages,
+   qui couvre déjà cet effet sans le dupliquer. */
+
+/* ---------- Hero ---------- */
+.df-home header { position: relative; isolation: isolate; padding-bottom: clamp(40px,7vw,84px); }
+.df-home .plate { position: relative; height: clamp(360px,58vw,620px); overflow: hidden; }
+.df-home .plate::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: url('/assets/hero/draconiros-plate.webp');
+  background-size: cover; background-position: 56% 42%;
+  transform: scale(1.05); animation: df-home-float 32s ease-in-out infinite alternate;
+}
+@keyframes df-home-float { to { transform: scale(1.13) translate(-14px,-12px); } }
+.df-home .plate::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(3,12,17,.82) 0%, rgba(3,12,17,.1) 22%, rgba(3,12,17,.15) 46%, rgba(3,12,17,.86) 82%, var(--df-bg) 100%),
+    linear-gradient(90deg, rgba(3,12,17,.9) 0%, rgba(3,12,17,.34) 40%, rgba(3,12,17,.05) 70%, rgba(3,12,17,.45) 100%);
+}
+.df-home .hero-in { position: relative; z-index: 2; margin-top: clamp(-190px,-24vw,-140px); padding: 0 clamp(18px,5vw,68px); max-width: 1320px; }
+.df-home .kicker { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.df-home .kicker span { font-size: 10.5px; letter-spacing: .36em; text-transform: uppercase; color: var(--df-cyan); font-weight: 500; }
+.df-home .kicker i { display: block; width: clamp(26px,5vw,58px); height: 1px; background: linear-gradient(90deg, var(--df-cyan), transparent); }
+.df-home h1 {
+  font-family: var(--df-font-logo); font-weight: 700; font-size: clamp(32px,5.4vw,64px);
+  line-height: 1.06; margin-bottom: 20px; max-width: 15em;
+  text-shadow: 0 4px 40px rgba(3,12,17,.9);
+}
+.df-home h1 em {
+  font-style: normal; background: linear-gradient(96deg, var(--df-cyan), #BFF6F0 46%, var(--df-violet));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.df-home .lede { font-size: clamp(14.5px,1.4vw,17px); color: var(--df-text-2); max-width: 44ch; margin-bottom: 32px; font-weight: 300; }
+.df-home .lede b { color: var(--df-text); font-weight: 400; }
+.df-home .cta-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 44px; }
+.df-home .cta {
+  position: relative; display: inline-flex; align-items: center; gap: 10px;
+  background: linear-gradient(102deg, var(--df-cyan), #12A8C4); color: #01222B; font-weight: 600;
+  font-size: 14.5px; padding: 14px 32px; border-radius: 999px; text-decoration: none;
+  transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s; cursor: pointer; border: none;
+}
+.df-home .cta::after {
+  content: ""; position: absolute; inset: -3px; border-radius: 999px;
+  border: 1px solid rgba(44,231,255,.4); animation: df-home-halo 4.6s ease-in-out infinite;
+}
+@keyframes df-home-halo { 0%,100% { opacity: .12; transform: scale(1); } 50% { opacity: .7; transform: scale(1.05); } }
+.df-home .cta:hover { transform: translateY(-3px); box-shadow: 0 14px 44px -14px rgba(44,231,255,.6); }
+.df-home .cta-2 {
+  color: var(--df-text-2); text-decoration: none; font-size: 14px;
+  border-bottom: 1px solid var(--df-border-cyan); padding-bottom: 3px; transition: .35s; cursor: pointer; background: none;
+}
+.df-home .cta-2:hover { color: var(--df-cyan); border-color: var(--df-cyan); }
+.df-home .figs {
+  display: flex; flex-wrap: wrap; background: rgba(5,27,41,.5);
+  backdrop-filter: blur(16px) saturate(1.3); border: 1px solid var(--df-border-cyan);
+  border-radius: 16px; overflow: hidden; max-width: 620px;
+}
+.df-home .fig { flex: 1 1 160px; padding: 18px 24px; position: relative; }
+.df-home .fig + .fig::before { content: ""; position: absolute; left: 0; top: 22%; bottom: 22%; width: 1px; background: var(--df-border-cyan-soft); }
+.df-home .fig .n { font-family: var(--df-font-logo); font-weight: 700; font-size: clamp(20px,2.4vw,28px); line-height: 1.05; }
+.df-home .fig .l { font-size: 11.5px; color: var(--df-text-3); margin-top: 6px; }
+.df-home .n.a { color: var(--df-cyan); } .df-home .n.g { color: var(--df-gold); } .df-home .n.c { color: var(--df-cauchemar); }
+
+/* ---------- Sections génériques ---------- */
+.df-home section { padding: clamp(58px,8vw,116px) clamp(18px,5vw,68px); position: relative; z-index: 1; }
+.df-home .wrap { max-width: 1320px; margin: 0 auto; }
+.df-home .sec-head { max-width: 640px; margin-bottom: clamp(30px,4.6vw,54px); }
+.df-home .sec-head .kicker { margin-bottom: 14px; }
+.df-home h2 { font-family: var(--df-font-logo); font-weight: 700; font-size: clamp(24px,3.3vw,40px); line-height: 1.18; margin-bottom: 13px; }
+.df-home .sec-head p { color: var(--df-text-2); font-size: 15px; }
+
+/* ---------- Cartes (Le Puits / Les Taux / Le Grimoire) ---------- */
+.df-home .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(262px,1fr)); gap: 18px; }
+.df-home .card {
+  position: relative; background: var(--df-card-bg-solid, #071A24); border: 1px solid var(--df-border-cyan-soft);
+  border-radius: 18px; padding: 30px 28px 32px; overflow: hidden; text-align: left; cursor: pointer;
+  transition: transform .55s cubic-bezier(.2,.8,.2,1), border-color .55s, background .55s;
+  font: inherit; color: inherit;
+}
+.df-home .card::before {
+  content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+  background: linear-gradient(90deg, var(--c), transparent); opacity: .5; transition: opacity .55s;
+}
+.df-home .card::after {
+  content: ""; position: absolute; right: -40px; top: -40px; width: 150px; height: 150px;
+  border-radius: 50%; background: var(--c); opacity: .05; transition: opacity .55s;
+}
+.df-home .card:hover { transform: translateY(-6px); border-color: var(--df-border-cyan); background: var(--df-card-hi); }
+.df-home .card:hover::before { opacity: 1; }
+.df-home .card:hover::after { opacity: .11; }
+.df-home .card .ic {
+  position: relative; width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center;
+  background: rgba(255,255,255,.04); border: 1px solid var(--df-border-cyan); margin-bottom: 22px;
+}
+.df-home .card .ic svg { width: 20px; height: 20px; stroke: var(--c); fill: none; stroke-width: 1.5; }
+.df-home .card h3 { font-family: var(--df-font-logo); font-weight: 700; font-size: 19.5px; margin-bottom: 10px; }
+.df-home .card p { font-size: 13.8px; color: var(--df-text-2); line-height: 1.7; position: relative; }
+.df-home .card .go {
+  margin-top: 20px; font-size: 12.5px; color: var(--c); letter-spacing: .05em;
+  display: inline-flex; gap: 8px; align-items: center; transition: gap .45s; position: relative;
+}
+.df-home .card:hover .go { gap: 14px; }
+
+/* ---------- Bande des intensités ---------- */
+.df-home .band { border-top: 1px solid var(--df-border-cyan-soft); border-bottom: 1px solid var(--df-border-cyan-soft); background: linear-gradient(180deg, transparent, rgba(5,27,41,.55), transparent); }
+.df-home .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; }
+.df-home .tier { border: 1px solid var(--df-border-cyan-soft); border-left: 2px solid var(--c); border-radius: 0 14px 14px 0; padding: 22px 24px; background: rgba(255,255,255,.014); transition: background .5s; }
+.df-home .tier:hover { background: rgba(255,255,255,.04); }
+.df-home .tier .t { font-family: var(--df-font-logo); font-weight: 700; font-size: 17.5px; color: var(--c); margin-bottom: 7px; }
+.df-home .tier .d { font-size: 12.8px; color: var(--df-text-2); line-height: 1.6; }
+.df-home .tier .m { font-size: 11px; color: var(--df-text-3); margin-top: 11px; letter-spacing: .06em; }
+
+/* ---------- Citation ---------- */
+.df-home .quote-sec { position: relative; overflow: hidden; isolation: isolate; }
+.df-home .quote-sec::before {
+  content: ""; position: absolute; inset: 0; z-index: -2;
+  background-image: var(--df-home-quote-img, none);
+  background-size: cover; background-position: center 26%; opacity: .5;
+  /* --df-home-quote-img posée en style inline une fois la section visible
+     (chargement différé, voir AccueilPage.jsx) — pas d'URL en dur ici pour
+     ne pas précharger cette image hors écran. */
+}
+.df-home .quote-sec::after {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, var(--df-bg), rgba(3,12,17,.72) 40%, rgba(3,12,17,.86) 70%, var(--df-bg));
+}
+.df-home .quote { max-width: 780px; margin: 0 auto; text-align: center; padding: clamp(20px,4vw,60px) 0; }
+.df-home .quote p {
+  font-family: var(--df-font-logo); font-weight: 500; font-style: italic;
+  font-size: clamp(17px,2.3vw,27px); line-height: 1.55; color: #E6F8FC;
+  text-shadow: 0 2px 30px rgba(3,12,17,.9);
+}
+.df-home .quote .who {
+  font-family: var(--df-font-body); font-style: normal; font-size: 11px; letter-spacing: .3em;
+  text-transform: uppercase; color: var(--df-cyan); margin-top: 26px; display: block; font-weight: 500;
+}
+
+/* ---------- Apparition au défilement ---------- */
+.df-home .rise { opacity: 0; transform: translateY(28px); transition: opacity 1.05s cubic-bezier(.2,.8,.2,1), transform 1.05s cubic-bezier(.2,.8,.2,1); }
+.df-home .rise.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .df-home *, .df-home *::before, .df-home *::after { animation: none !important; transition: none !important; }
+  .df-home .rise { opacity: 1; transform: none; }
+}

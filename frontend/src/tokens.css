@@ -4,45 +4,66 @@
    Garantit la cohérence visuelle sur toutes les pages.
    Source : doc/dofura-tokens.css (cahier de refonte) — copie exacte,
    ne pas modifier ici sans mettre à jour la source.
+
+   Refonte visuelle (30 juillet 2026) : valeurs mises à jour depuis le
+   :root de maquette/dofura-maquette-v2.html (identité "astrale", cyan
+   #2CE7FF comme accent principal, or/violet en accents secondaires).
+   Les NOMS de variables sont inchangés (seules les valeurs bougent) pour
+   que tout ce qui utilise déjà var(--df-*) hérite automatiquement de la
+   nouvelle palette sans qu'il faille toucher chaque page une par une.
    ============================================================ */
 
 :root {
   /* --- Fonds --- */
-  --df-bg: #0C0F1D;              /* fond principal du site */
-  --df-card-bg: 20, 26, 46;     /* fond des cartes/blocs (en RGB, à utiliser avec opacité ~0.92) */
-  --df-panel-bg: #10152A;       /* menus déroulants, tooltips */
-  --df-track: #1B2138;          /* fond des barres de progression */
+  --df-bg: #030C11;              /* fond principal du site (etait #0C0F1D) */
+  --df-bg-2: #051B29;            /* degrade secondaire (nouveau, maquette --bg2) */
+  --df-card-bg: 7, 26, 36;       /* #071A24 en RGB, à utiliser avec opacité ~0.92 (etait 20,26,46) */
+  --df-card-hi: #0B2531;         /* fond carte au survol/actif (nouveau, maquette --card-hi) */
+  --df-panel-bg: #071A24;        /* menus déroulants, tooltips (etait #10152A) */
+  --df-track: #0B2531;           /* fond des barres de progression (etait #1B2138) */
 
-  /* --- Doré (identité) --- */
-  --df-gold: #FFC63D;           /* doré accent plein : titres de section, bordures */
-  --df-gold-grad-1: #FFE08A;    /* début dégradé doré (logo, grands titres, boutons) */
-  --df-gold-grad-2: #DE9B1F;    /* fin dégradé doré */
-  --df-gold-btn-1: #FFD35E;     /* début dégradé bouton primaire */
-  --df-gold-btn-2: #E0A62E;     /* fin dégradé bouton primaire */
-  --df-gold-btn-text: #1A1405;  /* texte sombre sur bouton doré */
+  /* --- Cyan astral (accent principal, interactif) --- */
+  --df-cyan: #2CE7FF;            /* etait #4DD8E6 */
+  --df-cyan-rgb: 44, 231, 255;   /* meme couleur en canaux RGB, pour rgba(var(--df-cyan-rgb), alpha) — voir --df-card-bg */
+  --df-cyan-2: #7FE9E0;          /* accent secondaire cyan (nouveau, maquette --astral-2) */
 
-  /* --- Cyan (interactif) --- */
-  --df-cyan: #4DD8E6;           /* liens, boutons secondaires, éléments cliquables */
+  /* --- Doré (accent secondaire) --- */
+  --df-gold: #F0C040;            /* doré accent plein : titres de section, bordures (etait #FFC63D) */
+  --df-gold-rgb: 240, 192, 64;   /* meme couleur en canaux RGB, pour rgba(var(--df-gold-rgb), alpha) */
+  --df-gold-grad-1: #F5D375;     /* début dégradé doré (etait #FFE08A) */
+  --df-gold-grad-2: #D9A020;     /* fin dégradé doré (etait #DE9B1F) */
+  --df-gold-btn-1: #F5D375;      /* début dégradé bouton primaire (etait #FFD35E) */
+  --df-gold-btn-2: #D9A020;      /* fin dégradé bouton primaire (etait #E0A62E) */
+  --df-gold-btn-text: #1A1405;   /* texte sombre sur bouton doré (inchangé) */
+
+  /* --- Violet (accent secondaire, nouveau) --- */
+  --df-violet: #C478FF;
 
   /* --- Accents --- */
-  --df-magenta: #C44BC7;        /* rappel nébuleuses, badge quête */
+  --df-magenta: #C44BC7;        /* rappel nébuleuses, badge quête (inchangé, hors perimetre maquette) */
+
+  /* --- Intensités du Puits (nouveau, maquette) --- */
+  --df-reve: #4DA6FF;
+  --df-paradoxe: #C478FF;        /* alias de --df-violet, meme teinte que la maquette */
+  --df-cauchemar: #FF6B4A;
 
   /* --- Sémantique stats --- */
-  --df-green: #4CC98D;          /* bonus / stats positives / succès accompli */
-  --df-red: #F26D6D;            /* malus / stats négatives */
+  --df-green: #4CC98D;          /* bonus / stats positives / succès accompli (inchangé) */
+  --df-red: #F26D6D;            /* malus / stats négatives (inchangé) */
 
   /* --- Texte --- */
-  --df-text: #E8EAF2;           /* texte courant */
-  --df-text-2: #B8BFD6;         /* texte secondaire */
-  --df-text-3: #7F8AA6;         /* texte discret (méta, légendes) */
-  --df-text-off: #3A4257;       /* étoile favori non active */
+  --df-text: #DCF2F7;           /* texte courant (etait #E8EAF2) */
+  --df-text-2: #86A9B5;         /* texte secondaire (etait #B8BFD6) */
+  --df-text-3: #55757F;         /* texte discret (méta, légendes) (etait #7F8AA6) */
+  --df-text-off: #2E4750;       /* étoile favori non active (dérivé, etait #3A4257) */
 
   /* --- Bordures --- */
-  --df-border-gold: rgba(255, 198, 61, 0.20);   /* bordure carte au repos */
-  --df-border-gold-hover: rgba(255, 198, 61, 0.90);
-  --df-border-cyan: rgba(77, 216, 230, 0.35);   /* encadrés de cross-linking */
+  --df-border-gold: rgba(240, 192, 64, 0.20);   /* bordure carte au repos (nouvelle teinte, meme alpha) */
+  --df-border-gold-hover: rgba(240, 192, 64, 0.90);
+  --df-border-cyan: rgba(44, 231, 255, 0.15);   /* encadrés de cross-linking (maquette --line, etait 77,216,230/.35) */
+  --df-border-cyan-soft: rgba(44, 231, 255, 0.07); /* liseré très discret (nouveau, maquette --line-soft) */
 
-  /* --- Couleurs des 6 Dofus primordiaux --- */
+  /* --- Couleurs des 6 Dofus primordiaux (inchangées, hors perimetre maquette) --- */
   --df-dofus-emeraude: #3FCF8A;
   --df-dofus-pourpre: #E0485E;
   --df-dofus-turquoise: #3FC9E0;
@@ -58,7 +79,7 @@
   --df-radius-tile: 14px;
 
   /* --- Typo --- */
-  --df-font-logo: 'Cinzel Decorative', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  --df-font-logo: 'Cinzel', 'Cinzel Decorative', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
   --df-font-body: 'Inter', system-ui, -apple-system, sans-serif;
 }
 

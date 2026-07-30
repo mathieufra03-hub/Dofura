@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import SongesPage from "./pages/SongesPage"
+import AccueilPage from "./pages/AccueilPage"
 import { DOFUS_COULEURS } from "./dofusCouleurs"
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
@@ -41,16 +42,16 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-// Structure de nav (chantier Grimoire, 29 juillet 2026) : Équipements,
-// Ressources (ex-"Métiers" — le mot "métiers" n'est plus utilisé nulle part
-// dans l'interface, remplacé par "ressources"), Bestiaire et Panoplies
-// fusionnés en une seule entrée "Grimoire". Ces anciennes pages ne sont plus
-// accessibles depuis la navigation (ni la barre du haut, ni la grille
-// Encyclopédie) — seul le Grimoire y mène desormais, voir GrimoirePage.
-// "Songes" (SONGES.md) n'est pas une catégorie d'encyclopédie mais un outil
-// de suivi joueur — entrée volontairement distincte du Grimoire.
-const navLinks = ["Grimoire", "Donjons", "Quêtes", "Songes"]
-const NAV_LABEL_VERS_CIBLE = { "Grimoire":"grimoire", "Donjons":"donjon", "Quêtes":"quete", "Songes":"songes" }
+// Structure de nav (refonte visuelle, 30 juillet 2026, phase 2) : 4 entrées
+// seulement — Le Puits (tracker Songes, rebrandé) · Les Taux (pas encore de
+// page dédiée, fait défiler jusqu'à la bande "Dix intensités" de l'accueil,
+// voir handleLesTaux dans App()) · Le Grimoire · Se connecter. Donjons,
+// Quêtes, et tout ce que fusionnait déjà le Grimoire (chantier Grimoire,
+// 29 juillet 2026 : Équipements/Ressources/Bestiaire/Panoplies) sortent de la
+// navigation — SANS supprimer leur code/routes, le Grimoire s'appuie dessus
+// et ils restent atteignables par les liens croisés entre fiches.
+const navLinks = ["Le Puits", "Les Taux", "Le Grimoire"]
+const NAV_LABEL_VERS_CIBLE = { "Le Puits":"songes", "Le Grimoire":"grimoire" }
 
 // Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
 // ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
@@ -116,46 +117,69 @@ function LoginPanel({ onLogin, onClose }) {
   )
 }
 
-function Navbar({ onHome, onNav, browsing, user, onLogin, onLogout }) {
+// Reprend nav/.brand/.links/.ghost de la maquette (refonte visuelle, phase 2)
+// — sticky, translucide + flou, dégradé or→cyan→violet sur le logo comme le
+// mot "légende" de l'accueil, lien actif souligné cyan. Pas de nouvelle
+// classe globale pour le dégradé du logo : traitement unique à ce composant,
+// à la différence de .df-title-gold (partagé par les titres de fiches,
+// hors périmètre de cette refonte) — voir IDENTITE.md.
+function Navbar({ onHome, onNav, onLesTaux, browsing, user, onLogin, onLogout }) {
   const [showLogin, setShowLogin] = useState(false)
   return (
-    <nav style={{ background:"var(--df-panel-bg)", borderBottom:"1px solid var(--df-border-gold)", padding:"14px 2rem", display:"flex", alignItems:"center", position:"sticky", top:0, zIndex:100 }}>
-      <span onClick={onHome} className="df-title-gold" style={{ fontSize:19, letterSpacing:"0.06em", marginRight:28, cursor:"pointer" }}>
-        DOFURA
-      </span>
-      <div style={{ display:"flex", gap:2, flex:1, overflowX:"auto" }}>
+    <nav style={{
+      position:"sticky", top:0, zIndex:100, display:"flex", alignItems:"center", justifyContent:"space-between",
+      padding:"0 clamp(18px,5vw,68px)", height:68,
+      background:"rgba(3,12,17,0.7)", backdropFilter:"blur(20px) saturate(1.4)", WebkitBackdropFilter:"blur(20px) saturate(1.4)",
+      borderBottom:"1px solid var(--df-border-cyan-soft)",
+    }}>
+      <span onClick={onHome} style={{
+        fontFamily:"var(--df-font-logo)", fontWeight:900, fontSize:22, letterSpacing:"0.16em", cursor:"pointer",
+        background:"linear-gradient(100deg, var(--df-gold) 6%, var(--df-cyan) 52%, var(--df-violet) 96%)",
+        WebkitBackgroundClip:"text", backgroundClip:"text", color:"transparent",
+      }}>DOFURA</span>
+
+      <div style={{ display:"flex", gap:"clamp(14px,2.4vw,36px)", alignItems:"center" }}>
         {navLinks.map(n => {
           const cible = NAV_LABEL_VERS_CIBLE[n]
           const actif = cible && browsing === cible
+          const onClick = cible ? () => onNav(cible) : (n === "Les Taux" ? onLesTaux : undefined)
           return (
-            <span key={n} onClick={cible ? () => onNav(cible) : undefined}
-              style={{ fontSize:14.5, color:actif?"var(--df-gold)":"var(--df-text)", padding:"18px 13px", cursor:cible?"pointer":"default", whiteSpace:"nowrap" }}
-              onMouseEnter={e=>{if(cible)e.currentTarget.style.color="var(--df-gold)"}}
-              onMouseLeave={e=>{e.currentTarget.style.color=actif?"var(--df-gold)":"var(--df-text)"}}
+            <span key={n} onClick={onClick}
+              style={{
+                fontSize:13.5, fontWeight:400, color:actif?"var(--df-cyan)":"var(--df-text-2)",
+                padding:"7px 0", cursor:onClick?"pointer":"default", whiteSpace:"nowrap",
+                borderBottom: actif ? "1px solid var(--df-cyan)" : "1px solid transparent", transition:"color .35s",
+              }}
+              onMouseEnter={e=>{ if(!actif) e.currentTarget.style.color="var(--df-text)" }}
+              onMouseLeave={e=>{ e.currentTarget.style.color = actif?"var(--df-cyan)":"var(--df-text-2)" }}
             >{n}</span>
           )
         })}
-      </div>
-      <div style={{ marginLeft:"auto", display:"flex", gap:12, alignItems:"center", position:"relative" }}>
-        {user ? (
-          <>
-            <span style={{ fontSize:13, color:"var(--df-text-2)" }}>{user.pseudo}</span>
-            <button onClick={onLogout} style={{ background:"transparent", color:"var(--df-text-3)", border:"1px solid rgba(255,198,61,0.25)", borderRadius:10, padding:"7px 14px", fontSize:12.5, cursor:"pointer" }}>
-              Déconnexion
-            </button>
-          </>
-        ) : (
-          <>
-            <button onClick={()=>setShowLogin(s=>!s)} style={{
-              background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.7)",
-              borderRadius:10, padding:"8px 18px", fontSize:13.5, fontWeight:600, cursor:"pointer",
-            }}
-              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,198,61,0.18)"}
-              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,198,61,0.08)"}
-            >Connexion</button>
-            {showLogin && <LoginPanel onLogin={(token)=>{ onLogin(token); setShowLogin(false) }} onClose={()=>setShowLogin(false)} />}
-          </>
-        )}
+        <div style={{ position:"relative" }}>
+          {user ? (
+            <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+              <span style={{ fontSize:13, color:"var(--df-text-2)" }}>{user.pseudo}</span>
+              <span onClick={onLogout} style={{
+                border:"1px solid var(--df-border-cyan)", borderRadius:999, padding:"7px 18px",
+                background:"transparent", color:"var(--df-text)", fontSize:12.5, cursor:"pointer", transition:".35s",
+              }}
+                onMouseEnter={e=>{ e.currentTarget.style.borderColor="var(--df-cyan)"; e.currentTarget.style.background="rgba(44,231,255,0.07)" }}
+                onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--df-border-cyan)"; e.currentTarget.style.background="transparent" }}
+              >Déconnexion</span>
+            </div>
+          ) : (
+            <>
+              <span onClick={()=>setShowLogin(s=>!s)} style={{
+                border:"1px solid var(--df-border-cyan)", borderRadius:999, padding:"7px 18px",
+                background:"transparent", color:"var(--df-text)", fontSize:12.5, cursor:"pointer", transition:".35s",
+              }}
+                onMouseEnter={e=>{ e.currentTarget.style.borderColor="var(--df-cyan)"; e.currentTarget.style.background="rgba(44,231,255,0.07)" }}
+                onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--df-border-cyan)"; e.currentTarget.style.background="transparent" }}
+              >Se connecter</span>
+              {showLogin && <LoginPanel onLogin={(token)=>{ onLogin(token); setShowLogin(false) }} onClose={()=>setShowLogin(false)} />}
+            </>
+          )}
+        </div>
       </div>
     </nav>
   )
@@ -3946,6 +3970,11 @@ export default function App() {
   const [selectedSucces, setSelectedSucces]     = useState(null)
   const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete" | "succes"
   const [almanax, setAlmanax]   = useState(null)
+  // "Les Taux" (nav, refonte visuelle phase 2) n'a pas encore de page dédiée
+  // — compteur incrémenté à chaque clic pour redéclencher le défilement vers
+  // la bande "Dix intensités" de l'accueil, même si on y est déjà (voir
+  // AccueilPage.jsx).
+  const [scrollTauxSignal, setScrollTauxSignal] = useState(0)
   const [token, setToken] = useState(() => localStorage.getItem("dofura_token") || null)
   const [user, setUser]   = useState(null)
 
@@ -3998,6 +4027,7 @@ export default function App() {
   const handleSelectSucces   = (id) => { resetNav(); setSelectedSucces(id) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
+  const handleLesTaux        = () => { resetNav(); setScrollTauxSignal(s => s + 1) }
 
   return (
     <div translate="no" style={{ position:"relative", minHeight:"100vh", overflow:"hidden", background:"var(--df-bg)", display:"flex", flexDirection:"column" }}>
@@ -4010,7 +4040,7 @@ export default function App() {
       <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.22)", pointerEvents:"none" }} />
 
       <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>
-        <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} user={user} onLogin={handleLogin} onLogout={handleLogout} />
+        <Navbar onHome={handleHome} onNav={handleNav} onLesTaux={handleLesTaux} browsing={browsing} user={user} onLogin={handleLogin} onLogout={handleLogout} />
         <AlmanaxBanner data={almanax} />
         <div style={{ flex:1 }}>
       {selectedMonstre ? (
@@ -4042,11 +4072,7 @@ export default function App() {
       ) : browsing === "songes" ? (
         <SongesPage token={token} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : (
-        <>
-          <Hero query={query} setQuery={setQuery} results={results} onSelect={handleSelectMonstre} loading={loading} />
-          <EncycloGrid onNav={handleNav} />
-          <ChasseDofus token={token} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onSelectDonjon={handleSelectDonjon} onSelectMonstre={handleSelectMonstre} />
-        </>
+        <AccueilPage onNav={handleNav} scrollTauxSignal={scrollTauxSignal} />
       )}
         </div>
         <Footer />
