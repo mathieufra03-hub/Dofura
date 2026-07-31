@@ -1,5 +1,5 @@
 /* ============================================================
-   DOFURA — Page d'accueil ("Le Puits")
+   DOFURA — Page d'accueil ("Le Registre des Songes")
    Refonte visuelle (30 juillet 2026). Port fidèle de
    maquette/dofura-maquette-v2.html — CSS de la maquette pris comme
    source de vérité, pas réinventé (règle du chantier).
@@ -122,12 +122,15 @@
 .df-home h2 { font-family: var(--df-font-logo); font-weight: 700; font-size: clamp(24px,3.3vw,40px); line-height: 1.18; margin-bottom: 13px; }
 .df-home .sec-head p { color: var(--df-text-2); font-size: 15px; }
 
-/* ---------- Cartes (Le Puits / Les Taux / Le Grimoire) ---------- */
+/* ---------- Cartes (Le Registre des Songes / Les Taux / Le Grimoire) ---------- */
 .df-home .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(262px,1fr)); gap: 18px; }
 .df-home .card {
+  /* Padding resserré (retour Popo, 1er août 2026 — cartes ~40% moins hautes) —
+     survol (:hover ci-dessous) volontairement non touché. */
   position: relative; background: var(--df-card-bg-solid, #071A24); border: 1px solid var(--df-border-cyan-soft);
-  border-radius: 18px; padding: 30px 28px 32px; overflow: hidden; text-align: left; cursor: pointer;
-  transition: transform .55s cubic-bezier(.2,.8,.2,1), border-color .55s, background .55s;
+  border-radius: 18px; padding: 16px 18px 18px; overflow: hidden; text-align: left; cursor: pointer;
+  /* box-shadow ajouté à la liste (halo de survol, retour Popo 1er août 2026) */
+  transition: transform .55s cubic-bezier(.2,.8,.2,1), border-color .55s, background .55s, box-shadow .4s cubic-bezier(.2,.8,.2,1);
   font: inherit; color: inherit;
 }
 .df-home .card::before {
@@ -138,30 +141,110 @@
   content: ""; position: absolute; right: -40px; top: -40px; width: 150px; height: 150px;
   border-radius: 50%; background: var(--c); opacity: .05; transition: opacity .55s;
 }
-.df-home .card:hover { transform: translateY(-6px) scale(1.015); border-color: var(--df-border-cyan); background: var(--df-card-hi); }
+.df-home .card:hover {
+  transform: translateY(-6px) scale(1.015); border-color: var(--df-border-cyan); background: var(--df-card-hi);
+  /* Halo discret dans la couleur d'accent de la carte (var(--c), déjà posée
+     en style inline par carte sur l'élément .card lui-même). */
+  box-shadow: 0 0 36px -10px var(--c);
+}
 .df-home .card:hover::before { opacity: 1; }
 .df-home .card:hover::after { opacity: .11; }
 .df-home .card .ic {
-  position: relative; width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center;
-  background: rgba(255,255,255,.04); border: 1px solid var(--df-border-cyan); margin-bottom: 22px;
+  position: relative; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+  background: rgba(255,255,255,.04); border: 1px solid var(--df-border-cyan); margin-bottom: 8px;
 }
-.df-home .card .ic svg { width: 20px; height: 20px; stroke: var(--c); fill: none; stroke-width: 1.5; }
-.df-home .card h3 { font-family: var(--df-font-logo); font-weight: 700; font-size: 19.5px; margin-bottom: 10px; }
-.df-home .card p { font-size: 13.8px; color: var(--df-text-2); line-height: 1.7; position: relative; }
+.df-home .card .ic svg { width: 14px; height: 14px; stroke: var(--c); fill: none; stroke-width: 1.5; }
+.df-home .card h3 { font-family: var(--df-font-logo); font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.df-home .card p {
+  font-size: 12px; color: var(--df-text-2); line-height: 1.35; position: relative;
+  /* Limitée à 2 lignes (retour Popo, 1er août 2026) — line-clamp, fait partie
+     du resserrement de hauteur, pas un changement de contenu. */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 .df-home .card .go {
-  margin-top: 20px; font-size: 12.5px; color: var(--c); letter-spacing: .05em;
+  margin-top: 8px; font-size: 12.5px; color: var(--c); letter-spacing: .05em;
   display: inline-flex; gap: 8px; align-items: center; transition: gap .45s; position: relative;
 }
 .df-home .card:hover .go { gap: 14px; }
 
-/* ---------- Bande des intensités ---------- */
-.df-home .band { border-top: 1px solid var(--df-border-cyan-soft); border-bottom: 1px solid var(--df-border-cyan-soft); background: linear-gradient(180deg, transparent, rgba(5,27,41,.55), transparent); }
-.df-home .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; }
-.df-home .tier { border: 1px solid var(--df-border-cyan-soft); border-left: 2px solid var(--c); border-radius: 0 14px 14px 0; padding: 22px 24px; background: rgba(255,255,255,.014); transition: background .5s; }
-.df-home .tier:hover { background: rgba(255,255,255,.04); }
-.df-home .tier .t { font-family: var(--df-font-logo); font-weight: 700; font-size: 17.5px; color: var(--c); margin-bottom: 7px; }
-.df-home .tier .d { font-size: 12.8px; color: var(--df-text-2); line-height: 1.6; }
-.df-home .tier .m { font-size: 11px; color: var(--df-text-3); margin-top: 11px; letter-spacing: .06em; }
+/* Illustration en haut de chaque carte (retour Popo, 1er août 2026 ; ratio
+   21:9 → 32:9 le même jour, bande très fine, cartes ~40% moins hautes),
+   bord à bord (marges négatives = padding/rayon de .card, ajustées au
+   nouveau padding resserré ci-dessus) — les 3 cartes ont le même bloc,
+   structurellement identiques, ce qui garde leur hauteur alignée quel que
+   soit l'état de chargement de l'image (avant l'ajout de .card-art aux 3
+   cartes, un déséquilibre du même genre existait).
+   Dégradé de repli quasi invisible ("se deviner, pas se voir") TOUJOURS
+   présent en background de .card-art lui-même : si l'image (voir CardArt
+   dans AccueilPage.jsx, gère le onError) est absente ou ne charge pas, il
+   reste seul visible — jamais d'icône d'image cassée. */
+.df-home .card-art {
+  position: relative; aspect-ratio: 32 / 9; margin: -16px -18px 10px;
+  border-radius: 18px 18px 0 0; overflow: hidden;
+  background: linear-gradient(160deg, rgba(255,255,255,.025), rgba(255,255,255,.006));
+}
+.df-home .card-art img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  transition: transform .4s cubic-bezier(.2,.8,.2,1);
+}
+.df-home .card:hover .card-art img { transform: scale(1.05); }
+
+/* ---------- Artwork de la section "Trois outils" ---------- */
+/* Retour Popo (31 juillet 2026) : même recette que .plate/.plate::after du
+   hero (image en ::before, masques en dégradé en ::after par-dessus) —
+   réorientée : fondu fort à DROITE (l'image disparaît dans le fond) au lieu
+   du bas. position:absolute uniquement (jamais fixed, voir piège CLAUDE.md —
+   fantômes de texte au scroll sur Android).
+   Diagnostic (1er août 2026, 5e passe) : le vide entre l'image du hero et
+   celle-ci n'était pas une histoire d'espacement (déjà tenté 3 fois) — les
+   deux fondus se terminaient chacun À L'INTÉRIEUR de leur propre boîte,
+   jamais jusqu'au bord partagé. Fix : .outils-art déborde maintenant
+   au-dessus de .outils-sec (margin-top négatif) pour chevaucher la fin du
+   fondu du hero — ce qui impose de retirer le overflow:hidden d'ici (il
+   coupait tout débordement) ET de faire descendre le z-index de TOUTE la
+   section sous celui de .stats-sec (sinon .outils-sec, qui est sa propre
+   pile d'empilement via le z-index:1 générique des sections, s'affiche
+   entièrement AU-DESSUS de .stats-sec quel que soit le z-index interne de
+   .outils-art — un enfant à z-index négatif ne peut pas "sortir" de la
+   pile d'empilement de son parent). .plate garde son overflow:hidden (pas
+   concerné, l'image qui bouge est celle du bas). overflow-x:hidden déjà
+   assuré plus haut sur .df-home (barre de défilement horizontale
+   impossible même sans le overflow:hidden retiré ici). */
+.df-home .outils-sec { position: relative; z-index: 0; }
+.df-home .outils-art {
+  /* Chevauchement avec la fin du fondu du hero (retour Popo, 1er août 2026,
+     5e passe) : 110px de vide mesurés entre le bas de .plate (déjà
+     totalement estompé) et le haut de .outils-art — remontée de 200px pour
+     entrer franchement dans la zone où .plate est déjà en train de
+     s'effacer (son propre fondu commence vers 55% de ses 620px, ~y=341px
+     depuis son sommet). Point de départ mesuré, pas figé. */
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin-top: -200px; z-index: -1;
+  opacity: .6; pointer-events: none;
+}
+.df-home .outils-art::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: url('/assets/accueil-heros-portail.webp');
+  background-size: cover; background-position: left center; background-repeat: no-repeat;
+  /* Flou volontaire (retour Popo, 1er août 2026) : le fichier source est en
+     basse résolution, le flou masque l'agrandissement (image maintenant
+     pleine largeur de section) et donne un effet de profondeur de champ. */
+  filter: blur(3px);
+}
+.df-home .outils-art::after {
+  content: ""; position: absolute; inset: 0;
+  /* Fondu du haut rallongé avec palier intermédiaire (retour Popo, 1er août
+     2026, 5e passe) : 6% (~44px) était bien trop brutal pour un
+     chevauchement de 200px — le raccord se serait vu comme une bordure.
+     Étalé sur ~26% avec une étape à 10%/18% pour une transition plus douce
+     qu'un dégradé à 2 seuls points. */
+  background:
+    linear-gradient(180deg, var(--df-bg) 0%, rgba(3,12,17,.7) 10%, rgba(3,12,17,.3) 18%, transparent 26%, transparent 80%, var(--df-bg) 100%),
+    linear-gradient(90deg, transparent 0%, transparent 45%, rgba(3,12,17,.65) 78%, var(--df-bg) 100%);
+}
+@media (max-width: 900px) {
+  /* Un fondu latéral n'a aucun sens sur mobile — masquée entièrement. */
+  .df-home .outils-art { display: none; }
+}
 
 /* ---------- Citation ---------- */
 .df-home .quote-sec { position: relative; overflow: hidden; isolation: isolate; }

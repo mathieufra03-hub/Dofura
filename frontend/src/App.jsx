@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import SongesPage from "./pages/SongesPage"
 import AccueilPage from "./pages/AccueilPage"
+import TauxPage from "./pages/TauxPage"
 import { DOFUS_COULEURS } from "./dofusCouleurs"
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
@@ -42,16 +43,19 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-// Structure de nav (refonte visuelle, 30 juillet 2026, phase 2) : 4 entrées
-// seulement — Le Puits (tracker Songes, rebrandé) · Les Taux (pas encore de
-// page dédiée, fait défiler jusqu'à la bande "Dix intensités" de l'accueil,
-// voir handleLesTaux dans App()) · Le Grimoire · Se connecter. Donjons,
-// Quêtes, et tout ce que fusionnait déjà le Grimoire (chantier Grimoire,
-// 29 juillet 2026 : Équipements/Ressources/Bestiaire/Panoplies) sortent de la
-// navigation — SANS supprimer leur code/routes, le Grimoire s'appuie dessus
-// et ils restent atteignables par les liens croisés entre fiches.
-const navLinks = ["Le Puits", "Les Taux", "Le Grimoire"]
-const NAV_LABEL_VERS_CIBLE = { "Le Puits":"songes", "Le Grimoire":"grimoire" }
+// Structure de nav (retour Popo, 31 juillet 2026) : "Le Puits" rebrandé
+// "Le Registre des Songes" (tracker Songes, cible "songes" inchangée) ·
+// "Les Taux" retiré de la BARRE DE NAV uniquement (toujours volontaire,
+// demande explicite) — la page existe désormais réellement (TauxPage.jsx,
+// cible "taux", 1er août 2026), atteignable depuis la carte "Les Taux" et le
+// lien "Voir les taux relevés" de l'accueil, juste pas depuis la navbar.
+// Donjons, Quêtes, et tout ce que fusionnait déjà le Grimoire (chantier
+// Grimoire, 29 juillet 2026 :
+// Équipements/Ressources/Bestiaire/Panoplies) restent hors nav — SANS
+// supprimer leur code/routes, le Grimoire s'appuie dessus et ils restent
+// atteignables par les liens croisés entre fiches.
+const navLinks = ["Le Registre des Songes", "Le Grimoire"]
+const NAV_LABEL_VERS_CIBLE = { "Le Registre des Songes":"songes", "Le Grimoire":"grimoire" }
 
 // Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
 // ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
@@ -118,10 +122,11 @@ function LoginPanel({ onLogin, onClose }) {
 }
 
 // Icônes de nav — trait fin, pas d'emoji (refonte visuelle, phase 2 nav).
-// Puits/Taux/Grimoire reprennent exactement les tracés déjà utilisés sur les
-// 3 cartes de l'accueil (AccueilPage.jsx) : même symbole aux deux endroits,
-// cohérence délibérée plutôt que 2 jeux d'icônes différents pour la même idée.
-function IconePuits(props) {
+// Registre/Taux/Grimoire reprennent exactement les tracés déjà utilisés sur
+// les 3 cartes de l'accueil (AccueilPage.jsx) : même symbole aux deux
+// endroits, cohérence délibérée plutôt que 2 jeux d'icônes différents pour
+// la même idée.
+function IconeRegistre(props) {
   return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><path d="M12 3c0 4-4 5-4 9a4 4 0 0 0 8 0c0-4-4-5-4-9z" /><path d="M8 21h8" /></svg>
 }
 function IconeTaux(props) {
@@ -145,7 +150,7 @@ function IconeDiscord(props) {
   )
 }
 
-const NAV_ICONS = { "Le Puits": IconePuits, "Les Taux": IconeTaux, "Le Grimoire": IconeGrimoireNav }
+const NAV_ICONS = { "Le Registre des Songes": IconeRegistre, "Les Taux": IconeTaux, "Le Grimoire": IconeGrimoireNav }
 
 // Recherche discrète de la nav (refonte visuelle, phase 2) — réutilise le
 // state query/results/loading déjà câblé dans App() pour l'ancien Hero (mort
@@ -252,7 +257,7 @@ function MonComptePanel({ user, onClose }) {
 // Disposition en grille 3 colonnes (logo / menu+recherche / compte-Discord)
 // plutôt que flex+space-between : le menu central reste VRAIMENT centré même
 // si les zones gauche/droite n'ont pas la même largeur.
-function Navbar({ onHome, onNav, onLesTaux, browsing, user, onLogin, onLogout, query, setQuery, results, loading, onSelectMonstre }) {
+function Navbar({ onHome, onNav, browsing, user, onLogin, onLogout, query, setQuery, results, loading, onSelectMonstre }) {
   const [showLogin, setShowLogin] = useState(false)
   const [showCompte, setShowCompte] = useState(false)
   return (
@@ -272,7 +277,7 @@ function Navbar({ onHome, onNav, onLesTaux, browsing, user, onLogin, onLogout, q
         {navLinks.map(n => {
           const cible = NAV_LABEL_VERS_CIBLE[n]
           const actif = cible && browsing === cible
-          const onClick = cible ? () => onNav(cible) : (n === "Les Taux" ? onLesTaux : undefined)
+          const onClick = cible ? () => onNav(cible) : undefined
           const Icone = NAV_ICONS[n]
           return (
             <span key={n} onClick={onClick}
@@ -4115,12 +4120,7 @@ export default function App() {
   const [selectedSousZone, setSelectedSousZone] = useState(null)
   const [selectedQuete, setSelectedQuete]       = useState(null)
   const [selectedSucces, setSelectedSucces]     = useState(null)
-  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete" | "succes"
-  // "Les Taux" (nav, refonte visuelle phase 2) n'a pas encore de page dédiée
-  // — compteur incrémenté à chaque clic pour redéclencher le défilement vers
-  // la bande "Dix intensités" de l'accueil, même si on y est déjà (voir
-  // AccueilPage.jsx).
-  const [scrollTauxSignal, setScrollTauxSignal] = useState(0)
+  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete" | "succes" | "taux"
   const [token, setToken] = useState(() => localStorage.getItem("dofura_token") || null)
   const [user, setUser]   = useState(null)
 
@@ -4167,7 +4167,6 @@ export default function App() {
   const handleSelectSucces   = (id) => { resetNav(); setSelectedSucces(id) }
   const handleHome          = () => { resetNav() }
   const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
-  const handleLesTaux        = () => { resetNav(); setScrollTauxSignal(s => s + 1) }
 
   return (
     <div translate="no" style={{ position:"relative", minHeight:"100vh", overflow:"hidden", background:"var(--df-bg)", display:"flex", flexDirection:"column" }}>
@@ -4180,7 +4179,7 @@ export default function App() {
       <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.22)", pointerEvents:"none" }} />
 
       <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>
-        <Navbar onHome={handleHome} onNav={handleNav} onLesTaux={handleLesTaux} browsing={browsing} user={user} onLogin={handleLogin} onLogout={handleLogout}
+        <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} user={user} onLogin={handleLogin} onLogout={handleLogout}
           query={query} setQuery={setQuery} results={results} loading={loading} onSelectMonstre={handleSelectMonstre} />
         <div style={{ flex:1 }}>
       {selectedMonstre ? (
@@ -4211,8 +4210,10 @@ export default function App() {
         <SuccesPage token={token} onSelect={handleSelectSucces} onBack={handleHome} />
       ) : browsing === "songes" ? (
         <SongesPage token={token} onSelectObjet={handleSelectObjet} onBack={handleHome} />
+      ) : browsing === "taux" ? (
+        <TauxPage onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : (
-        <AccueilPage onNav={handleNav} scrollTauxSignal={scrollTauxSignal} />
+        <AccueilPage onNav={handleNav} />
       )}
         </div>
         <Footer />

@@ -2381,6 +2381,46 @@ def songes_items_trackables():
         } for r in rows
     ]}
 
+@app.get("/songes/taux")
+def songes_taux(intensite: str, niveau: int):
+    """Taux de drop par palier pour tous les items trackables, a une
+    intensite x niveau donnes — alimente la page "Les Taux" (accueil).
+    Public, aucune donnee joueur. Retourne les items PAR ITEM (pas groupes
+    par cle_taux) : verifie sur les donnees reelles que des items partageant
+    la meme cle_taux (ex. les 5 "Bouclireve ...") peuvent avoir des paliers
+    eligibles differents chacun — un regroupement naif aurait affiche des
+    paliers faux pour certains d'entre eux. Jamais d'extrapolation : un
+    palier absent de songe_taux reste `null`, jamais une estimation
+    (regle 4 §5, voir charger_taux)."""
+    if intensite not in songes_config.INTENSITES:
+        raise HTTPException(status_code=400, detail=f"Intensite inconnue : {intensite}")
+    if niveau not in songes_config.INTENSITES[intensite]["niveaux"]:
+        raise HTTPException(status_code=400, detail=f"Niveau {niveau} invalide pour {intensite}")
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT si.item_id, o.nom, o.img, si.categorie, si.paliers, si.cle_taux, si.intensite_min
+        FROM songe_items_trackables si
+        JOIN objets o ON o.id = si.item_id
+        ORDER BY si.categorie, o.nom
+    """)
+    items = cur.fetchall()
+
+    resultat = []
+    for it in items:
+        if not item_eligible_intensite(it["intensite_min"], intensite):
+            continue
+        paliers_item = json.loads(it["paliers"])
+        taux = charger_taux(conn, intensite, niveau, it["cle_taux"])
+        resultat.append({
+            "item_id": it["item_id"], "nom": it["nom"], "img": it["img"], "categorie": it["categorie"],
+            "paliers_eligibles": paliers_item,
+            "taux_par_palier": {str(p): taux.get(p) for p in paliers_item},
+        })
+    conn.close()
+    return {"intensite": intensite, "niveau": niveau, "items": resultat}
+
 @app.get("/songes/personnages")
 def songes_liste_personnages(user: dict = Depends(utilisateur_courant)):
     conn = get_db()

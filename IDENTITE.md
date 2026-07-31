@@ -10,8 +10,15 @@
 > **Passe 2** (30 juillet, après-midi) : révision de la page d'accueil (hero centré, chiffres dans
 > leur propre section, nouvelle section "trois intensités" avec phrases de caractérisation) +
 > retravail complet de la navbar (recherche, icônes, Discord, "Mon compte") + spec d'animation au
-> survol commune à toutes les cartes/vignettes. Faite en trois temps, pause après chacun — ce
-> fichier est mis à jour en place à chaque passe plutôt que dupliqué, pour rester une référence
+> survol commune à toutes les cartes/vignettes.
+> **Passe 3** (31 juillet – 1er août 2026) : rebranding "Le Puits" → "Le Registre des Songes"
+> (partout, y compris le titre de la page du tracker elle-même) ; construction d'une vraie page
+> "Les Taux" (avec nouvel endpoint backend `/songes/taux`) pour remplacer le lien mort laissé par
+> la suppression de la bande d'intensités en passe 2 ; artwork de la section "Trois outils"
+> retravaillé (opacité, ancrage) ; illustration 16:9 + repli propre + survol sur les 3 cartes.
+> Faite par petits lots avec allers-retours de réglage fin (notamment la position du titre du
+> hero, ajustée 3 fois de suite sur retour visuel direct de Popo).
+> Ce fichier est mis à jour en place à chaque passe plutôt que dupliqué, pour rester une référence
 > vivante de l'état ACTUEL de la charte, pas un journal chronologique (ce rôle-là est déjà tenu par
 > CLAUDE.md, chantiers en cours/fermés).
 
@@ -238,6 +245,183 @@ agrandissement + translation vers le haut + surbrillance de l'accent, transition
   chantier (accueil / nav / tracker) et toucherait des pages que la règle 2 de CLAUDE.md ("un
   chantier à la fois") place plutôt dans le chantier futur #1 ("Refonte graphique complète").
   Signalé à Popo plutôt que tranché seul.
+
+## 6. Passe 3 — rebranding, page Taux, artwork/cartes de l'accueil
+
+**Rebranding "Le Puits" → "Le Registre des Songes"** : toutes les occurrences de "Puits"
+remplacées dans `frontend/src/` (nav, cartes, lede, CTA, commentaires) — y compris le titre `<h1>`
+de la page du tracker elle-même (`SongesPage.jsx`, "Suivi de Songes" → "Le Registre des Songes",
+sur les deux écrans où il apparaît : principal et "connexion requise"), qui n'avait pas été touché
+en passe 2 (seul un sous-titre avait été ajouté dessous). Sous-titre "Compte tes songes, traque tes
+légendes" conservé tel quel.
+
+**Nouvelle page "Les Taux"** (`frontend/src/pages/TauxPage.jsx`, cible `browsing === "taux"`) —
+construite après clarification avec Popo : la carte "Les Taux" et le lien "Voir les taux relevés"
+de l'accueil pointaient vers la bande d'intensités supprimée en passe 2, il n'existait aucune vraie
+page/route "Taux" avant cette passe (contrairement à ce qui était supposé au départ).
+- Nouvel endpoint public `GET /songes/taux?intensite=X&niveau=Y` (`main.py`), réutilise
+  `charger_taux`/`item_eligible_intensite` déjà existants (aucune donnée dupliquée, aucun nouveau
+  calcul de probabilité). **Renvoie les items un par un, pas groupés par `cle_taux`** — vérifié sur
+  la base réelle avant d'écrire la requête (leçon CLAUDE.md #4 : ne jamais supposer qu'un domaine
+  suit les conventions d'un autre) : plusieurs items partageant la même `cle_taux` (les 5
+  "Bouclirêve ...") ont en réalité des `paliers` éligibles différents chacun (un seul palier
+  chacun, un cle_taux "réservoir commun" réutilisé par tranche) — un regroupement naïf aurait
+  affiché les mauvais paliers pour 4 objets sur 5 de ce groupe.
+- **Donnée réelle limitée à Paradoxe I** : `songe_taux` ne contient pour l'instant que des relevés
+  pour Paradoxe niveau 1 (vérifié en base avant de coder l'UI) — cohérent avec la mention déjà
+  affichée sur l'accueil ("Statistiques relevées en Paradoxe I"). La page affiche donc "Pas encore
+  de taux relevés en jeu pour [Intensité] [Niveau]" pour toute autre combinaison plutôt qu'un
+  tableau vide ou une estimation — jamais d'extrapolation (règle 13).
+- UI : sélecteur intensité/niveau (source `/songes/config`, comme le tracker), filtre par
+  catégorie (mêmes 4 catégories que le tracker), liste d'items avec taux par palier éligible
+  ("—" si le palier est éligible mais absent de la base), clic sur un item → fiche objet
+  (`onSelectObjet`, même cross-link que partout ailleurs sur le site).
+- Nettoyage en passant : l'ancien mécanisme de défilement (`scrollTauxSignal`, `handleLesTaux`,
+  `onLesTaux`, `allerAuxTaux`) entièrement retiré d'`App.jsx`/`AccueilPage.jsx` — obsolète
+  maintenant qu'une vraie destination existe, pas juste "pas encore utilisé".
+- **"Les Taux" reste absent de la barre de nav** (règle explicite de la passe 2, non remise en
+  cause par l'existence de la page) — atteignable uniquement depuis l'accueil pour l'instant.
+
+**Artwork "Trois outils"** (`.outils-art`, `pageAccueil.css`) : opacité 0.32 → 0.60, ancrage vertical
+`bottom:0` → centré (`top:50%; transform:translateY(-50%)`) — la version en passe 2 se faisait
+couper par le bas de la section, quasi invisible derrière les cartes. Masques en dégradé, position
+absolute, pointer-events none et le masquage sous 900px inchangés.
+
+**Illustrations 16:9 sur les 3 cartes** (`CardArt`, `AccueilPage.jsx` + `.card-art`,
+`pageAccueil.css`) — remplace l'ancien `.vignette-placeholder` (un seul bloc statique, présent
+uniquement sur la carte Registre) : c'était directement la cause du bug d'alignement signalé
+("le texte de la carte Registre décalé vers le bas par rapport aux 2 autres") — les 3 cartes ont
+maintenant exactement le même bloc `<CardArt>`, donc la même hauteur de départ, donc un alignement
+identique quel que soit l'état de chargement de l'image.
+- Chemins référencés : `/assets/carte-registre.webp`, `/assets/carte-taux.webp`,
+  `/assets/carte-grimoire.webp` — aucun n'existait au moment d'écrire le code (vérifié avant),
+  `carte-grimoire.webp` déposé par Popo en cours de session et testé avec succès (image réelle
+  affichée, `object-fit:cover`, coins arrondis en haut) pendant que les 2 autres retombent
+  proprement sur le dégradé neutre.
+- **Repli propre** : `onError` sur l'`<img>` passe un état React à `true`, qui retire l'`<img>` du
+  DOM (pas de `src` cassé laissé dans le HTML) — le fond dégradé de `.card-art` (toujours présent,
+  indépendant de l'image) reste seul visible. Jamais d'icône d'image cassée, testé avec 2 des 3
+  fichiers absents.
+- `loading="lazy"` sur les 3 `<img>`.
+- **Survol** : zoom de l'image (`scale(1.05)`, `.4s cubic-bezier(.2,.8,.2,1)`, `overflow:hidden`
+  sur `.card-art` pour ne jamais déborder du cadre arrondi) + halo `box-shadow` dans la couleur
+  d'accent de la carte (`var(--c)`, déjà posée par carte) + bordure supérieure qui s'intensifie
+  (`.card::before`, déjà existant depuis la passe 1, aucun changement nécessaire). Le tout déjà
+  couvert par la règle `prefers-reduced-motion` globale existante (`.df-home *`) — pas de nouvelle
+  media query à ajouter.
+
+## 6bis. Passe 3, retouches — bande de cartes, repli, artwork de fond
+
+Trois ajustements demandés juste après la passe 3, survol volontairement non touché (déjà validé).
+
+**Bande d'illustration des cartes** (`.card-art`) : ratio 16:9 → 21:9 (bande large et basse plutôt
+qu'un carré massif) — un seul changement de `aspect-ratio`, la hauteur des 3 cartes rétrécit d'autant
+sans toucher au padding (le calcul reste piloté par la largeur de la carte, identique aux 3, donc
+les hauteurs restent égales entre elles).
+
+**Repli sans image** : dégradé remonté de `rgba(255,255,255,.06/.015)` à `rgba(255,255,255,.025/.006)`
+— quasiment invisible sur le fond de carte (`#071A24`), la zone "se devine" plutôt que de faire un
+bloc franc. Mécanisme `onError` inchangé.
+
+**Artwork de fond, bord net corrigé** : le fondu vertical du haut (`.outils-art::after`) s'arrêtait à
+14% de la hauteur de la boîte — mathématiquement un vrai dégradé, mais sur une boîte à hauteur
+modeste (~30vw) ça se voyait comme une coupure nette plutôt qu'un fondu. Remonté à 48%. Diagnostic
+fait par inspection directe (`getComputedStyle` sur `::after` en JS) avant de toucher au CSS : la
+recette à 2 couches de `linear-gradient` dans une seule propriété `background` se composait
+correctement (confirmé, les 2 couches apparaissent bien dans le style calculé) — le problème n'était
+donc pas un bug de superposition de masques, juste un pourcentage de fondu trop court pour la
+hauteur réelle de l'élément. Pas besoin de `mask-composite` : deux `linear-gradient()` empilés dans
+`background` se comportent déjà comme des masques superposés (couches peintes dans l'ordre, celle du
+dessus laisse voir celle du dessous à travers ses zones transparentes) — la piste suggérée par Popo
+n'était pas la cause réelle, mais la vérifier explicitement (plutôt que la supposer) a évité de
+réécrire un système qui fonctionnait déjà.
+
+**Artwork de fond, taille/position** : `width` 55vw → 75vw (max-width 900px → 1200px). Ancrage
+vertical : abandon du bloc à `aspect-ratio` fixe centré verticalement (`top:50%;translateY(-50%)`),
+remplacé par `top:0;bottom:0` — la boîte occupe maintenant toute la hauteur de `.outils-sec`
+(qui gagne `overflow:hidden` en même temps, pour un clippage propre contre les bords de la section).
+Consequence : `background-size` passe de `contain` à `cover` sur `.outils-art::before` (l'image
+doit maintenant remplir une boîte dont le ratio ne correspond plus forcément à son ratio natif
+596:335, comme le fait déjà `.plate::before` du hero) — `background-position` ajusté à `left center`.
+Reste inchangé : `position:absolute`, `z-index:-1` (sous le contenu), `pointer-events:none`,
+`opacity:.6`, masquée sous 900px.
+
+## 6ter. Passe 3, 2e retouche — artwork pleine largeur + flou, cartes ~35% moins hautes
+
+**Artwork pleine largeur** : `width:75vw;max-width:1200px` → `left:0;right:0` (occupe toute la
+largeur de la section, plus une largeur fixe calée à gauche). `filter:blur(3px)` ajouté sur
+`.outils-art::before` (le calque image uniquement, pas le masque `::after`) — voulu par Popo pour
+masquer la basse résolution du fichier source vu l'agrandissement, effet de profondeur de champ.
+Reste inchangé : `position:absolute`, `z-index:-1`, `pointer-events:none`, `opacity:.6`, masques
+dégradés (recette inchangée depuis 6bis), masquée sous 900px.
+
+**Fondu du haut raccourci, en 2 temps** (retour Popo, PNG annoté de flèches sur la limite entre la
+section chiffres et "Trois outils") : le fondu à 48% (posé en 6bis pour corriger le bord net)
+cachait l'image jusqu'à quasi la moitié de la section — elle ne "touchait" jamais visuellement la
+limite avec la section au-dessus. Remonté à 22% une première fois, encore insuffisant au retour
+suivant de Popo ("les 2 [bords] doivent se toucher" — l'image devait littéralement rejoindre la
+limite) → remonté à 6% (`transparent 6%` sur la couche verticale de `.outils-art::after`), fondu
+minimal plutôt que progressif sur une grande distance, tout en gardant un léger blend (pas un
+retour au bord net corrigé en 6bis).
+
+**Cartes resserrées** (objectif ~40% de réduction de hauteur, donné par Popo) : padding
+`30px 28px 32px` → `16px 18px 18px`, icône 44px → 30px (svg 20px → 14px, marge sous l'icône
+22px → 8px), titre 19.5px → 15px, description 13.8px → 12px avec interligne 1.7 → 1.35 et
+`-webkit-line-clamp:2` (jamais plus de 2 lignes, quel que soit le texte), marge avant le lien bas
+20px → 8px. Bande d'illustration 21:9 → 32:9 (valeur donnée par Popo), marges négatives de
+`.card-art` ajustées au nouveau padding. **Résultat mesuré** (`getBoundingClientRect`, avant de
+toucher au CSS puis après) : 434px → 281px, soit **-35 %** — légèrement en dessous du ~40% visé,
+gardé tel quel plutôt que de pousser le ratio de bande au-delà des "~32:9" donnés par Popo pour
+gratter les derniers points de pourcentage. Aucun changement aux règles `:hover` (`.card:hover`,
+`.card:hover::before/::after`, `.card:hover .go`, `.card:hover .card-art img`), toutes intactes.
+Les 3 cartes restent à hauteur strictement égale (mesuré : les 3 à 280.875px).
+
+## 6quater. Passe 3, 3e retouche — vraie cause du vide entre les deux artworks
+
+Après 3 tentatives de resserrer marges/padding (sans effet, voir 6ter), diagnostic demandé et
+posé avant tout code : **le vide n'était pas un problème d'espacement**. Les deux fondus
+(`.plate::after` en bas du hero, `.outils-art::after` en haut de la section "Trois outils")
+se terminaient chacun À L'INTÉRIEUR de leur propre boîte — jamais jusqu'au bord partagé. Mesuré en
+direct dans le navigateur (`getBoundingClientRect`) : 110px d'écart net entre le bas de `.plate`
+(déjà 100% invisible à ce point, son propre dégradé atteint `var(--df-bg)` plein à 100% de sa
+hauteur) et le haut de `.outils-art` (dont le fondu ne commençait qu'à 6% de SA hauteur).
+
+**Fix** (chevauchement réel entre les deux boîtes, pas juste réduction de l'espace) :
+- `overflow: hidden` retiré de `.outils-sec` (c'est lui qui aurait coupé tout débordement vers le
+  haut) — gardé sur `.plate` (pas concerné, l'image qui bouge est celle du bas). Pas besoin de
+  `overflow-x` de secours : `.df-home` a déjà `overflow-x: hidden` en racine, aucune barre de
+  défilement horizontale possible même sans le `overflow:hidden` retiré ici (vérifié :
+  `scrollWidth === clientWidth` avant/après).
+- `.outils-art` (le calque image, PAS `.outils-sec`) reçoit `margin-top: -200px` — déborde
+  maintenant au-dessus de sa propre section, jusqu'à chevaucher la fin du fondu du hero.
+- **z-index — piège réel rencontré** : `.outils-sec` héritait de `z-index: 1` via la règle
+  générique `.df-home section`, ce qui en fait sa PROPRE pile d'empilement CSS. Un enfant à
+  `z-index: -1` (`.outils-art`) ne peut réordonner sa position QUE dans la pile de son parent
+  direct — il ne peut jamais "sortir" pour passer derrière une pile SŒUR (`.stats-sec`, elle aussi
+  à `z-index: 1`) : deux piles à z-index égal se peignent dans l'ordre du DOM, entièrement l'une
+  après l'autre, quel que soit ce qui se passe à l'intérieur. Sans correction, `.outils-art`
+  aurait chevauché le bas de `.stats-sec` en s'affichant PAR-DESSUS ses cartes de chiffres.
+  Fix : `.df-home .outils-sec { z-index: 0 }` (override, spécificité 0,2,0 > 0,1,1 de la règle
+  générique) — fait passer toute la section derrière `.stats-sec` (z-index 1), sans effet visuel
+  ailleurs puisque rien d'autre dans `.outils-sec` ne chevauche réellement `.stats-sec`.
+  `.outils-art` garde son `z-index:-1` local pour rester sous le contenu de sa propre section.
+- Fondu haut de `.outils-art::after` rallongé à ~26% avec un palier intermédiaire
+  (`var(--df-bg) 0%, rgba(...,.7) 10%, rgba(...,.3) 18%, transparent 26%`) — un chevauchement de
+  200px avec un fondu à 6% (~44px) se serait vu comme une bordure nette au milieu de la zone de
+  recouvrement.
+
+**Vérifié** : les 3 encadrés de chiffres restent parfaitement lisibles (fond translucide +
+`backdrop-filter` déjà en place, inchangé) ; "Statistiques relevées en Paradoxe I" tombe presque
+exactement sur le point le plus sombre du croisement des deux dégradés, donc reste lisible sans
+voile supplémentaire ; les boutons "Ouvrir le Registre des Songes" et "Voir les taux relevés"
+testés cliquables (`pointer-events:none` sur `.outils-art` seulement, jamais sur le contenu) ;
+aucune barre de défilement horizontale. **Non vérifié visuellement à 1280px** : l'outil de
+redimensionnement de fenêtre de cet environnement de test ne change pas réellement la largeur du
+viewport rendu (limitation connue de la session) — vérifié en revanche qu'aucune valeur touchée
+aujourd'hui (`margin-top`, les paliers du dégradé, le z-index) n'est en `vw`/`%` dépendant de la
+largeur ; seul le seuil `@media (max-width:900px)` change le comportement, et il n'a pas été
+modifié — donc le rendu à 1280px devrait être identique en proportion à celui vérifié à 1665px,
+mais Popo devra confirmer à l'œil sur son propre écran.
 
 ## Pièges rencontrés pendant ce chantier
 

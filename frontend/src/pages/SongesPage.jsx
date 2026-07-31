@@ -98,7 +98,7 @@ function SongesConnexionRequise({ onBack }) {
     <div style={sp.page}>
       <button onClick={onBack} style={sp.backBtn}>← Retour</button>
       <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
-        <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 10px" }}>Suivi de Songes</h1>
+        <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 10px" }}>Le Registre des Songes</h1>
         <p style={{ color: "var(--df-text-2)", fontSize: 14, margin: 0 }}>
           Connecte-toi pour compter tes songes et enregistrer tes drops — tes données te suivent sur tous tes appareils.
         </p>
@@ -542,8 +542,19 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   return (
     <div style={sp.page}>
       <button onClick={onBack} style={sp.backBtn}>← Retour</button>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
-        <h1 className="df-section-title" style={{ fontSize: 20, margin: 0 }}>Suivi de Songes</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <h1 className="df-section-title" style={{ fontSize: 20, margin: 0 }}>Le Registre des Songes</h1>
+          {/* Sous-titre (retour Popo, 31 juillet 2026 : rebranding "Le Puits" →
+              "Le Registre des Songes" côté nav/accueil, puis 1er août :
+              titre principal de cette page lui-même renommé à l'identique) —
+              même traitement "petite capitale" que les kickers de l'accueil
+              (uppercase, letter-spacing large, petite taille, texte
+              secondaire). */}
+          <p style={{ margin: "4px 0 0", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--df-text-2)" }}>
+            Compte tes songes, traque tes légendes
+          </p>
+        </div>
         <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
       </div>
 
