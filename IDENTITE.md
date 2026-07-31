@@ -553,6 +553,49 @@ JS forçant un conteneur à 360px (scrollWidth 171 > clientWidth 90 → défilem
 saut à la ligne) — pas de redimensionnement réel de fenêtre possible dans cet environnement de test
 (limite déjà rencontrée aux passes précédentes).
 
+## 9. Passe 6 — page Les Taux, regroupement par catégorie (2 août 2026)
+
+26 lignes de légendes strictement identiques jugées trop répétitives. Compacté en une ligne par
+catégorie, repliée par défaut, dépliable pour le détail item par item — remplace entièrement les
+lignes agrégées ad hoc de la passe 5 (`LigneCategorie`/`LigneItem`, `TauxPage.jsx`).
+
+**Généralisation de la formule.** L'ancien paramètre `multiplicateur` (valable uniquement quand
+tous les items partagent le même profil de taux, ex. les 26 légendes identiques) est remplacé par
+`calculerSongesItems(items[], ...)` qui boucle sur une LISTE d'items — mathématiquement identique
+pour les profils homogènes, mais généralise aussi aux profils hétérogènes (Cosmétiques, où chaque
+Bouclirêve a son propre taux par palier). Un seul chemin de calcul pour item seul / catégorie
+agrégée, plus de logique dupliquée.
+
+**Catégories uniformes vs variables** (`CATEGORIES_UNIFORMES`) : Légendes/Légendes animales ont un
+taux identique pour tous leurs items → la ligne repliée affiche directement les pourcentages, plus
+une ligne discrète "Si tu vises une [légende/animale] précise : ~X songes" (recalculée avec le
+sélecteur de personnages). Cosmétiques/Runes ont des taux différents d'un item à l'autre (vérifié :
+chaque Bouclirêve nommé a son propre palier et sa propre valeur) → "taux variables" affiché à la
+place d'un chiffre qui n'existerait pas vraiment ; le détail par item reste la seule source des
+vrais chiffres. Colonne "1 tous les X songes" agrégée calculable pour Cosmétiques (probabilité
+qu'un cosmétique quelconque tombe) mais pas pour les Runes ("—" volontaire) : taux trop hétérogènes
+(0,965 % à 6,72 %) pour qu'une agrégation ait un sens, décision explicite de Popo.
+
+**Avertissement prospection**, sur la ligne Cosmétiques et dupliqué dans son détail déplié
+uniquement (jamais Légendes/Animales/Runes, qui n'y sont pas soumises) : "⚠️ Ces taux varient selon
+la prospection du groupe. Les valeurs ci-dessous sont indicatives."
+
+**Noms raccourcis** (`nomCourt()`, `PREFIXES_A_RETIRER`) : le préfixe "Légende de/du/d'" (Légendes)
+et "Légende animale de " (Légendes animales) retiré à l'affichage seulement — jamais dans les
+données ni dans le lien vers la fiche objet (toujours basé sur `item_id`, pas le nom affiché).
+Corrige au passage la troncature par `…` de la passe précédente (noms devenus assez courts pour
+tenir sans coupure). Extension à "Légendes animales" décidée par analogie avec la consigne explicite
+sur "Légendes" (même rationnel : "la catégorie le dit déjà") — à confirmer avec Popo si ce n'était
+pas voulu.
+
+**Vérifié avant tout code (règle 13) : l'orthographe "Diplôme de Feur" était déjà correcte** dans
+`dofura_songes_taux.json`, `dofura_items.json` et la base (`cle_taux: "diplome_feur"`, nom "Diplôme
+de Feur") — aucune correction nécessaire, contrairement à ce que Popo craignait.
+
+Six repères de contrôle vérifiés avant publication (4 personnages, Paradoxe I), tous exacts :
+Légendes agrégées 13,5 · légende précise 338 · Animales agrégées 29 · animale précise 115 ·
+Cosmétiques agrégés 171 · Bouclirêve Étoile seul 455.
+
 ## Pièges rencontrés pendant ce chantier
 
 - **Édition de `config/songes.py` sans effet observé en local** : le backend tournait via
