@@ -5,11 +5,18 @@ import { useEffect, useRef, useState } from "react"
 // volontairement, même logique que pages/SongesPage.jsx : n'importe rien
 // d'App.jsx, reçoit juste les callbacks de navigation dont elle a besoin.
 //
-// "Les Taux" a désormais une vraie page (TauxPage.jsx, cible "taux", 1er
-// août 2026) — sa carte et le lien "Voir les taux relevés" y naviguent
-// directement via onNav, comme "Le Registre des Songes"/"Le Grimoire".
-// L'ancien mécanisme de défilement vers une bande d'intensités (supprimée le
-// 31 juillet 2026) est retiré : plus besoin de scrollTauxSignal.
+// "Les Taux" a une vraie page (TauxPage.jsx, cible "taux") et "Comprendre
+// les Songes" une page vide en attente de contenu (ComprendrePage.jsx,
+// cible "comprendre", jamais dans la nav — voir App.jsx) — toutes deux
+// atteignables via les deux encadrés cliquables juste sous le hero
+// (retour Popo, 1er août 2026 : les anciens chiffres de stats "étaient
+// faux", remplacés par ces deux raccourcis).
+//
+// Rebranding (1er août 2026) : le tracker Songes s'appelle maintenant
+// "L'Œil de Draconiros" (nav, hero, carte — et SongesPage.jsx lui-même).
+// "Le Registre des Songes" désigne désormais un AUTRE concept : une future
+// page d'historique des descentes, pas encore construite — sa carte pointe
+// pour l'instant vers le tracker en attendant (signalé à Popo).
 
 // Illustration 16:9 en haut d'une carte (retour Popo, 1er août 2026) — repli
 // propre si le fichier n'existe pas encore : onError retire l'<img> du DOM
@@ -67,24 +74,27 @@ export default function AccueilPage({ onNav }) {
         <div className="hero-in">
           <div className="kicker"><i /><span>Le grimoire de Draconiros</span></div>
           <h1>Combien de songes<br />avant ta <em>légende</em> ?</h1>
-          <p className="lede">Le maître des rêves consigne chaque descente dans le Registre des Songes. <b>Tes songes, tes drops, ta malchance</b> — et les taux que le jeu ne t'affiche jamais.</p>
+          <p className="lede">Le maître des rêves consigne chaque descente dans l'Œil de Draconiros. <b>Tes songes, tes drops, ta malchance</b> — et les taux que le jeu ne t'affiche jamais.</p>
           <div className="cta-row">
             <a href="#" className="cta" onClick={(e) => { e.preventDefault(); onNav("songes") }}>
-              Ouvrir le Registre des Songes
+              Ouvrir l'Œil de Draconiros
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
             </a>
-            <a href="#" className="cta-2" onClick={(e) => { e.preventDefault(); onNav("taux") }}>Voir les taux relevés</a>
           </div>
         </div>
       </header>
 
-      <section className="stats-sec rise"><div className="wrap">
-        <div className="figs">
-          <div className="fig"><div className="n a">0,006 %</div><div className="l">une légende, par combat</div></div>
-          <div className="fig"><div className="n g">350</div><div className="l">songes en team de 4</div></div>
-          <div className="fig"><div className="n c">~500 h</div><div className="l">de jeu, en moyenne</div></div>
+      <section className="shortcuts-sec rise"><div className="wrap">
+        <div className="shortcuts">
+          <button type="button" className="shortcut" onClick={() => onNav("taux")}>
+            <div className="shortcut-title">Calcule ton taux</div>
+            <div className="shortcut-sub">En espérant qu'Ecaflip soit avec toi.</div>
+          </button>
+          <button type="button" className="shortcut" onClick={() => onNav("comprendre")}>
+            <div className="shortcut-title">Comprendre les Songes</div>
+            <div className="shortcut-sub">Paliers, intensités, éligibilité : tout ce que le jeu ne dit pas.</div>
+          </button>
         </div>
-        <p className="stats-note">Statistiques relevées en Paradoxe I</p>
       </div></section>
 
       <section className="outils-sec">
@@ -105,21 +115,24 @@ export default function AccueilPage({ onNav }) {
           <button type="button" className="card rise" style={{ "--c": "var(--df-cyan)" }} onClick={() => onNav("songes")}>
             <CardArt src="/assets/carte-registre.webp" alt="" />
             <div className="ic"><svg viewBox="0 0 24 24"><path d="M12 3c0 4-4 5-4 9a4 4 0 0 0 8 0c0-4-4-5-4-9z" /><path d="M8 21h8" /></svg></div>
-            <h3>Le Registre des Songes</h3>
+            <h3>L'Œil de Draconiros</h3>
             <p>Un bouton par songe terminé. Le site compte pour toi et te dit depuis combien de songes tu n'as rien vu tomber.</p>
             <span className="go">Commencer →</span>
           </button>
-          <button type="button" className="card rise" style={{ "--c": "var(--df-gold)" }} onClick={() => onNav("taux")}>
-            <CardArt src="/assets/carte-taux.webp" alt="" />
-            <div className="ic"><svg viewBox="0 0 24 24"><path d="M19 5 5 19" /><circle cx="7.5" cy="7.5" r="2.5" /><circle cx="16.5" cy="16.5" r="2.5" /></svg></div>
-            <h3>Les Taux</h3>
-            <p>Relevés en jeu, intensité par intensité, palier par palier. Personne d'autre ne les publie.</p>
+          {/* "Le Registre des Songes" désigne ici une future page d'historique
+              (pas encore construite) — pointe vers le tracker en attendant,
+              signalé à Popo. Image pas encore déposée (repli neutre attendu). */}
+          <button type="button" className="card rise" style={{ "--c": "var(--df-gold)" }} onClick={() => onNav("songes")}>
+            <CardArt src="/assets/carte-historique.webp" alt="" />
+            <div className="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg></div>
+            <h3>Le Registre des Songes</h3>
+            <p>L'historique complet de tes descentes. Chaque songe, chaque drop, chaque team.</p>
             <span className="go">Consulter →</span>
           </button>
           <button type="button" className="card rise" style={{ "--c": "var(--df-violet)" }} onClick={() => onNav("grimoire")}>
             <CardArt src="/assets/carte-grimoire.webp" alt="" />
             <div className="ic"><svg viewBox="0 0 24 24"><path d="M4 5v14a2 2 0 0 1 2-2h14V3H6a2 2 0 0 0-2 2z" /><path d="M9 8h7" /></svg></div>
-            <h3>Le Grimoire</h3>
+            <h3>Le Grimoire de Draconiros</h3>
             <p>Un doute sur un monstre, un sort, une recette de légende ? Recherche instantanée, sans quitter ton combat.</p>
             <span className="go">Feuilleter →</span>
           </button>

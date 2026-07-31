@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import SongesPage from "./pages/SongesPage"
 import AccueilPage from "./pages/AccueilPage"
 import TauxPage from "./pages/TauxPage"
+import ComprendrePage from "./pages/ComprendrePage"
 import { DOFUS_COULEURS } from "./dofusCouleurs"
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
@@ -43,19 +44,18 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-// Structure de nav (retour Popo, 31 juillet 2026) : "Le Puits" rebrandé
-// "Le Registre des Songes" (tracker Songes, cible "songes" inchangée) ·
-// "Les Taux" retiré de la BARRE DE NAV uniquement (toujours volontaire,
-// demande explicite) — la page existe désormais réellement (TauxPage.jsx,
-// cible "taux", 1er août 2026), atteignable depuis la carte "Les Taux" et le
-// lien "Voir les taux relevés" de l'accueil, juste pas depuis la navbar.
-// Donjons, Quêtes, et tout ce que fusionnait déjà le Grimoire (chantier
-// Grimoire, 29 juillet 2026 :
+// Structure de nav (retour Popo, 1er août 2026) : le tracker Songes
+// (cible "songes" inchangée) est rebrandé "L'Œil de Draconiros" partout,
+// mais la nav affiche juste "L'Œil" (raccourci volontaire pour ne pas
+// alourdir le menu — voir IDENTITE.md). "Les Taux" remis dans la barre
+// (en était sorti le 31 juillet, une passe précédente) — sa page existe
+// réellement (TauxPage.jsx, cible "taux"). Donjons, Quêtes, et tout ce que
+// fusionnait déjà le Grimoire (chantier Grimoire, 29 juillet 2026 :
 // Équipements/Ressources/Bestiaire/Panoplies) restent hors nav — SANS
 // supprimer leur code/routes, le Grimoire s'appuie dessus et ils restent
 // atteignables par les liens croisés entre fiches.
-const navLinks = ["Le Registre des Songes", "Le Grimoire"]
-const NAV_LABEL_VERS_CIBLE = { "Le Registre des Songes":"songes", "Le Grimoire":"grimoire" }
+const navLinks = ["L'Œil", "Les Taux", "Le Grimoire"]
+const NAV_LABEL_VERS_CIBLE = { "L'Œil":"songes", "Les Taux":"taux", "Le Grimoire":"grimoire" }
 
 // Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
 // ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
@@ -122,11 +122,11 @@ function LoginPanel({ onLogin, onClose }) {
 }
 
 // Icônes de nav — trait fin, pas d'emoji (refonte visuelle, phase 2 nav).
-// Registre/Taux/Grimoire reprennent exactement les tracés déjà utilisés sur
-// les 3 cartes de l'accueil (AccueilPage.jsx) : même symbole aux deux
-// endroits, cohérence délibérée plutôt que 2 jeux d'icônes différents pour
-// la même idée.
-function IconeRegistre(props) {
+// Œil/Taux/Grimoire reprennent exactement les tracés déjà utilisés sur les
+// 3 cartes de l'accueil (AccueilPage.jsx) : même symbole aux deux endroits,
+// cohérence délibérée plutôt que 2 jeux d'icônes différents pour la même
+// idée.
+function IconeOeil(props) {
   return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><path d="M12 3c0 4-4 5-4 9a4 4 0 0 0 8 0c0-4-4-5-4-9z" /><path d="M8 21h8" /></svg>
 }
 function IconeTaux(props) {
@@ -134,6 +134,12 @@ function IconeTaux(props) {
 }
 function IconeGrimoireNav(props) {
   return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><path d="M4 5v14a2 2 0 0 1 2-2h14V3H6a2 2 0 0 0-2 2z" /><path d="M9 8h7" /></svg>
+}
+// Registre (historique), même famille de tracé simple qu'un cadran —
+// nouveau (1er août 2026), remplace l'icône % de l'ancienne carte "Les
+// Taux" à cet emplacement de la grille de l'accueil.
+function IconeHistorique(props) {
+  return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
 }
 function IconeCompte(props) {
   return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><circle cx="12" cy="8" r="3.4" /><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" /></svg>
@@ -150,7 +156,7 @@ function IconeDiscord(props) {
   )
 }
 
-const NAV_ICONS = { "Le Registre des Songes": IconeRegistre, "Les Taux": IconeTaux, "Le Grimoire": IconeGrimoireNav }
+const NAV_ICONS = { "L'Œil": IconeOeil, "Les Taux": IconeTaux, "Le Grimoire": IconeGrimoireNav }
 
 // Recherche discrète de la nav (refonte visuelle, phase 2) — réutilise le
 // state query/results/loading déjà câblé dans App() pour l'ancien Hero (mort
@@ -4212,6 +4218,8 @@ export default function App() {
         <SongesPage token={token} onSelectObjet={handleSelectObjet} onBack={handleHome} />
       ) : browsing === "taux" ? (
         <TauxPage onSelectObjet={handleSelectObjet} onBack={handleHome} />
+      ) : browsing === "comprendre" ? (
+        <ComprendrePage onBack={handleHome} />
       ) : (
         <AccueilPage onNav={handleNav} />
       )}
