@@ -423,6 +423,50 @@ largeur ; seul le seuil `@media (max-width:900px)` change le comportement, et il
 modifié — donc le rendu à 1280px devrait être identique en proportion à celui vérifié à 1665px,
 mais Popo devra confirmer à l'œil sur son propre écran.
 
+## 6quinquies. Passe 3, 4e retouche — voile de couleur vs masque alpha
+
+Le fix de 6quater (chevauchement des deux boîtes) a fait apparaître un nouveau symptôme : une
+**bande sombre à bords francs** exactement à la jonction. Diagnostic donné par Popo, confirmé
+correct : `.plate::after` et `.outils-art::after` étaient des **voiles de couleur** (dégradés vers
+`var(--df-bg)`, un fond OPAQUE peint par-dessus l'image) plutôt que des masques de transparence
+réelle. Superposés dans la zone de chevauchement, les deux voiles opaques recouvraient les DEUX
+images en même temps — un voile ne "fond" pas une image dans une autre, il peint dessus.
+
+**Fix** : la partie VERTICALE de chaque fondu est passée en `mask-image`/`-webkit-mask-image`
+directement sur le calque (`.plate`, `.outils-art`) — un masque alpha rend l'image elle-même
+transparente à cet endroit, laissant voir ce qu'il y a DERRIÈRE (l'autre image, ou le fond plein
+là où il n'y a rien) plutôt que de peindre une couleur par-dessus.
+- `.plate` : `mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 100%)`.
+- `.outils-art` : `mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 80%,
+  transparent 100%)`, et `margin-top` remonté de `-200px` à `-370px` — un masque a besoin d'une
+  zone de croisement nettement plus large qu'un simple raccord de teinte pour ne pas se voir
+  (**vérifié : chevauchement mesuré à 260px**, au-dessus du minimum de 250px demandé).
+- Les fondus HORIZONTAUX (vignette gauche/droite de `.plate`, disparition à droite de
+  `.outils-art`) restent des voiles de couleur dans leurs `::after` respectifs — gardés tels
+  quels : ils ne posent pas ce problème (ils s'effacent vers le fond plein, jamais vers une autre
+  image superposée, l'axe horizontal n'a jamais été concerné par la bande sombre).
+- `filter: blur(3px)` reste sur `.outils-art::before` (l'image), `mask-image` sur `.outils-art`
+  (le parent) — combinaison qui fonctionne sans conflit ici (flou et masque appliqués à des
+  niveaux différents de l'arbre de rendu), pas eu besoin de les séparer davantage.
+
+**Effet de bord assumé, pas corrigé** : `.plate::after` faisait auparavant DOUBLE usage — fondu du
+bas ET assombrissement général de l'image pour la lisibilité du titre par-dessus (voir 6bis/passe
+2 : "assombri de façon plus uniforme sur toute la hauteur... pour que le texte reste lisible
+partout où il tombe"). Le masque alpha ne fait QUE rendre transparent, il n'assombrit rien tant
+qu'il est à `black` (opaque) — entre 0% et 55%, l'image est donc maintenant **plus lumineuse/plus
+détaillée derrière le titre qu'avant** cette passe. Reste lisible (ombre portée du texte déjà en
+place), mais plus proche de la limite qu'avant. Pas retouché sans validation — signalé à Popo,
+pas un problème que la consigne de cette passe demandait de résoudre.
+
+**Vérifié** : plus aucune ligne horizontale sur toute la jonction (testé par capture d'écran,
+zoom sur la zone exacte) ; chiffres et "Statistiques relevées..." toujours lisibles ; boutons
+"Ouvrir le Registre des Songes"/"Voir les taux relevés" testés cliquables (pointer-events:none
+inchangé sur les deux calques) ; aucune barre de défilement horizontale (mesuré :
+`scrollWidth === clientWidth`). **1280px toujours pas vérifiable visuellement** dans cet
+environnement de test (même limitation qu'en 6quater) — les valeurs touchées aujourd'hui
+(`margin-top`, les paliers des masques) sont toutes en px fixes ou en % relatifs à la hauteur
+propre de l'élément, aucune en `vw`, donc le comportement devrait suivre proportionnellement.
+
 ## Pièges rencontrés pendant ce chantier
 
 - **Texte du titre invisible au premier test** : `.df-home` n'avait pas de `color` explicite. La
