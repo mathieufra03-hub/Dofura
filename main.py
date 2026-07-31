@@ -865,6 +865,14 @@ def detail_objet(objet_id: int):
     return {
         **dict(objet),
         "legendaire": bool(objet["legendaire"]),
+        # SQLite stocke les booleens en INTEGER (0/1) — sans ce cast, un objet
+        # sans recette renvoie has_recipe:0 et la condition JSX
+        # "data.obtention?.length > 0 || data.has_recipe" evalue a 0 (pas
+        # false), que React affiche litteralement comme texte "0" sur la
+        # fiche (trouve en testant les items de songe, 2 août 2026 — les
+        # legendes/legendes animales sont des ressources sans recette,
+        # exactement le cas qui declenche le bug).
+        "has_recipe": bool(objet["has_recipe"]),
         "categorie_nom": categorie_nom,
         "effects": [f for e in effets_bruts if (f := formater_effet_objet(e))["texte"] is not None],
         "recette": [

@@ -22,10 +22,10 @@ import { useEffect, useRef, useState } from "react"
 // propre si le fichier n'existe pas encore : onError retire l'<img> du DOM
 // plutôt que de laisser le navigateur afficher l'icône d'image cassée, le
 // dégradé neutre de .card-art (pageAccueil.css) reste alors seul visible.
-function CardArt({ src, alt }) {
+function CardArt({ src, alt, className }) {
   const [enErreur, setEnErreur] = useState(false)
   return (
-    <div className="card-art">
+    <div className={className ? `card-art ${className}` : "card-art"}>
       {!enErreur && <img src={src} alt={alt} loading="lazy" onError={() => setEnErreur(true)} />}
     </div>
   )
@@ -86,11 +86,11 @@ export default function AccueilPage({ onNav }) {
 
       <section className="shortcuts-sec rise"><div className="wrap">
         <div className="shortcuts">
-          <button type="button" className="shortcut" onClick={() => onNav("taux")}>
+          <button type="button" className="shortcut" style={{ "--c": "var(--df-cyan)" }} onClick={() => onNav("taux")}>
             <div className="shortcut-title">Calcule ton taux</div>
             <div className="shortcut-sub">En espérant qu'Ecaflip soit avec toi.</div>
           </button>
-          <button type="button" className="shortcut" onClick={() => onNav("comprendre")}>
+          <button type="button" className="shortcut" style={{ "--c": "var(--df-violet)" }} onClick={() => onNav("comprendre")}>
             <div className="shortcut-title">Comprendre les Songes</div>
             <div className="shortcut-sub">Paliers, intensités, éligibilité : tout ce que le jeu ne dit pas.</div>
           </button>
@@ -121,19 +121,29 @@ export default function AccueilPage({ onNav }) {
           </button>
           {/* "Le Registre des Songes" désigne ici une future page d'historique
               (pas encore construite) — pointe vers le tracker en attendant,
-              signalé à Popo. Image pas encore déposée (repli neutre attendu). */}
+              signalé à Popo. Image déposée le 2 août 2026 (pierre claire +
+              bassins cyan, nettement plus claire que les cartes 1/3) —
+              assombrie via .card-art--claire (pageAccueil.css) pour ne pas
+              déséquilibrer la grille. */}
           <button type="button" className="card rise" style={{ "--c": "var(--df-gold)" }} onClick={() => onNav("songes")}>
-            <CardArt src="/assets/carte-historique.webp" alt="" />
+            <CardArt src="/assets/carte-registre-songes.webp" alt="" className="card-art--claire" />
             <div className="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg></div>
             <h3>Le Registre des Songes</h3>
             <p>L'historique complet de tes descentes. Chaque songe, chaque drop, chaque team.</p>
             <span className="go">Consulter →</span>
           </button>
-          <button type="button" className="card rise" style={{ "--c": "var(--df-violet)" }} onClick={() => onNav("grimoire")}>
-            <CardArt src="/assets/carte-grimoire.webp" alt="" />
+          {/* Accent orangé #FF6B4A propre à cette carte (retour Popo, 2 août
+              2026) — en dur, pas var(--df-cauchemar) : même teinte que
+              l'intensité Cauchemar (Taux/tracker) par coïncidence visuelle
+              uniquement, aucun lien sémantique entre les deux, ne pas les
+              coupler. Devenue cohérente avec l'image chaude de "La
+              Bibliothèque" (même jour, renommage) — accent conservé tel
+              quel. */}
+          <button type="button" className="card rise" style={{ "--c": "#FF6B4A" }} onClick={() => onNav("grimoire")}>
+            <CardArt src="/assets/carte-bibliotheque.webp" alt="" className="card-art--chaude" />
             <div className="ic"><svg viewBox="0 0 24 24"><path d="M4 5v14a2 2 0 0 1 2-2h14V3H6a2 2 0 0 0-2 2z" /><path d="M9 8h7" /></svg></div>
-            <h3>Le Grimoire de Draconiros</h3>
-            <p>Un doute sur un monstre, un sort, une recette de légende ? Recherche instantanée, sans quitter ton combat.</p>
+            <h3>La Bibliothèque</h3>
+            <p>Monstres, sorts, boss : tout ce qu'un songeur a besoin de vérifier.</p>
             <span className="go">Feuilleter →</span>
           </button>
         </div>

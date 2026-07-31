@@ -54,8 +54,8 @@ const C = {
 // Équipements/Ressources/Bestiaire/Panoplies) restent hors nav — SANS
 // supprimer leur code/routes, le Grimoire s'appuie dessus et ils restent
 // atteignables par les liens croisés entre fiches.
-const navLinks = ["L'Œil", "Les Taux", "Le Grimoire"]
-const NAV_LABEL_VERS_CIBLE = { "L'Œil":"songes", "Les Taux":"taux", "Le Grimoire":"grimoire" }
+const navLinks = ["L'Œil", "Les Taux", "La Bibliothèque"]
+const NAV_LABEL_VERS_CIBLE = { "L'Œil":"songes", "Les Taux":"taux", "La Bibliothèque":"grimoire" }
 
 // Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
 // ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
@@ -156,7 +156,7 @@ function IconeDiscord(props) {
   )
 }
 
-const NAV_ICONS = { "L'Œil": IconeOeil, "Les Taux": IconeTaux, "Le Grimoire": IconeGrimoireNav }
+const NAV_ICONS = { "L'Œil": IconeOeil, "Les Taux": IconeTaux, "La Bibliothèque": IconeGrimoireNav }
 
 // Recherche discrète de la nav (refonte visuelle, phase 2) — réutilise le
 // state query/results/loading déjà câblé dans App() pour l'ancien Hero (mort
@@ -2126,44 +2126,61 @@ function PanoplieDetailPage({ id, onSelectObjet, onBack }) {
 }
 
 // ============================================================
-// Grimoire des Secrets (chantier Grimoire, phase 1 — structure uniquement,
-// filtres specialises en phase 2). Fusionne Équipements/Ressources/
-// Bestiaire/Panoplies en une seule page : recherche globale groupee par
-// type ("Tout", onglet par defaut) ou filtree sur un seul type via les
-// onglets. Cliquer un resultat ouvre un PANNEAU LATERAL par-dessus la
-// liste plutot qu'une nouvelle page (regle centrale des specs) — la
-// recherche/les onglets vivent dans GrimoirePage et ne sont jamais
-// reinitialises a l'ouverture/fermeture du panneau, donc "fermer" ramene
-// exactement a l'etat de recherche precedent. Reutilise tel quel les
-// endpoints /objets, /monstres, /panoplies (aucun nouvel endpoint
-// necessaire pour la structure) et les fiches detail existantes
-// (ObjetDetailPage, MonstrePage, PanoplieDetailPage) — simplement rendues
-// dans le panneau au lieu d'une page pleine, meme code, DRY.
+// Grimoire des Secrets (chantier Grimoire, structure phase 1+2, puis refonte
+// "focus Songes" le 2 août 2026 — Dofura est un outil de suivi des Songes,
+// le Grimoire ne montre plus que ce qui sert en plein songe. Voir
+// IDENTITE.md pour le detail complet du diagnostic/plan). Équipements/
+// Ressources/Panoplies retires de la barre d'onglets — leurs pages
+// (ObjetsPage/BestiairePage/PanopliesPage) et routes backend restent
+// intactes, juste plus atteignables depuis ici (regle absolue du chantier :
+// on masque l'affichage, on ne supprime aucune donnee ni composant).
+// Onglets restants : Tout / Monstres / Items de songe. Cliquer un resultat
+// ouvre un PANNEAU LATERAL par-dessus la liste plutot qu'une nouvelle page
+// (regle centrale des specs) — la recherche/les onglets vivent dans
+// GrimoirePage et ne sont jamais reinitialises a l'ouverture/fermeture du
+// panneau, donc "fermer" ramene exactement a l'etat de recherche precedent.
+// Reutilise tel quel /monstres (avec un filtre categorie force, voir
+// CATEGORIES_MONSTRE_GRIMOIRE) et /songes/items-trackables (endpoint deja
+// existant, SONGES.md) — aucun nouvel endpoint necessaire. Fiches detail
+// existantes (ObjetDetailPage, MonstrePage, PanoplieDetailPage — cette
+// derniere gardee pour les liens croises panoplie depuis une legende)
+// simplement rendues dans le panneau au lieu d'une page pleine, meme code, DRY.
 const GRIMOIRE_TYPES = [
-  { id:"equipement", label:"Équipements", endpoint:"objets",    params:{ categorie:"equipement" } },
-  { id:"ressource",  label:"Ressources",  endpoint:"objets",    params:{ categorie:"ressource" } },
-  { id:"monstre",    label:"Monstres",    endpoint:"monstres",  params:{} },
-  { id:"panoplie",   label:"Panoplies",   endpoint:"panoplies", params:{} },
+  { id:"monstre", label:"Monstres", endpoint:"monstres", params:{} },
 ]
 const GRIMOIRE_PREVIEW = 6
 
+// Categories monstre autorisees dans le Grimoire (2 août 2026) : les
+// monstres de quete et les archimonstres n'existent pas en songe — masques
+// ICI, dans la construction de la requete (grimoireParams), jamais dans
+// /monstres lui-meme. Cet endpoint est PARTAGE avec l'Archidex de la Chasse
+// aux Dofus (fetch categorie=archi explicite, App.jsx ~ligne 780) : lui
+// retirer sa capacite a filtrer sur archi aurait casse cette autre
+// fonctionnalite. Verifie en base (2 août 2026) : boss∩archi=0 et
+// boss∩quête=0, donc "boss,monstre" = exactement 1 862 monstres (135+1727),
+// aucun cas de priorite/chevauchement a gerer.
+const CATEGORIES_MONSTRE_GRIMOIRE = ["boss", "monstre"]
+
 function grimoireListe(d, typeId) {
-  return typeId === "monstre" ? d.monstres : typeId === "panoplie" ? d.panoplies : d.objets
+  return typeId === "monstre" ? d.monstres : d.objets
 }
+
+// Libelles courts pour la sous-ligne des items de songe (typeId "songe") —
+// memes 4 categories que songe_items_trackables (SONGES.md), affichage
+// uniquement.
+const SONGE_CATEGORIE_LABELS = { legende:"Légende", legende_animale:"Légende animale", cosmetique:"Cosmétique", rune_astrale:"Rune astrale" }
 
 // Carte uniforme (§CONTRAINTES : "cartes visuellement uniformes, meme
 // quand les donnees different selon le type") — un seul composant, la
-// sous-ligne et le badge s'adaptent au type plutot que 4 cartes copiees-collees.
+// sous-ligne et le badge s'adaptent au type plutot que des cartes copiees-collees.
 function GrimoireTuile({ item, typeId, onClick }) {
   const img = item.img || item.image_url || null
   const sousLigne = typeId === "monstre"
     ? `Niv. ${item.niveau ?? "—"}`
-    : typeId === "panoplie"
-    ? `Niv. ${item.niveau} — ${item.nb_objets} pièce${item.nb_objets!==1?"s":""}`
+    : typeId === "songe"
+    ? (SONGE_CATEGORIE_LABELS[item.categorie] || item.categorie)
     : `Niv. ${item.niveau} — ${item.type_nom || "—"}`
-  const badge = typeId === "equipement" && item.legendaire ? "LÉG."
-    : typeId === "panoplie" && item.cosmetique ? "COSM."
-    : typeId === "monstre" && item.categorie && item.categorie !== "monstre" ? CATEGORIE_BADGE_TEXTE[item.categorie]
+  const badge = typeId === "monstre" && item.categorie && item.categorie !== "monstre" ? CATEGORIE_BADGE_TEXTE[item.categorie]
     : null
   return (
     <div className="df-tile" onClick={onClick}>
@@ -2217,36 +2234,35 @@ function GrimoirePanel({ pile, onBack, onClose, onPushObjet, onPushMonstre, onPu
   )
 }
 
-// Construit les parametres cote backend adaptes au type (chantier Grimoire,
-// phase 2 — filtres specialises) : chaque type reprend a l'identique le
-// jeu de filtres de son ancienne page dediee (ObjetsPage/BestiairePage/
-// PanopliesPage). Un seul point de construction, reutilise en mode "Tout"
-// (juste le niveau, filtre commun) et en mode onglet specifique (jeu complet).
+// Construit les parametres cote backend pour /monstres (chantier Grimoire).
+// Categorie TOUJOURS restreinte a CATEGORIES_MONSTRE_GRIMOIRE (boss+monstre)
+// meme sans selection utilisateur — c'est ce qui masque quete/archi par
+// defaut ; si l'utilisateur coche une sous-partie (ex. juste "Boss de
+// donjon"), on affine a l'interieur de cet ensemble deja restreint, jamais
+// au-dela.
 function grimoireParams(typeId, f) {
-  if (typeId === "equipement" || typeId === "ressource") {
-    return {
-      categorie: typeId, tri:"az",
-      type: (f.types||[]).join(","),
-      niveau_min: f.niveauMin ?? 1, niveau_max: f.niveauMax ?? 999,
-      effets: typeId==="equipement" ? (f.effets||[]).join(",") : "",
-      panoplie: typeId==="equipement" ? !!f.panoplieSeule : false,
-      legendaire: typeId==="equipement" ? !!f.legendaire : false,
-    }
-  }
   if (typeId === "monstre") {
+    const categoriesActives = (f.categoriesMonstre && f.categoriesMonstre.length > 0) ? f.categoriesMonstre : CATEGORIES_MONSTRE_GRIMOIRE
     return {
       tri:"az",
-      region:(f.regions||[]).join(","), sous_zone:(f.sousZones||[]).join(","), categorie:(f.categoriesMonstre||[]).join(","),
-      niveau_min: f.niveauMin ?? 1, niveau_max: f.niveauMax ?? 999,
+      region:(f.regions||[]).join(","), sous_zone:(f.sousZones||[]).join(","),
+      categorie: categoriesActives.join(","),
+      // Repli 9999 (pas 999, bug preexistant trouve en verifiant le compteur
+      // du mode "Tout" — les monstres vont jusqu'au niveau 1600, un repli a
+      // 999 excluait 4 monstres du total affiche en aperçu) : n'importe
+      // quel niveau reel, jamais un plafond artificiel.
+      niveau_min: f.niveauMin ?? 1, niveau_max: f.niveauMax ?? 9999,
     }
   }
-  // panoplie : pas de plage de niveau continue cote backend (tranche_niveau
-  // categorielle) — le filtre "niveau" commun du mode Tout ne s'applique
-  // donc pas aux panoplies, limite assumee et documentee (voir pause phase 1).
-  return { type: f.panoplieType || "", tranche_niveau: f.trancheNiveau || "" }
+  return {}
 }
 
 function GrimoirePage({ onBack, onSelectDonjon }) {
+  // Renommee "La Bibliotheque" (2 août 2026, ex-"Grimoire des Secrets") —
+  // premiere page du site a piloter document.title (aucune autre page ne le
+  // fait aujourd'hui, pas de mecanisme partage a reutiliser).
+  useEffect(() => { document.title = "La Bibliothèque — Dofura" }, [])
+
   const [activeTab, setActiveTab] = useState("tout")
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
@@ -2258,29 +2274,41 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
   const [resultats, setResultats] = useState({ total:0, items:[] })
   const [loading, setLoading] = useState(true)
 
-  // Filtres specialises par type (phase 2) — un seul jeu d'etats, mais
-  // chaque filtre n'est envoye au backend que pour le(s) type(s) auquel il
-  // s'applique (voir grimoireParams). Reinitialises a chaque changement
-  // d'onglet, comme le faisaient les anciennes pages dediees.
+  // Filtres specialises (monstre uniquement desormais — equipement/
+  // ressource/panoplie retires avec leurs onglets, 2 août 2026).
+  // Reinitialises a chaque changement d'onglet, comme avant.
   const [niveauMin, setNiveauMin] = useState(1)
   const [niveauMax, setNiveauMax] = useState(999)
   const [niveauBounds, setNiveauBounds] = useState(null)
-  const [types, setTypes] = useState([])                 // equipement + ressource
-  const [effets, setEffets] = useState([])                // equipement uniquement
-  const [panoplieSeule, setPanoplieSeule] = useState(false) // equipement uniquement
-  const [legendaire, setLegendaire] = useState(false)     // equipement uniquement
-  const [regions, setRegions] = useState([])              // monstre
-  const [sousZones, setSousZones] = useState([])          // monstre
-  const [categoriesMonstre, setCategoriesMonstre] = useState([]) // monstre
-  const [panoplieType, setPanoplieType] = useState("")    // panoplie
-  const [trancheNiveau, setTrancheNiveau] = useState("")  // panoplie
+  const [regions, setRegions] = useState([])
+  const [sousZones, setSousZones] = useState([])
+  const [categoriesMonstre, setCategoriesMonstre] = useState([])
 
-  const [typesDispo, setTypesDispo] = useState([])
-  const [effetsDispo, setEffetsDispo] = useState([])
   const [regionsDispo, setRegionsDispo] = useState([])
   const [sousZonesDispo, setSousZonesDispo] = useState([])
   const [categoriesDispo, setCategoriesDispo] = useState([])
-  const [sansNiveauDispo, setSansNiveauDispo] = useState(false)
+
+  // Items de songe (2 août 2026) : les 38 items trackables, endpoint deja
+  // existant (GET /songes/items-trackables, SONGES.md) — ensemble fixe,
+  // charge une seule fois au montage (pas de pagination serveur, pas de
+  // filtre categorie a construire cote backend). item_id renomme en id pour
+  // matcher la forme attendue par GrimoireTuile/onClicResultat (memes noms
+  // que /objets, /monstres, /panoplies).
+  const [songeItemsTous, setSongeItemsTous] = useState(null)
+  useEffect(() => {
+    fetch(`${API}/songes/items-trackables`).then(r=>r.json()).then(d => {
+      setSongeItemsTous(d.items.map(it => ({ ...it, id: it.item_id })))
+    })
+  }, [])
+  // Recherche filtree cote client (38 items, pas besoin d'aller-retour
+  // serveur) — reagit au meme etat `search` (debounce deja fait ci-dessous)
+  // que les onglets a pagination backend, pour un comportement uniforme.
+  const songeFiltres = useMemo(() => {
+    if (!songeItemsTous) return []
+    if (!search) return songeItemsTous
+    const q = search.toLowerCase()
+    return songeItemsTous.filter(it => it.nom.toLowerCase().includes(q))
+  }, [songeItemsTous, search])
 
   useEffect(() => {
     const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 250)
@@ -2288,38 +2316,34 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
   }, [searchInput])
 
   // Changement d'onglet : filtres remis a zero + options du panneau
-  // rechargees pour le type nouvellement actif (comme la categorie sur
-  // l'ancienne ObjetsPage). "Tout" recupere les bornes de niveau des 3
-  // types qui en ont une (equipement/ressource/monstre) et prend la plage
-  // la plus large — seul filtre commun aux 4 types (§ARCHITECTURE point 4).
+  // rechargees pour le type nouvellement actif. "songe" n'a pas de filtres
+  // specialises (ensemble fixe de 38 items, deja charge ci-dessus), rien a
+  // faire ici pour cet onglet. "tout" recupere aussi categoriesDispo (retour
+  // Popo, 2 août 2026 : filtre Catégorie/Boss utilisable depuis l'aperçu
+  // "Tout", pas seulement depuis l'onglet Monstres dédié) — niveauBounds est
+  // recupere par la meme requete mais reste inutilise en mode "Tout"
+  // (montrerNiveau toujours limite a l'onglet Monstres, aucun sens commun
+  // entre Monstres et Items de songe).
   useEffect(() => {
     setPage(1)
-    setTypes([]); setEffets([]); setPanoplieSeule(false); setLegendaire(false)
     setRegions([]); setSousZones([]); setCategoriesMonstre([])
-    setPanoplieType(""); setTrancheNiveau("")
     setNiveauBounds(null)
 
-    if (activeTab === "equipement" || activeTab === "ressource") {
-      fetch(`${API}/objets/filtres?categorie=${activeTab}`).then(r=>r.json()).then(d => {
-        setTypesDispo(d.types); setEffetsDispo(d.effets)
-        setNiveauBounds({ min:d.niveau_min, max:d.niveau_max })
-        setNiveauMin(d.niveau_min); setNiveauMax(d.niveau_max)
-      })
-    } else if (activeTab === "monstre") {
+    if (activeTab === "monstre" || activeTab === "tout") {
       fetch(`${API}/monstres/filtres`).then(r=>r.json()).then(d => {
-        setRegionsDispo(d.regions); setCategoriesDispo(d.categories); setSousZonesDispo([])
+        setRegionsDispo(d.regions)
+        // "Monstre de quête"/"Archimonstre" retires du filtre (2 août 2026) :
+        // masques partout dans le Grimoire (voir grimoireParams), inutile de
+        // proposer un filtre sur ce qui n'est plus jamais affiche.
+        setCategoriesDispo(d.categories.filter(c => CATEGORIES_MONSTRE_GRIMOIRE.includes(c.valeur)))
+        setSousZonesDispo([])
         setNiveauBounds({ min:d.niveau_min, max:d.niveau_max })
         setNiveauMin(d.niveau_min); setNiveauMax(d.niveau_max)
       })
-    } else if (activeTab === "panoplie") {
-      fetch(`${API}/panoplies/filtres`).then(r=>r.json()).then(d => setSansNiveauDispo(d.sans_niveau))
     }
     // Pas de filtre en mode "Tout" (retour Popo, 30 juillet 2026) : le niveau
-    // n'a pas de sens commun entre 4 types a des echelles trop differentes,
-    // et un classement alphabetique demanderait un nouveau parametre backend
-    // sur les 3 endpoints pour un gain limite face a la recherche texte deja
-    // disponible — juge pas assez utile pour l'effort, laisse volontairement
-    // sans filtre.
+    // n'a pas de sens commun entre Monstres et Items de songe (echelles trop
+    // differentes), et la recherche texte deja disponible couvre l'essentiel.
   }, [activeTab])
 
   // Cascade region -> sous-zones (monstre uniquement), identique a l'ancienne
@@ -2338,15 +2362,17 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
 
   const requeteId = useRef(0)
 
-  // Onglet "Tout" : 4 apercus en parallele (comptage + quelques resultats
-  // par type) — mêmes endpoints que les onglets individuels, juste avec une
-  // page_size reduite. Aucun filtre applique (voir effet ci-dessus).
+  // Onglet "Tout" : apercu Monstres (comptage + quelques resultats) — meme
+  // endpoint que l'onglet Monstres dedie, juste avec une page_size reduite.
+  // Filtre Catégorie applicable ici aussi (retour Popo, 2 août 2026) : le
+  // niveau/la zone restent reserves a l'onglet Monstres (aucun sens commun
+  // avec Items de songe), mais Catégorie (Boss/Monstre) est propage.
   useEffect(() => {
     if (activeTab !== "tout") return
     const id = ++requeteId.current
     setLoading(true)
     Promise.all(GRIMOIRE_TYPES.map(t => {
-      const params = new URLSearchParams({ ...grimoireParams(t.id, {}), search, page:1, page_size:GRIMOIRE_PREVIEW })
+      const params = new URLSearchParams({ ...grimoireParams(t.id, { categoriesMonstre }), search, page:1, page_size:GRIMOIRE_PREVIEW })
       return fetch(`${API}/${t.endpoint}?${params}`).then(r=>r.json())
     })).then(reponses => {
       if (id !== requeteId.current) return
@@ -2355,20 +2381,20 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
       setToutResultats(parType)
       setLoading(false)
     }).catch(() => { if (id === requeteId.current) setLoading(false) })
-  }, [activeTab, search])
+  }, [activeTab, search, categoriesMonstre])
 
-  // Onglet specifique : pagination complete sur un seul type + jeu de
-  // filtres complet pour ce type, comme les anciennes pages dediees.
-  // "panoplie" n'a pas de bornes de niveau (tranche categorielle), donc pas
-  // d'attente sur niveauBounds pour ce type-la.
+  // Onglet "monstre" : pagination complete + filtres complets, comme avant.
+  // "tout" et "songe" geres entierement en dehors de cet effet (previews
+  // paralleles / donnees locales, voir plus haut et le rendu ci-dessous).
   useEffect(() => {
-    if (activeTab === "tout") return
-    if (activeTab !== "panoplie" && !niveauBounds) return
+    if (activeTab === "tout" || activeTab === "songe") return
+    if (!niveauBounds) return
     const type = GRIMOIRE_TYPES.find(t => t.id === activeTab)
+    if (!type) return
     const id = ++requeteId.current
     setLoading(true)
     const params = new URLSearchParams({
-      ...grimoireParams(type.id, { types, niveauMin, niveauMax, effets, panoplieSeule, legendaire, regions, sousZones, categoriesMonstre, panoplieType, trancheNiveau }),
+      ...grimoireParams(type.id, { niveauMin, niveauMax, regions, sousZones, categoriesMonstre }),
       search, page, page_size: PAGE_SIZE,
     })
     fetch(`${API}/${type.endpoint}?${params}`).then(r=>r.json()).then(d => {
@@ -2376,29 +2402,27 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
       setResultats({ total: d.total, items: grimoireListe(d, type.id) })
       setLoading(false)
     }).catch(() => { if (id === requeteId.current) setLoading(false) })
-  }, [activeTab, search, page, types, niveauMin, niveauMax, effets, panoplieSeule, legendaire, regions, sousZones, categoriesMonstre, panoplieType, trancheNiveau, niveauBounds])
+  }, [activeTab, search, page, niveauMin, niveauMax, regions, sousZones, categoriesMonstre, niveauBounds])
 
-  const toggleType = (t) => { setTypes(ts => ts.includes(t) ? ts.filter(x=>x!==t) : [...ts, t]); setPage(1) }
-  const toggleEffet = (e) => { setEffets(es => es.includes(e) ? es.filter(x=>x!==e) : [...es, e]); setPage(1) }
   const toggleRegion = (r) => { setRegions(rs => rs.includes(r) ? rs.filter(x=>x!==r) : [...rs, r]); setPage(1) }
   const toggleSousZone = (s) => { setSousZones(ss => ss.includes(s) ? ss.filter(x=>x!==s) : [...ss, s]); setPage(1) }
   const toggleCategorieMonstre = (c) => { setCategoriesMonstre(cs => cs.includes(c) ? cs.filter(x=>x!==c) : [...cs, c]); setPage(1) }
   const libelleCategorieMonstre = (v) => categoriesDispo.find(c=>c.valeur===v)?.label || v
-  const libelleTrancheNiveau = (v) => v === SANS_VALEUR ? "Sans niveau" : (TRANCHES_NIVEAU.find(t=>t.valeur===v)?.label || v)
 
   const pushPanel = (type, id) => setPile(p => [...p, { type, id }])
   const backPanel = () => setPile(p => p.length > 1 ? p.slice(0, -1) : [])
   const closePanel = () => setPile([])
 
+  // Un item de songe est un objet (dont les 26 légendes, des équipements à
+  // part entière) — sa fiche complète (effets + recette) vit dans
+  // ObjetDetailPage, réutilisée telle quelle via le panneau type "objet".
   const onClicResultat = (typeId, id) => {
-    const type = typeId === "equipement" || typeId === "ressource" ? "objet" : typeId
+    const type = typeId === "songe" ? "objet" : typeId
     pushPanel(type, id)
   }
 
   const reinitialiserFiltres = () => {
-    setTypes([]); setEffets([]); setPanoplieSeule(false); setLegendaire(false)
     setRegions([]); setSousZones([]); setCategoriesMonstre([])
-    setPanoplieType(""); setTrancheNiveau("")
     if (niveauBounds) { setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max) }
     setPage(1)
   }
@@ -2406,41 +2430,37 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
   const chipNiveau = niveauBounds && (niveauMin > niveauBounds.min || niveauMax < niveauBounds.max)
     ? [{ label:`Niv. ${niveauMin}-${niveauMax}`, off:()=>{ setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max) } }]
     : []
-  const chips = activeTab === "tout" ? []
-    : (activeTab === "equipement" || activeTab === "ressource") ? [
-      ...types.map(t => ({ label:t, off:()=>toggleType(t) })),
-      ...chipNiveau,
-      ...(activeTab==="equipement" ? effets.map(e => ({ label:e, off:()=>toggleEffet(e) })) : []),
-      ...(activeTab==="equipement" && panoplieSeule ? [{ label:"Avec panoplie", off:()=>{ setPanoplieSeule(false); setPage(1) } }] : []),
-      ...(activeTab==="equipement" && legendaire ? [{ label:"Légendaire", off:()=>{ setLegendaire(false); setPage(1) } }] : []),
-    ] : activeTab === "monstre" ? [
+  const chips = (activeTab === "monstre" || activeTab === "tout") ? [
       ...regions.map(r => ({ label:r, off:()=>toggleRegion(r) })),
       ...sousZones.map(s => ({ label:s, off:()=>toggleSousZone(s) })),
       ...categoriesMonstre.map(c => ({ label:libelleCategorieMonstre(c), off:()=>toggleCategorieMonstre(c) })),
       ...chipNiveau,
-    ] : [
-      ...(panoplieType ? [{ label: panoplieType==="bonus" ? "Avec bonus" : "Cosmétiques", off:()=>{ setPanoplieType(""); setPage(1) } }] : []),
-      ...(trancheNiveau ? [{ label: libelleTrancheNiveau(trancheNiveau), off:()=>{ setTrancheNiveau(""); setPage(1) } }] : []),
-    ]
+    ] : []
 
   const totalPages = Math.max(Math.ceil(resultats.total / PAGE_SIZE), 1)
-  const activeType = GRIMOIRE_TYPES.find(t => t.id === activeTab)
-  const montrerNiveau = niveauBounds && (activeTab === "equipement" || activeTab === "ressource" || activeTab === "monstre")
-  const montrerFiltres = activeTab !== "tout"
+  const montrerNiveau = niveauBounds && activeTab === "monstre"
+  // "tout" affiche aussi le panneau Filtres (retour Popo, 2 août 2026) mais
+  // uniquement la section Catégorie (voir aside plus bas) — Zone/Niveau
+  // restent réservés à l'onglet Monstres dédié.
+  const montrerFiltres = activeTab === "monstre" || activeTab === "tout"
 
   return (
-    <div style={mp.page}>
+    <div style={{ ...mp.page, position:"relative", zIndex:0, overflow:"hidden" }}>
+      {/* Fond de page (2 août 2026) — voir .df-grimoire-bg (tokens.css) pour
+          la recette complète (position absolute, z-index sous le contenu,
+          pointer-events:none, opacity/flou/vignette, masqué sous 900px). */}
+      <div className="df-grimoire-bg" aria-hidden="true" />
       <button onClick={onBack} style={mp.backBtn}>← Retour</button>
 
       <div style={{ marginBottom:6 }}>
-        <h1 className="df-section-title" style={{ fontSize:"clamp(24px, 4vw, 32px)", margin:0 }}>Grimoire des Secrets</h1>
-        <div style={{ color:"var(--df-text-3)", fontSize:12.5, marginTop:4 }}>encyclopédie générale</div>
+        <h1 className="df-section-title" style={{ fontSize:"clamp(24px, 4vw, 32px)", margin:0 }}>La Bibliothèque</h1>
+        <div style={{ color:"var(--df-text-3)", fontSize:12.5, marginTop:4 }}>Monstres, sorts, boss : tout ce qu'un songeur a besoin de vérifier.</div>
       </div>
 
       <div style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(20,26,46,0.95)", border:"1px solid rgba(77,216,230,0.5)", borderRadius:12, padding:"11px 16px", margin:"18px 0 14px" }}>
         <SearchIcon />
         <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
-          placeholder="Rechercher un équipement, une ressource, un monstre, une panoplie..."
+          placeholder="Rechercher un monstre, un item de songe..."
           style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"var(--df-text)", fontSize:14 }} />
       </div>
 
@@ -2455,6 +2475,10 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
             {t.label}
           </button>
         ))}
+        <button onClick={()=>setActiveTab("songe")} className="df-chip-filter"
+          style={activeTab==="songe" ? { background:"rgba(77,216,230,0.18)", color:"var(--df-cyan)", borderColor:"var(--df-cyan)" } : undefined}>
+          Items de songe
+        </button>
         {montrerFiltres && (
           <button className="df-filters-toggle" onClick={()=>setShowFilters(s=>!s)}
             style={{ marginLeft:"auto", background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.6)", borderRadius:12, padding:"9px 16px", fontSize:13.5, fontWeight:600, cursor:"pointer" }}>
@@ -2494,43 +2518,6 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
             </>
           )}
 
-          {(activeTab === "equipement" || activeTab === "ressource") && (
-            <>
-              <div className="df-section-title" style={ftitle}>Type</div>
-              {typesDispo.map(t => (
-                <label key={t} style={fchk}>
-                  <input type="checkbox" checked={types.includes(t)} onChange={()=>toggleType(t)} style={fchkInput} />
-                  {t}
-                </label>
-              ))}
-            </>
-          )}
-
-          {activeTab === "equipement" && effetsDispo.length > 0 && (
-            <>
-              <div className="df-section-title" style={ftitle}>Effets recherchés</div>
-              <div>
-                {effetsDispo.map(e => (
-                  <button key={e} className={"df-chip-fx" + (effets.includes(e)?" on":"")} onClick={()=>toggleEffet(e)}>{e}</button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {activeTab === "equipement" && (
-            <>
-              <div className="df-section-title" style={ftitle}>Options</div>
-              <label style={fchk}>
-                <input type="checkbox" checked={panoplieSeule} onChange={()=>{ setPanoplieSeule(p=>!p); setPage(1) }} style={fchkInput} />
-                Avec panoplie
-              </label>
-              <label style={fchk}>
-                <input type="checkbox" checked={legendaire} onChange={()=>{ setLegendaire(l=>!l); setPage(1) }} style={fchkInput} />
-                Légendaire uniquement
-              </label>
-            </>
-          )}
-
           {activeTab === "monstre" && (
             <>
               <div className="df-section-title" style={ftitle}>Zone</div>
@@ -2551,8 +2538,16 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
                     </label>
                   ))
               }
+            </>
+          )}
 
-              <div className="df-section-title" style={ftitle}>Catégorie</div>
+          {/* Catégorie (Boss/Monstre) disponible aussi en mode "Tout" (retour
+              Popo, 2 août 2026) — contrairement à Zone/Niveau ci-dessus,
+              réservés à l'onglet Monstres dédié (pas de sens commun avec
+              Items de songe). */}
+          {(activeTab === "monstre" || activeTab === "tout") && (
+            <>
+              <div className="df-section-title" style={{ ...ftitle, marginTop: activeTab === "tout" ? 0 : undefined }}>Catégorie</div>
               {categoriesDispo.map(c => (
                 <label key={c.valeur} style={fchk}>
                   <input type="checkbox" checked={categoriesMonstre.includes(c.valeur)} onChange={()=>toggleCategorieMonstre(c.valeur)} style={fchkInput} />
@@ -2561,33 +2556,16 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
               ))}
             </>
           )}
-
-          {activeTab === "panoplie" && (
-            <>
-              <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Type</div>
-              <select value={panoplieType} onChange={e=>{ setPanoplieType(e.target.value); setPage(1) }} style={{ ...mp.select, width:"100%" }}>
-                <option value="">Toutes</option>
-                <option value="bonus">Avec bonus</option>
-                <option value="cosmetique">Cosmétiques</option>
-              </select>
-
-              <div className="df-section-title" style={ftitle}>Niveau</div>
-              <select value={trancheNiveau} onChange={e=>{ setTrancheNiveau(e.target.value); setPage(1) }} style={{ ...mp.select, width:"100%" }}>
-                <option value="">Tous niveaux</option>
-                {TRANCHES_NIVEAU.map(tr => <option key={tr.valeur} value={tr.valeur}>{tr.label}</option>)}
-                {sansNiveauDispo && <option value={SANS_VALEUR}>Sans niveau</option>}
-              </select>
-            </>
-          )}
         </aside>
         )}
 
         <div>
           {activeTab === "tout" ? (
-            !loading && GRIMOIRE_TYPES.every(t => toutResultats[t.id].total === 0) ? (
+            !loading && GRIMOIRE_TYPES.every(t => toutResultats[t.id].total === 0) && songeFiltres.length === 0 ? (
               <div style={mp.videEtat}>Aucun résultat pour cette recherche.</div>
             ) : (
-              GRIMOIRE_TYPES.map(t => {
+              <>
+              {GRIMOIRE_TYPES.map(t => {
                 const r = toutResultats[t.id]
                 if (r.total === 0) return null
                 return (
@@ -2608,7 +2586,38 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
                     </div>
                   </div>
                 )
-              })
+              })}
+              {songeFiltres.length > 0 && (
+                <div style={{ marginBottom:26 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+                    <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>Items de songe {songeFiltres.length}</span>
+                    <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
+                    {songeFiltres.length > GRIMOIRE_PREVIEW && (
+                      <button onClick={()=>setActiveTab("songe")} style={{ background:"none", border:"none", color:"var(--df-cyan)", fontSize:12.5, fontWeight:600, cursor:"pointer" }}>
+                        Voir tout →
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
+                    {songeFiltres.slice(0, GRIMOIRE_PREVIEW).map(item => (
+                      <GrimoireTuile key={item.id} item={item} typeId="songe" onClick={()=>onClicResultat("songe", item.id)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              </>
+            )
+          ) : activeTab === "songe" ? (
+            songeItemsTous === null ? (
+              <div style={mp.videEtat}>Chargement...</div>
+            ) : songeFiltres.length === 0 ? (
+              <div style={mp.videEtat}>Aucun résultat pour cette recherche.</div>
+            ) : (
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
+                {songeFiltres.map(item => (
+                  <GrimoireTuile key={item.id} item={item} typeId="songe" onClick={()=>onClicResultat("songe", item.id)} />
+                ))}
+              </div>
             )
           ) : (
             <>
@@ -2622,7 +2631,7 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
               ) : (
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
                   {resultats.items.map(item => (
-                    <GrimoireTuile key={item.id} item={item} typeId={activeType.id} onClick={()=>onClicResultat(activeType.id, item.id)} />
+                    <GrimoireTuile key={item.id} item={item} typeId="monstre" onClick={()=>onClicResultat("monstre", item.id)} />
                   ))}
                 </div>
               )}

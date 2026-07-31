@@ -596,6 +596,147 @@ Six repères de contrôle vérifiés avant publication (4 personnages, Paradoxe 
 Légendes agrégées 13,5 · légende précise 338 · Animales agrégées 29 · animale précise 115 ·
 Cosmétiques agrégés 171 · Bouclirêve Étoile seul 455.
 
+## 10. Passe 7 — image carte 2, encadrés du hero translucides (2 août 2026)
+
+**Image "Le Registre des Songes" déposée** (`/assets/carte-registre-songes.webp`, plateformes de
+pierre + bassins cyan) — branchée sur `CardArt` (composant étendu avec un `className` optionnel,
+`AccueilPage.jsx`) comme les cartes 1/3. Nettement plus claire que ses deux voisines (très sombres) :
+essai à `brightness(.85)` jugé insuffisant à l'œil (toujours nettement plus lumineuse une fois les
+3 cartes cote à cote), passé à **`brightness(.65) saturate(.9)`** (`.card-art--claire`,
+`pageAccueil.css`) — grille visuellement équilibrée, comparé les deux versions avant de trancher
+comme demandé.
+
+**Encadrés du hero ("Calcule ton taux"/"Comprendre les Songes") retravaillés** — masquaient trop
+l'artwork de Draconiros derrière eux :
+- Hauteur réduite (~-30%) : padding 20px→14px, marge titre/sous-texte 8px→5px.
+- Fond très translucide : `rgba(var(--df-card-bg), .35)` (token de surface existant, pas de couleur
+  en dur) + `backdrop-filter: blur(8px)` — suffisant pour la lisibilité même sur les zones les plus
+  claires de l'artwork (vérifié à l'écran, pas eu besoin de renforcer le blur au-delà de ce qui était
+  demandé). Bordure `rgba(var(--df-cyan-rgb), .20)`.
+- Barre d'accent à gauche par encadré (`::before`, couleur pilotée par la variable `--c` injectée en
+  style inline sur chaque `<button>` — même mécanisme déjà en place pour `.card`) : cyan pour
+  "Calcule ton taux", violet pour "Comprendre les Songes".
+- Survol : bordure pleine couleur `--c`, halo (`box-shadow: 0 0 28px -8px var(--c)`), translation
+  -2px (réduite depuis -4px). Transition déjà coupée sous `prefers-reduced-motion` par la règle
+  globale `.df-home *` existante (ligne ~286) — rien à ajouter spécifiquement pour ces encadrés.
+
+## 11. Passe 8 — accent orangé sur la carte Grimoire (2 août 2026)
+
+Carte "Le Grimoire de Draconiros" (accueil) : accent violet (`var(--df-violet)`) remplacé par
+`#FF6B4A` (bordure supérieure, halo de survol, icône, lien "Feuilleter →" — tous pilotés par la même
+variable `--c` injectée en style inline sur la carte, un seul point de changement). **En dur, pas
+`var(--df-cauchemar)`** (même teinte utilisée pour l'intensité Cauchemar sur la page Taux/le
+tracker) : coïncidence visuelle uniquement, aucun lien sémantique entre les deux — les coupler
+aurait fait dépendre le style de cette carte d'accueil d'un token d'intensité de jeu, risque de
+régression croisée si l'un des deux change un jour indépendamment de l'autre.
+
+## 12. Refonte du Grimoire des Secrets — focus Songes (2 août 2026)
+
+Dofura est un outil de suivi des Songes : le Grimoire ne montre plus que ce qui sert en plein songe.
+**Règle absolue tenue** : aucune donnée supprimée en base ni en JSON, uniquement de l'affichage masqué.
+
+**Diagnostic avant tout code (validé par Popo avant d'écrire quoi que ce soit).** `categorie` monstre
+n'est pas une colonne stockée mais calculée (`famille = 'Créatures Archimonstres'`/`'Créatures de
+quête'`, ou jointure `donjons_monstres.est_boss`) — 4 932 monstres au total : 1 727 Monstre, 2 764
+Créatures de quête, 306 Archimonstres, 135 Boss, **0 chevauchement** boss∩archi et boss∩quête. Effet
+de bord vérifié avant de coder (mise en garde explicite de Popo) : un archimonstre/monstre de quête
+est déjà une ligne distincte en base de son "monstre de base" (ex. Bouftou id 101 vs Bouftou Royal id
+147 vs Bouftou transformé id 4746, trois lignes séparées, trois `famille` différentes) — masquer une
+`famille` ne peut donc jamais masquer accidentellement une autre ligne.
+
+**Masquage fait dans la construction de la requête, jamais dans `/monstres` lui-même** :
+`grimoireParams` force `categorie=boss,monstre` par défaut (App.jsx). L'endpoint `/monstres` reste
+inchangé et capable de renvoyer archi/quête — **partagé avec l'Archidex de la Chasse aux Dofus**
+(`fetch ${API}/monstres?categorie=archi...`, App.jsx ~ligne 780) qui a explicitement besoin de ces
+catégories ; les modifier au niveau de l'endpoint aurait cassé cette autre fonctionnalité. Filtre
+"Catégorie" de l'aside réduit aux 2 valeurs autorisées (`categoriesDispo` filtré côté client après
+l'appel à `/monstres/filtres`, lui aussi laissé générique). **1 862 monstres affichés** (135+1727),
+confirmé à l'écran (pagination "Page 1/39", 48/page).
+
+**Onglets Équipements/Ressources/Panoplies retirés** de `GRIMOIRE_TYPES` (App.jsx) — `ObjetsPage`/
+`BestiairePage`/`PanopliesPage` et leurs routes backend intacts, juste plus atteignables depuis le
+Grimoire (déjà le cas pour les 3 premières depuis le chantier Grimoire initial, seul le point d'accès
+change ici). Toute la logique de filtres équipement/ressource/panoplie (états, effets, JSX de l'aside)
+devenue morte a été retirée du corps de `GrimoirePage` — laisser ~15 states et 3 branches JSX mortes
+aurait été plus fragile à maintenir que les retirer proprement.
+
+**Nouvel onglet "Items de songe"** : les 38 items de `songe_items_trackables`, via l'endpoint déjà
+existant `GET /songes/items-trackables` — aucun nouvel endpoint. Chargé une seule fois au montage
+(ensemble fixe), recherche filtrée côté client (`songeFiltres`, `useMemo`). `item_id` renommé en `id`
+à la réception pour matcher la forme attendue par `GrimoireTuile`/`onClicResultat` (même contrat que
+`/objets`/`/monstres`/`/panoplies`). Clic sur un item de songe → panneau type "objet" (réutilise
+`ObjetDetailPage` telle quelle, fiche + recette déjà là où elles existent).
+
+**Découverte en testant (pas dans le diagnostic initial) : les 26 légendes/4 légendes animales sont
+en réalité classées `super_type_nom = "Ressource"` (type "Ressource des Songes"), pas Équipement** —
+la prémisse de Popo ("les légendes sont des équipements") ne correspond pas aux données réelles.
+Signalé tel quel (règle 13) : ça ne change rien au résultat (l'onglet "Items de songe" les rend
+accessibles indépendamment de leur catégorie objet réelle), juste une précision factuelle.
+
+**Deux bugs préexistants trouvés en vérifiant les compteurs et en testant les fiches, corrigés au
+passage (hors périmètre strict de la demande mais découverts en la vérifiant) :**
+- `grimoireParams` plafonnait `niveau_max` à 999 par défaut pour les monstres — 4 monstres vont
+  jusqu'au niveau 1600, le total du mode "Tout" affichait 1858 au lieu de 1862 (l'onglet "Monstres"
+  dédié, qui recharge les vraies bornes via `/monstres/filtres`, affichait déjà le bon chiffre). Repli
+  remonté à 9999.
+- `has_recipe` renvoyé par `/objets/{id}` comme entier SQLite (0/1) au lieu d'un booléen (contrairement
+  à `legendaire`, casté juste à côté) — `data.obtention?.length > 0 || data.has_recipe` évalue à `0`
+  (pas `false`) pour un objet sans recette, et React affiche un `0 && (...)` littéralement comme texte
+  "0" au lieu de rien. Repéré en ouvrant la fiche d'une légende (ressource sans recette propre,
+  exactement le cas qui déclenche le bug) — `has_recipe` casté en `bool()` comme `legendaire`.
+
+**Fond de page** (`/assets/fond-grimoire.webp`, déposé par Popo) : recette plus simple que
+`.outils-art` de l'accueil (pas de jonction avec une autre image à gérer) — un seul calque
+`.df-grimoire-bg` (`tokens.css`), vignette en `mask-image: radial-gradient` sur les 4 bords plutôt que
+deux dégradés linéaires. `saturate(.6)` ajouté au filtre après comparaison à l'écran : l'image tire
+vers le violet/rose, une tache assez visible à côté de la charte cyan du site une fois en place —
+nettement mieux équilibrée avec le filtre. Conteneur (`GrimoirePage`, style inline) : `position:
+relative` + `zIndex:0` pour contenir le `z-index:-1` du fond (même piège de pile d'empilement que
+`.outils-art` à l'accueil, évité d'entrée cette fois).
+
+## 13. Filtre Catégorie disponible depuis l'onglet "Tout" (2 août 2026)
+
+Retour Popo : le filtre Catégorie (Boss de donjon/Monstre) n'existait que dans l'aside de l'onglet
+Monstres dédié — `montrerFiltres` était figé à `activeTab === "monstre"`, donc aucun panneau Filtres
+n'apparaissait en mode "Tout" (le point de départ par défaut de la page). Diagnostic express avant
+correction (question posée à Popo pour confirmer) : la fonctionnalité était déjà bien codée, juste
+invisible depuis "Tout" — pas un bug de logique, un trou de couverture d'un onglet.
+
+`montrerFiltres` étendu à `"monstre" || "tout"`, mais Zone/Sous-zone/Niveau restent réservés à
+l'onglet Monstres (aucun sens commun avec Items de songe, décision déjà actée) — seule la section
+Catégorie s'affiche aussi en "Tout". Nécessite que `categoriesDispo` soit peuplé dès l'arrivée sur
+"Tout" (onglet par défaut au chargement) : la requête `/monstres/filtres` de l'effet de changement
+d'onglet se déclenche donc aussi pour `"tout"`, pas seulement `"monstre"`. `categoriesMonstre` propagé
+à la requête de l'aperçu "Tout" (`grimoireParams("monstre", { categoriesMonstre })`, avant appelée
+avec `{}` vide). Testé : filtre "Boss de donjon" depuis "Tout" → 135 résultats, badge BOSS correct,
+chip + "Tout effacer" fonctionnels.
+
+## 14. Renommage carte 3 + page Grimoire → "La Bibliothèque" (2 août 2026)
+
+Carte 3 de l'accueil ("Le Grimoire de Draconiros" → "La Bibliothèque") et la page qu'elle ouvre,
+renommées ensemble : titre `<h1>`, sous-titre, entrée de nav (`navLinks`/`NAV_LABEL_VERS_CIBLE`/
+`NAV_ICONS`, App.jsx), `document.title`. Le surtitre du hero "LE GRIMOIRE DE DRACONIROS" (nom du site)
+n'a pas été touché — vérifié qu'aucune des chaînes modifiées ne le recoupe. `EncycloGrid` (App.jsx
+~ligne 543) garde encore "Grimoire des Secrets" en dur : composant jamais rendu nulle part (vérifié,
+mort depuis la refonte visuelle) — non touché, hors du périmètre "ce qui est affiché".
+
+**`document.title` : premier mécanisme du genre sur le site.** Aucune autre page ne pilote le titre
+d'onglet aujourd'hui (le `<title>` statique d'`index.html` reste "frontend", jamais changé) — pas de
+convention existante à réutiliser, `useEffect(() => { document.title = "..." }, [])` ajouté directement
+dans `GrimoirePage`, sans nettoyage au démontage (aucune autre page ne réclame encore le titre après).
+
+**Image `/assets/carte-bibliotheque.webp`** (bois, chandelles, tapis rouge) très chaude à côté des deux
+cartes froides (cyan/bleu nuit) voisines — écart jugé trop violent même avec les valeurs suggérées
+(`saturate(.85) brightness(.9)`, quasi invisible à l'écran une fois comparé). Poussé plus loin après
+comparaison : **`saturate(.5) brightness(.75)`** (`.card-art--chaude`, `pageAccueil.css`) — l'image
+reste identifiable comme une bibliothèque chaleureuse (différenciation volontaire, cohérente avec son
+propos) mais ne "crie" plus à côté de ses voisines. Accent `#FF6B4A` de la carte (posé au chantier
+précédent) conservé tel quel — devient cohérent avec l'image maintenant que celle-ci est chaude.
+
+**`/assets/carte-grimoire.webp` (ancienne image) confirmée orpheline** — recherchée dans tout `src/`,
+aucune référence restante (seule mention : celle-ci et le journal historique de sa mise en place).
+Signalée à Popo, pas supprimée (il s'en charge).
+
 ## Pièges rencontrés pendant ce chantier
 
 - **Édition de `config/songes.py` sans effet observé en local** : le backend tournait via

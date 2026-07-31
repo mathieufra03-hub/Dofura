@@ -332,6 +332,32 @@
 .df-hover-lift:hover { transform: translateY(-2px) scale(1.03); }
 .df-hover-lift:disabled:hover { transform: none; }
 
+/* Fond de la page Grimoire (retour Popo, 2 août 2026) — image en basse
+   résolution, flou volontaire pour masquer l'agrandissement. Recette
+   demandée explicitement, plus simple que .outils-art de l'accueil (pas de
+   jonction avec une autre image à gérer ici) : un seul calque, vignette en
+   dégradé sur les 4 bords via mask-image radial plutôt que deux dégradés
+   linéaires. Le conteneur (App.jsx, style inline sur GrimoirePage) porte
+   position:relative + z-index:0 pour contenir le z-index:-1 ci-dessous —
+   sans ça, un enfant à z-index négatif peut "sortir" de la pile
+   d'empilement et passer sous tout le site (piège déjà rencontré à
+   l'accueil, voir IDENTITE.md 6e passe). */
+.df-grimoire-bg {
+  position: absolute; inset: 0; z-index: -1;
+  pointer-events: none; opacity: .35;
+  background-image: url('/assets/fond-grimoire.webp');
+  background-size: cover; background-position: center;
+  /* saturate(.6) ajouté (2 août 2026) : l'image tire vers le violet/rose,
+     une tache assez visible à l'écran à côté de la charte cyan du site —
+     comparé avec/sans avant de trancher, voir IDENTITE.md. */
+  filter: blur(3px) saturate(.6);
+  mask-image: radial-gradient(ellipse at center, black 45%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 45%, transparent 85%);
+}
+@media (max-width: 900px) {
+  .df-grimoire-bg { display: none; }
+}
+
 /* Respect du mode "mouvement réduit" (accessibilité) */
 @media (prefers-reduced-motion: reduce) {
   .df-card, .df-card:hover, .df-tile, .df-tile:hover, .df-hover-lift, .df-hover-lift:hover { transition: none; transform: none; }
