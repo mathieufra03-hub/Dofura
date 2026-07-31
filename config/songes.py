@@ -10,7 +10,11 @@ NB_SALLES_PAR_RUN = 26
 # Nombre de salles de combat par palier sur une run complete.
 # Les fontaines et salles Faveur ne sont pas des combats.
 # Valeurs moyennes relevees en jeu — le chemin choisi fait legerement varier le total.
-COMBATS_PAR_PALIER = {1: 3, 2: 5, 3: 5, 4: 4, 5: 4}   # total ~ 21
+# Palier 4 corrige de 4 a 5 le 31 juillet 2026 (page Les Taux) : c'est cette
+# valeur qui reproduit les reperes donnes par Popo (~13,5 songes pour
+# "n'importe quelle legende", 4 personnages, Paradoxe I) — l'ancienne valeur
+# (4) donnait ~14,45, ecart trop grand pour etre du seul arrondi.
+COMBATS_PAR_PALIER = {1: 3, 2: 5, 3: 5, 4: 5, 5: 4}   # total ~ 22
 
 PALIERS = {
     1: {"nom": "Les Pensées oniriques",        "salles": (1, 3)},

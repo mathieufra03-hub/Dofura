@@ -467,8 +467,101 @@ environnement de test (même limitation qu'en 6quater) — les valeurs touchées
 (`margin-top`, les paliers des masques) sont toutes en px fixes ou en % relatifs à la hauteur
 propre de l'élément, aucune en `vw`, donc le comportement devrait suivre proportionnellement.
 
+## 7. Passe 4 — nouveau rebranding, page /comprendre, stats remplacées
+
+**"Le Registre des Songes" change de sens.** Ce nom désignait le tracker (rebrandé ainsi le
+31 juillet, lui-même ex-"Le Puits"). Il désigne maintenant un AUTRE concept : une future page
+d'historique des descentes (pas encore construite). Le tracker, lui, devient **"L'Œil de
+Draconiros"** — nav (affiché en raccourci "L'Œil" seulement, pour ne pas alourdir le menu),
+`SongesPage.jsx` (titre `<h1>` sur les deux écrans où il apparaît), hero de l'accueil (kicker
+inchangé "Le grimoire de Draconiros" — accroche différente, pas concernée), CTA, carte 1 de
+"Trois outils". Sous-titre du tracker inchangé : "Compte tes songes, traque tes légendes".
+Icône de nav renommée en conséquence (`IconeRegistre` → `IconeOeil`, même tracé).
+
+**Carte 2 de "Trois outils"** récupère le nom "Le Registre des Songes" pour ce nouveau sens
+(historique), avec sa propre icône (`IconeHistorique`, nouveau — un cadran, plus adapté à
+"historique" que l'ancien signe %). Elle **pointe vers le tracker en attendant** : aucune page
+d'historique séparée n'existe (le tracker a bien un bloc "Historique des songes" intégré à son
+écran principal, mais pas de page dédiée standalone) — signalé explicitement dans ce message
+plutôt que d'inventer une route. Image `/assets/carte-historique.webp` référencée mais pas encore
+déposée (repli neutre attendu, comme pour Les Taux/Le Grimoire avant que leurs fichiers arrivent).
+
+**"Les Taux" remis dans la nav** (en était sorti le 31 juillet, sur demande explicite à l'époque)
+— sa carte disparaît en revanche de la grille "Trois outils" (remplacée par "Le Registre des
+Songes" ci-dessus) : elle vit maintenant dans le nouveau duo d'encadrés cliquables sous le hero
+(voir plus bas) en plus de la nav.
+
+**Stats de l'accueil supprimées** ("ces chiffres étaient faux", retour Popo) : `.stats-sec`,
+`.figs`/`.fig`, la note "Statistiques relevées en Paradoxe I", et le lien secondaire "Voir les
+taux relevés" du hero — tous retirés du JSX et de `pageAccueil.css` (CSS mort supprimé, pas juste
+caché). CTA du hero réduit au bouton principal seul, texte adapté au nouveau nom du tracker.
+
+**Deux encadrés cliquables** à la place, même emplacement, même traitement visuel que les anciens
+encadrés de stats (fond translucide + `backdrop-filter`, bordure, arrondi — nouvelles classes
+`.shortcut-sec`/`.shortcuts`/`.shortcut`, grille 2 colonnes, hauteur égale par défaut CSS Grid) :
+- **"Calcule ton taux"** (+ sous-texte italique discret "En espérant qu'Ecaflip soit avec toi.")
+  → `TauxPage` (`onNav("taux")`).
+- **"Comprendre les Songes"** → nouvelle page `ComprendrePage.jsx` (cible `"comprendre"`,
+  structure minimale : titre + "Page en cours de rédaction.", volontairement PAS dans la nav —
+  atteignable uniquement via cet encadré). Contenu réel à venir, rien inventé en attendant
+  (règle 13).
+- Toute la surface de chaque encadré est cliquable (`<button>` englobant titre + sous-texte,
+  même pattern que les cartes "Trois outils"), survol ajouté (translateY + bordure/fond, nouveau
+  pour ces encadrés — les survols déjà validés ailleurs, cartes/artworks, n'ont pas été touchés).
+
+## 8. Passe 5 — page Les Taux, cœur fonctionnel (31 juillet 2026)
+
+Le squelette (tableau simple, filtre catégorie mono-sélection, sélecteur d'intensité) existait déjà.
+Cette passe ajoute la partie demandée par Popo comme "le cœur de la page".
+
+**Runes affichées sans être trackées.** 6 des 7 taux de runes/reliques (`dofura_songes_taux.json`)
+n'ont pas d'item correspondant dans `songe_items_trackables` (pas de tracker joueur pour eux, décision
+volontaire de Popo). Backend : `RUNES_HORS_TRACKER` (dict `cle_taux → nom en dur`) dans `main.py`,
+fusionné dans la réponse `/songes/taux` avec `item_id: null`, `img: null`, `"synthetique": true`
+(paliers éligibles dérivés dynamiquement des paliers réellement présents dans `songe_taux` pour cette
+`cle_taux`, jamais codés en dur). "Rune astrale légendaire" volontairement exclue de ce dict : déjà
+couverte par `songe_items_trackables`, l'ajouter aurait dupliqué la ligne. Catégorie `rune_astrale`
+assignée aussi à "Reflet onirique" faute de catégorie dédiée — supposition à corriger si Popo en veut
+une distincte. Frontend : pastille neutre (petit rond) à la place de l'image manquante, ligne non
+cliquable (pas de fiche objet à ouvrir pour un item synthétique).
+
+**Sélecteur de personnages (1-4, défaut 4)** : état local pur, ne redéclenche jamais de fetch — il ne
+pilote que le calcul client de la colonne "1 tous les X songes", jamais les taux affichés eux-mêmes.
+
+**Colonne calculée et lignes agrégées** : formule donnée par Popo, implémentée telle quelle côté
+client (`calculerSonges()`, `TauxPage.jsx`) à partir des taux déjà reçus + `config.combats_par_palier`
+(`/songes/config`) — pas de nouvel appel serveur au changement du sélecteur. Trois repères de contrôle
+vérifiés avant publication (règle : ne rien publier si un contrôle ne tombe pas) : Légende d'Amayiro
+seule (338 songes), agrégat "N'importe quelle légende" ×26 (13,5), agrégat "N'importe quelle légende
+animale" ×4 (29). Les deux derniers chiffres donnés initialement par Popo (~350 et ~38) étaient des
+estimations à la main non calculées — confirmés faux par Popo lui-même via une preuve croisée
+indépendante (probabilité combinée légende OU légende animale, team de 4 = 9,5 songes, cohérent
+uniquement avec 29 et pas 38). **`config/songes.py` corrigé en conséquence** : `COMBATS_PAR_PALIER`
+palier 4 passe de 4 à 5 (total ~22 au lieu de ~21) — c'est cette valeur qui reproduit les repères,
+l'ancienne ne les reproduisait pas. Lue par tout le reste du code (`estimer_esperance_runs`,
+`/songes/config`) : une seule source de vérité, pas de table dupliquée pour ce chantier seul.
+Arrondi d'affichage : 1 décimale sous 20 songes (distingue 13,5 de 14), entier au-dessus.
+
+**Intensités sans données** : le `<select>` listait déjà les 10 intensités (bug perçu par Popo,
+en réalité juste un message d'état vide trop générique) — texte remplacé par le message explicite +
+bouton "Rejoindre le Discord" (lien placeholder, à remplacer par Popo).
+
+**Mobile — défilement horizontal plutôt que tassement** (exigence explicite) : la carte objet (icône
++ nom, troncature par `…` au-delà de 180px) reste fixe, seule la zone numérique (paliers + colonne
+songes) est `overflow-x: auto` / `flexWrap: nowrap` et scrolle indépendamment. Vérifié par un test
+JS forçant un conteneur à 360px (scrollWidth 171 > clientWidth 90 → défilement confirmé, pas de
+saut à la ligne) — pas de redimensionnement réel de fenêtre possible dans cet environnement de test
+(limite déjà rencontrée aux passes précédentes).
+
 ## Pièges rencontrés pendant ce chantier
 
+- **Édition de `config/songes.py` sans effet observé en local** : le backend tournait via
+  `python main.py` lancé en tout début de session, sans rechargement automatique — modifier un
+  fichier `.py` importé au démarrage (`COMBATS_PAR_PALIER`) n'a aucun effet tant que le process n'est
+  pas redémarré. Piège classique de ce projet (contrairement au frontend Vite, qui a du HMR) : après
+  toute modification d'un fichier Python lu au démarrage, vérifier qu'un redémarrage du serveur a bien
+  eu lieu avant de juger un résultat correct ou faux — le repéré ici via un chiffre affiché (363)
+  correspondant exactement à l'ancienne constante, pas la nouvelle.
 - **Texte du titre invisible au premier test** : `.df-home` n'avait pas de `color` explicite. La
   maquette s'appuie sur `body { color: var(--txt) }` (règle globale du fichier maquette, jamais
   vue tant que je n'ai pas relu la section `body{...}` de son CSS) — ajouté `color: var(--df-text)`
