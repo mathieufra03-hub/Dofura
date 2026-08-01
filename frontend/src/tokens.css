@@ -275,6 +275,9 @@
 /* ARCHI = cyan, QUÊTE = magenta — voir maquette/dofura-bestiaire.jsx */
 .df-tile-badge.df-tile-badge-archi { background: linear-gradient(180deg, #7FE3F0, #3FB9CF); color: #06222A; }
 .df-tile-badge.df-tile-badge-quete { background: linear-gradient(180deg, #E08AE0, #B44FC0); color: #2A0A2A; }
+/* Avis de recherche (2 août 2026) : vert, distinct des 3 badges existants
+   (BOSS doré, ARCHI cyan, QUÊTE magenta). */
+.df-tile-badge.df-tile-badge-avis { background: linear-gradient(180deg, #8FE38A, #4CAF50); color: #0A2A0C; }
 
 /* Tooltip flottant au survol/tap d'une vignette */
 .df-tooltip {

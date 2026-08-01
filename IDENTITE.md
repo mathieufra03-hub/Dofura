@@ -737,6 +737,106 @@ précédent) conservé tel quel — devient cohérent avec l'image maintenant qu
 aucune référence restante (seule mention : celle-ci et le journal historique de sa mise en place).
 Signalée à Popo, pas supprimée (il s'en charge).
 
+## 15. Catégorie "Avis de recherche" (2 août 2026)
+
+Diagnostic en deux temps demandé avant tout code : familles (`famille`) vérifiées une à une, aucune
+ne correspond — mais le champ `race` (228 valeurs, jamais exploité pour les catégories jusqu'ici)
+contient bien la donnée, éclatée en 5 variantes réelles (`Avis de recherche`, `de Frigost`, `alignés`,
+`des Dimensions`, `de Sufokia` — 95 monstres au total, tous `famille = 'Créatures de quête'`, 0
+chevauchement avec boss). Trouvé en local, l'étape B (DofusDB) n'a pas été nécessaire.
+
+`main.py` : `"avis": "m.race LIKE 'Avis de recherche%'"` ajouté à `CATEGORIE_CONDITIONS`, et la
+condition `"quete"` corrigée pour exclure ces 95 monstres (`AND m.race NOT LIKE 'Avis de recherche%'`)
+— sans ça ils auraient compté dans les deux catégories à la fois, alors que le but est justement de
+les extraire de "masqué" vers "visible". La condition `"monstre"` n'a pas eu besoin d'être touchée :
+elle exclut déjà `famille = 'Créatures de quête'` en bloc, donc les avis (qui ont cette famille) en
+étaient déjà exclus avant même l'ajout de la catégorie. `m.race` ajouté au `SELECT` de `liste_monstres`
+(absent jusqu'ici, jamais utile) pour que `categorie_de()` puisse la lire — priorité badge boss > avis
+> archi > quête > monstre. `CATEGORIES_MONSTRE_GRIMOIRE` (App.jsx) étendu à `["boss","monstre","avis"]`
+— 1 862 → **1 957** confirmé (135+1727+95).
+
+**Bug préexistant trouvé en testant le badge** (invisible jusqu'ici, jamais un 2e badge coloré
+n'était apparu dans la Bibliothèque) : `GrimoireTuile` posait `<span className="df-tile-badge">`
+sans jamais ajouter le modificateur de couleur (`CATEGORIE_BADGE_CLASSE[item.categorie]`) — un badge
+non-"monstre" retombait donc toujours sur le style par défaut (doré, celui de BOSS). "AVIS" apparaissait
+donc doré au lieu de vert. Corrigé (`badgeClasse` ajouté à la classe du span) — BOSS reste doré comme
+avant (comportement inchangé), AVIS devient bien vert. Badge "AVIS" vert (`#8FE38A`→`#4CAF50`, texte
+`#0A2A0C`), distinct de BOSS (doré), ARCHI (cyan), QUÊTE (magenta) — `.df-tile-badge-avis` (`tokens.css`).
+
+**"Les deux pages" du §4 de la demande** : le filtre Catégorie était déjà unifié entre l'onglet "Tout"
+et l'onglet "Monstres" de `GrimoirePage` depuis le chantier §13 (même `categoriesDispo`, même bloc
+JSX) — aucune page séparée à dupliquer. `BestiairePage` (l'"ancienne page monstres avec pagination")
+reste confirmée morte (jamais rendue nulle part, vérifié) — non touchée, hors périmètre "ce qui est
+affiché". Vérifié à l'écran que les 3 cases (Boss de donjon/Avis de recherche/Monstre) sont identiques
+sur les deux onglets de la Bibliothèque.
+
+**Vérifications finales** (via `/monstres` direct + écran) : 95 (avis seul), 1727 (monstre seul, aucun
+avis dedans), 1862 (boss+monstre sans avis), 1957 (les trois, = comportement par défaut sans aucune
+case cochée) — tous exacts. Archimonstres/créatures de quête restent invisibles dans les deux cas.
+
+## 16. La Bibliothèque devient un bestiaire pur — onglet Monstres retiré (2 août 2026)
+
+Retour Popo : "La Bibliothèque doit être un bestiaire pur : monstres, boss, avis de recherche. Rien
+d'autre." Les Items de songe ne s'affichent plus par défaut (hors recherche) — mais restent
+accessibles via leur propre onglet et remontent avec les monstres dès qu'une recherche est saisie.
+
+**Conséquence directe actée avec Popo (option (a) de son message) : l'onglet "Monstres" est retiré.**
+Sans la section Items de songe affichée par défaut, "Tout" hors recherche et "Monstres" affichaient
+exactement la même chose — deux onglets identiques, du bruit plutôt qu'un choix délibéré. "Tout"
+reprend directement la pagination complète + les filtres (Zone/Sous-zone/Niveau/Catégorie) qu'avait
+"Monstres" : un seul effet de fetch au lieu de deux (l'ancien aperçu "Tout" à 6 résultats + l'ancienne
+pagination complète de "Monstres" fusionnés), un seul jeu de conditions `activeTab === "tout"` partout
+(regions/sous-zones/niveau/catégorie, plus besoin de gérer "monstre" et "tout" comme deux cas
+parallèles). `GRIMOIRE_TYPES`/`GRIMOIRE_PREVIEW`/`toutResultats`/`grimoireListe` devenus inutiles
+(n'avaient de sens que pour l'ancien mécanisme à aperçus multiples) — supprimés plutôt que laissés
+morts, conséquence mécanique directe de la fusion, pas un nettoyage à part.
+
+**Items de songe en recherche uniquement, sans troncature** : la liste ne dépasse jamais 38 items, donc
+plus besoin du plafond `GRIMOIRE_PREVIEW`/lien "Voir tout →" — tous les résultats correspondant à la
+recherche s'affichent directement dans la section "Items de songe" au-dessus du bestiaire.
+
+**Titre neutre** (§3 de la demande) : `Monstres {total}` → `Bestiaire {total}` — évite l'ambiguïté
+relevée par Popo (filtrer sur "Avis de recherche" seul affichait "Monstres 95", alors que ce ne sont
+pas des "Monstre" au sens du filtre Catégorie).
+
+**Pagination vérifiée** (§4) : `PAGE_SIZE` reste 48 (pas 50 — la demande de Popo semble être une
+valeur approximative dans son message, pas une consigne explicite de changement ; signalé, pas changé
+sans confirmation). Total après filtrage confirmé à l'écran : 1 957 non filtré (page 1/41), 6 sur une
+recherche texte ("bouclir" → 6 items de songe, bestiaire vide avec message "Aucun résultat"). Filtre
+Catégorie/badges non touchés comme demandé.
+
+## 17. Panneau resserré à Catégorie seule + 3e onglet "Sorts de songe" (2 août 2026)
+
+**Filtres Zone/Sous-zone/Niveau retirés de l'interface** (pas du backend, demande explicite) : états
+`niveauMin/niveauMax/niveauBounds/regions/sousZones/regionsDispo/sousZonesDispo`, l'effet de cascade
+région→sous-zones et les blocs JSX correspondants supprimés de `GrimoirePage` — devenus morts dès lors
+que plus aucun contrôle ne les alimentait. `grimoireParams("monstre", {...})` n'envoie simplement plus
+`niveauMin/niveauMax/regions/sousZones` : ses repos par défaut (`niveau_min:1, niveau_max:9999`,
+`region`/`sous_zone` vides) donnent exactement "aucun filtre", donc le bestiaire reste complet.
+**Vérifié avant de toucher au backend** : `/monstres` et `/monstres/filtres` gardent tous leurs
+paramètres intacts, aucune ligne backend modifiée. Seule consommatrice restante de ces paramètres
+côté frontend : `BestiairePage`, confirmée morte (jamais rendue nulle part, vérifié par recherche
+exhaustive) — aucune autre page live n'en dépend.
+
+**Catégorie réordonnée à l'affichage** (`ORDRE_CATEGORIE_FILTRE = ["monstre","boss","avis"]`, distinct
+de l'ordre de `CATEGORIE_LABELS` qui reflète la priorité des badges, boss en tête) — tri appliqué
+côté client sur la réponse de `/monstres/filtres`, aucun changement d'ordre côté API.
+
+**Panneau resserré** : largeur de la colonne aside réduite de 260px à 190px en style inline sur le
+`div.df-list-wrap` (pas touché à la règle CSS globale, partagée avec d'autres pages) — la grille
+récupère les ~70px libérés. Padding vertical de l'aside 20px→16px. Plus de grande boîte vide
+maintenant que le contenu tient en 3 cases à cocher.
+
+**Onglets renommés/réorganisés** : "Tout" → "Bestiaire" (id interne `activeTab` renommé `"tout"` →
+`"bestiaire"` par cohérence — un futur lecteur du code n'aurait pas dû lire `activeTab === "tout"`
+sous un bouton qui affiche "Bestiaire"). Nouvel onglet "Sorts de songe" entre Bestiaire et Items de
+songe : `<button disabled>` natif (pas un style grisé appliqué à un bouton actif) — un bouton
+`disabled` est automatiquement retiré du tab order par le navigateur, donc ni cliquable à la souris
+ni focusable au clavier, sans piège de focus à gérer à la main. Vérifié à l'écran (Tab depuis
+"Bestiaire" atterrit directement sur "Items de songe", jamais sur le bouton désactivé). Badge
+"Bientôt" discret intégré au bouton, `aria-label` explicite pour les lecteurs d'écran. Aucune page
+créée derrière — juste la place réservée, comme demandé.
+
 ## Pièges rencontrés pendant ce chantier
 
 - **Édition de `config/songes.py` sans effet observé en local** : le backend tournait via

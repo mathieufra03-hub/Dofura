@@ -321,11 +321,21 @@ SANS_VALEUR = "__aucune__"
 # cumuler plusieurs categories (ex. boss ET archimonstre) : priorite
 # d'affichage boss > archi > quete pour le badge (une seule pastille par
 # vignette), mais le filtre matche sur l'union (OR) des cases cochees.
-CATEGORIE_LABELS = {"boss": "Boss de donjon", "archi": "Archimonstre", "quete": "Monstre de quête", "monstre": "Monstre"}
+CATEGORIE_LABELS = {"boss": "Boss de donjon", "avis": "Avis de recherche", "archi": "Archimonstre", "quete": "Monstre de quête", "monstre": "Monstre"}
+# "avis" (2 août 2026) : pas de famille dediee, identifie via race LIKE
+# 'Avis de recherche%' — couvre les 5 variantes reelles (Avis de recherche,
+# de Frigost, alignes, des Dimensions, de Sufokia), verifie en base = 95
+# monstres, tous avec famille = 'Créatures de quête'. Condition "quete"
+# corrigee pour les exclure (sinon ils compteraient dans les deux
+# categories) : c'est justement le point de cette nouvelle categorie, des
+# monstres officiels de quete que les songeurs croisent aussi en songe.
+# "monstre" les exclut deja structurellement (test sur famille, pas sur
+# race) — rien a changer de ce cote.
 CATEGORIE_CONDITIONS = {
     "boss":    "m.id IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1)",
+    "avis":    "m.race LIKE 'Avis de recherche%'",
     "archi":   "m.famille = 'Créatures Archimonstres'",
-    "quete":   "m.famille = 'Créatures de quête'",
+    "quete":   "m.famille = 'Créatures de quête' AND m.race NOT LIKE 'Avis de recherche%'",
     "monstre": "m.id NOT IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1) AND (m.famille IS NULL OR m.famille NOT IN ('Créatures Archimonstres', 'Créatures de quête'))",
 }
 # Reutilise partout : niveau "naturel" de rencontre = grade le plus bas du
@@ -390,7 +400,7 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
     total = cur.fetchone()[0]
 
     cur.execute(f"""
-        SELECT m.id, m.nom, m.image_url, m.famille, base.niveau_base,
+        SELECT m.id, m.nom, m.image_url, m.famille, m.race, base.niveau_base,
                {sql_region_principale} AS region_principale,
                {sql_sous_zone_principale} AS sous_zone_principale,
                (m.id IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1)) AS est_boss
@@ -426,7 +436,10 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
     conn.close()
 
     def categorie_de(r):
+        # Priorite d'affichage (badge) : boss > avis > archi > quete > monstre
+        # — 0 chevauchement boss/avis constate en base, ordre fixe quand meme.
         if r["est_boss"]: return "boss"
+        if r["race"] and r["race"].startswith("Avis de recherche"): return "avis"
         if r["famille"] == "Créatures Archimonstres": return "archi"
         if r["famille"] == "Créatures de quête": return "quete"
         return "monstre"

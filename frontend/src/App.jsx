@@ -1265,8 +1265,8 @@ const mp = {
   comboboxEmpty: { padding:"10px 12px", fontSize:12, color:C.txt3 },
 }
 
-const CATEGORIE_BADGE_TEXTE = { boss:"BOSS", archi:"ARCHI", quete:"QUÊTE" }
-const CATEGORIE_BADGE_CLASSE = { boss:"", archi:" df-tile-badge-archi", quete:" df-tile-badge-quete" }
+const CATEGORIE_BADGE_TEXTE = { boss:"BOSS", avis:"AVIS", archi:"ARCHI", quete:"QUÊTE" }
+const CATEGORIE_BADGE_CLASSE = { boss:"", avis:" df-tile-badge-avis", archi:" df-tile-badge-archi", quete:" df-tile-badge-quete" }
 
 // Regroupement sous en-tetes : "Par zone" utilise la region principale du
 // monstre (un monstre peut avoir plusieurs zones, voir main.py) — comme
@@ -2134,21 +2134,29 @@ function PanoplieDetailPage({ id, onSelectObjet, onBack }) {
 // (ObjetsPage/BestiairePage/PanopliesPage) et routes backend restent
 // intactes, juste plus atteignables depuis ici (regle absolue du chantier :
 // on masque l'affichage, on ne supprime aucune donnee ni composant).
-// Onglets restants : Tout / Monstres / Items de songe. Cliquer un resultat
-// ouvre un PANNEAU LATERAL par-dessus la liste plutot qu'une nouvelle page
-// (regle centrale des specs) — la recherche/les onglets vivent dans
-// GrimoirePage et ne sont jamais reinitialises a l'ouverture/fermeture du
-// panneau, donc "fermer" ramene exactement a l'etat de recherche precedent.
-// Reutilise tel quel /monstres (avec un filtre categorie force, voir
-// CATEGORIES_MONSTRE_GRIMOIRE) et /songes/items-trackables (endpoint deja
-// existant, SONGES.md) — aucun nouvel endpoint necessaire. Fiches detail
-// existantes (ObjetDetailPage, MonstrePage, PanoplieDetailPage — cette
-// derniere gardee pour les liens croises panoplie depuis une legende)
-// simplement rendues dans le panneau au lieu d'une page pleine, meme code, DRY.
-const GRIMOIRE_TYPES = [
-  { id:"monstre", label:"Monstres", endpoint:"monstres", params:{} },
-]
-const GRIMOIRE_PREVIEW = 6
+// Onglets : Tout / Items de songe (2 août 2026, "Monstres" retire — voir
+// point plus bas). "Tout" EST le bestiaire (monstres/boss/avis) hors
+// recherche ; des qu'une recherche est saisie, les items de songe
+// correspondants remontent aussi dans "Tout" (voir IDENTITE.md). Cliquer un
+// resultat ouvre un PANNEAU LATERAL par-dessus la liste plutot qu'une
+// nouvelle page (regle centrale des specs) — la recherche/les onglets
+// vivent dans GrimoirePage et ne sont jamais reinitialises a l'ouverture/
+// fermeture du panneau, donc "fermer" ramene exactement a l'etat de
+// recherche precedent. Reutilise tel quel /monstres (avec un filtre
+// categorie force, voir CATEGORIES_MONSTRE_GRIMOIRE) et
+// /songes/items-trackables (endpoint deja existant, SONGES.md) — aucun
+// nouvel endpoint necessaire. Fiches detail existantes (ObjetDetailPage,
+// MonstrePage, PanoplieDetailPage — cette derniere gardee pour les liens
+// croises panoplie depuis une legende) simplement rendues dans le panneau
+// au lieu d'une page pleine, meme code, DRY.
+//
+// Onglet "Monstres" retire (2 août 2026) : sans la section Items de songe
+// affichee par defaut dans "Tout" (retour Popo — "La Bibliotheque doit
+// etre un bestiaire pur"), "Tout" hors recherche et "Monstres" affichaient
+// exactement la meme chose — deux onglets identiques, retenu comme du
+// bruit plutot qu'un choix delibere. "Tout" reprend directement la
+// pagination complete + les filtres (Zone/Sous-zone/Niveau/Categorie) qu'
+// avait "Monstres".
 
 // Categories monstre autorisees dans le Grimoire (2 août 2026) : les
 // monstres de quete et les archimonstres n'existent pas en songe — masques
@@ -2159,11 +2167,16 @@ const GRIMOIRE_PREVIEW = 6
 // fonctionnalite. Verifie en base (2 août 2026) : boss∩archi=0 et
 // boss∩quête=0, donc "boss,monstre" = exactement 1 862 monstres (135+1727),
 // aucun cas de priorite/chevauchement a gerer.
-const CATEGORIES_MONSTRE_GRIMOIRE = ["boss", "monstre"]
-
-function grimoireListe(d, typeId) {
-  return typeId === "monstre" ? d.monstres : d.objets
-}
+// "avis" ajoute le meme jour : les Avis de recherche sont des monstres
+// officiels du jeu croises en songe, identifies via race LIKE 'Avis de
+// recherche%' (main.py, CATEGORIE_CONDITIONS) — 95 monstres, tous avec
+// famille='Créatures de quête' donc masques par erreur sans cet ajout
+// specifique. "boss,monstre,avis" = 1 957 (1862+95), verifie en base.
+const CATEGORIES_MONSTRE_GRIMOIRE = ["boss", "monstre", "avis"]
+// Ordre d'affichage des cases a cocher (2 août 2026, retour Popo) — distinct
+// de l'ordre de CATEGORIE_LABELS (qui reflete plutot la priorite d'affichage
+// des badges, boss en tete).
+const ORDRE_CATEGORIE_FILTRE = ["monstre", "boss", "avis"]
 
 // Libelles courts pour la sous-ligne des items de songe (typeId "songe") —
 // memes 4 categories que songe_items_trackables (SONGES.md), affichage
@@ -2182,6 +2195,11 @@ function GrimoireTuile({ item, typeId, onClick }) {
     : `Niv. ${item.niveau} — ${item.type_nom || "—"}`
   const badge = typeId === "monstre" && item.categorie && item.categorie !== "monstre" ? CATEGORIE_BADGE_TEXTE[item.categorie]
     : null
+  // Classe de couleur du badge jamais branchee ici avant (trouve en testant
+  // "Avis de recherche", 2 août 2026) — sans elle, tout badge non-"monstre"
+  // retombait sur le style par defaut de .df-tile-badge (doré, celui de
+  // BOSS), invisible tant que seul "boss" apparaissait dans le Grimoire.
+  const badgeClasse = item.categorie ? (CATEGORIE_BADGE_CLASSE[item.categorie] || "") : ""
   return (
     <div className="df-tile" onClick={onClick}>
       {img
@@ -2190,7 +2208,7 @@ function GrimoireTuile({ item, typeId, onClick }) {
       }
       <div style={{ color:"var(--df-gold)", fontWeight:700, fontSize:12.5, lineHeight:1.25, minHeight:31, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>{item.nom}</div>
       <div style={{ color:"var(--df-text-3)", fontSize:11, marginTop:4 }}>{sousLigne}</div>
-      {badge && <span className="df-tile-badge">{badge}</span>}
+      {badge && <span className={"df-tile-badge" + badgeClasse}>{badge}</span>}
     </div>
   )
 }
@@ -2263,29 +2281,24 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
   // fait aujourd'hui, pas de mecanisme partage a reutiliser).
   useEffect(() => { document.title = "La Bibliothèque — Dofura" }, [])
 
-  const [activeTab, setActiveTab] = useState("tout")
+  const [activeTab, setActiveTab] = useState("bestiaire")
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [pile, setPile] = useState([]) // panneau lateral : [] = ferme
   const [showFilters, setShowFilters] = useState(false)
 
-  const [toutResultats, setToutResultats] = useState(() => Object.fromEntries(GRIMOIRE_TYPES.map(t => [t.id, { total:0, items:[] }])))
   const [resultats, setResultats] = useState({ total:0, items:[] })
   const [loading, setLoading] = useState(true)
 
-  // Filtres specialises (monstre uniquement desormais — equipement/
-  // ressource/panoplie retires avec leurs onglets, 2 août 2026).
-  // Reinitialises a chaque changement d'onglet, comme avant.
-  const [niveauMin, setNiveauMin] = useState(1)
-  const [niveauMax, setNiveauMax] = useState(999)
-  const [niveauBounds, setNiveauBounds] = useState(null)
-  const [regions, setRegions] = useState([])
-  const [sousZones, setSousZones] = useState([])
+  // Filtre specialise (2 août 2026 : Zone/Sous-zone/Niveau retires de
+  // l'interface — "La Bibliothèque doit rester un bestiaire pur, panneau
+  // resserre a la Categorie". Cote backend, /monstres et /monstres/filtres
+  // gardent leurs parametres region/sous_zone/niveau_min/niveau_max intacts
+  // (demande explicite : reservables plus tard) — grimoireParams ne les
+  // envoie simplement plus (repli par defaut du cote serveur = aucun
+  // filtre), voir plus bas. Seule Categorie reste geree cote client.
   const [categoriesMonstre, setCategoriesMonstre] = useState([])
-
-  const [regionsDispo, setRegionsDispo] = useState([])
-  const [sousZonesDispo, setSousZonesDispo] = useState([])
   const [categoriesDispo, setCategoriesDispo] = useState([])
 
   // Items de songe (2 août 2026) : les 38 items trackables, endpoint deja
@@ -2318,94 +2331,51 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
   // Changement d'onglet : filtres remis a zero + options du panneau
   // rechargees pour le type nouvellement actif. "songe" n'a pas de filtres
   // specialises (ensemble fixe de 38 items, deja charge ci-dessus), rien a
-  // faire ici pour cet onglet. "tout" recupere aussi categoriesDispo (retour
-  // Popo, 2 août 2026 : filtre Catégorie/Boss utilisable depuis l'aperçu
-  // "Tout", pas seulement depuis l'onglet Monstres dédié) — niveauBounds est
-  // recupere par la meme requete mais reste inutilise en mode "Tout"
-  // (montrerNiveau toujours limite a l'onglet Monstres, aucun sens commun
-  // entre Monstres et Items de songe).
+  // faire ici pour cet onglet. "bestiaire" ne recupere plus que Categorie
+  // (Zone/Sous-zone/Niveau retires de l'interface, 2 août 2026) — reordonnee
+  // selon ORDRE_CATEGORIE_FILTRE (Monstre, Boss, Avis), pas l'ordre brut de
+  // l'API (qui reflete la priorite des badges, boss en tete).
   useEffect(() => {
     setPage(1)
-    setRegions([]); setSousZones([]); setCategoriesMonstre([])
-    setNiveauBounds(null)
+    setCategoriesMonstre([])
 
-    if (activeTab === "monstre" || activeTab === "tout") {
+    if (activeTab === "bestiaire") {
       fetch(`${API}/monstres/filtres`).then(r=>r.json()).then(d => {
-        setRegionsDispo(d.regions)
         // "Monstre de quête"/"Archimonstre" retires du filtre (2 août 2026) :
         // masques partout dans le Grimoire (voir grimoireParams), inutile de
         // proposer un filtre sur ce qui n'est plus jamais affiche.
-        setCategoriesDispo(d.categories.filter(c => CATEGORIES_MONSTRE_GRIMOIRE.includes(c.valeur)))
-        setSousZonesDispo([])
-        setNiveauBounds({ min:d.niveau_min, max:d.niveau_max })
-        setNiveauMin(d.niveau_min); setNiveauMax(d.niveau_max)
+        const dispo = d.categories.filter(c => CATEGORIES_MONSTRE_GRIMOIRE.includes(c.valeur))
+        dispo.sort((a, b) => ORDRE_CATEGORIE_FILTRE.indexOf(a.valeur) - ORDRE_CATEGORIE_FILTRE.indexOf(b.valeur))
+        setCategoriesDispo(dispo)
       })
     }
-    // Pas de filtre en mode "Tout" (retour Popo, 30 juillet 2026) : le niveau
-    // n'a pas de sens commun entre Monstres et Items de songe (echelles trop
-    // differentes), et la recherche texte deja disponible couvre l'essentiel.
   }, [activeTab])
-
-  // Cascade region -> sous-zones (monstre uniquement), identique a l'ancienne
-  // BestiairePage : aucune sous-zone proposee tant qu'aucune region n'est cochee.
-  const sousZonesRequeteId = useRef(0)
-  useEffect(() => {
-    if (activeTab !== "monstre") return
-    const requeteId = ++sousZonesRequeteId.current
-    if (regions.length === 0) { setSousZonesDispo([]); setSousZones([]); return }
-    fetch(`${API}/monstres/filtres?region=${encodeURIComponent(regions.join(","))}`).then(r=>r.json()).then(d => {
-      if (requeteId !== sousZonesRequeteId.current) return
-      setSousZonesDispo(d.sous_zones)
-      setSousZones(sz => sz.filter(s => d.sous_zones.includes(s)))
-    })
-  }, [regions, activeTab])
 
   const requeteId = useRef(0)
 
-  // Onglet "Tout" : apercu Monstres (comptage + quelques resultats) — meme
-  // endpoint que l'onglet Monstres dedie, juste avec une page_size reduite.
-  // Filtre Catégorie applicable ici aussi (retour Popo, 2 août 2026) : le
-  // niveau/la zone restent reserves a l'onglet Monstres (aucun sens commun
-  // avec Items de songe), mais Catégorie (Boss/Monstre) est propage.
+  // Onglet "Bestiaire" (ex-"Tout", ex-fusion avec "Monstres" — 2 août 2026,
+  // voir commentaire en tete de fichier) : pagination complete, plus que le
+  // filtre Categorie cote interface. region/sous_zone/niveau_min/niveau_max
+  // NE SONT PLUS ENVOYES (grimoireParams les reçoit undefined → replis par
+  // defaut = aucun filtre, tout le bestiaire) mais restent acceptes par
+  // /monstres cote backend, volontairement pas retires (demande explicite,
+  // reservables plus tard). "songe" gere entierement en dehors de cet effet
+  // (donnees locales, voir songeFiltres plus haut).
   useEffect(() => {
-    if (activeTab !== "tout") return
-    const id = ++requeteId.current
-    setLoading(true)
-    Promise.all(GRIMOIRE_TYPES.map(t => {
-      const params = new URLSearchParams({ ...grimoireParams(t.id, { categoriesMonstre }), search, page:1, page_size:GRIMOIRE_PREVIEW })
-      return fetch(`${API}/${t.endpoint}?${params}`).then(r=>r.json())
-    })).then(reponses => {
-      if (id !== requeteId.current) return
-      const parType = {}
-      GRIMOIRE_TYPES.forEach((t, i) => { parType[t.id] = { total: reponses[i].total, items: grimoireListe(reponses[i], t.id) } })
-      setToutResultats(parType)
-      setLoading(false)
-    }).catch(() => { if (id === requeteId.current) setLoading(false) })
-  }, [activeTab, search, categoriesMonstre])
-
-  // Onglet "monstre" : pagination complete + filtres complets, comme avant.
-  // "tout" et "songe" geres entierement en dehors de cet effet (previews
-  // paralleles / donnees locales, voir plus haut et le rendu ci-dessous).
-  useEffect(() => {
-    if (activeTab === "tout" || activeTab === "songe") return
-    if (!niveauBounds) return
-    const type = GRIMOIRE_TYPES.find(t => t.id === activeTab)
-    if (!type) return
+    if (activeTab !== "bestiaire") return
     const id = ++requeteId.current
     setLoading(true)
     const params = new URLSearchParams({
-      ...grimoireParams(type.id, { niveauMin, niveauMax, regions, sousZones, categoriesMonstre }),
+      ...grimoireParams("monstre", { categoriesMonstre }),
       search, page, page_size: PAGE_SIZE,
     })
-    fetch(`${API}/${type.endpoint}?${params}`).then(r=>r.json()).then(d => {
+    fetch(`${API}/monstres?${params}`).then(r=>r.json()).then(d => {
       if (id !== requeteId.current) return
-      setResultats({ total: d.total, items: grimoireListe(d, type.id) })
+      setResultats({ total: d.total, items: d.monstres })
       setLoading(false)
     }).catch(() => { if (id === requeteId.current) setLoading(false) })
-  }, [activeTab, search, page, niveauMin, niveauMax, regions, sousZones, categoriesMonstre, niveauBounds])
+  }, [activeTab, search, page, categoriesMonstre])
 
-  const toggleRegion = (r) => { setRegions(rs => rs.includes(r) ? rs.filter(x=>x!==r) : [...rs, r]); setPage(1) }
-  const toggleSousZone = (s) => { setSousZones(ss => ss.includes(s) ? ss.filter(x=>x!==s) : [...ss, s]); setPage(1) }
   const toggleCategorieMonstre = (c) => { setCategoriesMonstre(cs => cs.includes(c) ? cs.filter(x=>x!==c) : [...cs, c]); setPage(1) }
   const libelleCategorieMonstre = (v) => categoriesDispo.find(c=>c.valeur===v)?.label || v
 
@@ -2422,27 +2392,16 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
   }
 
   const reinitialiserFiltres = () => {
-    setRegions([]); setSousZones([]); setCategoriesMonstre([])
-    if (niveauBounds) { setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max) }
+    setCategoriesMonstre([])
     setPage(1)
   }
 
-  const chipNiveau = niveauBounds && (niveauMin > niveauBounds.min || niveauMax < niveauBounds.max)
-    ? [{ label:`Niv. ${niveauMin}-${niveauMax}`, off:()=>{ setNiveauMin(niveauBounds.min); setNiveauMax(niveauBounds.max) } }]
+  const chips = activeTab === "bestiaire"
+    ? categoriesMonstre.map(c => ({ label:libelleCategorieMonstre(c), off:()=>toggleCategorieMonstre(c) }))
     : []
-  const chips = (activeTab === "monstre" || activeTab === "tout") ? [
-      ...regions.map(r => ({ label:r, off:()=>toggleRegion(r) })),
-      ...sousZones.map(s => ({ label:s, off:()=>toggleSousZone(s) })),
-      ...categoriesMonstre.map(c => ({ label:libelleCategorieMonstre(c), off:()=>toggleCategorieMonstre(c) })),
-      ...chipNiveau,
-    ] : []
 
   const totalPages = Math.max(Math.ceil(resultats.total / PAGE_SIZE), 1)
-  const montrerNiveau = niveauBounds && activeTab === "monstre"
-  // "tout" affiche aussi le panneau Filtres (retour Popo, 2 août 2026) mais
-  // uniquement la section Catégorie (voir aside plus bas) — Zone/Niveau
-  // restent réservés à l'onglet Monstres dédié.
-  const montrerFiltres = activeTab === "monstre" || activeTab === "tout"
+  const montrerFiltres = activeTab === "bestiaire"
 
   return (
     <div style={{ ...mp.page, position:"relative", zIndex:0, overflow:"hidden" }}>
@@ -2465,16 +2424,22 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
       </div>
 
       <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:14 }}>
-        <button onClick={()=>setActiveTab("tout")} className="df-chip-filter"
-          style={activeTab==="tout" ? { background:"rgba(77,216,230,0.18)", color:"var(--df-cyan)", borderColor:"var(--df-cyan)" } : undefined}>
-          Tout
+        <button onClick={()=>setActiveTab("bestiaire")} className="df-chip-filter"
+          style={activeTab==="bestiaire" ? { background:"rgba(77,216,230,0.18)", color:"var(--df-cyan)", borderColor:"var(--df-cyan)" } : undefined}>
+          Bestiaire
         </button>
-        {GRIMOIRE_TYPES.map(t => (
-          <button key={t.id} onClick={()=>setActiveTab(t.id)} className="df-chip-filter"
-            style={activeTab===t.id ? { background:"rgba(77,216,230,0.18)", color:"var(--df-cyan)", borderColor:"var(--df-cyan)" } : undefined}>
-            {t.label}
-          </button>
-        ))}
+        {/* Onglet a venir (2 août 2026) : le contenu (sorts de fontaine)
+            n'existe pas encore, place preparee uniquement. disabled natif
+            (pas juste un style grise) — inutilisable au clic ET au clavier,
+            un <button disabled> est automatiquement retire du tab order par
+            le navigateur, donc jamais de piege de focus a gerer a la main. */}
+        <button disabled className="df-chip-filter" aria-label="Sorts de songe — bientôt disponible"
+          style={{ opacity:.45, cursor:"not-allowed", display:"inline-flex", alignItems:"center", gap:6 }}>
+          Sorts de songe
+          <span style={{ fontSize:9.5, fontWeight:700, letterSpacing:".04em", textTransform:"uppercase", padding:"2px 6px", borderRadius:999, background:"rgba(255,255,255,0.08)", color:"var(--df-text-3)" }}>
+            Bientôt
+          </span>
+        </button>
         <button onClick={()=>setActiveTab("songe")} className="df-chip-filter"
           style={activeTab==="songe" ? { background:"rgba(77,216,230,0.18)", color:"var(--df-cyan)", borderColor:"var(--df-cyan)" } : undefined}>
           Items de songe
@@ -2498,116 +2463,81 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
         </div>
       )}
 
-      <div className={montrerFiltres ? "df-list-wrap" : undefined}>
+      {/* Panneau resserre a la seule Categorie (2 août 2026, retour Popo) —
+          largeur de la colonne aside reduite en style inline (260px→190px,
+          pas touche a la regle globale .df-list-wrap, partagee avec
+          d'autres pages) pour rendre a la grille la largeur liberee, et
+          padding vertical resserre (20px→16px) pour eviter une grande boite
+          vide maintenant que le contenu tient en 3 cases. */}
+      <div className={montrerFiltres ? "df-list-wrap" : undefined} style={montrerFiltres ? { gridTemplateColumns:"190px 1fr" } : undefined}>
         {montrerFiltres && (
         <aside className={"df-filters-panel" + (showFilters?" df-filters-open":"")}
-          style={{ background:"rgba(20,26,46,0.92)", border:"1px solid rgba(255,198,61,0.2)", borderRadius:16, padding:20 }}>
-
-          {montrerNiveau && (
-            <>
-              <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Niveau</div>
-              <input type="range" min={niveauBounds.min} max={niveauBounds.max} value={niveauMin}
-                onChange={e=>{ setNiveauMin(Math.min(Number(e.target.value), niveauMax)); setPage(1) }}
-                style={{ width:"100%", accentColor:"var(--df-cyan)" }} />
-              <input type="range" min={niveauBounds.min} max={niveauBounds.max} value={niveauMax}
-                onChange={e=>{ setNiveauMax(Math.max(Number(e.target.value), niveauMin)); setPage(1) }}
-                style={{ width:"100%", accentColor:"var(--df-cyan)" }} />
-              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"var(--df-text-3)", marginTop:2 }}>
-                <span>Min : {niveauMin}</span><span>Max : {niveauMax}</span>
-              </div>
-            </>
-          )}
-
-          {activeTab === "monstre" && (
-            <>
-              <div className="df-section-title" style={ftitle}>Zone</div>
-              {regionsDispo.map(r => (
-                <label key={r} style={fchk}>
-                  <input type="checkbox" checked={regions.includes(r)} onChange={()=>toggleRegion(r)} style={fchkInput} />
-                  {r}
-                </label>
-              ))}
-
-              <div className="df-section-title" style={ftitle}>Sous-zone</div>
-              {sousZonesDispo.length === 0
-                ? <div style={{ color:"var(--df-text-3)", fontSize:11.5, fontStyle:"italic" }}>Coche une zone pour affiner par sous-zone</div>
-                : sousZonesDispo.map(s => (
-                    <label key={s} style={{ ...fchk, paddingLeft:22, fontSize:12.5, color:"var(--df-text-2)" }}>
-                      <input type="checkbox" checked={sousZones.includes(s)} onChange={()=>toggleSousZone(s)} style={{ ...fchkInput, accentColor:"var(--df-cyan)" }} />
-                      {s}
-                    </label>
-                  ))
-              }
-            </>
-          )}
-
-          {/* Catégorie (Boss/Monstre) disponible aussi en mode "Tout" (retour
-              Popo, 2 août 2026) — contrairement à Zone/Niveau ci-dessus,
-              réservés à l'onglet Monstres dédié (pas de sens commun avec
-              Items de songe). */}
-          {(activeTab === "monstre" || activeTab === "tout") && (
-            <>
-              <div className="df-section-title" style={{ ...ftitle, marginTop: activeTab === "tout" ? 0 : undefined }}>Catégorie</div>
-              {categoriesDispo.map(c => (
-                <label key={c.valeur} style={fchk}>
-                  <input type="checkbox" checked={categoriesMonstre.includes(c.valeur)} onChange={()=>toggleCategorieMonstre(c.valeur)} style={fchkInput} />
-                  {c.label}
-                </label>
-              ))}
-            </>
-          )}
+          style={{ background:"rgba(20,26,46,0.92)", border:"1px solid rgba(255,198,61,0.2)", borderRadius:16, padding:16 }}>
+          <div className="df-section-title" style={{ ...ftitle, marginTop:0 }}>Catégorie</div>
+          {categoriesDispo.map(c => (
+            <label key={c.valeur} style={fchk}>
+              <input type="checkbox" checked={categoriesMonstre.includes(c.valeur)} onChange={()=>toggleCategorieMonstre(c.valeur)} style={fchkInput} />
+              {c.label}
+            </label>
+          ))}
         </aside>
         )}
 
         <div>
-          {activeTab === "tout" ? (
-            !loading && GRIMOIRE_TYPES.every(t => toutResultats[t.id].total === 0) && songeFiltres.length === 0 ? (
-              <div style={mp.videEtat}>Aucun résultat pour cette recherche.</div>
-            ) : (
-              <>
-              {GRIMOIRE_TYPES.map(t => {
-                const r = toutResultats[t.id]
-                if (r.total === 0) return null
-                return (
-                  <div key={t.id} style={{ marginBottom:26 }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
-                      <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>{t.label} {r.total}</span>
-                      <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
-                      {r.total > GRIMOIRE_PREVIEW && (
-                        <button onClick={()=>setActiveTab(t.id)} style={{ background:"none", border:"none", color:"var(--df-cyan)", fontSize:12.5, fontWeight:600, cursor:"pointer" }}>
-                          Voir tout →
-                        </button>
-                      )}
-                    </div>
-                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
-                      {r.items.map(item => (
-                        <GrimoireTuile key={item.id} item={item} typeId={t.id} onClick={()=>onClicResultat(t.id, item.id)} />
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
-              {songeFiltres.length > 0 && (
+          {activeTab === "bestiaire" ? (
+            <>
+              {/* Items de songe : jamais affiches hors recherche (retour Popo,
+                  2 août 2026 — "La Bibliothèque doit être un bestiaire pur").
+                  Des qu'une recherche est saisie, les deux categories
+                  remontent ensemble comme avant — la liste est petite (38
+                  items max), tous les resultats sont montres, pas de "Voir
+                  tout" ni de troncature necessaire. */}
+              {search && songeFiltres.length > 0 && (
                 <div style={{ marginBottom:26 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                     <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>Items de songe {songeFiltres.length}</span>
                     <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
-                    {songeFiltres.length > GRIMOIRE_PREVIEW && (
-                      <button onClick={()=>setActiveTab("songe")} style={{ background:"none", border:"none", color:"var(--df-cyan)", fontSize:12.5, fontWeight:600, cursor:"pointer" }}>
-                        Voir tout →
-                      </button>
-                    )}
                   </div>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
-                    {songeFiltres.slice(0, GRIMOIRE_PREVIEW).map(item => (
+                    {songeFiltres.map(item => (
                       <GrimoireTuile key={item.id} item={item} typeId="songe" onClick={()=>onClicResultat("songe", item.id)} />
                     ))}
                   </div>
                 </div>
               )}
-              </>
-            )
-          ) : activeTab === "songe" ? (
+
+              {!loading && resultats.items.length === 0 ? (
+                <div style={mp.videEtat}>
+                  Aucun résultat pour cette recherche.
+                  {chips.length > 0 && <div style={{ marginTop:10 }}>
+                    <button onClick={reinitialiserFiltres} style={mp.resetBtn}>Réinitialiser les filtres</button>
+                  </div>}
+                </div>
+              ) : (
+                <>
+                  {/* Titre neutre (retour Popo, 2 août 2026) : "Monstres X"
+                      pretait à confusion en filtrant sur Avis de recherche
+                      seul — ce ne sont pas des "monstres" au sens du filtre. */}
+                  <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+                    <span style={{ color:"var(--df-gold)", fontWeight:700, fontSize:18 }}>Bestiaire {resultats.total}</span>
+                    <span style={{ flex:1, height:1, background:"rgba(255,198,61,0.2)" }} />
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
+                    {resultats.items.map(item => (
+                      <GrimoireTuile key={item.id} item={item} typeId="monstre" onClick={()=>onClicResultat("monstre", item.id)} />
+                    ))}
+                  </div>
+                </>
+              )}
+              {totalPages > 1 && (
+                <div style={mp.pagination}>
+                  <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
+                  <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
+                  <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
+                </div>
+              )}
+            </>
+          ) : (
             songeItemsTous === null ? (
               <div style={mp.videEtat}>Chargement...</div>
             ) : songeFiltres.length === 0 ? (
@@ -2619,30 +2549,6 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
                 ))}
               </div>
             )
-          ) : (
-            <>
-              {!loading && resultats.items.length === 0 ? (
-                <div style={mp.videEtat}>
-                  Aucun résultat pour cette recherche.
-                  {chips.length > 0 && <div style={{ marginTop:10 }}>
-                    <button onClick={reinitialiserFiltres} style={mp.resetBtn}>Réinitialiser les filtres</button>
-                  </div>}
-                </div>
-              ) : (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(136px, 1fr))", gap:12 }}>
-                  {resultats.items.map(item => (
-                    <GrimoireTuile key={item.id} item={item} typeId="monstre" onClick={()=>onClicResultat("monstre", item.id)} />
-                  ))}
-                </div>
-              )}
-              {totalPages > 1 && (
-                <div style={mp.pagination}>
-                  <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={mp.pageBtn(page<=1)}>← Précédent</button>
-                  <span style={mp.pageLabel}>Page {page} / {totalPages}</span>
-                  <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={mp.pageBtn(page>=totalPages)}>Suivant →</button>
-                </div>
-              )}
-            </>
           )}
         </div>
       </div>
