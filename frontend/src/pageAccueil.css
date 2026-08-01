@@ -257,14 +257,9 @@
   content: ""; position: absolute; inset: 0;
   background-image: url('/assets/accueil-heros-portail.webp');
   background-size: cover; background-position: left center; background-repeat: no-repeat;
-  /* Flou volontaire (retour Popo, 1er août 2026) : le fichier source est en
-     basse résolution, le flou masque l'agrandissement (image maintenant
-     pleine largeur de section) et donne un effet de profondeur de champ.
-     Le flou reste sur ::before (l'image), le mask-image sur .outils-art
-     (le parent) — les deux ne posaient pas de problème combinés ainsi,
-     pas besoin de les séparer plus que la structure ::before/parent déjà
-     en place. */
-  filter: blur(3px);
+  /* Flou retiré (1er août 2026) : le fichier source est passé en haute
+     résolution (1920x1081), il ne masquait qu'un agrandissement d'une
+     image basse résolution — plus nécessaire. */
 }
 .df-home .outils-art::after {
   /* Voile horizontal (fondu vers la droite) gardé tel quel — orthogonal au
