@@ -1,0 +1,117 @@
+{
+  "Ilyzaelle": {
+    "titre": "Aberration d'Ilyzaelle",
+    "modifs": [
+      "Ilyzaelle n'appelle plus de Brûlâmes, mais elle augmente davantage la Vitalité des combattants ennemis.",
+      "Elle applique également la Brûle-âme sur tous les combattants ennemis qui ne sont pas des Brûlâmes.",
+      "Elle ne se téléporte plus lorsqu'elle fait appel à sa Défense des Rois."
+    ]
+  },
+  "Osavora": {
+    "zone": true,
+    "titre": "Aberration d'Osavora",
+    "modifs": [
+      "Les monstres d'Osavora sont perturbés."
+    ]
+  },
+  "Belladone": {
+    "titre": "Aberration de Belladone",
+    "modifs": [
+      "Belladone entre directement dans sa dernière phase au début du combat."
+    ]
+  },
+  "Bethel Akarna": {
+    "titre": "Aberration de Bethel Akarna",
+    "modifs": [
+      "Bethel Akarna invoque le Monolithe et le Dagon des Profondeurs à proximité de lui.",
+      "Il ne pose plus d'Entrave tentaculaire et pose ses Étoiles de Mer autour de la case qu'il cible.",
+      "Il applique également l'Aquazomb sur tous les combattants ennemis qui ne sont pas des Submergés ou des Calcinés."
+    ]
+  },
+  "Dantinéa": {
+    "titre": "Aberration de Dantinéa",
+    "modifs": [
+      "Dantinéa invoque ses Grokillages à proximité des alliés.",
+      "La Vitalité des Grokillages est doublée."
+    ]
+  },
+  "Founoroshi": {
+    "titre": "Aberration de Founoroshi",
+    "modifs": [
+      "Founoroshi entre directement dans sa dernière phase du combat, sans invoquer de tonneaux anti-incendie ou de feux de Bengale."
+    ]
+  },
+  "Fraktale": {
+    "titre": "Aberration de Fraktale",
+    "modifs": [
+      "Fraktale invoque l'Auroraire à proximité de lui.",
+      "Cette dernière ne se téléporte plus et ne permet plus de se téléporter."
+    ]
+  },
+  "Kabahal": {
+    "titre": "Aberration de Kabahal",
+    "modifs": [
+      "Kabahal abandonne son rituel démoniaque et n'est plus Invulnérable au début du combat.",
+      "À partir du deuxième tour, il peut commencer à invoquer un Bras Démoniaque (temps de relance de 4 tours).",
+      "Ce bras rend Kabahal Invulnérable aux attaques des entités autres que ses Bras tant qu'il est en vie."
+    ]
+  },
+  "Roi Nidas": {
+    "titre": "Aberration de Roi Nidas",
+    "modifs": [
+      "Le Roi Nidas invoque la première Boubourse à proximité de l'allié qu'il cible au début du combat."
+    ]
+  },
+  "Solar": {
+    "titre": "Aberration de Solar",
+    "modifs": [
+      "Solar ne pose plus de glyphe à chaque cycle solaire."
+    ]
+  },
+  "Torkélonia": {
+    "titre": "Aberration de Torkélonia",
+    "modifs": [
+      "Torkélonia n'invoque plus sa Lunorbe, mais applique le Cycle Lunaire sur tous les combattants ennemis qui ne sont pas des Crocodailles de Crocuzko.",
+      "La Parade Lunaire de la Lunorbe se déclenche quand Torkélonia subit des dommages de poussée."
+    ]
+  },
+  "Vortex": {
+    "titre": "Aberration de Vortex",
+    "modifs": [
+      "Vortex invoque l'Auroraire à proximité de lui.",
+      "Cette dernière ne se téléporte plus et ne permet plus de se téléporter, mais change d'heure à chaque fois qu'elle subit des dommages.",
+      "Il passe également à l'action dès que tous les monstres qui l'accompagnent ont été achevés deux fois à une même heure."
+    ]
+  },
+  "XLII": {
+    "titre": "Aberration de XLII",
+    "modifs": [
+      "XLII invoque l'Auroraire à proximité de lui.",
+      "Cette dernière ne se téléporte plus et ne permet plus de se téléporter."
+    ]
+  },
+  "Capitaine Meno": {
+    "titre": "Aberration du Capitaine Meno",
+    "modifs": [
+      "Le Capitaine Meno n'appelle plus de renforts, mais il réduit les dommages subis par tous les combattants ennemis au début du combat."
+    ]
+  },
+  "Chalœil": {
+    "titre": "Aberration du Chaloeil",
+    "modifs": [
+      "Le Jeu du Chaloeil est remplacé par ses Dés.",
+      "Les ennemis lancent deux dés 6 au début de leur tour. Selon le résultat, des effets sont appliqués soit sur tous les alliés, soit sur l'ennemi, pendant 1 tour.",
+      "3 à 6 : +10% à +2% de dommages finaux à tous les alliés.",
+      "7 : aucun effet.",
+      "8 à 11 : +5% à 20% de dommages finaux à l'ennemi lanceur des dés.",
+      "Double : ignore le résultat et donne 5% à 30% de dommages finaux à l'ennemi lanceur.",
+      "Double deux tours de suite : passe le tour en cours de l'ennemi lanceur."
+    ]
+  },
+  "Père Ver": {
+    "titre": "Aberration du Père Ver",
+    "modifs": [
+      "Le Père Ver ne se téléporte plus au début du combat."
+    ]
+  }
+}

@@ -1131,6 +1131,27 @@ function MonstrePage({ id, onSelectDonjon, onBack }) {
         ← Retour
       </button>
 
+      {/* Encadre "EN SONGE" (2 août 2026, dofura_songes_boss_modifs.json) —
+          accent violet Paradoxe #C478FF, masque entierement si le monstre
+          n'a pas de modification (data.modif_songe null). En haut de la
+          fiche, avant meme le bloc nom/image : c'est l'info la plus
+          importante pour un songeur sur un boss qui se comporte
+          differemment de sa version classique. */}
+      {data.modif_songe && (
+        <div style={{ background:"rgba(196,120,255,0.08)", border:`0.5px solid #C478FF`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:"#C478FF", fontWeight:700, marginBottom:6 }}>En songe</div>
+          <div style={{ fontSize:13.5, fontWeight:600, color:C.txt, marginBottom:8 }}>{data.modif_songe.titre}</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
+            {data.modif_songe.lignes.map((ligne, i) => (
+              <div key={i} style={{ display:"flex", gap:8, fontSize:12.5, color:C.txt2, lineHeight:1.4 }}>
+                <span style={{ color:"#C478FF", flexShrink:0 }}>•</span>
+                <span>{ligne}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr2}`, borderRadius:12, padding:"18px 20px", display:"grid", gridTemplateColumns:"100px 1fr", gap:20, marginBottom:16 }}>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
           {data.image_url
@@ -1146,7 +1167,6 @@ function MonstrePage({ id, onSelectDonjon, onBack }) {
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:12 }}>
             {data.race    && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.race}</span>}
             {data.famille && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.famille}</span>}
-            {data.zones?.length > 0 && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:10, background:C.bg4, border:`0.5px solid ${C.bdr}`, color:C.txt2 }}>{data.zones[0].nom}</span>}
           </div>
           <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
             {data.grades?.map((gr,i) => (
@@ -1193,35 +1213,6 @@ function MonstrePage({ id, onSelectDonjon, onBack }) {
       </div>
 
       {data.sorts?.length > 0 && <SortsPanel sorts={data.sorts} />}
-
-      {data.drops?.length > 0 && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px", marginBottom:16 }}>
-          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Drops</div>
-          <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-            {data.drops.map(d => (
-              <div key={d.nom} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"5px 0", borderBottom:`0.5px solid rgba(0,212,255,0.06)` }}>
-                <span style={{ fontSize:12, color:C.txt }}>{d.nom}</span>
-                <span style={{ fontSize:12, color:C.gold }}>{d.pourcentage}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {data.donjons?.length > 0 && (
-        <div style={{ background:C.bg2, border:`0.5px solid ${C.bdr}`, borderRadius:10, padding:"14px 16px" }}>
-          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.txt3, marginBottom:10 }}>Apparaît dans</div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-            {data.donjons.map(d => (
-              <span key={d.id} onClick={()=>onSelectDonjon(d.id)}
-                style={{ fontSize:11, padding:"3px 9px", borderRadius:6, cursor:"pointer",
-                  background:d.est_boss?C.goldf:C.bg4, border:`0.5px solid ${d.est_boss?C.goldb:C.bdr}`, color:d.est_boss?C.gold:C.txt2 }}>
-                {d.nom}{d.est_boss?" (Boss)":""}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -2202,6 +2193,13 @@ function GrimoireTuile({ item, typeId, onClick }) {
   const badgeClasse = item.categorie ? (CATEGORIE_BADGE_CLASSE[item.categorie] || "") : ""
   return (
     <div className="df-tile" onClick={onClick}>
+      {/* Pastille discrete "modifie en songe" (2 août 2026) — coin haut-droit,
+          violet Paradoxe #C478FF comme l'encadre "EN SONGE" de la fiche,
+          volontairement petite (juste un repere avant d'ouvrir la fiche,
+          pas un badge de categorie de plus). */}
+      {typeId === "monstre" && item.modif_songe && (
+        <span title="Modifié en songe" style={{ position:"absolute", top:8, right:8, width:8, height:8, borderRadius:"50%", background:"#C478FF", boxShadow:"0 0 6px rgba(196,120,255,0.8)" }} />
+      )}
       {img
         ? <img src={img} alt={item.nom} style={{ width:44, height:44, objectFit:"contain", margin:"0 auto 10px", display:"block" }} />
         : <div style={{ width:44, height:44, borderRadius:10, margin:"0 auto 10px", background:"rgba(12,15,29,0.8)", border:"1px solid rgba(255,198,61,0.3)" }} />

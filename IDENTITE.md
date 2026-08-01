@@ -837,6 +837,118 @@ ni focusable au clavier, sans piège de focus à gérer à la main. Vérifié à
 "Bientôt" discret intégré au bouton, `aria-label` explicite pour les lecteurs d'écran. Aucune page
 créée derrière — juste la place réservée, comme demandé.
 
+## 18. Avis de recherche — liste blanche explicite (2 août 2026)
+
+Signalement Popo : "Ilyzaelle n'apparaît pas dans le bestiaire" — diagnostic complet (voir échange),
+conclusion : Ilyzaelle est en réalité correctement taguée boss (vérifié DB + API + capture d'écran),
+le signalement ne s'est pas reproduit. En creusant la question plus large (bosses non rattachés à un
+donjon), découverte séparée mais réelle : `race LIKE 'Avis de recherche%'` remontait **95 monstres**
+alors que Popo confirme **24 avis de recherche réels en jeu** — heuristique trop large (5 variantes de
+race, mais toutes les créatures qui les portent ne sont pas forcément encore actives/pertinentes).
+
+**Liste blanche** : nouveau fichier `dofura_songes_avis.json` (24 noms, racine du projet, ajouté à la
+liste des sources JSON de la règle 9 de CLAUDE.md) — contenu éditorial validé par Popo à la main, un
+par un, pas un scrape. Chargé au démarrage comme `DONJONS_GUIDES_DATA`/`QUETES_GUIDES_DATA`
+(`AVIS_RECHERCHE_NOMS`/`AVIS_RECHERCHE_SET`, `main.py`).
+
+**Script de contrôle avant tout code** (demande explicite) : correspondance exacte testée un par un
+contre `monstres.nom`, 21/24 trouvés du premier coup, 3 écarts typographiques identifiés et proposés à
+Popo sans correction automatique (règle explicite "ne corrige pas tout seul") : `Culbutoeuf` →
+**Culbutœuf** (ligature œ), `Homar Medali` → **Homard Medali** (lettre manquante), `Maxi-malle` →
+**Maxi-Malle** (casse). Confirmés par Popo avant application.
+
+**Collision trouvée en testant après application** (25 résultats au lieu de 24) : deux monstres
+distincts nommés "Vengeuse Masquée" en base (id 2905 et 7949) — `m.nom IN (...)` les confondait tous
+les deux. Vérifié sur `api.dofusdb.fr` (JSON brut, pas résumé) avant de trancher, à la demande de
+Popo : les deux existent réellement et portent `isBounty: true`, mais seul l'id 2905 a la race
+`Avis de recherche de Frigost` (raceId 90 chez DofusDB, "Frigost Wanted Notices") — le 7949 est classé
+race générique `Monstres de quête` (raceId 50) malgré son flag `isBounty`. Condition finale :
+`m.nom IN (liste blanche) AND m.race LIKE 'Avis de recherche%'` — la race sert ici de désambiguïsation
+à l'intérieur de la liste blanche, pas de filtre principal (ne peut jamais réintroduire les 71 autres
+exclus). Même correctif appliqué à `categorie_de()` (calcul du badge) pour rester cohérent.
+
+**Découverte annexe, non exploitée pour l'instant** : `isBounty` est un champ officiel de l'API
+DofusDB, potentiellement une source plus directe que la race pour identifier les avis de recherche à
+l'avenir — mais son usage semble plus large que la seule race "Avis de recherche" (le 7949 l'a aussi).
+À investiguer si un futur écart de comptage se reproduit.
+
+**Vérifié après correctif** : avis seul → 24 (les 24 bons noms, aucun de plus) ; boss+monstre+avis →
+**1 886** (confirmé, objectif de la demande) ; monstre seul et boss+monstre (sans avis) inchangés
+(1727 et 1862) — la liste blanche n'a touché aucune autre catégorie.
+
+## 19. Nettoyage des fiches monstre/boss — retrait Zone/Drops/Apparaît dans (2 août 2026)
+
+Retour Popo : une fiche doit contenir ce qu'on vérifie en plein combat, rien de plus — Zone, Drops et
+"Apparaît dans" n'ont pas de sens en songe (pas de zone d'origine, pas les drops habituels, seuls les
+taux de songe comptent).
+
+**Confirmé avant toute modification (précaution demandée) : un seul composant partagé.** `MonstrePage`
+(App.jsx) sert identiquement les fiches monstre et boss — deux points d'appel (`GrimoirePanel` et
+l'ancien accès direct), même fonction, même JSX. Retirer les trois blocs dans `MonstrePage` s'applique
+donc automatiquement aux deux, comme voulu. Vérifié aussi qu'aucune autre page ne réutilise ce même
+code : `DonjonDetailPage` a son propre bloc "Drops" totalement indépendant (tableau agrégé par donjon,
+pas par monstre) — non touché, hors périmètre de cette demande.
+
+**Retiré** : badge zone dans l'en-tête (`data.zones[0].nom`), bloc "Drops" (`data.drops`), bloc
+"Apparaît dans" (`data.donjons`, liens vers les fiches donjon). **Conservé** : nom, image, badges
+race/famille, sélecteur de grade, Stats, Résistances, Sorts (`SortsPanel`) — élément jugé le plus
+important par Popo, non touché.
+
+**Affichage uniquement, comme demandé** : `main.py` intact (endpoint `/monstres/{id}` continue de
+renvoyer `zones`/`drops`/`donjons`, juste plus consommés par le JSX) — aucune donnée supprimée,
+réaffichable un jour sans migration.
+
+**Mise en page vérifiée à l'écran** sur un boss (Ilyzaelle) et deux monstres (un sans zone/drops
+réels, un avec — "Bouftou des cavernes", pour confirmer que le retrait n'est pas juste une absence de
+données) : rendu équilibré tel quel, aucun grand vide, espacements existants (`marginBottom:16` sur la
+grille Stats/Résistances) suffisants sans resserrement supplémentaire.
+
+## 20. Modifications de boss en songe — table + encadré "EN SONGE" + badge (2 août 2026)
+
+Fichier `dofura_songes_boss_modifs.json` déposé par Popo (16 boss/zones, 34 lignes) : contenu éditorial
+décrivant comment certains boss se comportent différemment en songe par rapport à leur version
+classique. Demande explicite : **contrôle de correspondance en premier, montré avant tout affichage**,
+avec 4 clés en doute (`Osavora`, `Chaloeil`, `Roi Nidas`, `Capitaine Meno`) — aucune corrigée seule.
+
+**Résultat du contrôle** : `Roi Nidas` et `Capitaine Meno` correspondaient exactement. `Chaloeil` → pas
+de correspondance exacte, candidat `Chalœil` (id 4263, même ligature œ que `Culbutœuf` au round Avis
+de recherche) proposé et confirmé par Popo. `Osavora` → pas de correspondance monstre du tout, confirmé
+par Popo être une zone : la modification s'applique à tous ses monstres, pas à un boss unique — ajout
+d'un marqueur `"zone": true` dans le JSON, résolu via `zones`/`zones_areas` (16 monstres trouvés).
+
+**Table `songe_boss_modifs`** (`init_db.py`) : volontairement classée table ENCYCLOPÉDIQUE (DROP
+autorisé à chaque démarrage) malgré son préfixe `songe_`, qui d'habitude signale une table de données
+joueur protégée — celle-ci ne contient aucune progression, uniquement du contenu régénéré depuis le
+JSON source, donc n'appartient pas à `TABLES_UTILISATEUR_INTERDITES`. Contrôle de correspondance
+automatique à **chaque** démarrage (pas seulement cette vérification manuelle) : toute clé future sans
+correspondance déclenche un `⚠️ ATTENTION` au lieu de disparaître silencieusement. 49 lignes insérées
+au final (34 lignes source − 1 ligne Osavora + 16 copies zone-étendues).
+
+**Frontend** : encadré "EN SONGE" en haut de `MonstrePage` (accent violet Paradoxe `#C478FF`, masqué
+si `data.modif_songe` est `null`) ; pastille violette discrète en coin haut-droit des tuiles du
+bestiaire (`GrimoireTuile`) pour les monstres modifiés. **Vérifié à l'écran** sur Ilyzaelle (boss direct,
+encadré + pastille) et Amphibouc (membre de la zone Osavora, confirme le mécanisme d'expansion par
+zone) — rendu correct dans les deux cas, console propre.
+
+## 21. Retrait du blur sur l'artwork "Trois outils" + fichier mal nommé (1er août 2026)
+
+Popo a remplacé l'artwork basse résolution (596×335) de la section "Trois outils, aucun bavardage" par
+une version haute résolution (~1456×819, proche du 1920×1081 annoncé — écart probablement dû à la
+compression webp). Le `filter: blur(3px)` sur `.df-home .outils-art::before` (`pageAccueil.css`)
+n'existait que pour masquer l'agrandissement d'une image basse résolution (voir round "Flou volontaire"
+du 1er août) — retiré, plus nécessaire avec le nouveau fichier.
+
+**Bug trouvé en vérifiant, sans rapport avec le blur lui-même** : le remplacement de fichier a atterri
+sous `frontend/public/assets/acceuil-heros-portail.webp` (faute de frappe, "acceuil"), et dans
+l'opération le fichier correctement nommé `accueil-heros-portail.webp` (référencé par la CSS) a été
+supprimé (confirmé via `git status` : `D` sur le nom correct, `??` sur le nom fautif). Résultat :
+l'artwork était en 404 silencieux sur le serveur de dev, invisible flou ou pas — impossible de juger le
+retrait du blur avant de corriger ça. Fichier renommé pour retrouver le nom attendu par la CSS.
+
+**Vérifié à l'écran** : artwork visible et net (scène de portail, deux personnages), comparé côte à
+côte avec la bannière du haut (`hero/draconiros-plate.webp`, qui vérifié n'a jamais eu de `filter`
+dans son CSS) — aucune différence de netteté perceptible entre les deux.
+
 ## Pièges rencontrés pendant ce chantier
 
 - **Édition de `config/songes.py` sans effet observé en local** : le backend tournait via

@@ -161,6 +161,18 @@ if os.path.exists("dofura_quetes_guides.json"):
     with open("dofura_quetes_guides.json", "r", encoding="utf-8") as f:
         QUETES_GUIDES_DATA = json.load(f)
 
+# Liste blanche des Avis de recherche reellement rencontres en songe (2 août
+# 2026) — remplace l'ancienne heuristique "race LIKE 'Avis de recherche%'"
+# qui remontait 95 monstres alors que seuls 24 existent reellement en jeu.
+# Contenu editorial verifie a la main par Popo (noms exacts, un par un,
+# apostrophes/accents/ligature œ inclus) — meme famille de fichier que
+# DONJONS_GUIDES_DATA/QUETES_GUIDES_DATA (donnee de validation, pas un scrape).
+AVIS_RECHERCHE_NOMS = []
+if os.path.exists("dofura_songes_avis.json"):
+    with open("dofura_songes_avis.json", "r", encoding="utf-8") as f:
+        AVIS_RECHERCHE_NOMS = json.load(f)["noms"]
+AVIS_RECHERCHE_SET = set(AVIS_RECHERCHE_NOMS)
+
 # Effets dont un placeholder brut (#1/#2/#3) est en realite un ID a resoudre,
 # pas un nombre (chantier #6) :
 # - EFFECTS_ETAT_VALEUR : "Etat #3"/"Enleve l'etat #3"/"Desactive l'etat #3",
@@ -322,20 +334,34 @@ SANS_VALEUR = "__aucune__"
 # d'affichage boss > archi > quete pour le badge (une seule pastille par
 # vignette), mais le filtre matche sur l'union (OR) des cases cochees.
 CATEGORIE_LABELS = {"boss": "Boss de donjon", "avis": "Avis de recherche", "archi": "Archimonstre", "quete": "Monstre de quête", "monstre": "Monstre"}
-# "avis" (2 août 2026) : pas de famille dediee, identifie via race LIKE
-# 'Avis de recherche%' — couvre les 5 variantes reelles (Avis de recherche,
-# de Frigost, alignes, des Dimensions, de Sufokia), verifie en base = 95
-# monstres, tous avec famille = 'Créatures de quête'. Condition "quete"
-# corrigee pour les exclure (sinon ils compteraient dans les deux
-# categories) : c'est justement le point de cette nouvelle categorie, des
-# monstres officiels de quete que les songeurs croisent aussi en songe.
-# "monstre" les exclut deja structurellement (test sur famille, pas sur
-# race) — rien a changer de ce cote.
+# "avis" (corrige le 2 août 2026) : liste blanche explicite AVIS_RECHERCHE_NOMS
+# (24 noms, voir plus haut) au lieu de "race LIKE 'Avis de recherche%'" —
+# l'heuristique par race remontait 95 monstres, verifie a la main par Popo
+# que seuls 24 existent reellement en jeu. Condition parametree (m.nom IN
+# (?,?,...)) : ces noms contiennent des apostrophes (Aermyne 'Braco'
+# Scalptaras) qu'un simple format-string aurait casse, d'ou le placeholder —
+# voir liste_monstres, ou les valeurs sont ajoutees a `params` a la main des
+# que "avis" (ou "quete", meme raison) est choisi. "quete" exclut les memes
+# 24 noms pour rester coherente (pas de double-compte) — jamais selectionne
+# depuis l'interface actuelle (CATEGORIES_MONSTRE_GRIMOIRE ne l'inclut pas),
+# gardee correcte quand meme. "monstre" exclut deja Créatures de quête en
+# bloc (test sur famille) — rien a changer de ce cote.
+_AVIS_IN_SQL = "(" + ",".join(["?"] * len(AVIS_RECHERCHE_NOMS)) + ")" if AVIS_RECHERCHE_NOMS else "(NULL)"
+# Collision trouvee en testant (2 août 2026) : deux monstres differents
+# partagent le nom "Vengeuse Masquée" (id 2905 et 7949) — verifie sur
+# api.dofusdb.fr, les deux existent reellement et ont isBounty=true, mais
+# seul l'id 2905 a la race "Avis de recherche de Frigost" (raceId 90,
+# "Frigost Wanted Notices") ; le 7949 est classe race "Monstres de quête"
+# (raceId 50, generique) malgre son isBounty. m.nom IN (...) seul les
+# confondait tous les deux (25 au lieu de 24) — race LIKE en filtre
+# supplementaire les distingue, sans revenir a l'ancienne heuristique
+# (qui balayait TOUTE la base, ici c'est une restriction a l'INTERIEUR
+# de la liste blanche, ne peut jamais reintroduire les 71 autres).
 CATEGORIE_CONDITIONS = {
     "boss":    "m.id IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1)",
-    "avis":    "m.race LIKE 'Avis de recherche%'",
+    "avis":    f"m.nom IN {_AVIS_IN_SQL} AND m.race LIKE 'Avis de recherche%'",
     "archi":   "m.famille = 'Créatures Archimonstres'",
-    "quete":   "m.famille = 'Créatures de quête' AND m.race NOT LIKE 'Avis de recherche%'",
+    "quete":   f"m.famille = 'Créatures de quête' AND m.nom NOT IN {_AVIS_IN_SQL}",
     "monstre": "m.id NOT IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1) AND (m.famille IS NULL OR m.famille NOT IN ('Créatures Archimonstres', 'Créatures de quête'))",
 }
 # Reutilise partout : niveau "naturel" de rencontre = grade le plus bas du
@@ -372,6 +398,13 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
     categories_choisies = [c for c in categorie.split(",") if c in CATEGORIE_CONDITIONS]
     if categories_choisies:
         conditions.append("(" + " OR ".join(CATEGORIE_CONDITIONS[c] for c in categories_choisies) + ")")
+        # "avis"/"quete" contiennent chacune un IN (?,?,...) sur
+        # AVIS_RECHERCHE_NOMS (voir CATEGORIE_CONDITIONS) — params ajoutes ici
+        # dans le meme ordre que le OR-join ci-dessus, seules categories du
+        # dict a porter des placeholders.
+        for c in categories_choisies:
+            if c in ("avis", "quete") and AVIS_RECHERCHE_NOMS:
+                params.extend(AVIS_RECHERCHE_NOMS)
 
     conditions.append("base.niveau_base BETWEEN ? AND ?")
     params.extend([niveau_min, niveau_max])
@@ -403,7 +436,8 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
         SELECT m.id, m.nom, m.image_url, m.famille, m.race, base.niveau_base,
                {sql_region_principale} AS region_principale,
                {sql_sous_zone_principale} AS sous_zone_principale,
-               (m.id IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1)) AS est_boss
+               (m.id IN (SELECT monstre_id FROM donjons_monstres WHERE est_boss = 1)) AS est_boss,
+               (m.id IN (SELECT monstre_id FROM songe_boss_modifs)) AS modif_songe
         FROM monstres m
         JOIN {SQL_NIVEAU_BASE} base ON base.monstre_id = m.id
         WHERE {where_clause}
@@ -438,8 +472,11 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
     def categorie_de(r):
         # Priorite d'affichage (badge) : boss > avis > archi > quete > monstre
         # — 0 chevauchement boss/avis constate en base, ordre fixe quand meme.
+        # nom ET race : meme garde-fou que CATEGORIE_CONDITIONS["avis"] contre
+        # la collision "Vengeuse Masquée" (id 2905 vs 7949, meme nom, races
+        # differentes — un seul est reellement classe "Avis de recherche").
         if r["est_boss"]: return "boss"
-        if r["race"] and r["race"].startswith("Avis de recherche"): return "avis"
+        if r["nom"] in AVIS_RECHERCHE_SET and r["race"] and r["race"].startswith("Avis de recherche"): return "avis"
         if r["famille"] == "Créatures Archimonstres": return "archi"
         if r["famille"] == "Créatures de quête": return "quete"
         return "monstre"
@@ -455,6 +492,7 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
                 "niveau": r["niveau_base"], "region": r["region_principale"], "sous_zone": r["sous_zone_principale"],
                 "categorie": categorie_de(r),
                 "chasse": str(r["id"]) in chasses_ids,
+                "modif_songe": bool(r["modif_songe"]),
             }
             for r in rows
         ],
@@ -514,6 +552,12 @@ def detail_monstre(monstre_id: int):
         ORDER BY d.nom
     """, (monstre_id,))
     donjons = cur.fetchall()
+    # Modification en songe (2 août 2026, table songe_boss_modifs) : "titre"
+    # est repete sur chaque ligne (denormalise, une ligne = un point de la
+    # liste a puces), on ne garde que la 1ere occurrence pour la reponse.
+    cur.execute("SELECT titre, ligne FROM songe_boss_modifs WHERE monstre_id = ? ORDER BY ordre", (monstre_id,))
+    modif_lignes = cur.fetchall()
+    modif_songe = {"titre": modif_lignes[0]["titre"], "lignes": [r["ligne"] for r in modif_lignes]} if modif_lignes else None
     conn.close()
     return {
         **dict(monstre),
@@ -522,6 +566,7 @@ def detail_monstre(monstre_id: int):
         "sorts": [dict(s) for s in sorts],
         "zones": [dict(z) for z in zones],
         "donjons": [{"id": d["id"], "nom": d["nom"], "est_boss": bool(d["est_boss"])} for d in donjons],
+        "modif_songe": modif_songe,
     }
 
 @app.get("/sorts/{sort_id}")

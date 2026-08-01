@@ -27,6 +27,8 @@ with open("dofura_songes_items.json", "r", encoding="utf-8") as f:
     songes_items = json.load(f)
 with open("dofura_songes_taux.json", "r", encoding="utf-8") as f:
     songes_taux = json.load(f)
+with open("dofura_songes_boss_modifs.json", "r", encoding="utf-8") as f:
+    songes_boss_modifs = json.load(f)
 print(f"[init_db] JSON charges. Connexion a la base : {DB_PATH}")
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
@@ -48,6 +50,12 @@ TABLES_ENCYCLOPEDIE = {
     # depuis dofura_songes_items.json / dofura_songes_taux.json, pas de donnee
     # utilisateur — donc autorisees ici comme le reste de l'encyclopedie.
     "songe_items_trackables", "songe_taux",
+    # Modifications de boss en songe (2 août 2026) : contenu editorial
+    # regenere depuis dofura_songes_boss_modifs.json a chaque demarrage,
+    # comme le reste — malgre le prefixe "songe_", ce N'EST PAS une table de
+    # donnee joueur (pas de progression, pas de saisie utilisateur), donc
+    # elle appartient ici et pas a TABLES_UTILISATEUR_INTERDITES ci-dessous.
+    "songe_boss_modifs",
 }
 
 # users / progression_joueur / favoris portent de la donnee utilisateur reelle
@@ -96,6 +104,7 @@ DROP TABLE IF EXISTS succes_recompenses_items;
 DROP TABLE IF EXISTS succes_donjons;
 DROP TABLE IF EXISTS songe_items_trackables;
 DROP TABLE IF EXISTS songe_taux;
+DROP TABLE IF EXISTS songe_boss_modifs;
 CREATE TABLE monstres (
     id INTEGER PRIMARY KEY,
     nom TEXT,
@@ -324,6 +333,13 @@ CREATE TABLE songe_taux (
     cle_taux      TEXT NOT NULL,
     taux          REAL NOT NULL,
     PRIMARY KEY (intensite, niveau, palier, cle_taux)
+);
+CREATE TABLE songe_boss_modifs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    monstre_id INTEGER NOT NULL,
+    titre      TEXT NOT NULL,
+    ligne      TEXT NOT NULL,
+    ordre      INTEGER NOT NULL
 );
 """
 
@@ -559,6 +575,55 @@ for t in songes_taux:
         INSERT OR REPLACE INTO songe_taux (intensite, niveau, palier, cle_taux, taux)
         VALUES (?, ?, ?, ?, ?)
     """, (t.get("intensite"), t.get("niveau"), t.get("palier"), t.get("cle_taux"), t.get("taux")))
+
+# Modifications de boss en songe (2 août 2026) : dofura_songes_boss_modifs.json
+# est cle par NOM DE MONSTRE (ex. "Ilyzaelle"), sauf marqueur "zone": true ou
+# la cle designe une REGION (zones_areas.area, ex. "Osavora") — la modification
+# s'applique alors a tous les monstres de cette zone, resolus ici via la
+# jointure zones/zones_areas deja peuplee plus haut dans ce script.
+# Controle de correspondance a CHAQUE demarrage (pas juste une verification
+# ponctuelle) : toute cle qui ne resout ni un monstre ni une zone est
+# rapportee en clair dans les logs plutot que silencieusement ignoree —
+# memes lecons que le chantier "Avis de recherche" (un nom mal orthographie
+# fait disparaitre une entree sans avertissement si on ne verifie pas).
+print("[init_db] Import des modifications de boss en songe (dofura_songes_boss_modifs.json)...")
+boss_modifs_non_resolues = []
+boss_modifs_lignes = 0
+for cle, entree in songes_boss_modifs.items():
+    titre = entree.get("titre")
+    lignes = entree.get("modifs", [])
+    if entree.get("zone"):
+        cur.execute("""
+            SELECT DISTINCT m.id FROM monstres m
+            JOIN zones z ON z.monstre_id = m.id
+            JOIN zones_areas za ON za.nom = z.nom
+            WHERE za.area = ?
+        """, (cle,))
+        monstre_ids = [r[0] for r in cur.fetchall()]
+        if not monstre_ids:
+            boss_modifs_non_resolues.append(f"{cle} (zone introuvable ou sans monstre associe)")
+            continue
+    else:
+        cur.execute("SELECT id FROM monstres WHERE nom = ?", (cle,))
+        row = cur.fetchone()
+        if not row:
+            boss_modifs_non_resolues.append(cle)
+            continue
+        monstre_ids = [row[0]]
+    for monstre_id in monstre_ids:
+        for ordre, ligne in enumerate(lignes):
+            cur.execute("""
+                INSERT INTO songe_boss_modifs (monstre_id, titre, ligne, ordre)
+                VALUES (?, ?, ?, ?)
+            """, (monstre_id, titre, ligne, ordre))
+            boss_modifs_lignes += 1
+
+if boss_modifs_non_resolues:
+    print(f"[init_db] ⚠️ ATTENTION : {len(boss_modifs_non_resolues)} cle(s) de dofura_songes_boss_modifs.json "
+          f"sans correspondance en base : {boss_modifs_non_resolues}")
+else:
+    print(f"[init_db] Modifications de boss en songe : {len(songes_boss_modifs)} entree(s) source -> "
+          f"{boss_modifs_lignes} lignes inserees, toutes les cles resolues.")
 
 
 # ============================================================
