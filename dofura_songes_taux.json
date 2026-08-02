@@ -1,254 +1,144 @@
-[
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 3,
-    "cle_taux": "legende",
-    "taux": 0.005
+{
+  "_meta": {
+    "version": "2.0.0",
+    "date_maj": "2026-08-02",
+    "source": "Relevés en jeu (tableaux des butins de salle + infobulles d'items), Dofus 3.x",
+    "principe": "Les taux affichés en jeu suivent la formule : taux_affiche = taux_base * multiplicateur_butin. Vérifiée au millième sur 8 intensités. Ne JAMAIS stocker les 10 tables en dur : les recalculer depuis taux_base.",
+    "avertissement_prospection": "Les taux stockés ici sont les taux BRUTS affichés par le jeu. Ils n'intègrent PAS la prospection du joueur. La prospection influence les cosmétiques (Bouclirêve, Diplôme de Feur) mais pas les légendes, légendes animales ni runes astrales. Toute estimation affichée sur le site doit être présentée comme une indication générale.",
+    "regles_non_extrapolees": "Toutes les valeurs de ce fichier proviennent soit d'un relevé direct, soit de la formule validée. Aucune donnée inventée.",
+    "reserve_connue": "Runes astrales (bloc runes_astrales) : les valeurs de l'ancien fichier v1 (relevés ponctuels, remplacés par ce fichier) étaient systématiquement plus hautes que taux_base * multiplicateur, selon un ratio qui varie par PALIER (pas par rune ni par intensité) : palier II ×1.1, palier III ×1.3, palier IV ×1.2, palier V ×1.4 (palier I inchangé, ratio 1.0). Un multiplicateur de palier non documenté existe donc peut-être en plus du multiplicateur_butin par intensité. NE PAS l'implémenter dans les calculs tant qu'il n'est pas mesuré en jeu et confirmé — les taux runes actuels de ce fichier doivent être traités comme un PLANCHER (valeur réelle possiblement plus haute), pas comme la valeur finale. Voir audit du 2 août 2026."
   },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "legende",
-    "taux": 0.005
+
+  "intensites": [
+    { "id": "reve_1",       "nom": "Rêve I",        "famille": "reve",      "rang": 1,  "xp_pct": 50,  "butin_pct": 50,  "multiplicateur": 0.50, "bribes_par_vague": 25,   "vagues_victoire": 1, "butin_legendaire": false, "points_de_reve": 10, "drop_legendes": false, "drop_runes": false },
+    { "id": "reve_2",       "nom": "Rêve II",       "famille": "reve",      "rang": 2,  "xp_pct": 75,  "butin_pct": 75,  "multiplicateur": 0.75, "bribes_par_vague": 50,   "vagues_victoire": 1, "butin_legendaire": false, "points_de_reve": 10, "drop_legendes": false, "drop_runes": false },
+    { "id": "reve_3",       "nom": "Rêve III",      "famille": "reve",      "rang": 3,  "xp_pct": 100, "butin_pct": 100, "multiplicateur": 1.00, "bribes_par_vague": 75,   "vagues_victoire": 1, "butin_legendaire": false, "points_de_reve": 10, "drop_legendes": false, "drop_runes": false },
+    { "id": "paradoxe_1",   "nom": "Paradoxe I",    "famille": "paradoxe",  "rang": 4,  "xp_pct": 120, "butin_pct": 120, "multiplicateur": 1.20, "bribes_par_vague": 75,   "vagues_victoire": 3, "butin_legendaire": true,  "points_de_reve": 5,  "drop_legendes": true,  "drop_runes": true },
+    { "id": "paradoxe_2",   "nom": "Paradoxe II",   "famille": "paradoxe",  "rang": 5,  "xp_pct": 140, "butin_pct": 140, "multiplicateur": 1.40, "bribes_par_vague": 100,  "vagues_victoire": 3, "butin_legendaire": true,  "points_de_reve": 5,  "drop_legendes": true,  "drop_runes": true },
+    { "id": "paradoxe_3",   "nom": "Paradoxe III",  "famille": "paradoxe",  "rang": 6,  "xp_pct": 160, "butin_pct": 160, "multiplicateur": 1.60, "bribes_par_vague": 150,  "vagues_victoire": 3, "butin_legendaire": true,  "points_de_reve": 5,  "drop_legendes": true,  "drop_runes": true },
+    { "id": "paradoxe_4",   "nom": "Paradoxe IV",   "famille": "paradoxe",  "rang": 7,  "xp_pct": 190, "butin_pct": 190, "multiplicateur": 1.90, "bribes_par_vague": 200,  "vagues_victoire": 3, "butin_legendaire": true,  "points_de_reve": 5,  "drop_legendes": true,  "drop_runes": true },
+    { "id": "cauchemar_1",  "nom": "Cauchemar I",   "famille": "cauchemar", "rang": 8,  "xp_pct": 220, "butin_pct": 220, "multiplicateur": 2.20, "bribes_par_vague": 300,  "vagues_victoire": 3, "butin_legendaire": true,  "points_de_reve": 0,  "drop_legendes": true,  "drop_runes": true },
+    { "id": "cauchemar_2",  "nom": "Cauchemar II",  "famille": "cauchemar", "rang": 9,  "xp_pct": 250, "butin_pct": 250, "multiplicateur": 2.50, "bribes_par_vague": 500,  "vagues_victoire": 3, "butin_legendaire": true,  "points_de_reve": 0,  "drop_legendes": true,  "drop_runes": true },
+    { "id": "cauchemar_3",  "nom": "Cauchemar III", "famille": "cauchemar", "rang": 10, "xp_pct": 300, "butin_pct": 300, "multiplicateur": 3.00, "bribes_par_vague": 1000, "vagues_victoire": 3, "butin_legendaire": true,  "points_de_reve": 0,  "drop_legendes": true,  "drop_runes": true }
+  ],
+
+  "paliers": [
+    { "num": 1, "nom": "Les Pensées oniriques",      "salles": [1, 3],   "combats": 3 },
+    { "num": 2, "nom": "Les Balades fantastiques",   "salles": [4, 9],   "combats": 5 },
+    { "num": 3, "nom": "Les Espaces imaginaires",    "salles": [10, 15], "combats": 5 },
+    { "num": 4, "nom": "Les Concepts brumeux",       "salles": [16, 21], "combats": 5 },
+    { "num": 5, "nom": "Les Abstractions chimériques","salles": [22, 26], "combats": 4 }
+  ],
+
+  "categories": {
+    "legende": {
+      "nom": "Légendes",
+      "taux_base": 0.003667,
+      "paliers_eligibles": [3, 4, 5],
+      "combats_eligibles": 14,
+      "condition_jeu": "Niveau d'intensité du Songe > 3 · Palier courant > Palier II",
+      "affecte_par_prospection": false,
+      "nb_items": 26
+    },
+    "legende_animale": {
+      "nom": "Légendes animales",
+      "taux_base": 0.01,
+      "paliers_eligibles": [3, 4, 5],
+      "combats_eligibles": 14,
+      "condition_jeu": "Niveau d'intensité du Songe > 3 · Palier courant > Palier II",
+      "affecte_par_prospection": false,
+      "nb_items": 4
+    },
+    "cosmetique": {
+      "nom": "Cosmétiques",
+      "taux_base": 0.002,
+      "paliers_eligibles": "variable_par_item",
+      "condition_jeu": "Dépend de l'item (voir cosmetiques)",
+      "affecte_par_prospection": true,
+      "nb_items": 7
+    },
+    "rune_astrale": {
+      "nom": "Runes astrales",
+      "taux_base": "variable_par_palier",
+      "paliers_eligibles": [1, 2, 3, 4, 5],
+      "condition_jeu": "Niveau d'intensité du Songe > 3",
+      "affecte_par_prospection": false,
+      "nb_items": 6
+    }
   },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 5,
-    "cle_taux": "legende",
-    "taux": 0.006
+
+  "cosmetiques": [
+    { "nom": "Bouclirêve Onirique",    "taux_base": 0.002, "paliers_eligibles": [1],             "combats_eligibles": 3,  "condition_jeu": "Palier courant = Palier I - Pensées oniriques" },
+    { "nom": "Bouclirêve Fantastique", "taux_base": 0.002, "paliers_eligibles": [2],             "combats_eligibles": 5,  "condition_jeu": "Palier courant = Palier II - Balades fantastiques" },
+    { "nom": "Bouclirêve Imaginaire",  "taux_base": 0.002, "paliers_eligibles": [3],             "combats_eligibles": 5,  "condition_jeu": "Palier courant = Palier III - Espaces imaginaires" },
+    { "nom": "Bouclirêve Brumeux",     "taux_base": 0.002, "paliers_eligibles": [4],             "combats_eligibles": 5,  "condition_jeu": "Palier courant = Palier IV - Concepts brumeux" },
+    { "nom": "Bouclirêve Infini",      "taux_base": 0.002, "paliers_eligibles": [5],             "combats_eligibles": 4,  "condition_jeu": "Palier courant = Palier V - Abstractions chimériques" },
+    { "nom": "Bouclirêve Étoile",      "taux_base": 0.002, "paliers_eligibles": [1, 2, 3, 4, 5], "combats_eligibles": 22, "condition_jeu": "Aucune condition de palier ni d'intensité", "note": "Seul item du jeu sans condition. Dropable dès Rêve I et à tous les paliers." },
+    { "nom": "Diplôme de Feur",        "taux_base": 0.002, "paliers_eligibles": [3, 4, 5],       "combats_eligibles": 14, "intensite_rang_min": 4, "condition_jeu": "Niveau d'intensité du Songe > 3 · Joueur présent dans le combat précédent · Palier courant > Palier II", "note": "Condition unique 'joueur présent dans le combat précédent' — à vérifier en jeu pour son impact réel sur le nombre de tirages." }
+  ],
+
+  "runes_astrales": [
+    { "nom": "Rune astrale mineure",      "niveau": 100, "entrees": [ { "palier": 1, "taux_base": 4 }, { "palier": 2, "taux_base": 6 } ] },
+    { "nom": "Rune astrale moyenne",      "niveau": 120, "entrees": [ { "palier": 1, "taux_base": 2 }, { "palier": 2, "taux_base": 4 } ] },
+    { "nom": "Rune astrale majeure",      "niveau": 140, "entrees": [ { "palier": 3, "taux_base": 4 }, { "palier": 4, "taux_base": 6 } ] },
+    { "nom": "Rune astrale épatante",     "niveau": 160, "entrees": [ { "palier": 3, "taux_base": 2 }, { "palier": 4, "taux_base": 4 } ] },
+    { "nom": "Rune astrale merveilleuse", "niveau": 180, "entrees": [ { "palier": 4, "taux_base": 2 }, { "palier": 5, "taux_base": 4 } ] },
+    { "nom": "Rune astrale légendaire",   "niveau": 200, "entrees": [ { "palier": 4, "taux_base": 0.67 }, { "palier": 5, "taux_base": 2 } ] }
+  ],
+
+  "calcul": {
+    "formule_taux": "taux_affiche = taux_base * multiplicateur_butin",
+    "formule_probabilite": "P(au moins 1 drop) = 1 - (1 - p)^(combats_eligibles * nb_joueurs)",
+    "formule_esperance": "songes_moyens = 1 / (1 - (1 - p)^(combats_eligibles * nb_joueurs))",
+    "combats_par_palier": { "1": 3, "2": 5, "3": 5, "4": 5, "5": 4 },
+    "combats_total_songe": 22,
+    "notes": [
+      "Un tirage indépendant par joueur et par combat éligible.",
+      "Pour 'au moins une légende parmi les 26', agréger : p_any = 1 - (1 - p_unitaire)^26 par tirage.",
+      "Ne jamais présenter le résultat comme une garantie : c'est une espérance statistique."
+    ]
   },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 3,
-    "cle_taux": "legende_animale",
-    "taux": 0.016
+
+  "bribes_de_reve": {
+    "note": "Bribes gagnées par vague REMPORTÉE lors du combat final. Il faut gagner le combat pour les obtenir. Rêve = 1 vague pour la victoire, Paradoxe et Cauchemar = 3 vagues. Les vagues supplémentaires rapportent des bribes en plus.",
+    "par_intensite": {
+      "reve_1": 25, "reve_2": 50, "reve_3": 75,
+      "paradoxe_1": 75, "paradoxe_2": 100, "paradoxe_3": 150, "paradoxe_4": 200,
+      "cauchemar_1": 300, "cauchemar_2": 500, "cauchemar_3": 1000
+    }
   },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "legende_animale",
-    "taux": 0.014
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 5,
-    "cle_taux": "legende_animale",
-    "taux": 0.017
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 1,
-    "cle_taux": "bouclireve_etoile",
-    "taux": 0.001
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 2,
-    "cle_taux": "bouclireve_etoile",
-    "taux": 0.003
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 3,
-    "cle_taux": "bouclireve_etoile",
-    "taux": 0.003
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "bouclireve_etoile",
-    "taux": 0.002
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 5,
-    "cle_taux": "bouclireve_etoile",
-    "taux": 0.003
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 1,
-    "cle_taux": "bouclireve_palier",
-    "taux": 0.001
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 2,
-    "cle_taux": "bouclireve_palier",
-    "taux": 0.003
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 3,
-    "cle_taux": "bouclireve_palier",
-    "taux": 0.003
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "bouclireve_palier",
-    "taux": 0.002
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 5,
-    "cle_taux": "bouclireve_palier",
-    "taux": 0.003
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 3,
-    "cle_taux": "diplome_feur",
-    "taux": 0.003
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "diplome_feur",
-    "taux": 0.002
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 5,
-    "cle_taux": "diplome_feur",
-    "taux": 0.003
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "rune_astrale_legendaire",
-    "taux": 0.965
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 5,
-    "cle_taux": "rune_astrale_legendaire",
-    "taux": 3.36
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "rune_astrale_merveilleuse",
-    "taux": 2.88
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 5,
-    "cle_taux": "rune_astrale_merveilleuse",
-    "taux": 6.72
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 3,
-    "cle_taux": "rune_astrale_epatante",
-    "taux": 3.12
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "rune_astrale_epatante",
-    "taux": 5.76
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 3,
-    "cle_taux": "rune_astrale_majeure",
-    "taux": 6.24
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "rune_astrale_majeure",
-    "taux": 8.64
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 1,
-    "cle_taux": "rune_astrale_moyenne",
-    "taux": 2.4
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 2,
-    "cle_taux": "rune_astrale_moyenne",
-    "taux": 5.28
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 1,
-    "cle_taux": "rune_astrale_mineure",
-    "taux": 4.8
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 2,
-    "cle_taux": "rune_astrale_mineure",
-    "taux": 7.92
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 1,
-    "cle_taux": "reflet_onirique",
-    "taux": 100
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 2,
-    "cle_taux": "reflet_onirique",
-    "taux": 100
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 3,
-    "cle_taux": "reflet_onirique",
-    "taux": 100
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 4,
-    "cle_taux": "reflet_onirique",
-    "taux": 100
-  },
-  {
-    "intensite": "paradoxe",
-    "niveau": 1,
-    "palier": 5,
-    "cle_taux": "reflet_onirique",
-    "taux": 100
+
+  "_verification": {
+    "note": "Valeurs relevées en jeu servant de contrôle. Un script de test doit vérifier que taux_base * multiplicateur les reproduit (arrondi à 3 décimales pour les faibles taux, 1 décimale pour les runes).",
+    "releves": [
+      { "intensite": "reve_1",      "categorie": "cosmetique",      "attendu": 0.001 },
+      { "intensite": "paradoxe_1",  "categorie": "rune_lvl200_p4",  "attendu": 0.804 },
+      { "intensite": "paradoxe_1",  "categorie": "rune_base_2",     "attendu": 2.4 },
+      { "intensite": "paradoxe_1",  "categorie": "rune_base_4",     "attendu": 4.8 },
+      { "intensite": "paradoxe_1",  "categorie": "rune_base_6",     "attendu": 7.2 },
+      { "intensite": "paradoxe_2",  "categorie": "legende",         "attendu": 0.005 },
+      { "intensite": "paradoxe_2",  "categorie": "legende_animale", "attendu": 0.014 },
+      { "intensite": "paradoxe_2",  "categorie": "rune_lvl200_p4",  "attendu": 0.938 },
+      { "intensite": "paradoxe_3",  "categorie": "cosmetique",      "attendu": 0.003 },
+      { "intensite": "paradoxe_3",  "categorie": "legende",         "attendu": 0.006 },
+      { "intensite": "paradoxe_3",  "categorie": "legende_animale", "attendu": 0.016 },
+      { "intensite": "paradoxe_3",  "categorie": "rune_lvl200_p4",  "attendu": 1.072 },
+      { "intensite": "paradoxe_4",  "categorie": "cosmetique",      "attendu": 0.004 },
+      { "intensite": "paradoxe_4",  "categorie": "legende",         "attendu": 0.007 },
+      { "intensite": "paradoxe_4",  "categorie": "legende_animale", "attendu": 0.019 },
+      { "intensite": "paradoxe_4",  "categorie": "rune_lvl200_p4",  "attendu": 1.273 },
+      { "intensite": "cauchemar_1", "categorie": "cosmetique",      "attendu": 0.004 },
+      { "intensite": "cauchemar_1", "categorie": "legende",         "attendu": 0.008 },
+      { "intensite": "cauchemar_1", "categorie": "legende_animale", "attendu": 0.022 },
+      { "intensite": "cauchemar_1", "categorie": "rune_lvl200_p4",  "attendu": 1.474 },
+      { "intensite": "cauchemar_2", "categorie": "cosmetique",      "attendu": 0.005 },
+      { "intensite": "cauchemar_2", "categorie": "legende",         "attendu": 0.009 },
+      { "intensite": "cauchemar_2", "categorie": "legende_animale", "attendu": 0.025 },
+      { "intensite": "cauchemar_2", "categorie": "rune_lvl200_p4",  "attendu": 1.675 },
+      { "intensite": "cauchemar_3", "categorie": "cosmetique",      "attendu": 0.006 },
+      { "intensite": "cauchemar_3", "categorie": "legende",         "attendu": 0.011 },
+      { "intensite": "cauchemar_3", "categorie": "legende_animale", "attendu": 0.030 },
+      { "intensite": "cauchemar_3", "categorie": "rune_lvl200_p4",  "attendu": 2.010 }
+    ]
   }
-]
+}

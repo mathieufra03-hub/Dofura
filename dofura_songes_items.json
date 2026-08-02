@@ -433,7 +433,7 @@
       4,
       5
     ],
-    "intensite_min": null
+    "intensite_min": "paradoxe"
   },
   {
     "item_id": 21968,
@@ -444,6 +444,6 @@
       4,
       5
     ],
-    "intensite_min": null
+    "intensite_min": "paradoxe"
   }
 ]

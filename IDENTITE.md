@@ -576,9 +576,13 @@ vrais chiffres. Colonne "1 tous les X songes" agrégée calculable pour Cosméti
 qu'un cosmétique quelconque tombe) mais pas pour les Runes ("—" volontaire) : taux trop hétérogènes
 (0,965 % à 6,72 %) pour qu'une agrégation ait un sens, décision explicite de Popo.
 
-**Avertissement prospection**, sur la ligne Cosmétiques et dupliqué dans son détail déplié
-uniquement (jamais Légendes/Animales/Runes, qui n'y sont pas soumises) : "⚠️ Ces taux varient selon
-la prospection du groupe. Les valeurs ci-dessous sont indicatives."
+**Avertissement prospection**, sur la ligne Cosmétiques uniquement (jamais Légendes/Animales/Runes,
+qui n'y sont pas soumises) : "⚠️ Ces taux varient selon la prospection de chaque personnage,
+individuellement. Les valeurs ci-dessous sont les taux bruts affichés en jeu, sans prospection."
+(texte corrigé le 3 août 2026 — "prospection du groupe" était factuellement faux, la prospection
+qui influe sur les cosmétiques est celle du personnage individuel ; rendu en double avant cette même
+date — un exemplaire toujours visible + un second dans le détail déplié — corrigé à un seul, toujours
+visible.)
 
 **Noms raccourcis** (`nomCourt()`, `PREFIXES_A_RETIRER`) : le préfixe "Légende de/du/d'" (Légendes)
 et "Légende animale de " (Légendes animales) retiré à l'affichage seulement — jamais dans les

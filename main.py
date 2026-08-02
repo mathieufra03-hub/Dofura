@@ -2451,18 +2451,21 @@ def songes_items_trackables():
 # l'objet n'est volontairement PAS suivi dans songe_items_trackables (pas de
 # tracker cote joueur pour ceux-la) — nom en dur faute d'item_id/image a
 # resoudre par jointure, demande explicite Popo (31 juillet 2026). Categorie
-# "rune_astrale" choisie par defaut pour "reflet_onirique" aussi (pas de
-# categorie dediee existante) — a corriger si Popo en veut une distincte.
+# "rune_astrale" choisie par defaut (pas de categorie dediee existante) — a
+# corriger si Popo en veut une distincte.
 # "rune_astrale_legendaire" volontairement absent d'ici : deja couvert par
 # songe_items_trackables (item "Rune astrale legendaire"), l'ajouter ici le
 # dupliquerait dans le tableau.
+# "reflet_onirique" retire (2 aout 2026, migration dofura_songes_taux.json
+# v2.0) : sa valeur (100 sur les 5 paliers) etait un placeholder, aucune
+# source dans le nouveau fichier — decision Popo, ne pas reintroduire sans
+# une vraie mesure en jeu.
 RUNES_HORS_TRACKER = {
     "rune_astrale_merveilleuse": "Rune astrale merveilleuse",
     "rune_astrale_epatante": "Rune astrale épatante",
     "rune_astrale_majeure": "Rune astrale majeure",
     "rune_astrale_moyenne": "Rune astrale moyenne",
     "rune_astrale_mineure": "Rune astrale mineure",
-    "reflet_onirique": "Reflet onirique",
 }
 
 @app.get("/songes/taux")
@@ -2505,11 +2508,17 @@ def songes_taux(intensite: str, niveau: int):
         })
 
     for cle_taux, nom in RUNES_HORS_TRACKER.items():
-        cur.execute("SELECT DISTINCT palier FROM songe_taux WHERE cle_taux = ? ORDER BY palier", (cle_taux,))
-        paliers_possibles = [r["palier"] for r in cur.fetchall()]
+        # 3 aout 2026 : l'ancienne requete ("SELECT DISTINCT palier FROM
+        # songe_taux WHERE cle_taux = ?") ne filtrait PAS par intensite/niveau
+        # — un cle_taux avec des lignes a d'AUTRES intensites (ex. Paradoxe)
+        # passait le test meme a une intensite sans aucune donnee (Reve),
+        # affichant une rune fantome a taux null partout. charger_taux() est
+        # deja filtre par intensite/niveau — ses cles sont les seuls paliers
+        # reellement disponibles ICI, jamais None (colonne taux NOT NULL).
+        taux = charger_taux(conn, intensite, niveau, cle_taux)
+        paliers_possibles = sorted(taux.keys())
         if not paliers_possibles:
             continue
-        taux = charger_taux(conn, intensite, niveau, cle_taux)
         resultat.append({
             "item_id": None, "nom": nom, "img": None, "categorie": "rune_astrale",
             "paliers_eligibles": paliers_possibles,

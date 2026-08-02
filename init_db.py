@@ -3,6 +3,7 @@ import sqlite3
 import bcrypt
 import os
 import re
+from taux_songes import migrer as migrer_taux_songes
 
 DB_PATH = os.getenv("DB_PATH", "dofura.db")
 
@@ -26,7 +27,14 @@ with open("dofura_succes.json", "r", encoding="utf-8") as f:
 with open("dofura_songes_items.json", "r", encoding="utf-8") as f:
     songes_items = json.load(f)
 with open("dofura_songes_taux.json", "r", encoding="utf-8") as f:
-    songes_taux = json.load(f)
+    songes_taux_v2 = json.load(f)
+# v2.0 (2 aout 2026, migration) : taux_base + multiplicateur par intensite,
+# pas les 10 tables en dur. migrer_taux_songes() reconstruit le format plat
+# {intensite, niveau, palier, cle_taux, taux} attendu par la table songe_taux
+# (scripts/migrer_taux_songes.py, memes decisions que l'audit du meme jour :
+# reflet_onirique absent — plus de source, retire aussi de RUNES_HORS_TRACKER
+# cote main.py — reserve runes non implementee, voir _meta.reserve_connue).
+songes_taux = migrer_taux_songes(songes_taux_v2)
 with open("dofura_songes_boss_modifs.json", "r", encoding="utf-8") as f:
     songes_boss_modifs = json.load(f)
 print(f"[init_db] JSON charges. Connexion a la base : {DB_PATH}")

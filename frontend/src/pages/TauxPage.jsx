@@ -155,7 +155,7 @@ function LigneCategorie({ categorie, items, combatsParPalier, nbPersonnages, exp
   const profil = uniforme ? items[0] : null
   const songesAgrege = estRune ? null : calculerSongesItems(items, combatsParPalier, nbPersonnages)
   const songesPrecis = uniforme ? calculerSongesItems([items[0]], combatsParPalier, nbPersonnages) : null
-  const avertissementProspection = "⚠️ Ces taux varient selon la prospection du groupe. Les valeurs ci-dessous sont indicatives."
+  const avertissementProspection = "⚠️ Ces taux varient selon la prospection de chaque personnage, individuellement. Les valeurs ci-dessous sont les taux bruts affichés en jeu, sans prospection."
 
   return (
     <div style={{ marginBottom: 8 }}>
@@ -202,7 +202,6 @@ function LigneCategorie({ categorie, items, combatsParPalier, nbPersonnages, exp
 
       {expanded && (
         <div style={{ marginTop: 6, marginBottom: 10, paddingLeft: 20 }}>
-          {estCosmetique && <div style={{ ...tp.avertissement, padding: "0 14px 8px" }}>{avertissementProspection}</div>}
           {items.map(it => (
             <LigneItem
               key={it.item_id ?? it.nom} it={it} categorie={categorie}
