@@ -17,6 +17,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from config import songes as songes_config
+from taux_songes import migrer as migrer_taux_songes
 
 # Chemin de la base en variable d'environnement (SONGES.md §2) : sur Railway,
 # DB_PATH pointe vers le volume persistant monte sur /data. En local, aucune
@@ -3201,6 +3202,371 @@ def sauvegarde_admin(x_admin_token: str = Header(default="", alias="X-Admin-Toke
         media_type="application/octet-stream",
         background=BackgroundTask(shutil.rmtree, dossier_backup, ignore_errors=True),
     )
+
+# ============================================================
+# /admin/refresh-encyclopedie (3 aout 2026, diagnostic prod : 500 sur
+# /songes/taux, "no such table: songe_items_trackables")
+# ============================================================
+# Cause : base_deja_peuplee() (haut de ce fichier) ne relance init_db.py
+# QUE si 'monstres' est vide — sur un deploiement deja en place, toute
+# table AJOUTEE au schema d'init_db.py APRES la toute premiere mise en
+# ligne n'a donc jamais ete creee, meme aux redeploiements suivants (le
+# schema evolue, le volume Railway persistant non). Diagnostic du meme
+# jour, sur une copie de la base de prod ouverte en lecture seule : 10
+# tables dans ce cas exact — 3 encyclopediques du Suivi de Songes
+# (songe_items_trackables, songe_taux, songe_boss_modifs) + les 7 tables
+# de progression joueur du meme chantier (jamais creees, donc jamais
+# utilisees : aucune donnee joueur a preserver dessus AUJOURD'HUI, mais
+# ce sera faux des le premier joueur qui utilise le tracker — l'endpoint
+# est ecrit comme si elles contenaient deja de vraies donnees).
+#
+# Registre volontairement LIMITE a ces 10 tables (pas un mecanisme
+# generique pour "toute table future manquante") : si le schema
+# d'init_db.py gagne encore une table plus tard et qu'elle subit le meme
+# sort, TABLES_ENDPOINT_CREATE devra etre mis a jour a la main. Prefere a
+# une solution generique qui aurait du importer/deriver dynamiquement le
+# schema d'init_db.py — risque ecarte plus bas.
+#
+# Copies (pas import) des whitelists d'init_db.py : importer init_db.py
+# executerait tout son code de haut niveau (chargement JSON + connexion a
+# DB_PATH + DROP/CREATE/INSERT) des l'import, ce qui ecraserait la vraie
+# base au demarrage de main.py — inacceptable. Ces deux sets sont donc
+# des copies independantes, a tenir synchronisees a la main avec
+# TABLES_ENCYCLOPEDIE / TABLES_UTILISATEUR_INTERDITES d'init_db.py.
+TABLES_ENCYCLOPEDIQUES_REFRESH = {
+    "monstres", "grades", "drops", "sorts", "zones", "objets", "objets_effets",
+    "recettes", "panoplies", "panoplies_effets", "donjons", "donjons_monstres",
+    "donjons_objets_requis", "zones_areas", "quetes", "quetes_etapes",
+    "quetes_etapes_items", "quetes_etapes_actions", "quetes_ressources",
+    "quetes_prerequis_quetes", "quetes_prerequis_objets", "quetes_donjons",
+    "succes", "succes_objectifs", "succes_recompenses_items", "succes_donjons",
+    "songe_items_trackables", "songe_taux", "songe_boss_modifs",
+}
+TABLES_INTERDITES_REFRESH = {
+    "users", "progression_joueur", "favoris",
+    "songe_personnages", "songe_teams", "songe_team_membres",
+    "songe_runs", "songe_run_participants", "songe_drops", "songe_journal",
+}
+
+# SQL de creation des 10 tables manquantes identifiees le 3 aout 2026,
+# copie verbatim depuis le schema actuel d'init_db.py (IF NOT EXISTS ajoute
+# partout ici : contrairement a init_db.py, cet endpoint ne DROP jamais,
+# donc chaque CREATE doit etre idempotent par lui-meme). songe_runs recoit
+# directement duree_secondes/vague_finale/nombre_tours dans le CREATE
+# (dans init_db.py ces 3 colonnes arrivent par une migration ALTER TABLE
+# a part, parce que cette table PEUT deja exister sans elles en prod — ici
+# la table est neuve a 100% si on la cree, donc le schema final complet
+# directement, pas de migration a rejouer).
+TABLES_ENDPOINT_CREATE = {
+    "songe_items_trackables": """
+        CREATE TABLE IF NOT EXISTS songe_items_trackables (
+            item_id       INTEGER PRIMARY KEY,
+            categorie     TEXT NOT NULL,
+            cle_taux      TEXT NOT NULL,
+            paliers       TEXT NOT NULL,
+            intensite_min TEXT
+        )
+    """,
+    "songe_taux": """
+        CREATE TABLE IF NOT EXISTS songe_taux (
+            intensite     TEXT NOT NULL,
+            niveau        INTEGER NOT NULL,
+            palier        INTEGER NOT NULL,
+            cle_taux      TEXT NOT NULL,
+            taux          REAL NOT NULL,
+            PRIMARY KEY (intensite, niveau, palier, cle_taux)
+        )
+    """,
+    "songe_boss_modifs": """
+        CREATE TABLE IF NOT EXISTS songe_boss_modifs (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            monstre_id INTEGER NOT NULL,
+            titre      TEXT NOT NULL,
+            ligne      TEXT NOT NULL,
+            ordre      INTEGER NOT NULL
+        )
+    """,
+    "songe_personnages": """
+        CREATE TABLE IF NOT EXISTS songe_personnages (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id       INTEGER,
+            nom           TEXT NOT NULL,
+            classe        TEXT,
+            serveur       TEXT,
+            cree_le       TEXT DEFAULT (datetime('now'))
+        )
+    """,
+    "songe_teams": """
+        CREATE TABLE IF NOT EXISTS songe_teams (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id       INTEGER,
+            nom           TEXT NOT NULL,
+            cree_le       TEXT DEFAULT (datetime('now'))
+        )
+    """,
+    "songe_team_membres": """
+        CREATE TABLE IF NOT EXISTS songe_team_membres (
+            team_id       INTEGER NOT NULL REFERENCES songe_teams(id) ON DELETE CASCADE,
+            perso_id      INTEGER NOT NULL REFERENCES songe_personnages(id) ON DELETE CASCADE,
+            PRIMARY KEY (team_id, perso_id)
+        )
+    """,
+    "songe_runs": """
+        CREATE TABLE IF NOT EXISTS songe_runs (
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id            INTEGER,
+            date_run           TEXT DEFAULT (datetime('now')),
+            intensite          TEXT NOT NULL,
+            niveau             INTEGER NOT NULL,
+            terminee           INTEGER NOT NULL DEFAULT 1,
+            salle_atteinte     INTEGER NOT NULL DEFAULT 26,
+            nb_combats         INTEGER NOT NULL,
+            source_nb_combats  TEXT NOT NULL,
+            team_id            INTEGER,
+            note               TEXT,
+            duree_secondes     INTEGER,
+            vague_finale       INTEGER,
+            nombre_tours       INTEGER
+        )
+    """,
+    "songe_run_participants": """
+        CREATE TABLE IF NOT EXISTS songe_run_participants (
+            run_id        INTEGER NOT NULL REFERENCES songe_runs(id) ON DELETE CASCADE,
+            perso_id      INTEGER NOT NULL REFERENCES songe_personnages(id),
+            PRIMARY KEY (run_id, perso_id)
+        )
+    """,
+    "songe_drops": """
+        CREATE TABLE IF NOT EXISTS songe_drops (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id        INTEGER NOT NULL REFERENCES songe_runs(id) ON DELETE CASCADE,
+            perso_id      INTEGER NOT NULL REFERENCES songe_personnages(id),
+            item_id       INTEGER NOT NULL,
+            quantite      INTEGER NOT NULL DEFAULT 1,
+            palier        INTEGER,
+            cree_le       TEXT DEFAULT (datetime('now'))
+        )
+    """,
+    "songe_journal": """
+        CREATE TABLE IF NOT EXISTS songe_journal (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id       INTEGER NOT NULL,
+            item_id       INTEGER NOT NULL,
+            palier        INTEGER,
+            date_drop     TEXT
+        )
+    """,
+}
+
+# (?<!ON ) exclut "ON DELETE CASCADE"/"ON UPDATE ..." (clauses FK standard,
+# legitimes dans un CREATE TABLE, pas des verbes destructeurs) sans exclure
+# un vrai DELETE/UPDATE en debut de statement — bug trouve en testant (3
+# aout 2026) : la 1ere version de cette regex refusait a tort le CREATE de
+# songe_team_membres/songe_run_participants/songe_drops, qui portent tous
+# "REFERENCES ... ON DELETE CASCADE".
+_VERBE_DESTRUCTEUR_REFRESH = re.compile(r"\bDROP\b|(?<!ON )\bDELETE\b|(?<!ON )\bUPDATE\b", re.IGNORECASE)
+
+def _verifier_sql_sans_verbe_destructeur_refresh(sql):
+    """Garde statique en plus de la garde par operation ci-dessous : meme si
+    TABLES_ENDPOINT_CREATE etait un jour modifie par erreur, aucun SQL
+    contenant DROP/DELETE/UPDATE ne peut etre execute par cet endpoint."""
+    trouve = _VERBE_DESTRUCTEUR_REFRESH.search(sql)
+    if trouve:
+        raise RuntimeError(
+            f"SQL refuse : verbe destructeur '{trouve.group()}' detecte — "
+            f"/admin/refresh-encyclopedie est limite a CREATE/INSERT."
+        )
+
+def _autoriser_operation_refresh(table, operation):
+    """Garde explicite (tache 5, 3 aout 2026) : verifiee AVANT chaque
+    ecriture, jamais apres coup. Porte sur l'OPERATION, pas seulement sur
+    le nom de la table : create et fill n'ont pas la meme portee (creer une
+    table vide ne detruit rien ; la remplir depuis les JSON n'a de sens que
+    pour les tables encyclopediques, et est un danger direct sur toute
+    table de progression joueur, qui doit rester create-only pour
+    toujours)."""
+    if operation == "create":
+        if table in TABLES_ENCYCLOPEDIQUES_REFRESH or table in TABLES_INTERDITES_REFRESH:
+            return
+        raise RuntimeError(f"CREATE refuse : {table!r} hors des tables connues de cet endpoint.")
+    if operation == "fill":
+        if table in TABLES_INTERDITES_REFRESH:
+            raise RuntimeError(
+                f"REMPLISSAGE REFUSE : {table!r} est une table de progression joueur protegee — "
+                f"jamais de reimport JSON dessus, meme si elle vient d'etre creee vide."
+            )
+        if table not in TABLES_ENCYCLOPEDIQUES_REFRESH:
+            raise RuntimeError(f"REMPLISSAGE REFUSE : {table!r} hors whitelist encyclopedique.")
+        return
+    raise RuntimeError(f"Operation inconnue : {operation!r}")
+
+def _remplir_songe_items_trackables_refresh(cur):
+    with open("dofura_songes_items.json", "r", encoding="utf-8") as f:
+        songes_items = json.load(f)
+    for it in songes_items:
+        cur.execute("""
+            INSERT OR REPLACE INTO songe_items_trackables (item_id, categorie, cle_taux, paliers, intensite_min)
+            VALUES (?, ?, ?, ?, ?)
+        """, (it.get("item_id"), it.get("categorie"), it.get("cle_taux"),
+              json.dumps(it.get("paliers")), it.get("intensite_min")))
+
+def _remplir_songe_taux_refresh(cur):
+    with open("dofura_songes_taux.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+    for t in migrer_taux_songes(data):
+        cur.execute("""
+            INSERT OR REPLACE INTO songe_taux (intensite, niveau, palier, cle_taux, taux)
+            VALUES (?, ?, ?, ?, ?)
+        """, (t.get("intensite"), t.get("niveau"), t.get("palier"), t.get("cle_taux"), t.get("taux")))
+
+def _remplir_songe_boss_modifs_refresh(cur):
+    with open("dofura_songes_boss_modifs.json", "r", encoding="utf-8") as f:
+        songes_boss_modifs = json.load(f)
+    for cle, entree in songes_boss_modifs.items():
+        titre = entree.get("titre")
+        lignes = entree.get("modifs", [])
+        if entree.get("zone"):
+            cur.execute("""
+                SELECT DISTINCT m.id FROM monstres m
+                JOIN zones z ON z.monstre_id = m.id
+                JOIN zones_areas za ON za.nom = z.nom
+                WHERE za.area = ?
+            """, (cle,))
+            monstre_ids = [r[0] for r in cur.fetchall()]
+        else:
+            cur.execute("SELECT id FROM monstres WHERE nom = ?", (cle,))
+            row = cur.fetchone()
+            monstre_ids = [row[0]] if row else []
+        if not monstre_ids:
+            print(f"[ADMIN] refresh-encyclopedie : cle sans correspondance dans dofura_songes_boss_modifs.json ignoree : {cle!r}")
+            continue
+        for monstre_id in monstre_ids:
+            for ordre, ligne in enumerate(lignes):
+                cur.execute("""
+                    INSERT INTO songe_boss_modifs (monstre_id, titre, ligne, ordre)
+                    VALUES (?, ?, ?, ?)
+                """, (monstre_id, titre, ligne, ordre))
+
+FILL_FUNCTIONS_REFRESH = {
+    "songe_items_trackables": _remplir_songe_items_trackables_refresh,
+    "songe_taux": _remplir_songe_taux_refresh,
+    "songe_boss_modifs": _remplir_songe_boss_modifs_refresh,
+}
+
+def _compter_lignes_refresh(cur, table):
+    cur.execute(f"SELECT COUNT(*) FROM {table}")
+    return cur.fetchone()[0]
+
+def _sauvegarder_avant_ecriture_refresh(chemin_db):
+    """Backup via l'API sqlite3 conn.backup() (coherente meme si la base
+    source est en cours d'ecriture, meme principe que /admin/backup) —
+    PAS une simple copie de fichier. Si quoi que ce soit echoue, ou si le
+    fichier produit est absent/vide, leve RuntimeError : l'appelant doit
+    alors annuler l'operation entiere sans ecrire quoi que ce soit."""
+    horodatage = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    chemin_backup = f"{chemin_db}.avant-refresh-{horodatage}.db"
+    try:
+        source = sqlite3.connect(chemin_db)
+        destination = sqlite3.connect(chemin_backup)
+        with destination:
+            source.backup(destination)
+        source.close()
+        destination.close()
+    except Exception as e:
+        raise RuntimeError(f"Echec de la sauvegarde automatique : {e}")
+    if not os.path.exists(chemin_backup) or os.path.getsize(chemin_backup) == 0:
+        raise RuntimeError("La sauvegarde automatique a produit un fichier absent ou vide.")
+    return chemin_backup
+
+@app.post("/admin/refresh-encyclopedie")
+def refresh_encyclopedie(x_admin_token: str = Header(default="", alias="X-Admin-Token")):
+    """Cree (CREATE TABLE IF NOT EXISTS) puis remplit les tables
+    encyclopediques manquantes en prod — voir le commentaire au-dessus de
+    TABLES_ENCYCLOPEDIQUES_REFRESH pour le diagnostic complet (3 aout 2026).
+
+    - CREATE TABLE IF NOT EXISTS : autorise sur les 10 tables du registre,
+      encyclopediques ET progression joueur (creer une table absente ne
+      detruit rien).
+    - Remplissage depuis les JSON sources : UNIQUEMENT sur les 3 tables
+      encyclopediques (songe_items_trackables, songe_taux,
+      songe_boss_modifs), a CHAQUE appel (INSERT OR REPLACE, idempotent
+      par item_id/palier — rejouer le remplissage ne duplique jamais rien,
+      "refresh" au sens propre : normalise vers l'etat courant des JSON).
+    - Les 7 tables de progression joueur ne sont JAMAIS remplies par cet
+      endpoint, qu'elles viennent d'etre creees ou qu'elles existent deja
+      avec de vraies donnees — seule leur CREATE IF NOT EXISTS peut se
+      produire, jamais un INSERT dessus.
+    - Aucun DROP/DELETE/UPDATE nulle part : verifie par la garde par
+      operation (_autoriser_operation_refresh) ET par une verification
+      statique du texte SQL avant chaque execution.
+    - Transaction unique : soit toutes les tables du registre sont
+      traitees avec succes et commit une seule fois a la fin, soit la
+      moindre erreur declenche un rollback complet (CREATE TABLE est
+      transactionnel sous SQLite, contrairement a d'autres SGBD)."""
+    if not ADMIN_TOKEN or not hmac.compare_digest(x_admin_token, ADMIN_TOKEN):
+        raise HTTPException(status_code=401)
+
+    print("[ADMIN] POST /admin/refresh-encyclopedie : debut.")
+
+    # Validation COMPLETE de tout le registre AVANT le backup et avant la
+    # moindre connexion en ecriture (3 aout 2026, trouve en testant : un bug
+    # dans la garde elle-meme, sur UNE table en fin de registre, avait quand
+    # meme laisse une ecriture partielle se produire sur les tables
+    # precedentes avant de planter — CREATE TABLE se comporte de façon
+    # surprenante vis-a-vis de conn.rollback() sous sqlite3/Python, mieux
+    # vaut ne rien ecrire du tout si UNE SEULE table du registre est mal
+    # configuree, plutot que de compter sur un rollback fiable a 100%).
+    for table, sql_create in TABLES_ENDPOINT_CREATE.items():
+        _autoriser_operation_refresh(table, "create")
+        _verifier_sql_sans_verbe_destructeur_refresh(sql_create)
+        if table in TABLES_ENCYCLOPEDIQUES_REFRESH:
+            _autoriser_operation_refresh(table, "fill")
+    print(f"[ADMIN] refresh-encyclopedie : {len(TABLES_ENDPOINT_CREATE)} table(s) du registre validees (garde + SQL), aucune ecriture encore effectuee.")
+
+    try:
+        chemin_backup = _sauvegarder_avant_ecriture_refresh(DB_PATH)
+    except RuntimeError as e:
+        print(f"[ADMIN] refresh-encyclopedie : ANNULE avant toute ecriture — {e}")
+        raise HTTPException(status_code=500, detail="Sauvegarde automatique echouee, operation annulee.")
+    print(f"[ADMIN] refresh-encyclopedie : sauvegarde ok -> {chemin_backup}")
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    resultats = []
+    try:
+        for table, sql_create in TABLES_ENDPOINT_CREATE.items():
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name = ?", (table,))
+            existait_deja = cur.fetchone() is not None
+            lignes_avant = _compter_lignes_refresh(cur, table) if existait_deja else 0
+
+            cur.execute(sql_create)
+
+            if table in TABLES_ENCYCLOPEDIQUES_REFRESH:
+                _autoriser_operation_refresh(table, "fill")
+                FILL_FUNCTIONS_REFRESH[table](cur)
+                action = "remplie"
+            elif existait_deja:
+                action = "deja_presente_ignoree"
+            else:
+                action = "creee"
+
+            lignes_apres = _compter_lignes_refresh(cur, table)
+            resultats.append({
+                "table": table, "action": action,
+                "lignes_avant": lignes_avant, "lignes_apres": lignes_apres,
+            })
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        print(f"[ADMIN] refresh-encyclopedie : ECHEC, rollback complet — {e}")
+        raise HTTPException(status_code=500, detail=f"Echec pendant l'operation, rollback effectue : {e}")
+
+    conn.commit()
+    conn.close()
+    print(f"[ADMIN] refresh-encyclopedie : succes. {resultats}")
+    return {"backup": chemin_backup, "tables": resultats}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
