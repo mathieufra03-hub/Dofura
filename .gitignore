@@ -11,6 +11,10 @@ audit_sorts.json
 # au deploiement. dofura_effets_speciaux.json est lu par main.py (chantier
 # #3, piege #10). A revoir une fois le volume Railway en place.
 
+# Fichiers bruts du scraping (500+ Mo, regenerables via scripts/scraper_items.py)
+# JAMAIS commitables : GitHub refuse les fichiers > 100 Mo
+dofura_*_brut.json
+
 # Backups locaux
 backups/
 
