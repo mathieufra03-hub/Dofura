@@ -5,46 +5,27 @@
 
 ## Reprise (dernière session : 2026-08-03)
 
-**Chantiers Migration des taux de Songes + Diagnostic tables manquantes en prod fermés le 2026-08-03** (voir chantiers 21 et 22 pour le détail complet). Popo a fourni `dofura_songes_taux.json` v2.0 (formule taux_base × multiplicateur, remplace les relevés ponctuels Paradoxe I uniquement de l'ancien fichier) — la migration a mis au jour, en la testant en prod, un bug de production sans rapport direct avec la migration elle-même : `/songes/taux` renvoyait 500, 10 tables (dont toute la partie donnée-joueur du tracker Songes) n'ayant jamais été créées sur le volume Railway. Nouvel endpoint `/admin/refresh-encyclopedie` créé pour ce cas et les suivants du même genre — voir piège #12.
+**Dernière session : 2026-08-03.** Ménage complet du projet (phases 0, 1a, 1b).
 
-**Chantier Grimoire fermé le 2026-07-29** (fusion Équipements/Ressources/Bestiaire/Panoplies en une page unique avec recherche globale et panneau latéral — voir chantier 20 pour le détail complet). Entre le chantier Quêtes (17, 2026-07-13) et celui-ci : le Suivi de Songes (SONGES.md, plusieurs refontes d'interface) et un chantier style global (ambiance Krosmoz renforcée, jauge de progression des Dofus) ont aussi été faits mais pas encore documentés en détail dans cette section — voir SONGES.md et l'historique Git pour ces deux-là en attendant un futur passage de mise à jour de ce fichier.
-
-**Phase 1 de la roadmap (encyclopédie : Donjons → Panoplies → Zones) terminée**, puis **chantier Quêtes fait le 2026-07-13** (liste + fiche, demandé directement par Popo hors de la liste des candidats ci-dessous — voir chantier 17 pour le détail complet).
-
-**Premier feedback visuel de Popo (2026-07-10), toujours pas traité :** les pages Panoplies et Zones sont jugées pas claires, organisation à revoir — détails à venir dans `REFONTE.md` (à créer, voir ci-dessous).
-
-**Candidats pour la prochaine session, à trancher avec Popo avant tout code (règle 1) :**
-1. **Cadrage du compagnon farm/craft** — chantier stratégique (prochaine étape de la Vision après l'encyclopédie), pas un simple chantier technique : périmètre, écrans, données déjà disponibles vs manquantes à définir ensemble avant d'écrire quoi que ce soit.
-2. **Mini-chantier Krag** — remplir `dofura_donjons_guides.json` (mécaniques de boss, actuellement vide, voir chantier Donjons).
-3. **Création de `REFONTE.md`** — consigner le feedback visuel de Popo (Panoplies/Zones pas claires, organisation à revoir) et cadrer la refonte graphique complète déjà notée en chantier futur #1.
+**Prochain chantier : L'Œil de Draconiros (n°1 de la roadmap).**
 
 ## Le projet
 
-**Dofura** = encyclopédie + hub d'outils Dofus 3.0. Objectif : devenir LA référence combinant data exhaustive, outils interactifs, suivi quêtes/succès, puis comptes utilisateurs.
+**Dofura** est un outil de suivi des Songes pour Dofus 3.0 : compter ses songes, traquer ses drops de légendes, connaître ses vraies chances. Le site EST le guide — un guide-outil, pas un guide-texte.
 
-## Vision (2026-07-09)
+## Vision
 
-Dofura vise à terme : **encyclopédie complète Dofus 3.0 + accompagnement du joueur** (suivi de progression, outils pratiques), pour rivaliser avec l'écosystème des fan-sites existants.
+**Pivot stratégique du 30-31 juillet 2026 :** Dofura se recentre sur le suivi des Songes après analyse de la concurrence.
 
-**Concurrents de référence :**
-- [dofusdb.fr](https://dofusdb.fr) — encyclopédie exhaustive : c'est notre **source de données**, pas notre cible.
-- [duffus.fr](https://duffus.fr) — guides + suivi de progression (cases à cocher) + comptes. Le modèle de notre future partie "accompagnement".
-- [tougli.barbofus.com](https://tougli.barbofus.com) — guides de quêtes + overlay in-game + multilingue.
-- [dofusyelle.com](https://dofusyelle.com) — curation d'expert, info directe.
-- [dafous.app](https://dafous.app) — boîte à outils tout-en-un (appli Unity).
+**Positionnement :** seul site à donner des taux chiffrés sur les Songes. Duffus a l'audience et le suivi généraliste, Picofus track sans comptes, DofusPourLesNoobs écrit les guides — personne ne fait les chiffres.
 
-**Positionnement Dofura :** exploiter notre base relationnelle propre (monstres↔drops↔zones↔recettes↔objets↔panoplies) pour proposer des outils croisés qu'un site éditorial classique ne peut pas offrir aussi facilement. Première brique d'accompagnement visée : **compagnon de farm/craft** (objet → ingrédients → où les farmer → progression cochable).
+Le tracker s'appelle **"L'Œil de Draconiros"**.
 
-**Retiré définitivement :** Simulateur de stuff · Commerce/HdV · Portails.
+**Nav actuelle :** DOFURA · L'Œil · Les Taux · La Bibliothèque · recherche · Mon compte · Discord.
 
-**Roadmap révisée (2026-07-09, react-router reporté) :**
-1. Compléter l'encyclopédie : **Donjons ✅** → **Panoplies ✅** → **Zones ✅** (encyclopédie complète — pas de carte interactive à ce stade, voir point 7)
-2. react-router (socle SEO/partage, vraies URLs) — reporté, voir Chantiers futurs
-3. Compagnon de farm/craft (première brique d'accompagnement)
-4. Comptes utilisateurs (Phase 4 — nécessite le volume persistant Railway, voir chantiers en cours #1)
-5. Refonte graphique complète
-6. Lancement — **penser à retirer le `noindex` (voir Chantiers en cours) avant cette étape**
-7. **Carte interactive du monde** (référence : [dofus-map.com](https://dofus-map.com)) — maps assemblées + positions des ressources récoltables. Feature finale phare, projet majeur. **Prérequis avant tout code : mini-chantier d'étude de faisabilité données** — les positions de ressources existent-elles en structuré chez DofusDB pour Dofus 3/Unity ? Une session d'inspection pure, zéro code, avant d'engager quoi que ce soit.
+**ABANDONNÉS (ne plus jamais proposer) :** encyclopédie généraliste comme produit principal, quêtes, succès, équipements/objets comme domaine à part entière, chasse au Dofus, carte interactive, portails, simulateur de stuff, commerce/HdV, compagnon de farm/craft, calculateur DD.
+
+**CONSERVÉ EN BASE :** les 21 700 items encyclopédiques restent, ne rien supprimer. La Bibliothèque est réduite à monstres, sorts, et items dropables en songe.
 
 ## Environnement de travail
 
@@ -68,7 +49,7 @@ Dofura vise à terme : **encyclopédie complète Dofus 3.0 + accompagnement du j
 8. **URL d'API en variable d'environnement** (`VITE_API_URL`). Plus de changer_api.py, plus d'oubli avant push.
 
 ### Protection des données
-9. **dofura.db hors Git** (régénéré uniquement si absent/vide par `init_db.py`, via `.gitignore` — voir "Prérequis Railway" ci-dessous, volume persistant en place depuis le 28 juillet 2026). **Exception : tous les JSON sources lus par `init_db.py`/`main.py` au démarrage restent DANS Git** — le déploiement Railway build depuis GitHub, donc c'est leur seule source lors du tout premier démarrage sur un volume vide. Liste à jour (2026-08-02) : `dofura_monstres.json`, `dofura_sorts.json`, `dofura_effects.json`, `dofura_effets_speciaux.json`, `dofura_etats_speciaux.json`, `dofura_items.json`, `dofura_recipes.json`, `dofura_item_sets.json`, `dofura_sorts_objets.json`, `dofura_donjons.json`, `dofura_donjons_guides.json`, `dofura_zones_areas.json`, `dofura_quetes.json`, `dofura_quetes_guides.json`, `dofura_succes.json`, `dofura_songes_items.json`, `dofura_songes_taux.json`, `dofura_songes_avis.json`, `dofura_songes_boss_modifs.json`. Voir piège #10.
+9. **dofura.db hors Git** (régénéré uniquement si absent/vide par `init_db.py`, via `.gitignore` — le volume Railway existe et le persiste entre redéploiements depuis le 28 juillet 2026, voir Stack & infrastructure). **Exception : tous les JSON sources lus par `init_db.py`/`main.py` au démarrage restent DANS Git** — le déploiement Railway build depuis GitHub, donc c'est leur seule source lors du tout premier démarrage sur un volume vide. Liste à jour (2026-08-02) : `dofura_monstres.json`, `dofura_sorts.json`, `dofura_effects.json`, `dofura_effets_speciaux.json`, `dofura_etats_speciaux.json`, `dofura_items.json`, `dofura_recipes.json`, `dofura_item_sets.json`, `dofura_sorts_objets.json`, `dofura_donjons.json`, `dofura_donjons_guides.json`, `dofura_zones_areas.json`, `dofura_quetes.json`, `dofura_quetes_guides.json`, `dofura_succes.json`, `dofura_songes_items.json`, `dofura_songes_taux.json`, `dofura_songes_avis.json`, `dofura_songes_boss_modifs.json`. Voir piège #8.
 10. **Backup de dofura.db avant tout script qui écrit dedans.** Une copie de fichier, c'est gratuit ; des semaines de scraping perdu, non.
 11. **Scraping avec pauses entre les requêtes.** Pour ne pas se faire bloquer par dofusdb ou Dofensive.
 12. **Jamais de mot de passe, clé API ou secret dans le code ou sur GitHub.** Variables d'environnement uniquement (onglet Variables de Railway).
@@ -87,7 +68,7 @@ Dofura vise à terme : **encyclopédie complète Dofus 3.0 + accompagnement du j
 
 ## ⚠️ Leçons apprises (données) — à relire avant tout nouveau domaine scrapé
 
-Ces 4 règles viennent de bugs réels (le "+0" et l'effet 1175 manquants au chantier #7/#8bis, le "--100 Force" au chantier #8). Elles s'appliquent dès le prochain domaine (Classes, Zones, Donjons...), pas seulement aux objets.
+Ces 4 règles viennent de bugs réels (le "+0" et l'effet 1175 manquants au chantier #7/#8bis, le "--100 Force" au chantier #8 — détail de ces chantiers : voir `doc/HISTORIQUE-CHANTIERS.md`). Elles s'appliquent dès le prochain domaine (Classes, Zones, Donjons...), pas seulement aux objets.
 
 1. **Ne jamais écarter un champ des données brutes sur intuition ("ça a l'air redondant").** Avant toute suppression dans un script de nettoyage : prouver par script que le champ est 100% reconstructible depuis les champs conservés, sur TOUTE la base — pas un échantillon. `possibleEffects` avait été jugé pur doublon d'`effects` au chantier #7 ; il portait en réalité le champ `value` manquant (le bug "+0") ET un effet entier absent d'`effects` (le sort accordé par les objets légendaires, chantier #8bis) — les deux fois découverts après coup, pas avant.
 2. **Après tout nettoyage/import : audit automatique brut vs nettoyé.** Compter les infos par entité des deux côtés (ex. nombre d'effets par objet dans `possibleEffects` vs `effects`) et signaler tout écart. C'est ce test précis qui aurait attrapé l'effet 1175 dès le chantier #7 au lieu d'attendre un signalement utilisateur.
@@ -100,21 +81,31 @@ Ces 4 règles viennent de bugs réels (le "+0" et l'effet 1175 manquants au chan
 |---|---|
 | Backend | Python / FastAPI (`main.py`) |
 | Frontend | React / Vite — tout dans `frontend/src/App.jsx` |
-| DB | SQLite `dofura.db` — tables : `monstres`, `grades`, `drops`, `sorts` (colonne `sort_id` = vrai ID Dofusdb), `zones`, `objets`, `objets_effets`, `recettes`, `panoplies`, `panoplies_effets`, `donjons`, `donjons_monstres`, `donjons_objets_requis` |
+| DB | SQLite `dofura.db` — tables encyclopédie : `monstres`, `grades`, `drops`, `sorts` (colonne `sort_id` = vrai ID Dofusdb), `zones`, `objets`, `objets_effets`, `recettes`, `panoplies`, `panoplies_effets`, `donjons`, `donjons_monstres`, `donjons_objets_requis` — tables Songes (produit principal) : `songe_items_trackables`, `songe_taux`, `songe_boss_modifs`, `songe_personnages`, `songe_teams`, `songe_team_membres`, `songe_runs`, `songe_run_participants`, `songe_drops`, `songe_journal` |
 | Back déployé | Railway → https://web-production-53f2b.up.railway.app |
+| Projet Railway | `faithful-delight` — seul projet Railway du compte (les projets `exemplary-wisdom` et `worthy-smile` ont été supprimés le 3 août 2026) |
+| Volume Railway | Existe, monté sur `/data`, `DB_PATH=/data/dofura.db` — en place depuis le 28 juillet 2026, revérifié le 3 août 2026 |
 | Front déployé | Vercel → https://dofura.vercel.app |
 | GitHub | mathieufra03-hub/Dofura |
 | Dossier local | C:\Users\mathi\Documents\dofura |
 
-**Composants App.jsx :** Navbar, StatsBar, Hero, AlmanaxBanner, EncycloGrid, SortsPanel, SortDetail, MonstrePage
+**Pages actuelles (`frontend/src/pages/`) :** `AccueilPage.jsx`, `SongesPage.jsx` (L'Œil de Draconiros), `TauxPage.jsx` (Les Taux), `ComprendrePage.jsx`.
 
-**Data :** `dofura_monstres.json` (4 932 monstres fusionnés Dofensive + Dofusdb + Duffus) · `dofura_sorts.json` (8 019 sorts) · `dofura_effects.json` (302 effets) · `dofura_effets_speciaux.json` (1577 résolutions diceNum→nom pour les effets sans description propre, ex. invocations) · `dofura_items.json`/`dofura_recipes.json`/`dofura_item_sets.json` (objets, chantier #7) · `dofura_sorts_objets.json` (sorts accordés par les objets, chantier #8ter) · `dofura_donjons.json` (187 donjons) · `dofura_donjons_guides.json` (guides de boss éditoriaux, vide pour l'instant — voir chantier Donjons) · `dofura_quetes.json` (1 976 quêtes, chantier Quêtes) · icônes `.webp` locales dans `frontend/public/assets/icons/`
+**`App.jsx` (4 144 lignes — découpage prévu, voir Roadmap → Chantiers hors roadmap) :** contient encore 46 composants + le composant racine `App()`, vérifiés sur le disque le 2026-08-03. Nav/UI commune : `Navbar`, `LoginPanel`, `MonComptePanel`, `NavSearch`, `DiscordLink`, `Footer`, `StarField`, `DofuraEggO`, `SearchIcon`, `DofusSeparator`, icônes (`IconeOeil`, `IconeTaux`, `IconeGrimoireNav`, `IconeHistorique`, `IconeCompte`, `IconeDiscord`, `IconeAction`), `BoutonTravel`. Bibliothèque/Grimoire : `GrimoirePage`, `GrimoirePanel`, `GrimoireTuile`, `BestiairePage`, `MonstrePage`, `SortsPanel`, `SortDetail`, `ObjetsPage`, `ObjetDetailPage`, `PanopliesPage`, `PanoplieDetailPage`, `DonjonsPage`, `DonjonDetailPage`, `RegionsPage`, `RegionDetailPage`, `SousZoneDetailPage`. Domaines abandonnés au pivot, code encore présent mais non relié à la nav : `Hero`, `AlmanaxBanner`, `EncycloGrid`, `OeufJauge`, `CarreDofus`, `DofusPanel`, `ChasseDofus`, `ArchidexSection`, `DofusDetailPage`, `QuetesPage`, `QuetePage`, `SuccesPage`, `SuccePage`.
 
-## Charte graphique — Krosmoz Espace (validée, ne pas modifier sans accord)
+**Data Songes (produit principal) :** `dofura_songes_items.json` (items trackables par catégorie/palier) · `dofura_songes_taux.json` (taux de base × multiplicateurs par intensité, chantier 21) · `dofura_songes_boss_modifs.json` (modifications de boss en songe) · `dofura_songes_avis.json` (avis de recherche). Migrés en tables plates au démarrage par `taux_songes.py` (racine du projet, PAS `scripts/` — `init_db.py` en dépend au démarrage, voir chantier 21 dans `doc/HISTORIQUE-CHANTIERS.md`). Non-régression : `verifier_taux.py` (racine), 28/28 relevés attendus, à relancer après toute modification des taux.
 
-- Fond `#06070f` · surfaces `#0a0c1a` / `#0e1225` / `#121830`
-- Cyan `#00d4ff` · violet `#c478ff` · or `#f0c040` · texte `#c8e4ff`
-- Logo `· DOFURA ·` en Cinzel Black 900 (Google Fonts, chargée dans index.html), dégradé or→violet
+**Data encyclopédie (conservée en base, hors périmètre produit — voir Vision) :** `dofura_monstres.json` (4 932 monstres fusionnés Dofensive + Dofusdb + Duffus) · `dofura_sorts.json` (8 019 sorts) · `dofura_effects.json` (302 effets) · `dofura_effets_speciaux.json` (1577 résolutions diceNum→nom pour les effets sans description propre, ex. invocations) · `dofura_items.json`/`dofura_recipes.json`/`dofura_item_sets.json` (objets, chantier #7) · `dofura_sorts_objets.json` (sorts accordés par les objets, chantier #8ter) · `dofura_donjons.json` (187 donjons) · `dofura_donjons_guides.json` (guides de boss éditoriaux, vide pour l'instant — voir chantier Donjons) · `dofura_quetes.json` (1 976 quêtes, chantier Quêtes) · icônes `.webp` locales dans `frontend/public/assets/icons/` — détail des chantiers cités (#7, #8ter, Donjons, Quêtes) : voir `doc/HISTORIQUE-CHANTIERS.md`
+
+## Charte graphique — "Le Grimoire de Draconiros"
+
+- Fond `#030C11` · cyan `#2CE7FF` · or `#F0C040` · violet `#C478FF`
+- Typo : Cinzel (titres) + Inter (corps)
+- Intensités : Rêve `#4DA6FF` · Paradoxe `#C478FF` · Cauchemar `#FF6B4A`
+- Maquette de référence : `maquette/dofura-maquette-v2.html`
+- L'ancienne charte dorée ("Krosmoz Espace") est archivée dans `maquette/archive-krosmoz/`, morte — ne pas s'en inspirer.
+
+**LA RÉFÉRENCE COMPLÈTE ET À JOUR EST `IDENTITE.md`** — toujours la consulter avant tout travail visuel, ne jamais se fier à une couleur citée ailleurs (y compris ci-dessus).
 
 ## ⛔ PIÈGES TOUJOURS VALABLES
 
@@ -125,12 +116,11 @@ Ces 4 règles viennent de bugs réels (le "+0" et l'effet 1175 manquants au chan
 5. **sort_id :** le front appelle `/sorts/{s.sort_id}` (vrai ID Dofusdb), jamais le row_id SQLite. FIXÉ — ne pas régresser.
 6. **Tacle/Fuite :** valeurs à lire depuis `data[s.key]` (niveau monstre), pas `g[s.key]` (grade). FIXÉ.
 7. **AssetRipper :** abandonné (compression Unity propriétaire). Icônes = webp Dofensive uniquement. Ne pas retenter.
-8. **Chasse au trésor :** wrapper dofusdb.fr uniquement. Jamais de rebuild des 13 000+ indices.
-9. **Dofus 3.0 : les idoles sont supprimées** — ne jamais en parler (exception : quête du Dofus Turquoise).
-10. **JSON sources vs Git :** ne jamais sortir un JSON source lu par `init_db.py`/`main.py` (liste à jour dans la règle 9) du suivi Git tant que le volume persistant Railway (chantier #1) n'existe pas — Railway build depuis GitHub, donc les retirer casse le déploiement (`init_db.py` plante sans `dofura_monstres.json`, `/sorts` renvoie du vide sans `dofura_sorts.json`). Seul `dofura.db` peut sortir du suivi sans risque, car régénéré à chaque démarrage. Erreur commise puis corrigée le 2026-07-08 pendant le grand nettoyage (chantier #2) — cf. règle 9 amendée. **Réflexe à chaque nouveau domaine :** si un nouveau fichier JSON est ajouté au chargement du backend (ex. `dofura_donjons_guides.json` au chantier Donjons), l'ajouter aussi à la liste de la règle 9 dans le même commit.
-11. **`PRAGMA foreign_keys` n'est activé nulle part dans ce projet** (vérifié : 0 occurrence dans `main.py`/`init_db.py`). Conséquence directe : tous les `ON DELETE CASCADE` déclarés dans les `CREATE TABLE` (ex. `songe_team_membres`→`songe_teams`, `songe_run_participants`/`songe_drops`→`songe_runs`, chantier Songes) sont **ignorés silencieusement par SQLite** — supprimer une ligne parente ne supprime PAS ses lignes filles automatiquement, elles restent orphelines. Toute suppression touchant une table avec des enfants doit gérer la cascade à la main (DELETE des lignes filles avant la ligne parente), comme le font `DELETE /songes/teams/{id}` et `DELETE /songes/runs/{id}`. Voir SONGES.md §5 règle 5. Activer le pragma globalement (et vérifier l'impact sur toutes les tables `REFERENCES` déjà existantes) est un chantier séparé, volontairement non fait — ne pas l'activer à la légère en cours de route.
-12. **Un déploiement Railway synchronise le CODE, jamais le SCHÉMA de la base.** `base_deja_peuplee()` (`main.py`) ne relance `init_db.py` que si la table `monstres` est vide — sur un déploiement déjà en place, toute table ajoutée au schéma d'`init_db.py` après la toute première mise en ligne n'est donc **jamais créée**, même aux redéploiements suivants (le code évolue, le volume Railway persistant non). Trouvé le 2026-08-03 : `songe_items_trackables` et 9 autres tables manquaient en prod depuis leur création dans le code, sans jamais avoir été rattrapées (chantier 22). **Réflexe à chaque nouvelle table ajoutée au schéma :** pousser le code, PUIS appeler `POST /admin/refresh-encyclopedie` (voir Manips de référence) — sinon la table reste invisible en prod jusqu'au prochain rappel manuel de l'endpoint. Ne jamais importer `init_db.py` depuis `main.py` pour contourner ça : son code de haut niveau (chargement JSON + connexion à `DB_PATH` + DROP/CREATE/INSERT) s'exécuterait dès l'import, sur la vraie base.
-13. **`CREATE TABLE` n'est pas annulé par un `conn.rollback()` sous sqlite3/Python.** Contrairement à l'intuition d'une transaction classique tout-ou-rien, une table déjà créée par un `cur.execute("CREATE TABLE ...")` peut survivre à un rollback appelé plus tard suite à une erreur ailleurs dans la même fonction — comportement du driver Python (implicite commit avant certains types de statements), pas de SQLite lui-même. Trouvé en testant l'endpoint `/admin/refresh-encyclopedie` (chantier 22) : une table s'était créée malgré l'échec global de l'appel. Ne jamais compter sur un rollback pour annuler un `CREATE TABLE` déjà exécuté — valider tout ce qui peut échouer (gardes, vérifications SQL) **avant** la moindre écriture plutôt que de faire confiance à un rollback en cas d'erreur en cours de route.
+8. **JSON sources vs Git :** ne jamais sortir un JSON source lu par `init_db.py`/`main.py` (liste à jour dans la règle 9) du suivi Git — **ce n'est plus une contrainte technique temporaire (le volume Railway existe désormais, voir Stack & infrastructure), c'est un choix assumé** : Railway build depuis GitHub, donc les JSON sources y restent par commodité (le volume ne stocke que `dofura.db`, jamais les JSON, et les retirer de Git casserait quand même le tout premier peuplement d'un volume vide — `init_db.py` plante sans `dofura_monstres.json`, `/sorts` renvoie du vide sans `dofura_sorts.json`). Seul `dofura.db` peut sortir du suivi sans risque, car régénéré à chaque démarrage. Erreur commise puis corrigée le 2026-07-08 pendant le grand nettoyage (chantier #2, voir `doc/HISTORIQUE-CHANTIERS.md`) — cf. règle 9 amendée. **Réflexe à chaque nouveau domaine :** si un nouveau fichier JSON est ajouté au chargement du backend (ex. `dofura_donjons_guides.json` au chantier Donjons, même fichier), l'ajouter aussi à la liste de la règle 9 dans le même commit.
+9. **`PRAGMA foreign_keys` n'est activé nulle part dans ce projet** (vérifié : 0 occurrence dans `main.py`/`init_db.py`). Conséquence directe : tous les `ON DELETE CASCADE` déclarés dans les `CREATE TABLE` (ex. `songe_team_membres`→`songe_teams`, `songe_run_participants`/`songe_drops`→`songe_runs`, chantier Songes) sont **ignorés silencieusement par SQLite** — supprimer une ligne parente ne supprime PAS ses lignes filles automatiquement, elles restent orphelines. Toute suppression touchant une table avec des enfants doit gérer la cascade à la main (DELETE des lignes filles avant la ligne parente), comme le font `DELETE /songes/teams/{id}` et `DELETE /songes/runs/{id}`. Voir SONGES.md §5 règle 5. Activer le pragma globalement (et vérifier l'impact sur toutes les tables `REFERENCES` déjà existantes) est un chantier séparé, volontairement non fait — ne pas l'activer à la légère en cours de route.
+10. **Un déploiement Railway synchronise le CODE, jamais le SCHÉMA de la base.** `base_deja_peuplee()` (`main.py`) ne relance `init_db.py` que si la table `monstres` est vide — sur un déploiement déjà en place, toute table ajoutée au schéma d'`init_db.py` après la toute première mise en ligne n'est donc **jamais créée**, même aux redéploiements suivants (le code évolue, le volume Railway persistant non). Trouvé le 2026-08-03 : `songe_items_trackables` et 9 autres tables manquaient en prod depuis leur création dans le code, sans jamais avoir été rattrapées (chantier 22, voir `doc/HISTORIQUE-CHANTIERS.md`). **Réflexe à chaque nouvelle table ajoutée au schéma :** pousser le code, PUIS appeler `POST /admin/refresh-encyclopedie` (voir Manips de référence) — sinon la table reste invisible en prod jusqu'au prochain rappel manuel de l'endpoint. Ne jamais importer `init_db.py` depuis `main.py` pour contourner ça : son code de haut niveau (chargement JSON + connexion à `DB_PATH` + DROP/CREATE/INSERT) s'exécuterait dès l'import, sur la vraie base.
+11. **`CREATE TABLE` n'est pas annulé par un `conn.rollback()` sous sqlite3/Python.** Contrairement à l'intuition d'une transaction classique tout-ou-rien, une table déjà créée par un `cur.execute("CREATE TABLE ...")` peut survivre à un rollback appelé plus tard suite à une erreur ailleurs dans la même fonction — comportement du driver Python (implicite commit avant certains types de statements), pas de SQLite lui-même. Trouvé en testant l'endpoint `/admin/refresh-encyclopedie` (chantier 22, voir `doc/HISTORIQUE-CHANTIERS.md`) : une table s'était créée malgré l'échec global de l'appel. Ne jamais compter sur un rollback pour annuler un `CREATE TABLE` déjà exécuté — valider tout ce qui peut échouer (gardes, vérifications SQL) **avant** la moindre écriture plutôt que de faire confiance à un rollback en cas d'erreur en cours de route.
+12. **`SONGES.md` contient les données de référence des Songes** (taux, conditions d'éligibilité, combats par palier). Toujours le lire avant tout travail touchant aux Songes. Ne jamais raisonner de mémoire sur les taux.
 
 Historique : chantiers fermés et leçons de l'ancienne méthode de travail → voir doc/HISTORIQUE-CHANTIERS.md
 
@@ -143,36 +133,44 @@ Historique : chantiers fermés et leçons de l'ancienne méthode de travail → 
 5. **Vider cache Vercel :** Redeploy SANS "Clear build cache"
 6. **Reconstruire la DB :** `python init_db.py` (relit `dofura_monstres.json`)
 7. **Lancer un script :** `python scripts\nom.py` depuis la RACINE, jamais depuis `frontend/`
-8. **Après tout ajout de table au schéma d'`init_db.py` :** pousser le code, PUIS appeler `POST /admin/refresh-encyclopedie` (header `X-Admin-Token`, jamais en query param) — le déploiement seul ne crée pas la table en prod (piège #12).
-9. **Après chaque push touchant le backend :** ouvrir une URL de l'API en prod (ex. `/songes/taux?intensite=paradoxe&niveau=1`) avant de considérer le déploiement terminé. Un déploiement marqué "Success" par Railway peut quand même livrer du code qui plante à l'usage (chantier 22).
+8. **Après tout ajout de table au schéma d'`init_db.py` :** pousser le code, PUIS appeler `POST /admin/refresh-encyclopedie` (header `X-Admin-Token`, jamais en query param) — le déploiement seul ne crée pas la table en prod (piège #10).
+9. **Après chaque push touchant le backend :** ouvrir une URL de l'API en prod (ex. `/songes/taux?intensite=paradoxe&niveau=1`) avant de considérer le déploiement terminé. Un déploiement marqué "Success" par Railway peut quand même livrer du code qui plante à l'usage (chantier 22, voir `doc/HISTORIQUE-CHANTIERS.md`).
 
-## 🤖 Agents Dofuriens (sous-agents dans .claude/agents/)
+## 🤖 Agents Dofuriens (sous-agents dans .claude/agent/)
 
-- **Krag** — boss de donjons (8 fiches Frigost 3 validées, +40 donjons restants)
-- **Lorn** — quêtes
-- **Vex** — succès
-- **Drakar** — objets/équipements
-- **Roam** — zones/donjons
+- **Krag** — boss de donjons (8 fiches Frigost 3 validées, +40 donjons restants). Seul agent réellement créé (`.claude/agent/krag.md`).
+
+**Lorn, Vex, Drakar, Roam** (quêtes, succès, objets/équipements, zones/donjons) avaient été annoncés dans une version précédente de ce fichier mais n'ont jamais été créés — aucun fichier correspondant n'a jamais existé sur le disque. Domaines abandonnés au pivot Songes de toute façon (voir Vision).
+
+**Prévu, pas encore créé :** un agent rédacteur spécialisé Songes, pour le contenu éditorial de la page "Comprendre les Songes".
 
 Règle commune : règle 13 (ne jamais inventer) + validation Popo avant intégration.
 
 ## Chantiers en cours / problèmes ouverts
 
-0. **⚠️ SITE EN NOINDEX — RETIRER AU LANCEMENT.** Ajouté le 2026-07-09 (`frontend/index.html`, `<meta name="robots" content="noindex, nofollow" />`) : le site est en construction, Popo veut rester discret jusqu'au lancement. **Vérifié le même jour : le repo GitHub `mathieufra03-hub/Dofura` est PUBLIC** — le noindex empêche l'indexation Google du site déployé (Vercel) mais ne cache PAS le code source ni l'historique Git, visibles par quiconque a l'URL du repo. Passer le repo en privé est une décision et une manipulation qui appartiennent à Popo (Settings GitHub), pas à Claude Code. **Avant le lancement (voir Vision → Roadmap révisée) : retirer la balise `noindex` de `frontend/index.html`.**
-1. **Volume persistant Railway VÉRIFIÉ (2026-07-08) : absent.** Vue d'ensemble Railway → un seul service web, pas de volume attaché (clic droit propose "Attach Volume"). Acceptable pour l'instant car `dofura.db` est regénérable via `init_db.py` (pas de perte définitive en cas de redéploiement). **Volume OBLIGATOIRE avant la Phase 4 (comptes utilisateurs)** — sans ça, les données de progression des utilisateurs seraient perdues à chaque redéploiement.
+0. **⚠️ SITE EN NOINDEX — RETIRER AU LANCEMENT.** Ajouté le 2026-07-09 (`frontend/index.html`, `<meta name="robots" content="noindex, nofollow" />`) : le site est en construction, Popo veut rester discret jusqu'au lancement. **Vérifié le même jour : le repo GitHub `mathieufra03-hub/Dofura` est PUBLIC** — le noindex empêche l'indexation Google du site déployé (Vercel) mais ne cache PAS le code source ni l'historique Git, visibles par quiconque a l'URL du repo. Passer le repo en privé est une décision et une manipulation qui appartiennent à Popo (Settings GitHub), pas à Claude Code. **Avant le lancement : retirer la balise `noindex` de `frontend/index.html`.**
 6. **Phase 4 (anticipation) :** front et back sur deux domaines → cookies impossibles proprement → prévoir JWT dans le header `Authorization`.
 
-## Chantiers futurs (pas encore commencés)
+## Roadmap
 
-1. **Refonte graphique complète du site (design actuel provisoire).** La charte Krosmoz Espace en place est fonctionnelle mais pas définitive — ne pas passer de temps à la peaufiner d'ici là. En attendant, tout nouveau composant doit grouper ses styles proprement (objet de styles centralisé, pas de valeurs magiques éparpillées inline) pour que ce restyling futur soit simple à faire.
-2. **Migration vers react-router** (vraies URLs, corrige le retour fiche→accueil au lieu de la grille filtrée — limite connue depuis le chantier #4 —, liens partageables). **Reporté le 2026-07-09** (décision Popo) : passe après l'encyclopédie (Donjons/Panoplies/Zones), pas avant.
-3. **Page Élevage/Montures.** Catégorie `super_type_nom = "Certificat de monture"` (267 objets : Dragodinde/Volkorne/Muldo) — vérifiée le 2026-07-09, c'est la bonne catégorie pour ça (pas "Certificat" tout court, qui ne contient que des objets de quête invisibles sans rapport).
-4. **Filtre "Légendaires" sur la page Équipements.** Colonne `legendaire` déjà en base depuis le chantier #8bis (25 objets), juste un filtre à brancher côté `/objets` + `/objets/filtres` sur le modèle des filtres existants.
-5. **Classes.** Retiré de la roadmap encyclopédie principale le 2026-07-09 (décision Popo) — utile seulement si un outil de build voit le jour un jour. Pas de valeur encyclopédique autonome suffisante pour justifier sa place dans l'ordre Donjons → Panoplies → Zones.
+1. **L'Œil de Draconiros** — bribes dans l'historique, total obtenu vs solde dépensable, rattrapage "vague terminée" oubliée, vocabulaire run/songe, graphisme.
+2. **Les Taux** — expliquer les vides (runes avant Paradoxe IV, cosmétiques variables selon prospection), exploiter l'écart cosmétiques/légendes (25-30x plus rares), documenter la méthode de calcul et la réserve du multiplicateur de palier, angle SEO.
+3. **La Bibliothèque** — allégée + page Classes & Sorts (vérifier d'abord si les sorts de classes sont en base, les 8 019 sorts actuels sont des sorts de monstres).
+4. **Dashboard du compte** — bribes (total obtenu qui ne descend jamais + solde dépensable), réglages teams, stats personnages.
+5. **Page d'accueil** — 2 encadrés : "Comprendre les Songes" et "Team partagée".
+6. **Team partagée entre comptes** — le mécanisme viral : un joueur logue la run, les 4 en profitent.
+
+**MÉTHODE DE TRAVAIL VALIDÉE :** un chantier à la fois, complet, avec son graphisme, testé et validé avant de passer au suivant. Plus jamais cinq choses en parallèle à 70%.
+
+### Chantiers hors roadmap (à faire quand l'occasion se présente)
+
+- Retirer le noindex de `frontend/index.html` avant le lancement public.
+- Renommer `carte-registre.webp` en `carte-oeil-draconiros.webp` (le nom ne correspond pas à la carte).
+- Découper `App.jsx` (4000+ lignes) par morceaux, un commit par extraction.
+- Nettoyer les scripts jetables de `scripts/` (garder `diag_tables_prod.py` et `verifier_endpoints_taux.py`, ce sont des outils de diagnostic réutilisables).
+- Remonter la note "étendre les résumés Lorn zone par zone" enterrée dans `doc/HISTORIQUE-CHANTIERS.md` — à trancher : encore pertinent après le pivot ?
 
 ## Ressources
 
 - **APIs :** api.dofusdb.fr (monstres, sorts, zones, items) · api.dofusdu.de (DofusDude — Dofus 3 + Almanax, SDK Python) · cdn.api.dofensive.com
-- **Sites référence :** dofuspourlesnoobs.com · dofusdb.fr · dofensive.com · dofusplanet.fr · duffus.fr · dofusbook.net
-- **Inspiration archi :** KaellyBot (GitHub, Go)
-- **Concurrent à surveiller :** Tougli (tougli.barbofus.com) — guidage in-game live, pas encyclopédique.
+- **Sites référence :** dofuspourlesnoobs.com · dofusdb.fr · dofensive.com · duffus.fr · picofus.fr (tracker multi-contenus, données navigateur uniquement, pas de comptes)
