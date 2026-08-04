@@ -116,7 +116,7 @@ export default function AccueilPage({ onNav }) {
             <CardArt src="/assets/carte-registre.webp" alt="" />
             <div className="ic"><svg viewBox="0 0 24 24"><path d="M12 3c0 4-4 5-4 9a4 4 0 0 0 8 0c0-4-4-5-4-9z" /><path d="M8 21h8" /></svg></div>
             <h3>L'Œil de Draconiros</h3>
-            <p>Un bouton par songe terminé. Le site compte pour toi et te dit depuis combien de songes tu n'as rien vu tomber.</p>
+            <p>Un bouton par run terminée. Le site compte pour toi et te dit depuis combien de runs tu n'as rien vu tomber.</p>
             <span className="go">Commencer →</span>
           </button>
           {/* "Le Registre des Songes" désigne ici une future page d'historique
@@ -129,7 +129,7 @@ export default function AccueilPage({ onNav }) {
             <CardArt src="/assets/carte-registre-songes.webp" alt="" className="card-art--claire" />
             <div className="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg></div>
             <h3>Le Registre des Songes</h3>
-            <p>L'historique complet de tes descentes. Chaque songe, chaque drop, chaque team.</p>
+            <p>L'historique complet de tes descentes. Chaque run, chaque drop, chaque team.</p>
             <span className="go">Consulter →</span>
           </button>
           {/* Accent orangé #FF6B4A propre à cette carte (retour Popo, 2 août

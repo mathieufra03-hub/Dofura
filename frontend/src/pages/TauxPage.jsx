@@ -93,7 +93,7 @@ function calculerSongesItems(items, combatsParPalier, nbPersonnages) {
 function formaterSonges(v) {
   if (v == null) return "—"
   const arrondi = v < 20 ? Math.round(v * 10) / 10 : Math.round(v)
-  return `~${arrondi.toLocaleString("fr-FR")} songes`
+  return `~${arrondi.toLocaleString("fr-FR")} runs`
 }
 
 const tp = {
@@ -311,7 +311,7 @@ export default function TauxPage({ onBack, onSelectObjet }) {
 
       <div style={tp.mentions}>
         <p style={{ margin: "0 0 6px" }}>Taux relevés en jeu, à la main. Ils ne viennent d'aucune API et ne sont publiés nulle part ailleurs.</p>
-        <p style={{ margin: 0 }}>Le nombre de songes est une moyenne statistique, pas une garantie. Certains dropperont au troisième songe, d'autres au cinquantième.</p>
+        <p style={{ margin: 0 }}>Le nombre de runs est une moyenne statistique, pas une garantie. Certains dropperont dès la troisième run, d'autres à la cinquantième.</p>
       </div>
     </div>
   )

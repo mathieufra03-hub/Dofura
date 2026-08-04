@@ -100,7 +100,7 @@ function SongesConnexionRequise({ onBack }) {
       <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
         <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 10px" }}>L'Œil de Draconiros</h1>
         <p style={{ color: "var(--df-text-2)", fontSize: 14, margin: 0 }}>
-          Connecte-toi pour compter tes songes et enregistrer tes drops — tes données te suivent sur tous tes appareils.
+          Connecte-toi pour compter tes runs et enregistrer tes drops — tes données te suivent sur tous tes appareils.
         </p>
       </div>
     </div>
@@ -208,7 +208,7 @@ function SongesGestion({ token, personnages, teams, onRafraichir, onTerminer, on
       </h1>
       {onboarding && (
         <p style={{ color: "var(--df-text-2)", fontSize: 13.5, margin: "0 0 16px" }}>
-          Le Suivi de Songes se base sur tes personnages regroupés en teams. Crée au moins un personnage, puis une team.
+          L'Œil de Draconiros se base sur tes personnages regroupés en teams. Crée au moins un personnage, puis une team.
         </p>
       )}
 
@@ -306,7 +306,7 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
       {!confirmation ? (
         <>
           <p style={{ color: "var(--df-text-2)", fontSize: 13, margin: "6px 0 12px" }}>
-            Supprime tous tes songes, leurs participants et leurs drops. Tes personnages et tes teams ne sont pas
+            Supprime toutes tes runs, leurs participants et leurs drops. Tes personnages et tes teams ne sont pas
             touchés. Chaque drop est archivé dans le Journal avant suppression.
           </p>
           <button onClick={() => setConfirmation(true)} className="df-hover-lift" style={{ ...sp.btnFantome, color: "var(--df-red)", borderColor: "rgba(242,109,109,0.5)" }}>
@@ -316,7 +316,7 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
       ) : (
         <>
           <p style={{ color: "var(--df-red)", fontSize: 13.5, fontWeight: 700, margin: "6px 0 12px" }}>
-            Action irréversible : tous tes songes et drops seront définitivement supprimés (tes personnages et teams
+            Action irréversible : toutes tes runs et tous tes drops seront définitivement supprimés (tes personnages et teams
             resteront). Confirmer ?
           </p>
           <div style={{ display: "flex", gap: 10 }}>
@@ -370,7 +370,7 @@ function BasculeSongeInterrompu({ nbSallesParRun, songeEchoue, setSongeEchoue, s
   if (!songeEchoue) {
     return (
       <button onClick={() => setSongeEchoue(true)} style={{ ...sp.lienDiscret, marginTop: 10 }}>
-        Le songe s'est arrêté en cours de route ?
+        La run s'est arrêtée en cours de route ?
       </button>
     )
   }
@@ -479,7 +479,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
 
         {dropsEnCours.length > 0 && (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 11.5, color: "var(--df-text-3)", marginBottom: 6 }}>Drops de ce songe ({dropsEnCours.length})</div>
+            <div style={{ fontSize: 11.5, color: "var(--df-text-3)", marginBottom: 6 }}>Drops de cette run ({dropsEnCours.length})</div>
             {dropsEnCours.map((d, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
                 {d._img ? <img src={d._img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} /> : null}
@@ -552,7 +552,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
               kickers de l'accueil (uppercase, letter-spacing large, petite
               taille, texte secondaire). */}
           <p style={{ margin: "4px 0 0", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--df-text-2)" }}>
-            Compte tes songes, traque tes légendes
+            Compte tes runs, traque tes légendes
           </p>
         </div>
         <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
@@ -633,7 +633,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
       {/* 4. Actions */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <button disabled={enregistrement} onClick={onSongeTermine} className="df-hover-lift" style={{ ...sp.btnVert, opacity: enregistrement ? 0.6 : 1 }}>
-          Songe terminé
+          Run terminée
         </button>
         <button onClick={onOuvrirAjoutDrop} className="df-hover-lift" style={sp.btnOrContour}>
           J'ai drop
@@ -651,7 +651,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
       {songeEchoue && (
         <button disabled={enregistrement} onClick={onSongeTermine} className="df-hover-lift" style={{ ...sp.btnVertPetit, marginTop: 10 }}>
-          Enregistrer ce songe
+          Enregistrer cette run
         </button>
       )}
 
@@ -661,7 +661,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
       {dernierRunId && (
         <div style={{ marginTop: 14 }}>
           <button onClick={onAnnulerDernierSonge} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
-            Annuler le dernier songe enregistré (Songe #{dernierRunId})
+            Annuler la dernière run enregistrée (Run #{dernierRunId})
           </button>
         </div>
       )}
@@ -669,17 +669,17 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
       {/* 6. Historique des songes */}
       <div style={{ marginTop: 26 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div className="df-block-title" style={{ margin: 0 }}>Historique des songes</div>
+          <div className="df-block-title" style={{ margin: 0 }}>Historique des runs</div>
           <button onClick={onOuvrirMesDrops} style={sp.lienDiscret}>🎁 Mes drops</button>
         </div>
         {historique.songes.length === 0 ? (
-          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucun songe enregistré pour l'instant.</div>
+          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucune run enregistrée pour l'instant.</div>
         ) : historique.songes.map(s => (
           <div key={s.id} style={{ background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-gold-rgb), 0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
               <div>
                 <div style={{ color: "var(--df-gold)", fontWeight: 700, fontSize: 13.5 }}>
-                  Songe #{s.id}
+                  Run #{s.id}
                   {!s.terminee && <span style={{ color: "var(--df-text-3)", fontWeight: 400 }}> (interrompu, salle {s.salle_atteinte})</span>}
                 </div>
                 <div style={{ color: "var(--df-text-3)", fontSize: 11.5, marginTop: 2 }}>
