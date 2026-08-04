@@ -151,6 +151,31 @@ def migrer(data):
     return lignes
 
 
+def calculer_bribes(data, intensite, niveau, vague_finale):
+    """data = dict charge depuis dofura_songes_taux.json (v2.0), meme format
+    que migrer(). Retourne le nombre de bribes de reve gagnees par PERSONNAGE
+    pour une run donnee (chantier 1, passe 1b, 2026-08-04).
+
+    Formule validee par Popo : bribes = vague_finale * bribes_par_vague de
+    l'intensite (data["intensites"][...]["bribes_par_vague"], jamais recopie
+    en dur ici). Les vagues obligatoires pour la victoire (1 en Reve, 3 en
+    Paradoxe/Cauchemar — voir songes_config.VAGUES_REQUISES) COMPTENT dans le
+    total, elles ne font que conditionner la victoire du combat : aucun cas
+    particulier a coder, la multiplication simple suffit.
+
+    vague_finale absent/0 (run non renseignee ou anterieure a cette passe) :
+    retourne 0, jamais une estimation (regle 13 CLAUDE.md)."""
+    if not vague_finale:
+        return 0
+
+    intensite_id = f"{intensite}_{niveau}"
+    entree = next((i for i in data["intensites"] if i["id"] == intensite_id), None)
+    if entree is None:
+        raise ValueError(f"Intensite inconnue pour le calcul des bribes : {intensite_id!r}")
+
+    return vague_finale * entree["bribes_par_vague"]
+
+
 # Les 36 lignes de l'ancien dofura_songes_taux.json v1 (Paradoxe I uniquement),
 # gardees ici en dur UNIQUEMENT pour le diff visuel de cette etape d'audit —
 # pas une source de verite a reutiliser ailleurs, le fichier v1 n'existe plus

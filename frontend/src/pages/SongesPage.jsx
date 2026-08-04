@@ -7,10 +7,11 @@ import { useState, useEffect, useMemo } from "react"
 // correspond exactement aux tokens existants (--df-bg, --df-cyan,
 // --df-green, --df-red, --df-card-bg), aucune nouvelle couleur inventée.
 //
-// VOCABULAIRE (refonte interface, 29 juillet 2026) : on ne dit jamais "run"
-// dans un texte visible par le joueur, seulement "songe". "run"/"Run"
-// reste dans le code (noms de variables/fonctions, endpoints) — voir
-// SONGES.md intro.
+// VOCABULAIRE (chantier 1, passe 1a, 2026-08-04 — remplace la regle du 29
+// juillet 2026, desormais perimee) : "songe" pour le recit (titres, promesses,
+// lore, descriptions), "run" pour l'action/le comptage (boutons, compteurs,
+// chiffres) — voir CLAUDE.md. "run"/"Run" reste par ailleurs le terme du
+// code (noms de variables/fonctions, endpoints, SONGES.md intro).
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const LS_TEAM = "dofura_songes_team_id"
@@ -306,8 +307,8 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
       {!confirmation ? (
         <>
           <p style={{ color: "var(--df-text-2)", fontSize: 13, margin: "6px 0 12px" }}>
-            Supprime toutes tes runs, leurs participants et leurs drops. Tes personnages et tes teams ne sont pas
-            touchés. Chaque drop est archivé dans le Journal avant suppression.
+            Supprime toutes tes runs, leurs participants, leurs drops et tes dépenses de bribes enregistrées. Tes
+            personnages et tes teams ne sont pas touchés. Chaque drop est archivé dans le Journal avant suppression.
           </p>
           <button onClick={() => setConfirmation(true)} className="df-hover-lift" style={{ ...sp.btnFantome, color: "var(--df-red)", borderColor: "rgba(242,109,109,0.5)" }}>
             Tout supprimer
@@ -316,8 +317,8 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
       ) : (
         <>
           <p style={{ color: "var(--df-red)", fontSize: 13.5, fontWeight: 700, margin: "6px 0 12px" }}>
-            Action irréversible : toutes tes runs et tous tes drops seront définitivement supprimés (tes personnages et teams
-            resteront). Confirmer ?
+            Action irréversible : toutes tes runs, tous tes drops et toutes tes dépenses de bribes seront définitivement
+            supprimés (tes personnages et teams resteront). Confirmer ?
           </p>
           <div style={{ display: "flex", gap: 10 }}>
             <button disabled={enCours} onClick={confirmer} className="df-hover-lift" style={{ ...sp.btnVertPetit, background: "var(--df-red)", opacity: enCours ? 0.6 : 1 }}>
@@ -506,9 +507,9 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
 function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   intensiteNiveau, changerIntensite, categorieAffichee, changerCategorie, stats,
   historique, pageHistorique, setPageHistorique,
-  dernierRunId, onAnnulerDernierSonge, onSupprimerSonge, onSupprimerDrop,
+  dernierRunId, onAnnulerDernierSonge, onSupprimerSonge, onSupprimerDrop, onCorrigerVagueFinale,
   songeEchoue, setSongeEchoue, salleAtteinte, setSalleAtteinte, dropsEnCours,
-  vagueFinale, setVagueFinale, nombreTours, setNombreTours,
+  vagueFinale, setVagueFinale,
   chronoSecondes, chronoEnMarche, onChronoDemarrerPause, onChronoReinitialiser,
   onSongeTermine, onOuvrirGestion, onOuvrirAjoutDrop, onOuvrirMesDrops, enregistrement, erreur, onSelectObjet }) {
 
@@ -520,6 +521,19 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   const infoCategorie = stats?.categories_secheresse?.find(c => c.categorie === categorieAffichee) || null
   const secheresseSonges = infoCategorie ? infoCategorie.songes_depuis_dernier_drop : null
 
+  // Combat final : bribes en direct, jamais de taux en dur (chantier 1,
+  // passe 1b) — bribes_par_vague et vagues_max/vagues_requises viennent
+  // tous deux de /songes/config. Chainage optionnel partout : un backend qui
+  // n'a pas encore ces champs (ancien process actif, ou config en cours de
+  // chargement) dégrade proprement (pas de plafond, détail/mention masqués)
+  // plutôt que de planter (Cannot read properties of undefined).
+  const cleIntensite = `${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`
+  const vaguesMaxActuel = config.vagues_max?.[intensiteNiveau.intensite] ?? null
+  const bribesParVagueActuel = config.bribes_par_vague?.[cleIntensite]
+  const vaguesRequisesActuel = config.vagues_requises?.[intensiteNiveau.intensite]
+  const bribesEnCours = vagueFinale * (bribesParVagueActuel || 0)
+  const ordinalVaguesRequises = vaguesRequisesActuel === 1 ? "1re" : `${vaguesRequisesActuel}e`
+
   const totalPagesHistorique = Math.max(Math.ceil((historique.total || 0) / 10), 1)
 
   // Confirmation en 2 clics (pas de window.confirm() : coupe avec la charte
@@ -529,6 +543,10 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   // courant change).
   const [confirmerSongeId, setConfirmerSongeId] = useState(null)
   const [confirmerDropId, setConfirmerDropId] = useState(null)
+  // Rattrapage vague finale (chantier 1, passe 1b) : { id, valeur } de la
+  // run en cours de correction, ou null si aucune. UNIQUEMENT vague_finale
+  // — aucun autre champ de la run n'est éditable ici (consigne explicite).
+  const [vagueFinaleEnEdition, setVagueFinaleEnEdition] = useState(null)
 
   const clicSupprimerSonge = (id) => {
     if (confirmerSongeId === id) { onSupprimerSonge(id); setConfirmerSongeId(null) }
@@ -612,22 +630,36 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         </div>
       </div>
 
-      {/* Combat final a vagues (SONGES.md §3.2) et nombre de tours : optionnels,
-          disponibles a chaque validation, au-dessus du bouton Songe terminé.
-          Pas de plafond sur la vague finale — le combat comporte des vagues
-          bonus au-dela du minimum requis pour gagner, le joueur choisit
-          librement (retour d'usage, refonte du 29 juillet 2026). */}
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <label style={{ fontSize: 12, color: "var(--df-text-3)" }}>Vague finale (optionnel)</label>
-          <input type="number" min={1} value={vagueFinale} onChange={e => setVagueFinale(e.target.value)}
-            style={{ width: 56, ...sp.champ, padding: "5px 8px", fontSize: 12.5 }} />
+      {/* Combat final a vagues (SONGES.md §3.2) : compteur −/+ plutot qu'un
+          champ libre, plafonne par intensite (config.vagues_max — Reve 5,
+          Paradoxe 15, Cauchemar illimite), bribes de reve affichees en
+          direct (chantier 1, passe 1b, 2026-08-04). "Nombre de tours" retire
+          de la saisie (colonne nombre_tours conservee en base, non exposee
+          ici — retour Popo). */}
+      <div style={{ ...sp.card, padding: "14px 18px", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <span style={{ fontSize: 12, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Combat final</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button onClick={() => setVagueFinale(v => Math.max(0, v - 1))} className="df-hover-lift"
+              style={{ ...sp.btnFantome, padding: "4px 12px", fontSize: 16, fontWeight: 700 }}>−</button>
+            <span style={{ fontSize: 20, fontWeight: 800, color: "var(--df-gold)", minWidth: 28, textAlign: "center" }}>{vagueFinale}</span>
+            <button
+              onClick={() => setVagueFinale(v => vaguesMaxActuel != null ? Math.min(vaguesMaxActuel, v + 1) : v + 1)}
+              disabled={vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel}
+              className="df-hover-lift"
+              style={{ ...sp.btnFantome, padding: "4px 12px", fontSize: 16, fontWeight: 700, opacity: (vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel) ? 0.5 : 1 }}>+</button>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <label style={{ fontSize: 12, color: "var(--df-text-3)" }}>Nombre de tours (optionnel)</label>
-          <input type="number" min={1} value={nombreTours} onChange={e => setNombreTours(e.target.value)}
-            style={{ width: 56, ...sp.champ, padding: "5px 8px", fontSize: 12.5 }} />
-        </div>
+        {bribesParVagueActuel != null && (
+          <div style={{ fontSize: 12.5, color: "var(--df-text-2)", marginTop: 8 }}>
+            {vagueFinale} vague{vagueFinale > 1 ? "s" : ""} × {bribesParVagueActuel} bribes = {formaterNombre(bribesEnCours)}
+          </div>
+        )}
+        {vaguesRequisesActuel != null && (
+          <div style={{ fontSize: 11, color: "var(--df-text-3)", marginTop: 4 }}>
+            Victoire acquise dès la {ordinalVaguesRequises} vague.
+          </div>
+        )}
       </div>
 
       {/* 4. Actions */}
@@ -682,11 +714,35 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
                   Run #{s.id}
                   {!s.terminee && <span style={{ color: "var(--df-text-3)", fontWeight: 400 }}> (interrompu, salle {s.salle_atteinte})</span>}
                 </div>
-                <div style={{ color: "var(--df-text-3)", fontSize: 11.5, marginTop: 2 }}>
-                  {s.intensite.charAt(0).toUpperCase() + s.intensite.slice(1)} {NOMS_PALIERS_ROMAINS[s.niveau] || s.niveau} · {s.team_nom || "—"} · {formaterDate(s.date_run)}
-                  {s.duree_secondes != null ? ` · durée : ${formaterDuree(s.duree_secondes)}` : ""}
-                  {s.vague_finale != null ? ` · Vague finale : ${s.vague_finale}` : ""}
-                  {s.nombre_tours != null ? ` · ${s.nombre_tours} tour${s.nombre_tours > 1 ? "s" : ""}` : ""}
+                <div style={{ color: "var(--df-text-3)", fontSize: 11.5, marginTop: 2, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+                  <span>
+                    {s.intensite.charAt(0).toUpperCase() + s.intensite.slice(1)} {NOMS_PALIERS_ROMAINS[s.niveau] || s.niveau} · {s.team_nom || "—"} · {formaterDate(s.date_run)}
+                    {s.duree_secondes != null ? ` · durée : ${formaterDuree(s.duree_secondes)}` : ""}
+                    {s.nombre_tours != null ? ` · ${s.nombre_tours} tour${s.nombre_tours > 1 ? "s" : ""}` : ""}
+                  </span>
+                  {/* Rattrapage vague finale (chantier 1, passe 1b) : UNIQUEMENT ce
+                      champ est corrigeable depuis l'historique, rien d'autre.
+                      Refresh de l'historique après enregistrement -> les bribes
+                      affichées (calculées côté backend) se recalculent aussitôt. */}
+                  {vagueFinaleEnEdition?.id === s.id ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      · Vague finale :
+                      <input type="number" min={1} value={vagueFinaleEnEdition.valeur}
+                        onChange={e => setVagueFinaleEnEdition({ id: s.id, valeur: e.target.value })}
+                        style={{ width: 48, ...sp.champ, padding: "2px 6px", fontSize: 11.5 }} />
+                      <button onClick={() => { onCorrigerVagueFinale(s.id, Number(vagueFinaleEnEdition.valeur)); setVagueFinaleEnEdition(null) }}
+                        style={{ ...sp.lienDiscret, color: "var(--df-cyan)" }}>Enregistrer</button>
+                      <button onClick={() => setVagueFinaleEnEdition(null)} style={sp.lienDiscret}>Annuler</button>
+                    </span>
+                  ) : (
+                    <span>
+                      {s.vague_finale != null ? ` · Vague finale : ${s.vague_finale}` : " · Vague finale non renseignée"}
+                      {s.bribes > 0 ? ` · 💠 ${formaterNombre(s.bribes)} bribes` : ""}{" "}
+                      <button onClick={() => setVagueFinaleEnEdition({ id: s.id, valeur: s.vague_finale || 1 })} style={sp.lienDiscret}>
+                        {s.vague_finale != null ? "Corriger" : "Renseigner"}
+                      </button>
+                    </span>
+                  )}
                 </div>
               </div>
               <button onClick={() => clicSupprimerSonge(s.id)} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
@@ -833,8 +889,9 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   const [dropsEnCours, setDropsEnCours] = useState([])
   const [songeEchoue, setSongeEchoue] = useState(false)
   const [salleAtteinte, setSalleAtteinte] = useState(26)
-  const [vagueFinale, setVagueFinale] = useState("")
-  const [nombreTours, setNombreTours] = useState("")
+  // Compteur "Combat final" (chantier 1, passe 1b) : nombre, plus une chaîne
+  // vide — 0 = pas encore renseigné, cohérent avec l'ancien état "vide".
+  const [vagueFinale, setVagueFinale] = useState(0)
   const [dernierRunId, setDernierRunId] = useState(null)
   const [stats, setStats] = useState(null)
   const [historique, setHistorique] = useState({ songes: [], total: 0 })
@@ -873,6 +930,19 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
       setIntensiteNiveau({ intensite: config.intensite_defaut.intensite, niveau: config.intensite_defaut.niveau })
     }
   }, [config, intensiteNiveau])
+
+  // Le plafond du compteur "Combat final" dépend de l'intensité (Rêve 5,
+  // Paradoxe 15, Cauchemar illimité) : si on change d'intensité après avoir
+  // monté le compteur, on le ramène au nouveau plafond plutôt que de laisser
+  // une valeur incohérente (chantier 1, passe 1b).
+  useEffect(() => {
+    // config?.vagues_max (pas juste !config) : un backend qui n'a pas encore
+    // ce champ (ancien process encore actif, ou config pas fini de charger)
+    // ne doit jamais faire planter le rendu — juste ne rien clamper.
+    if (!config?.vagues_max || !intensiteNiveau) return
+    const max = config.vagues_max[intensiteNiveau.intensite]
+    if (max != null && vagueFinale > max) setVagueFinale(max)
+  }, [intensiteNiveau, config]) // eslint-disable-line
 
   const chargerPersonnagesEtTeams = () => {
     if (!token) return
@@ -944,8 +1014,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
       participants, team_id: teamId,
       drops: dropsEnCours.map(d => ({ perso_id: d.perso_id, item_id: d.item_id, quantite: d.quantite, palier: d.palier })),
       duree_secondes: chronoSecondes > 0 ? chronoSecondes : null,
-      vague_finale: vagueFinale ? Number(vagueFinale) : null,
-      nombre_tours: nombreTours ? Number(nombreTours) : null,
+      vague_finale: vagueFinale > 0 ? vagueFinale : null,
     }
     fetch(`${API}/songes/runs`, { method: "POST", headers: authHeaders(token, true), body: JSON.stringify(body) })
       .then(async r => { if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || "Erreur d'enregistrement") }; return r.json() })
@@ -953,7 +1022,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
         setDernierRunId(d.id)
         setSongeEchoue(false); setSalleAtteinte(config.nb_salles_par_run)
         setDropsEnCours([]); setMode("principal")
-        chronoReinitialiser(); setVagueFinale(""); setNombreTours("")
+        chronoReinitialiser(); setVagueFinale(0)
         rafraichirStats(); rafraichirHistorique(1); setPageHistorique(1)
       })
       .catch(e => setErreur(e.message))
@@ -977,6 +1046,15 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   const supprimerDrop = (dropId) => {
     fetch(`${API}/songes/drops/${dropId}`, { method: "DELETE", headers: authHeaders(token) })
       .then(() => { rafraichirStats(); rafraichirHistorique() })
+  }
+
+  // Rattrapage (chantier 1, passe 1b) : corrige UNIQUEMENT vague_finale sur
+  // une run passée — rafraîchit l'historique ensuite, les bribes affichées
+  // (calculées côté backend) se recalculent donc immédiatement.
+  const corrigerVagueFinale = (runId, valeur) => {
+    fetch(`${API}/songes/runs/${runId}/vague-finale`, {
+      method: "PUT", headers: authHeaders(token, true), body: JSON.stringify({ vague_finale: valeur }),
+    }).then(() => rafraichirHistorique())
   }
 
   const toutSupprimer = () => {
@@ -1037,10 +1115,10 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
       historique={historique} pageHistorique={pageHistorique} setPageHistorique={setPageHistorique}
       dernierRunId={dernierRunId} onAnnulerDernierSonge={annulerDernierSonge}
       onSupprimerSonge={supprimerSonge} onSupprimerDrop={supprimerDrop}
+      onCorrigerVagueFinale={corrigerVagueFinale}
       songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue} salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte}
       dropsEnCours={dropsEnCours}
       vagueFinale={vagueFinale} setVagueFinale={setVagueFinale}
-      nombreTours={nombreTours} setNombreTours={setNombreTours}
       chronoSecondes={chronoSecondes} chronoEnMarche={chronoEnMarche}
       onChronoDemarrerPause={chronoDemarrerPause} onChronoReinitialiser={chronoReinitialiser}
       onSongeTermine={enregistrerRun}

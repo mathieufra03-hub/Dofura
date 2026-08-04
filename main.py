@@ -17,7 +17,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from config import songes as songes_config
-from taux_songes import migrer as migrer_taux_songes
+from taux_songes import migrer as migrer_taux_songes, calculer_bribes
 
 # Chemin de la base en variable d'environnement (SONGES.md §2) : sur Railway,
 # DB_PATH pointe vers le volume persistant monte sur /data. En local, aucune
@@ -2396,6 +2396,14 @@ class DropBody(BaseModel):
     quantite: int = 1
     palier: Optional[int] = None
 
+class DepenseBribesBody(BaseModel):
+    perso_id: int
+    montant: int
+    note: Optional[str] = None
+
+class VagueFinaleBody(BaseModel):
+    vague_finale: int
+
 class RunBody(BaseModel):
     intensite: str
     niveau: int
@@ -2413,7 +2421,10 @@ class RunBody(BaseModel):
 @app.get("/songes/config")
 def songes_recuperer_config():
     """Toutes les constantes de config/songes.py (SONGES.md §6) — le
-    frontend ne code rien en dur, tout vient d'ici."""
+    frontend ne code rien en dur, tout vient d'ici. bribes_par_vague vient de
+    dofura_songes_taux.json (via _songes_taux_v2(), chantier 1 passe 1b) : la
+    aussi, jamais recopie en dur cote frontend."""
+    taux_v2 = _songes_taux_v2()
     return {
         "nb_salles_par_run": songes_config.NB_SALLES_PAR_RUN,
         "combats_par_palier": songes_config.COMBATS_PAR_PALIER,
@@ -2423,6 +2434,8 @@ def songes_recuperer_config():
             "intensite": songes_config.INTENSITE_DEFAUT[0],
             "niveau": songes_config.INTENSITE_DEFAUT[1],
         },
+        "vagues_max": songes_config.VAGUES_MAX,
+        "bribes_par_vague": {e["id"]: e["bribes_par_vague"] for e in taux_v2["intensites"]},
         "vagues_requises": songes_config.VAGUES_REQUISES,
     }
 
@@ -2723,12 +2736,36 @@ def songes_supprimer_run(run_id: int, user: dict = Depends(utilisateur_courant))
     conn.close()
     return {"supprime": True}
 
+@app.put("/songes/runs/{run_id}/vague-finale")
+def songes_corriger_vague_finale(run_id: int, body: VagueFinaleBody, user: dict = Depends(utilisateur_courant)):
+    """Rattrapage (chantier 1, passe 1b, 2026-08-04) : renseigne ou corrige
+    UNIQUEMENT vague_finale sur une run passee (ex. run enregistree avant le
+    compteur "Combat final", ou valeur mal saisie sur le coup) — consigne
+    explicite : rien d'autre n'est modifiable par cet endpoint, ni ici ni
+    plus tard sans nouvelle demande (intensite, niveau, participants, drops
+    restent figes)."""
+    if body.vague_finale < 1:
+        raise HTTPException(status_code=400, detail="vague_finale doit etre >= 1")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM songe_runs WHERE id = ? AND user_id = ?", (run_id, user["id"]))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Run introuvable")
+    cur.execute("UPDATE songe_runs SET vague_finale = ? WHERE id = ?", (body.vague_finale, run_id))
+    conn.commit()
+    conn.close()
+    return {"id": run_id, "vague_finale": body.vague_finale}
+
 @app.get("/songes/historique")
 def songes_historique(page: int = 1, page_size: int = 20, user: dict = Depends(utilisateur_courant)):
-    """Historique des SONGES (refonte interface — vocabulaire "songe" cote
-    utilisateur, "run" reste le terme interne/BDD), du plus recent au plus
-    ancien, drops eventuels imbriques. Les id de songe ne sont JAMAIS
-    renumerotes apres suppression — un trou dans la numerotation est normal."""
+    """Historique des SONGES (vocabulaire interface, chantier 1 passe 1a :
+    "songe" pour le recit/titres, "run" pour compter/agir — voir CLAUDE.md ;
+    "run" reste par ailleurs le terme du code/BDD, cf. songe_runs), du plus
+    recent au plus ancien, drops eventuels imbriques. Les id de songe ne sont
+    JAMAIS renumerotes apres suppression — un trou dans la numerotation est
+    normal. bribes = calculer_bribes(vague_finale x bribes_par_vague), 0 si
+    vague_finale absente (chantier 1 passe 1b)."""
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
     conn = get_db()
@@ -2770,12 +2807,14 @@ def songes_historique(page: int = 1, page_size: int = 20, user: dict = Depends(u
             })
 
     conn.close()
+    taux_v2 = _songes_taux_v2()
     songes = [{
         "id": r["id"], "date_run": r["date_run"], "intensite": r["intensite"], "niveau": r["niveau"],
         "terminee": bool(r["terminee"]), "salle_atteinte": r["salle_atteinte"],
         "nb_combats": r["nb_combats"], "source_nb_combats": r["source_nb_combats"],
         "team_nom": r["team_nom"], "drops": drops_par_run.get(r["id"], []),
         "duree_secondes": r["duree_secondes"], "vague_finale": r["vague_finale"], "nombre_tours": r["nombre_tours"],
+        "bribes": calculer_bribes(taux_v2, r["intensite"], r["niveau"], r["vague_finale"]),
     } for r in runs]
     return {"total": total, "page": page, "page_size": page_size, "songes": songes}
 
@@ -2879,12 +2918,16 @@ def songes_journal(page: int = 1, page_size: int = 20, user: dict = Depends(util
 
 @app.delete("/songes/tout")
 def songes_tout_supprimer(user: dict = Depends(utilisateur_courant)):
-    """Supprime tous les songes/participants/drops de l'utilisateur — PAS ses
-    personnages ni ses teams (le panneau de gestion n'est pas concerne).
-    Chaque drop est d'abord archive dans songe_journal (user_id, item_id,
-    palier, date du drop original) avant suppression : ces entrees ne
+    """Supprime tous les songes/participants/drops de l'utilisateur, ET ses
+    depenses de bribes de reve (chantier 1, passe 1b, 2026-08-04 : sans ca,
+    total_obtenu retombe a 0 mais total_depense resterait, solde negatif) —
+    PAS ses personnages ni ses teams (le panneau de gestion n'est pas
+    concerne). Chaque drop est d'abord archive dans songe_journal (user_id,
+    item_id, palier, date du drop original) avant suppression : ces entrees ne
     comptent plus dans aucun calcul, elles restent juste consultables
-    (SONGES.md, refonte interface point 4)."""
+    (SONGES.md, refonte interface point 4). PRAGMA foreign_keys n'est pas
+    active dans ce projet (piege #9 CLAUDE.md) : chaque suppression liee est
+    faite a la main, aucun ON DELETE CASCADE a esperer."""
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -2893,9 +2936,118 @@ def songes_tout_supprimer(user: dict = Depends(utilisateur_courant)):
         FROM songe_drops d JOIN songe_runs r ON r.id = d.run_id
         WHERE r.user_id = ?
     """, (user["id"],))
+    cur.execute("""
+        DELETE FROM songe_bribes_depenses
+        WHERE perso_id IN (SELECT id FROM songe_personnages WHERE user_id = ?)
+    """, (user["id"],))
     cur.execute("DELETE FROM songe_drops WHERE run_id IN (SELECT id FROM songe_runs WHERE user_id = ?)", (user["id"],))
     cur.execute("DELETE FROM songe_run_participants WHERE run_id IN (SELECT id FROM songe_runs WHERE user_id = ?)", (user["id"],))
     cur.execute("DELETE FROM songe_runs WHERE user_id = ?", (user["id"],))
+    conn.commit()
+    conn.close()
+    return {"supprime": True}
+
+def _songes_taux_v2():
+    """Charge dofura_songes_taux.json (v2.0) a la demande — meme format que
+    taux_songes.migrer()/calculer_bribes() attendent. Aucune valeur en dur ici
+    (chantier 1, passe 1b, 2026-08-04)."""
+    with open("dofura_songes_taux.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+@app.get("/songes/bribes")
+def songes_bribes(user: dict = Depends(utilisateur_courant)):
+    """Bribes de reve par personnage. total_obtenu n'est JAMAIS stocke : il
+    est recalcule a chaque appel depuis les runs de l'utilisateur (vague_finale
+    x bribes_par_vague, voir taux_songes.calculer_bribes — une run sans
+    vague_finale compte 0, jamais une estimation). Gagnees PAR PERSONNAGE :
+    chaque participant d'une run touche le montant complet, pas une part.
+    Seules les DEPENSES sont stockees (songe_bribes_depenses)."""
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT id, nom FROM songe_personnages WHERE user_id = ? ORDER BY nom", (user["id"],))
+    personnages = cur.fetchall()
+    if not personnages:
+        conn.close()
+        return {"personnages": [], "total_obtenu": 0, "total_depense": 0, "solde": 0}
+
+    data = _songes_taux_v2()
+
+    cur.execute("""
+        SELECT rp.perso_id, r.intensite, r.niveau, r.vague_finale
+        FROM songe_run_participants rp
+        JOIN songe_runs r ON r.id = rp.run_id
+        WHERE r.user_id = ?
+    """, (user["id"],))
+    obtenu_par_perso = {}
+    for row in cur.fetchall():
+        bribes = calculer_bribes(data, row["intensite"], row["niveau"], row["vague_finale"])
+        obtenu_par_perso[row["perso_id"]] = obtenu_par_perso.get(row["perso_id"], 0) + bribes
+
+    cur.execute("""
+        SELECT perso_id, COALESCE(SUM(montant), 0) AS total
+        FROM songe_bribes_depenses
+        WHERE perso_id IN (SELECT id FROM songe_personnages WHERE user_id = ?)
+        GROUP BY perso_id
+    """, (user["id"],))
+    depense_par_perso = {row["perso_id"]: row["total"] for row in cur.fetchall()}
+
+    conn.close()
+
+    resultat = []
+    total_obtenu = 0
+    total_depense = 0
+    for p in personnages:
+        obtenu = obtenu_par_perso.get(p["id"], 0)
+        depense = depense_par_perso.get(p["id"], 0)
+        total_obtenu += obtenu
+        total_depense += depense
+        resultat.append({
+            "perso_id": p["id"], "nom": p["nom"],
+            "total_obtenu": obtenu, "total_depense": depense, "solde": obtenu - depense,
+        })
+
+    return {
+        "personnages": resultat,
+        "total_obtenu": total_obtenu, "total_depense": total_depense,
+        "solde": total_obtenu - total_depense,
+    }
+
+@app.post("/songes/bribes/depense")
+def songes_creer_depense_bribes(body: DepenseBribesBody, user: dict = Depends(utilisateur_courant)):
+    if body.montant <= 0:
+        raise HTTPException(status_code=400, detail="montant doit etre > 0")
+    conn = get_db()
+    if not _perso_ids_appartiennent(conn, [body.perso_id], user["id"]):
+        conn.close()
+        raise HTTPException(status_code=400, detail="Le personnage ne vous appartient pas")
+    cur = conn.cursor()
+    cur.execute("INSERT INTO songe_bribes_depenses (perso_id, montant, note) VALUES (?, ?, ?)",
+                (body.perso_id, body.montant, body.note))
+    depense_id = cur.lastrowid
+    conn.commit()
+    cur.execute("SELECT id, perso_id, montant, date, note FROM songe_bribes_depenses WHERE id = ?", (depense_id,))
+    row = cur.fetchone()
+    conn.close()
+    return dict(row)
+
+@app.delete("/songes/bribes/depense/{depense_id}")
+def songes_supprimer_depense_bribes(depense_id: int, user: dict = Depends(utilisateur_courant)):
+    conn = get_db()
+    cur = conn.cursor()
+    # Verifie que la depense appartient a un personnage de l'utilisateur, pas
+    # seulement que l'id existe (point de vigilance explicite, chantier 1
+    # passe 1b) : jointure sur songe_personnages.user_id, jamais de confiance
+    # aveugle dans un id envoye par le client.
+    cur.execute("""
+        SELECT d.id FROM songe_bribes_depenses d
+        JOIN songe_personnages p ON p.id = d.perso_id
+        WHERE d.id = ? AND p.user_id = ?
+    """, (depense_id, user["id"]))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Depense introuvable")
+    cur.execute("DELETE FROM songe_bribes_depenses WHERE id = ?", (depense_id,))
     conn.commit()
     conn.close()
     return {"supprime": True}
@@ -3246,6 +3398,7 @@ TABLES_INTERDITES_REFRESH = {
     "users", "progression_joueur", "favoris",
     "songe_personnages", "songe_teams", "songe_team_membres",
     "songe_runs", "songe_run_participants", "songe_drops", "songe_journal",
+    "songe_bribes_depenses",
 }
 
 # SQL de creation des 10 tables manquantes identifiees le 3 aout 2026,
@@ -3354,6 +3507,15 @@ TABLES_ENDPOINT_CREATE = {
             item_id       INTEGER NOT NULL,
             palier        INTEGER,
             date_drop     TEXT
+        )
+    """,
+    "songe_bribes_depenses": """
+        CREATE TABLE IF NOT EXISTS songe_bribes_depenses (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            perso_id  INTEGER NOT NULL REFERENCES songe_personnages(id),
+            montant   INTEGER NOT NULL,
+            date      TEXT DEFAULT (datetime('now')),
+            note      TEXT
         )
     """,
 }
@@ -3484,7 +3646,7 @@ def refresh_encyclopedie(x_admin_token: str = Header(default="", alias="X-Admin-
     encyclopediques manquantes en prod — voir le commentaire au-dessus de
     TABLES_ENCYCLOPEDIQUES_REFRESH pour le diagnostic complet (3 aout 2026).
 
-    - CREATE TABLE IF NOT EXISTS : autorise sur les 10 tables du registre,
+    - CREATE TABLE IF NOT EXISTS : autorise sur les 11 tables du registre,
       encyclopediques ET progression joueur (creer une table absente ne
       detruit rien).
     - Remplissage depuis les JSON sources : UNIQUEMENT sur les 3 tables
@@ -3492,7 +3654,7 @@ def refresh_encyclopedie(x_admin_token: str = Header(default="", alias="X-Admin-
       songe_boss_modifs), a CHAQUE appel (INSERT OR REPLACE, idempotent
       par item_id/palier — rejouer le remplissage ne duplique jamais rien,
       "refresh" au sens propre : normalise vers l'etat courant des JSON).
-    - Les 7 tables de progression joueur ne sont JAMAIS remplies par cet
+    - Les 8 tables de progression joueur ne sont JAMAIS remplies par cet
       endpoint, qu'elles viennent d'etre creees ou qu'elles existent deja
       avec de vraies donnees — seule leur CREATE IF NOT EXISTS peut se
       produire, jamais un INSERT dessus.

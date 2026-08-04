@@ -36,3 +36,8 @@ INTENSITE_DEFAUT = ("paradoxe", 1)
 # la victoire, selon l'intensite. Sert a borner le champ optionnel
 # "vague finale" (refonte interface, 29 juillet 2026).
 VAGUES_REQUISES = {"reve": 1, "paradoxe": 3, "cauchemar": 3}
+
+# Plafond du compteur "Combat final" (chantier 1, passe 1b, 2026-08-04) —
+# None = illimite. Rêve/Paradoxe bornes (nombre de vagues realistement
+# atteignables, retour Popo) ; Cauchemar laisse libre.
+VAGUES_MAX = {"reve": 5, "paradoxe": 15, "cauchemar": None}

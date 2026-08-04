@@ -73,6 +73,10 @@ TABLES_ENCYCLOPEDIE = {
 # drops, personnages, teams — rien de tout ca ne peut se reconstruire.
 # songe_journal (refonte interface "Tout supprimer") : archive de drops
 # passes, alimentee uniquement par l'appli — memes raisons, meme protection.
+# songe_bribes_depenses (chantier 1, passe 1b, 2026-08-04) : depenses de
+# bribes de reve saisies par l'utilisateur — meme raison, meme protection.
+# Le total OBTENU n'est jamais stocke (recalcule depuis songe_runs.vague_finale
+# via taux_songes.py), seules les DEPENSES le sont ici.
 # Elles ne doivent JAMAIS apparaitre dans TABLES_ENCYCLOPEDIE ni dans le
 # schema DROP ci-dessous ; elles ne sont creees plus bas qu'en
 # CREATE TABLE IF NOT EXISTS, jamais precedees d'un DROP.
@@ -80,6 +84,7 @@ TABLES_UTILISATEUR_INTERDITES = {
     "users", "progression_joueur", "favoris",
     "songe_personnages", "songe_teams", "songe_team_membres",
     "songe_runs", "songe_run_participants", "songe_drops", "songe_journal",
+    "songe_bribes_depenses",
 }
 
 print("[init_db] Creation du schema (DROP + CREATE des tables encyclopediques)...")
@@ -724,6 +729,13 @@ CREATE TABLE IF NOT EXISTS songe_journal (
     item_id       INTEGER NOT NULL,
     palier        INTEGER,
     date_drop     TEXT
+);
+CREATE TABLE IF NOT EXISTS songe_bribes_depenses (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    perso_id  INTEGER NOT NULL REFERENCES songe_personnages(id),
+    montant   INTEGER NOT NULL,
+    date      TEXT DEFAULT (datetime('now')),
+    note      TEXT
 );
 """)
 
