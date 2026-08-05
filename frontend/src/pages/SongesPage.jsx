@@ -42,6 +42,16 @@ const CATEGORIE_MOT_SINGULIER = {
 }
 const ORDRE_CATEGORIES = ["legende", "legende_animale", "cosmetique", "rune_astrale"]
 const NOMS_PALIERS_ROMAINS = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V" }
+// Libellé affiché par intensité (retour Popo, chantier 1 passe 1c-A) : les
+// clés de config.intensites ("reve"/"paradoxe"/"cauchemar") n'ont pas
+// d'accent — un simple charAt(0).toUpperCase() donnait "Reve" partout où
+// il était utilisé (sélecteur, historique, stats...). Source unique ici,
+// à utiliser partout au lieu de recapitaliser la clé brute.
+const INTENSITE_LABEL = { reve: "Rêve", paradoxe: "Paradoxe", cauchemar: "Cauchemar" }
+// Couleur par intensité (refonte visuelle, chantier 1 passe 1c) : violet
+// Paradoxe, bleu Rêve, orange Cauchemar — tokens.css (--df-reve/--df-paradoxe/
+// --df-cauchemar), jamais de hex recopié en dur ici.
+const INTENSITE_COULEUR = { reve: "var(--df-reve)", paradoxe: "var(--df-paradoxe)", cauchemar: "var(--df-cauchemar)" }
 
 function authHeaders(token, avecJson) {
   const h = {}
@@ -82,8 +92,10 @@ const sp = {
   card: { background: "rgba(var(--df-card-bg), 0.92)", border: "1px solid var(--df-border-gold)", borderRadius: 16, padding: "20px 20px", marginBottom: 16 },
   champ: { width: "100%", boxSizing: "border-box", background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-cyan-rgb), 0.35)", borderRadius: 8, padding: "9px 12px", fontSize: 13.5, color: "var(--df-text)", outline: "none" },
   select: { background: "rgba(var(--df-card-bg), 0.95)", color: "var(--df-text)", border: "1px solid rgba(var(--df-gold-rgb), 0.4)", borderRadius: 999, padding: "8px 14px", fontSize: 13, cursor: "pointer", outline: "none" },
-  btnVert: { background: "var(--df-green)", color: "#0A2118", border: "none", borderRadius: 12, padding: "16px 20px", fontSize: 16, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
-  btnVertPetit: { background: "var(--df-green)", color: "#0A2118", border: "none", borderRadius: 10, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  // Cyan = action principale (refonte visuelle, chantier 1 passe 1c) — le
+  // vert menthe précédent ne vient pas de la charte Draconiros (IDENTITE.md).
+  btnCyan: { background: "var(--df-cyan)", color: "#04121A", border: "none", borderRadius: 12, padding: "16px 20px", fontSize: 16, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
+  btnCyanPetit: { background: "var(--df-cyan)", color: "#04121A", border: "none", borderRadius: 10, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   btnOrContour: { background: "rgba(var(--df-gold-rgb), 0.08)", color: "var(--df-gold)", border: "2px solid var(--df-gold)", borderRadius: 12, padding: "16px 20px", fontSize: 15, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
   btnFantome: { background: "rgba(var(--df-cyan-rgb), 0.07)", color: "var(--df-cyan)", border: "1px solid rgba(var(--df-cyan-rgb), 0.6)", borderRadius: 10, padding: "8px 16px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
   lienDiscret: { fontSize: 12, color: "var(--df-text-3)", cursor: "pointer", textDecoration: "underline", background: "none", border: "none", padding: 0, fontFamily: "inherit" },
@@ -96,13 +108,15 @@ const sp = {
 
 function SongesConnexionRequise({ onBack }) {
   return (
-    <div style={sp.page}>
-      <button onClick={onBack} style={sp.backBtn}>← Retour</button>
-      <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
-        <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 10px" }}>L'Œil de Draconiros</h1>
-        <p style={{ color: "var(--df-text-2)", fontSize: 14, margin: 0 }}>
-          Connecte-toi pour compter tes runs et enregistrer tes drops — tes données te suivent sur tous tes appareils.
-        </p>
+    <div className="df-songes">
+      <div style={sp.page}>
+        <button onClick={onBack} style={sp.backBtn}>← Retour</button>
+        <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
+          <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 10px" }}>L'Œil de Draconiros</h1>
+          <p style={{ color: "var(--df-text-2)", fontSize: 14, margin: 0 }}>
+            Connecte-toi pour compter tes runs et enregistrer tes drops — tes données te suivent sur tous tes appareils.
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -146,7 +160,7 @@ function FormNouveauPersonnage({ token, onCree }) {
         style={{ ...sp.champ, flex: "1 1 120px" }} />
       <input value={serveur} onChange={e => setServeur(e.target.value)} placeholder="Serveur (optionnel)"
         style={{ ...sp.champ, flex: "1 1 120px" }} />
-      <button disabled={enCours || !nom.trim()} onClick={creer} className="df-hover-lift" style={{ ...sp.btnVertPetit, opacity: (enCours || !nom.trim()) ? 0.5 : 1 }}>
+      <button disabled={enCours || !nom.trim()} onClick={creer} className="df-hover-lift" style={{ ...sp.btnCyanPetit, opacity: (enCours || !nom.trim()) ? 0.5 : 1 }}>
         + Ajouter
       </button>
     </div>
@@ -184,7 +198,7 @@ function FormNouvelleTeam({ token, personnages, onCree }) {
         ))}
       </div>
       <button disabled={enCours || !nom.trim() || membres.length === 0} onClick={creer}
-        className="df-hover-lift" style={{ ...sp.btnVertPetit, opacity: (enCours || !nom.trim() || membres.length === 0) ? 0.5 : 1 }}>
+        className="df-hover-lift" style={{ ...sp.btnCyanPetit, opacity: (enCours || !nom.trim() || membres.length === 0) ? 0.5 : 1 }}>
         Créer la team
       </button>
     </div>
@@ -202,6 +216,7 @@ function SongesGestion({ token, personnages, teams, onRafraichir, onTerminer, on
   }
 
   return (
+    <div className="df-songes">
     <div style={sp.page}>
       {!onboarding && <button onClick={onTerminer} style={sp.backBtn}>← Retour</button>}
       <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 4px" }}>
@@ -251,6 +266,7 @@ function SongesGestion({ token, personnages, teams, onRafraichir, onTerminer, on
         </div>
       )}
     </div>
+    </div>
   )
 }
 
@@ -280,7 +296,7 @@ function FormEditionTeam({ token, team, personnages, onTermine }) {
           </span>
         ))}
       </div>
-      <button disabled={enCours} onClick={enregistrer} className="df-hover-lift" style={sp.btnVertPetit}>Enregistrer</button>
+      <button disabled={enCours} onClick={enregistrer} className="df-hover-lift" style={sp.btnCyanPetit}>Enregistrer</button>
       <button onClick={onTermine} style={{ ...sp.lienDiscret, marginLeft: 12 }}>Annuler</button>
     </div>
   )
@@ -321,7 +337,7 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
             supprimés (tes personnages et teams resteront). Confirmer ?
           </p>
           <div style={{ display: "flex", gap: 10 }}>
-            <button disabled={enCours} onClick={confirmer} className="df-hover-lift" style={{ ...sp.btnVertPetit, background: "var(--df-red)", opacity: enCours ? 0.6 : 1 }}>
+            <button disabled={enCours} onClick={confirmer} className="df-hover-lift" style={{ ...sp.btnCyanPetit, background: "var(--df-red)", opacity: enCours ? 0.6 : 1 }}>
               Oui, tout supprimer
             </button>
             <button disabled={enCours} onClick={() => setConfirmation(false)} className="df-hover-lift" style={sp.btnFantome}>Non, annuler</button>
@@ -369,14 +385,17 @@ function SongesJournalSection({ journal, page, setPage }) {
 
 function BasculeSongeInterrompu({ nbSallesParRun, songeEchoue, setSongeEchoue, salleAtteinte, setSalleAtteinte }) {
   if (!songeEchoue) {
+    // Vrai bouton discret plutôt qu'un lien souligné (refonte visuelle,
+    // chantier 1 passe 1c) : pensé pour vivre à côté de "J'ai drop", pas
+    // seul sur sa propre ligne.
     return (
-      <button onClick={() => setSongeEchoue(true)} style={{ ...sp.lienDiscret, marginTop: 10 }}>
+      <button onClick={() => setSongeEchoue(true)} className="df-hover-lift" style={sp.btnFantome}>
         La run s'est arrêtée en cours de route ?
       </button>
     )
   }
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
       <label style={{ fontSize: 12.5, color: "var(--df-text-2)" }}>Salle atteinte</label>
       <input type="number" min={1} max={nbSallesParRun} value={salleAtteinte}
         onChange={e => setSalleAtteinte(Math.min(nbSallesParRun, Math.max(1, Number(e.target.value) || 1)))}
@@ -418,6 +437,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
   const retirerDrop = (index) => setDropsEnCours(ds => ds.filter((_, i) => i !== index))
 
   return (
+    <div className="df-songes">
     <div style={sp.page}>
       <button onClick={onAnnuler} style={sp.backBtn}>← Retour</button>
       <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>J'ai drop</h1>
@@ -471,7 +491,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
                 <option value="">—</option>
                 {(itemSelectionne.paliers || []).map(p => <option key={p} value={p}>{NOMS_PALIERS_ROMAINS[p]}</option>)}
               </select>
-              <button disabled={!personnageId} onClick={ajouterDrop} className="df-hover-lift" style={{ ...sp.btnVertPetit, marginLeft: "auto", opacity: personnageId ? 1 : 0.5 }}>
+              <button disabled={!personnageId} onClick={ajouterDrop} className="df-hover-lift" style={{ ...sp.btnCyanPetit, marginLeft: "auto", opacity: personnageId ? 1 : 0.5 }}>
                 Ajouter ce drop
               </button>
             </div>
@@ -492,10 +512,11 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
           </div>
         )}
 
-        <button onClick={onValider} className="df-hover-lift" style={{ ...sp.btnVert, width: "100%", marginTop: 16 }}>
+        <button onClick={onValider} className="df-hover-lift" style={{ ...sp.btnCyan, width: "100%", marginTop: 16 }}>
           Valider le drop
         </button>
       </div>
+    </div>
     </div>
   )
 }
@@ -536,6 +557,15 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
 
   const totalPagesHistorique = Math.max(Math.ceil((historique.total || 0) / 10), 1)
 
+  // Réaction visuelle au clic sur "Run terminée" (point 6 du chantier 1 passe
+  // 1c) : purement présentationnel, aucun impact sur enregistrerRun côté
+  // parent. Le halo du compteur flashe brièvement puis reprend son pulse.
+  const [flashCompteur, setFlashCompteur] = useState(false)
+  const declencherFlashCompteur = () => {
+    setFlashCompteur(true)
+    setTimeout(() => setFlashCompteur(false), 650)
+  }
+
   // Confirmation en 2 clics (pas de window.confirm() : coupe avec la charte
   // graphique custom et bloquerait l'automatisation de test navigateur).
   // Premier clic sur un id -> affiche "Confirmer ?" ; second clic sur le
@@ -558,225 +588,292 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   }
 
   return (
-    <div style={sp.page}>
-      <button onClick={onBack} style={sp.backBtn}>← Retour</button>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
-        <div>
-          <h1 className="df-section-title" style={{ fontSize: 20, margin: 0 }}>L'Œil de Draconiros</h1>
-          {/* Sous-titre (retour Popo, 31 juillet 2026 : rebranding "Le Puits" →
-              "Le Registre des Songes", puis 1er août → "L'Œil de Draconiros"
-              — le titre principal renommé à chaque fois, ce sous-titre lui
-              n'a jamais changé) — même traitement "petite capitale" que les
-              kickers de l'accueil (uppercase, letter-spacing large, petite
-              taille, texte secondaire). */}
-          <p style={{ margin: "4px 0 0", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--df-text-2)" }}>
-            Compte tes runs, traque tes légendes
-          </p>
-        </div>
-        <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
+    <div className="df-songes">
+      {/* Bandeau haut (refonte visuelle, chantier 1 passe 1c) : artwork
+          Draconiros pleine largeur, fondu vers le fond en masque alpha
+          (recette signature du site, voir dofura-maquette-v2.html). */}
+      <div className="df-songes-banniere">
+        <img src="/assets/oeil/draconiros-banniere.jpg" alt="" />
+      </div>
+      <div style={{ position: "relative", textAlign: "center", marginTop: -54, padding: "0 20px 4px" }}>
+        <h1 className="df-section-title" style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(26px, 5vw, 36px)", margin: 0, textShadow: "0 2px 20px rgba(4,18,26,0.9)" }}>
+          L'Œil de Draconiros
+        </h1>
+        <p style={{ margin: "8px auto 0", maxWidth: 560, fontStyle: "italic", fontSize: 12.5, color: "var(--df-text-2)" }}>
+          Xélor, dieu du temps et des compteurs, sera-t-il clément ? Draconiros te surveille du coin de l'œil.
+        </p>
       </div>
 
-      {/* 1. Sélecteur de catégorie, au-dessus du compteur */}
-      <div style={{ marginBottom: 10 }}>
-        {ORDRE_CATEGORIES.map(c => (
-          <span key={c} onClick={() => changerCategorie(c)} className="df-hover-lift" style={sp.pill(categorieAffichee === c)}>
-            {CATEGORIE_LABELS_SELECTEUR[c]}
-          </span>
-        ))}
-      </div>
+      {/* Décors latéraux (épée + personnage Xélor) : disparaissent sous
+          1100px (voir pageSonges.css), jamais de bord net (masque radial). */}
+      <div className="df-songes-decor df-songes-decor-epee" style={{ backgroundImage: "url('/assets/oeil/xelor-epee.jpg')" }} aria-hidden="true" />
+      <div className="df-songes-decor df-songes-decor-perso" style={{ backgroundImage: "url('/assets/oeil/xelor-perso.jpg')" }} aria-hidden="true" />
 
-      {/* 2. Compteur principal : uniquement le gros chiffre, rien d'autre (retour d'usage) */}
-      <div style={{ ...sp.card, textAlign: "center", padding: "26px 20px" }}>
-        <div style={{ fontSize: 12, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
-          Sans {CATEGORIE_MOT_SINGULIER[categorieAffichee]} depuis
+      <div style={{ ...sp.page, position: "relative" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 8 }}>
+          <button onClick={onBack} style={{ ...sp.backBtn, marginBottom: 0 }}>← Retour</button>
+          <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
         </div>
-        {secheresseSonges == null ? (
-          <div style={{ color: "var(--df-text-3)", fontSize: 14 }}>Aucune donnée pour cette intensité pour l'instant.</div>
-        ) : (
-          <div style={{ fontSize: "clamp(38px, 11vw, 58px)", fontWeight: 800, color: "var(--df-red)", lineHeight: 1 }}>
-            {formaterNombre(secheresseSonges)}
+
+        {/* 1. Sélecteur de catégorie, au-dessus du compteur */}
+        <div style={{ marginBottom: 10 }}>
+          {ORDRE_CATEGORIES.map(c => (
+            <span key={c} onClick={() => changerCategorie(c)} className="df-hover-lift" style={sp.pill(categorieAffichee === c)}>
+              {CATEGORIE_LABELS_SELECTEUR[c]}
+            </span>
+          ))}
+        </div>
+
+        {/* 2. Compteur principal — le héros de l'écran (hiérarchie, refonte
+            visuelle chantier 1 passe 1c) : Cinzel ~80px, cyan, halo pulsant. */}
+        <div style={{ ...sp.card, textAlign: "center", padding: "30px 20px", position: "relative", overflow: "hidden" }}>
+          <div className={`df-songes-compteur-halo${flashCompteur ? " df-songes-flash" : ""}`} style={{
+            position: "absolute", left: "50%", top: "50%", width: 260, height: 200,
+            transform: "translate(-50%, -50%)",
+            background: "radial-gradient(ellipse at center, rgba(44,231,255,0.35), transparent 70%)",
+            pointerEvents: "none",
+          }} />
+          <div style={{ position: "relative", fontSize: 12, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>
+            Sans {CATEGORIE_MOT_SINGULIER[categorieAffichee]} depuis
+          </div>
+          {secheresseSonges == null ? (
+            <div style={{ position: "relative", color: "var(--df-text-3)", fontSize: 14 }}>Aucune donnée pour cette intensité pour l'instant.</div>
+          ) : (
+            <div style={{ position: "relative" }}>
+              <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(44px, 13vw, 80px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1 }}>
+                {formaterNombre(secheresseSonges)}
+              </div>
+              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)", marginTop: 6 }}>runs</div>
+            </div>
+          )}
+        </div>
+
+        {/* Total runs + meilleure série sans légende (chantier 1, passe 1c-A,
+            5 août 2026) — scopées à l'intensité + niveau affichés, comme le
+            compteur principal juste au-dessus (cohérence backend, /songes/stats).
+            Libellés explicites : jamais laisser deviner le périmètre du chiffre
+            (retour Popo). */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+          <div style={{ ...sp.card, flex: "1 1 160px", padding: "12px 16px", marginBottom: 0, textAlign: "center" }}>
+            <div style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Runs en {INTENSITE_LABEL[intensiteNiveau.intensite] || intensiteNiveau.intensite} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau] || intensiteNiveau.niveau}
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--df-text)", marginTop: 4 }}>
+              {stats?.total_runs ?? "—"}
+            </div>
+          </div>
+          <div style={{ ...sp.card, flex: "1 1 160px", padding: "12px 16px", marginBottom: 0, textAlign: "center" }}>
+            <div title="Record pour cette intensité et ce niveau." style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em", cursor: "help" }}>
+              Meilleure série
+            </div>
+            {stats?.meilleure_serie_sans_legende != null ? (
+              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--df-text)", marginTop: 4 }}>
+                {stats.meilleure_serie_sans_legende}
+              </div>
+            ) : (
+              <div title="Aucune légende ne peut tomber à cette intensité." style={{ fontSize: 24, fontWeight: 800, color: "var(--df-text-3)", marginTop: 4, cursor: "help" }}>
+                —
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 4. Actions — l'action principale d'abord, pleine largeur, cyan.
+            Réaction visuelle sur le compteur au clic (point 6 du chantier). */}
+        <button disabled={enregistrement} onClick={() => { onSongeTermine(); declencherFlashCompteur() }} className="df-hover-lift"
+          style={{ ...sp.btnCyan, width: "100%", marginTop: 18, opacity: enregistrement ? 0.6 : 1 }}>
+          Run terminée
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginTop: 10 }}>
+          <button onClick={onOuvrirAjoutDrop} className="df-hover-lift" style={{ ...sp.btnOrContour, flex: "0 1 auto", padding: "9px 18px", fontSize: 13 }}>
+            J'ai drop
+          </button>
+          {/* 5. "La run s'est arrêtée ?" — vrai bouton discret à côté, plus un lien */}
+          <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
+            salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
+        </div>
+
+        {dropsEnCours.length > 0 && (
+          <div style={{ fontSize: 12.5, color: "var(--df-gold)", marginTop: 8 }}>
+            {dropsEnCours.length} drop{dropsEnCours.length > 1 ? "s" : ""} en attente
           </div>
         )}
-      </div>
 
-      {/* 3. Pastilles team + intensité + chronomètre optionnel */}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 18 }}>
-        <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={sp.select}>
-          {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
-        </select>
-        <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
-          onChange={e => { const [intensite, niveau] = e.target.value.split("_"); changerIntensite(intensite, Number(niveau)) }}
-          style={sp.select}>
-          {Object.entries(config.intensites).map(([cle, info]) =>
-            info.niveaux.map(n => (
-              <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
-                {cle.charAt(0).toUpperCase() + cle.slice(1)} {NOMS_PALIERS_ROMAINS[n] || n}
-              </option>
-            ))
-          )}
-        </select>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(var(--df-card-bg), 0.95)", border: "1px solid rgba(var(--df-gold-rgb), 0.4)", borderRadius: 999, padding: "6px 8px 6px 14px", marginLeft: "auto" }}>
-          <span style={{ fontSize: 13, color: "var(--df-text)", fontVariantNumeric: "tabular-nums", minWidth: 56 }}>
-            {formaterDuree(chronoSecondes)}
-          </span>
-          <button onClick={onChronoDemarrerPause} style={{
-            ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5, fontWeight: 700, border: "none",
-            background: chronoEnMarche ? "var(--df-red)" : "var(--df-green)",
-            color: chronoEnMarche ? "#fff" : "#0A2118",
-          }}>
-            {chronoEnMarche ? "Pause" : "Démarrer"}
+        {songeEchoue && (
+          <button disabled={enregistrement} onClick={onSongeTermine} className="df-hover-lift" style={{ ...sp.btnCyanPetit, marginTop: 10 }}>
+            Enregistrer cette run
           </button>
-          <button onClick={onChronoReinitialiser} title="Réinitialiser" className="df-hover-lift" style={{ ...sp.btnFantome, padding: "5px 10px", fontSize: 11.5 }}>↺</button>
-        </div>
-      </div>
+        )}
 
-      {/* Combat final a vagues (SONGES.md §3.2) : compteur −/+ plutot qu'un
-          champ libre, plafonne par intensite (config.vagues_max — Reve 5,
-          Paradoxe 15, Cauchemar illimite), bribes de reve affichees en
-          direct (chantier 1, passe 1b, 2026-08-04). "Nombre de tours" retire
-          de la saisie (colonne nombre_tours conservee en base, non exposee
-          ici — retour Popo). */}
-      <div style={{ ...sp.card, padding: "14px 18px", marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-          <span style={{ fontSize: 12, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Combat final</span>
+        {erreur && <div style={{ color: "var(--df-red)", fontSize: 12.5, marginTop: 10 }}>{erreur}</div>}
+
+        {/* 7. Annulation rapide du dernier songe — gris discret, pas rouge :
+            c'est réversible, pas destructeur (refonte visuelle, passe 1c). */}
+        {dernierRunId && (
+          <div style={{ marginTop: 14 }}>
+            <button onClick={onAnnulerDernierSonge} style={sp.lienDiscret}>
+              Annuler la dernière run enregistrée (Run #{dernierRunId})
+            </button>
+          </div>
+        )}
+
+        {/* 3. RÉGLAGES — team, intensité, chrono, Combat final : un seul bloc,
+            poids visuel réduit (hiérarchie, refonte visuelle passe 1c). */}
+        <div style={{ background: "rgba(11, 37, 49, 0.55)", border: "1px solid rgba(var(--df-cyan-rgb), 0.10)", borderRadius: 14, padding: "16px 18px", marginTop: 22 }}>
+          <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-3)", fontWeight: 700, marginBottom: 12 }}>
+            Réglages
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+            <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={{ ...sp.select, fontSize: 12 }}>
+              {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
+            </select>
+            {/* Pastille couleur d'intensité (couleurs, refonte visuelle passe 1c) :
+                violet Paradoxe, bleu Rêve, orange Cauchemar — tokens.css. */}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: INTENSITE_COULEUR[intensiteNiveau.intensite], flexShrink: 0 }} />
+              <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
+                onChange={e => { const [intensite, niveau] = e.target.value.split("_"); changerIntensite(intensite, Number(niveau)) }}
+                style={{ ...sp.select, fontSize: 12 }}>
+                {Object.entries(config.intensites).map(([cle, info]) =>
+                  info.niveaux.map(n => (
+                    <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
+                      {INTENSITE_LABEL[cle] || cle} {NOMS_PALIERS_ROMAINS[n] || n}
+                    </option>
+                  ))
+                )}
+              </select>
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(var(--df-card-bg), 0.95)", border: "1px solid rgba(var(--df-gold-rgb), 0.4)", borderRadius: 999, padding: "5px 8px 5px 12px", marginLeft: "auto" }}>
+              <span style={{ fontSize: 12, color: "var(--df-text)", fontVariantNumeric: "tabular-nums", minWidth: 50 }}>
+                {formaterDuree(chronoSecondes)}
+              </span>
+              <button onClick={onChronoDemarrerPause} style={{
+                ...sp.btnFantome, padding: "4px 9px", fontSize: 11, fontWeight: 700, border: "none",
+                background: chronoEnMarche ? "var(--df-red)" : "var(--df-cyan)",
+                color: chronoEnMarche ? "#fff" : "#04121A",
+              }}>
+                {chronoEnMarche ? "Pause" : "Démarrer"}
+              </button>
+              <button onClick={onChronoReinitialiser} title="Réinitialiser" className="df-hover-lift" style={{ ...sp.btnFantome, padding: "4px 9px", fontSize: 11 }}>↺</button>
+            </div>
+          </div>
+
+          {/* Combat final a vagues (SONGES.md §3.2) : compteur −/+ plutot qu'un
+              champ libre, plafonne par intensite (config.vagues_max — Reve 5,
+              Paradoxe 15, Cauchemar illimite), bribes de reve affichees en
+              direct (chantier 1, passe 1b). "Nombre de tours" retire de la
+              saisie (colonne nombre_tours conservee en base, non exposee
+              ici — retour Popo). */}
+          <div style={{ fontSize: 11, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Combat à vague</div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button onClick={() => setVagueFinale(v => Math.max(0, v - 1))} className="df-hover-lift"
-              style={{ ...sp.btnFantome, padding: "4px 12px", fontSize: 16, fontWeight: 700 }}>−</button>
-            <span style={{ fontSize: 20, fontWeight: 800, color: "var(--df-gold)", minWidth: 28, textAlign: "center" }}>{vagueFinale}</span>
+              style={{ ...sp.btnFantome, padding: "3px 11px", fontSize: 14, fontWeight: 700 }}>−</button>
+            <span style={{ fontSize: 17, fontWeight: 800, color: "var(--df-gold)", minWidth: 24, textAlign: "center" }}>{vagueFinale}</span>
             <button
               onClick={() => setVagueFinale(v => vaguesMaxActuel != null ? Math.min(vaguesMaxActuel, v + 1) : v + 1)}
               disabled={vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel}
               className="df-hover-lift"
-              style={{ ...sp.btnFantome, padding: "4px 12px", fontSize: 16, fontWeight: 700, opacity: (vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel) ? 0.5 : 1 }}>+</button>
+              style={{ ...sp.btnFantome, padding: "3px 11px", fontSize: 14, fontWeight: 700, opacity: (vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel) ? 0.5 : 1 }}>+</button>
           </div>
-        </div>
-        {bribesParVagueActuel != null && (
-          <div style={{ fontSize: 12.5, color: "var(--df-text-2)", marginTop: 8 }}>
-            {vagueFinale} vague{vagueFinale > 1 ? "s" : ""} × {bribesParVagueActuel} bribes = {formaterNombre(bribesEnCours)}
-          </div>
-        )}
-        {vaguesRequisesActuel != null && (
-          <div style={{ fontSize: 11, color: "var(--df-text-3)", marginTop: 4 }}>
-            Victoire acquise dès la {ordinalVaguesRequises} vague.
-          </div>
-        )}
-      </div>
-
-      {/* 4. Actions */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <button disabled={enregistrement} onClick={onSongeTermine} className="df-hover-lift" style={{ ...sp.btnVert, opacity: enregistrement ? 0.6 : 1 }}>
-          Run terminée
-        </button>
-        <button onClick={onOuvrirAjoutDrop} className="df-hover-lift" style={sp.btnOrContour}>
-          J'ai drop
-        </button>
-      </div>
-
-      {dropsEnCours.length > 0 && (
-        <div style={{ fontSize: 12.5, color: "var(--df-gold)", marginTop: 8 }}>
-          {dropsEnCours.length} drop{dropsEnCours.length > 1 ? "s" : ""} en attente
-        </div>
-      )}
-
-      {/* 5. Salle atteinte, si le songe n'est pas terminé */}
-      <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
-        salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
-      {songeEchoue && (
-        <button disabled={enregistrement} onClick={onSongeTermine} className="df-hover-lift" style={{ ...sp.btnVertPetit, marginTop: 10 }}>
-          Enregistrer cette run
-        </button>
-      )}
-
-      {erreur && <div style={{ color: "var(--df-red)", fontSize: 12.5, marginTop: 10 }}>{erreur}</div>}
-
-      {/* 7. Annulation rapide du dernier songe */}
-      {dernierRunId && (
-        <div style={{ marginTop: 14 }}>
-          <button onClick={onAnnulerDernierSonge} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
-            Annuler la dernière run enregistrée (Run #{dernierRunId})
-          </button>
-        </div>
-      )}
-
-      {/* 6. Historique des songes */}
-      <div style={{ marginTop: 26 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div className="df-block-title" style={{ margin: 0 }}>Historique des runs</div>
-          <button onClick={onOuvrirMesDrops} style={sp.lienDiscret}>🎁 Mes drops</button>
-        </div>
-        {historique.songes.length === 0 ? (
-          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucune run enregistrée pour l'instant.</div>
-        ) : historique.songes.map(s => (
-          <div key={s.id} style={{ background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-gold-rgb), 0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
-              <div>
-                <div style={{ color: "var(--df-gold)", fontWeight: 700, fontSize: 13.5 }}>
-                  Run #{s.id}
-                  {!s.terminee && <span style={{ color: "var(--df-text-3)", fontWeight: 400 }}> (interrompu, salle {s.salle_atteinte})</span>}
-                </div>
-                <div style={{ color: "var(--df-text-3)", fontSize: 11.5, marginTop: 2, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
-                  <span>
-                    {s.intensite.charAt(0).toUpperCase() + s.intensite.slice(1)} {NOMS_PALIERS_ROMAINS[s.niveau] || s.niveau} · {s.team_nom || "—"} · {formaterDate(s.date_run)}
-                    {s.duree_secondes != null ? ` · durée : ${formaterDuree(s.duree_secondes)}` : ""}
-                    {s.nombre_tours != null ? ` · ${s.nombre_tours} tour${s.nombre_tours > 1 ? "s" : ""}` : ""}
-                  </span>
-                  {/* Rattrapage vague finale (chantier 1, passe 1b) : UNIQUEMENT ce
-                      champ est corrigeable depuis l'historique, rien d'autre.
-                      Refresh de l'historique après enregistrement -> les bribes
-                      affichées (calculées côté backend) se recalculent aussitôt. */}
-                  {vagueFinaleEnEdition?.id === s.id ? (
-                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      · Vague finale :
-                      <input type="number" min={1} value={vagueFinaleEnEdition.valeur}
-                        onChange={e => setVagueFinaleEnEdition({ id: s.id, valeur: e.target.value })}
-                        style={{ width: 48, ...sp.champ, padding: "2px 6px", fontSize: 11.5 }} />
-                      <button onClick={() => { onCorrigerVagueFinale(s.id, Number(vagueFinaleEnEdition.valeur)); setVagueFinaleEnEdition(null) }}
-                        style={{ ...sp.lienDiscret, color: "var(--df-cyan)" }}>Enregistrer</button>
-                      <button onClick={() => setVagueFinaleEnEdition(null)} style={sp.lienDiscret}>Annuler</button>
-                    </span>
-                  ) : (
-                    <span>
-                      {s.vague_finale != null ? ` · Vague finale : ${s.vague_finale}` : " · Vague finale non renseignée"}
-                      {s.bribes > 0 ? ` · 💠 ${formaterNombre(s.bribes)} bribes` : ""}{" "}
-                      <button onClick={() => setVagueFinaleEnEdition({ id: s.id, valeur: s.vague_finale || 1 })} style={sp.lienDiscret}>
-                        {s.vague_finale != null ? "Corriger" : "Renseigner"}
-                      </button>
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button onClick={() => clicSupprimerSonge(s.id)} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
-                {confirmerSongeId === s.id ? "Confirmer la suppression ?" : "Supprimer"}
-              </button>
+          {bribesParVagueActuel != null && (
+            <div style={{ fontSize: 12, color: "var(--df-text-2)", marginTop: 8 }}>
+              {vagueFinale} vague{vagueFinale > 1 ? "s" : ""} × {bribesParVagueActuel} bribes = <span style={{ color: "var(--df-gold)" }}>{formaterNombre(bribesEnCours)}</span>
             </div>
-            {s.drops.length > 0 && (
-              <div style={{ marginTop: 10, borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: 8 }}>
-                {s.drops.map(d => (
-                  <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
-                    <span onClick={() => onSelectObjet(d.item_id)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: 1, minWidth: 0 }}>
-                      {d.item_img ? <img src={d.item_img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} /> : null}
-                      <span style={{ fontSize: 13, color: "var(--df-text)" }}>{d.item_nom}{d.quantite > 1 ? ` ×${d.quantite}` : ""}</span>
-                      <span style={{ fontSize: 11.5, color: "var(--df-text-3)" }}>— {d.perso_nom}{d.palier ? ` · palier ${NOMS_PALIERS_ROMAINS[d.palier]}` : ""}</span>
-                    </span>
-                    <span onClick={() => clicSupprimerDrop(d.id)} title="Supprimer ce drop"
-                      style={{ color: "var(--df-red)", cursor: "pointer", fontWeight: 700, padding: "0 4px", fontSize: confirmerDropId === d.id ? 11 : 13, whiteSpace: "nowrap" }}>
-                      {confirmerDropId === d.id ? "Confirmer ?" : "✕"}
+          )}
+          {vaguesRequisesActuel != null && (
+            <div style={{ fontSize: 10.5, color: "var(--df-text-3)", marginTop: 4 }}>
+              Victoire acquise dès la {ordinalVaguesRequises} vague.
+            </div>
+          )}
+        </div>
+
+        {/* 6. Historique des songes */}
+        <div style={{ marginTop: 26 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div className="df-block-title" style={{ margin: 0 }}>Historique des runs</div>
+            <button onClick={onOuvrirMesDrops} style={sp.lienDiscret}>🎁 Mes drops</button>
+          </div>
+          {historique.songes.length === 0 ? (
+            <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucune run enregistrée pour l'instant.</div>
+          ) : historique.songes.map(s => (
+            <div key={s.id} style={{ background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-gold-rgb), 0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: INTENSITE_COULEUR[s.intensite], flexShrink: 0 }} />
+                    <span style={{ color: "var(--df-gold)", fontWeight: 700, fontSize: 13.5 }}>
+                      Run #{s.id}
+                      {!s.terminee && <span style={{ color: "var(--df-text-3)", fontWeight: 400 }}> (interrompu, salle {s.salle_atteinte})</span>}
                     </span>
                   </div>
-                ))}
+                  <div style={{ color: "var(--df-text-3)", fontSize: 11.5, marginTop: 2, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                    <span>
+                      {INTENSITE_LABEL[s.intensite] || s.intensite} {NOMS_PALIERS_ROMAINS[s.niveau] || s.niveau} · {s.team_nom || "—"} · {formaterDate(s.date_run)}
+                      {s.duree_secondes != null ? ` · durée : ${formaterDuree(s.duree_secondes)}` : ""}
+                      {s.nombre_tours != null ? ` · ${s.nombre_tours} tour${s.nombre_tours > 1 ? "s" : ""}` : ""}
+                    </span>
+                    {/* Rattrapage vague finale (chantier 1, passe 1b) : UNIQUEMENT ce
+                        champ est corrigeable depuis l'historique, rien d'autre.
+                        Refresh de l'historique après enregistrement -> les bribes
+                        affichées (calculées côté backend) se recalculent aussitôt.
+                        Séparateur (bordure) + gap garantissent l'espacement avant
+                        "Corriger" (refonte visuelle, passe 1c, point 7). */}
+                    {vagueFinaleEnEdition?.id === s.id ? (
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, borderLeft: "1px solid rgba(var(--df-cyan-rgb), 0.2)", paddingLeft: 8 }}>
+                        Vague finale :
+                        <input type="number" min={1} value={vagueFinaleEnEdition.valeur}
+                          onChange={e => setVagueFinaleEnEdition({ id: s.id, valeur: e.target.value })}
+                          style={{ width: 48, ...sp.champ, padding: "2px 6px", fontSize: 11.5 }} />
+                        <button onClick={() => { onCorrigerVagueFinale(s.id, Number(vagueFinaleEnEdition.valeur)); setVagueFinaleEnEdition(null) }}
+                          style={{ ...sp.lienDiscret, color: "var(--df-cyan)" }}>Enregistrer</button>
+                        <button onClick={() => setVagueFinaleEnEdition(null)} style={sp.lienDiscret}>Annuler</button>
+                      </span>
+                    ) : (
+                      <span style={{ display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid rgba(var(--df-cyan-rgb), 0.15)", paddingLeft: 8 }}>
+                        <span>
+                          {s.vague_finale != null ? `Vague finale : ${s.vague_finale}` : "Vague finale non renseignée"}
+                          {s.bribes > 0 && <span style={{ color: "var(--df-gold)" }}> · 💠 {formaterNombre(s.bribes)} bribes</span>}
+                        </span>
+                        <button onClick={() => setVagueFinaleEnEdition({ id: s.id, valeur: s.vague_finale || 1 })} style={sp.lienDiscret}>
+                          {s.vague_finale != null ? "Corriger" : "Renseigner"}
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => clicSupprimerSonge(s.id)} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
+                  {confirmerSongeId === s.id ? "Confirmer la suppression ?" : "Supprimer"}
+                </button>
               </div>
-            )}
-          </div>
-        ))}
-        {totalPagesHistorique > 1 && (
-          <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
-            <button disabled={pageHistorique <= 1} onClick={() => setPageHistorique(p => p - 1)}
-              className="df-hover-lift" style={{ ...sp.btnFantome, opacity: pageHistorique <= 1 ? 0.5 : 1 }}>← Précédent</button>
-            <span style={{ fontSize: 12, color: "var(--df-text-2)" }}>Page {pageHistorique} / {totalPagesHistorique}</span>
-            <button disabled={pageHistorique >= totalPagesHistorique} onClick={() => setPageHistorique(p => p + 1)}
-              className="df-hover-lift" style={{ ...sp.btnFantome, opacity: pageHistorique >= totalPagesHistorique ? 0.5 : 1 }}>Suivant →</button>
-          </div>
-        )}
+              {s.drops.length > 0 && (
+                <div style={{ marginTop: 10, borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: 8 }}>
+                  {s.drops.map(d => (
+                    <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+                      <span onClick={() => onSelectObjet(d.item_id)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: 1, minWidth: 0 }}>
+                        {d.item_img ? <img src={d.item_img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} /> : null}
+                        <span style={{ fontSize: 13, color: "var(--df-text)" }}>{d.item_nom}{d.quantite > 1 ? ` ×${d.quantite}` : ""}</span>
+                        <span style={{ fontSize: 11.5, color: "var(--df-text-3)" }}>— {d.perso_nom}{d.palier ? ` · palier ${NOMS_PALIERS_ROMAINS[d.palier]}` : ""}</span>
+                      </span>
+                      <span onClick={() => clicSupprimerDrop(d.id)} title="Supprimer ce drop"
+                        style={{ color: "var(--df-red)", cursor: "pointer", fontWeight: 700, padding: "0 4px", fontSize: confirmerDropId === d.id ? 11 : 13, whiteSpace: "nowrap" }}>
+                        {confirmerDropId === d.id ? "Confirmer ?" : "✕"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {totalPagesHistorique > 1 && (
+            <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
+              <button disabled={pageHistorique <= 1} onClick={() => setPageHistorique(p => p - 1)}
+                className="df-hover-lift" style={{ ...sp.btnFantome, opacity: pageHistorique <= 1 ? 0.5 : 1 }}>← Précédent</button>
+              <span style={{ fontSize: 12, color: "var(--df-text-2)" }}>Page {pageHistorique} / {totalPagesHistorique}</span>
+              <button disabled={pageHistorique >= totalPagesHistorique} onClick={() => setPageHistorique(p => p + 1)}
+                className="df-hover-lift" style={{ ...sp.btnFantome, opacity: pageHistorique >= totalPagesHistorique ? 0.5 : 1 }}>Suivant →</button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -807,6 +904,7 @@ function SongesMesDropsPage({ token, personnages, onBack, onSelectObjet }) {
   const totalPages = Math.max(Math.ceil((donnees.total || 0) / 20), 1)
 
   return (
+    <div className="df-songes">
     <div style={sp.page}>
       <button onClick={onBack} style={sp.backBtn}>← Retour</button>
       <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>🎁 Mes drops</h1>
@@ -839,7 +937,7 @@ function SongesMesDropsPage({ token, personnages, onBack, onSelectObjet }) {
                   {d.item_nom}{d.quantite > 1 ? ` ×${d.quantite}` : ""}
                 </span>
                 <span style={{ fontSize: 11.5, color: "var(--df-text-3)" }}>
-                  — {d.perso_nom} · {d.intensite.charAt(0).toUpperCase() + d.intensite.slice(1)} {NOMS_PALIERS_ROMAINS[d.niveau] || d.niveau}
+                  — {d.perso_nom} · {INTENSITE_LABEL[d.intensite] || d.intensite} {NOMS_PALIERS_ROMAINS[d.niveau] || d.niveau}
                   {d.palier ? ` · palier ${NOMS_PALIERS_ROMAINS[d.palier]}` : ""}
                 </span>
               </span>
@@ -856,6 +954,7 @@ function SongesMesDropsPage({ token, personnages, onBack, onSelectObjet }) {
           <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="df-hover-lift" style={{ ...sp.btnFantome, opacity: page >= totalPages ? 0.5 : 1 }}>Suivant →</button>
         </div>
       )}
+    </div>
     </div>
   )
 }
@@ -1087,9 +1186,11 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
       <>
         <SongesGestion token={token} personnages={personnages} teams={teams}
           onRafraichir={chargerPersonnagesEtTeams} onTerminer={() => setMode("principal")} />
+        <div className="df-songes">
         <div style={{ ...sp.page, paddingTop: 0 }}>
           <SongesZoneDangereuse onToutSupprimer={toutSupprimer} />
           <SongesJournalSection journal={journal} page={pageJournal} setPage={setPageJournal} />
+        </div>
         </div>
       </>
     )

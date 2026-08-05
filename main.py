@@ -3249,6 +3249,40 @@ def songes_stats(intensite: str, niveau: int, perso_id: Optional[int] = None,
             "categorie": cat, "songes_depuis_dernier_drop": courant_songes_cat,
         })
 
+    # Chantier 1, passe 1c-A (5 aout 2026) : total_runs + meilleure_serie_sans_legende.
+    # Calcules sur le MEME perimetre (intensite+niveau+scope) que tout le reste de cet
+    # endpoint, jamais globalement — coherence avec categories_secheresse ci-dessus
+    # validee explicitement (une run "pas eligible", palier pas atteint, est ignoree
+    # ici comme la-bas, ni ne casse ni ne compte la serie).
+    total_runs = len(runs_enrichies)
+
+    # "legende" uniquement (pas "legende_animale", categorie distincte) — meme
+    # definition que le compteur "sans legende depuis" existant.
+    items_legende = items_par_categorie.get("legende", [])
+    meilleure_serie_sans_legende = None
+    if items_legende:
+        item_ids_legende = {it["item_id"] for it in items_legende}
+        paliers_legende = {it["item_id"]: json.loads(it["paliers"]) for it in items_legende}
+        drops_par_run_legende = {}
+        for iid in item_ids_legende:
+            for d in drops_par_item.get(iid, []):
+                drops_par_run_legende[d["run_id"]] = drops_par_run_legende.get(d["run_id"], 0) + d["quantite"]
+
+        courant = 0
+        record = 0
+        for r in runs_enrichies:
+            t = sum(tirages_eligibles(paliers_legende[iid], r["salle_atteinte"], r["nb_scope"]) for iid in item_ids_legende)
+            if t == 0:
+                continue  # run pas eligible aux legendes a cette salle_atteinte : ignoree
+            courant += 1
+            if r["id"] in drops_par_run_legende:
+                record = max(record, courant)
+                courant = 0
+        meilleure_serie_sans_legende = max(record, courant)
+    # Sinon (Reve I-III, aucun item "legende" tracke a cette intensite) : reste None,
+    # meme convention que categories_secheresse (categorie absente du tableau) —
+    # jamais 0, qui laisserait croire a un record reel plutot qu'une stat sans sens ici.
+
     conn.close()
     return {
         "intensite": intensite, "niveau": niveau,
@@ -3256,6 +3290,8 @@ def songes_stats(intensite: str, niveau: int, perso_id: Optional[int] = None,
         "items": resultats,
         "moyennes_par_categorie": moyennes_par_categorie,
         "categories_secheresse": categories_secheresse,
+        "total_runs": total_runs,
+        "meilleure_serie_sans_legende": meilleure_serie_sans_legende,
     }
 
 @app.get("/songes/estimation")
