@@ -36,7 +36,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 35%;
+  /* Ancre en haut (pas de recadrage vertical) : garde la tete du dragon
+     visible, refonte visuelle chantier 1 passe 1c (retour Popo). */
+  object-position: center top;
   display: block;
 }
 
@@ -68,6 +70,24 @@
   .df-songes-decor-epee,
   .df-songes-decor-perso {
     display: none;
+  }
+}
+
+/* ---------- Bloc stats (meilleure série / sans légende / runs) ---------- */
+/* Ordre DOM = gauche, centre, droite (correspond déjà à l'ordre visuel en
+   ligne) — sous 700px, empilement en colonne avec le centre en premier
+   (structure, refonte visuelle chantier 1 passe 1c). */
+.df-songes-stats {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+@media (max-width: 700px) {
+  .df-songes-stats {
+    flex-direction: column;
+  }
+  .df-songes-stat-centre {
+    order: -1;
   }
 }
 

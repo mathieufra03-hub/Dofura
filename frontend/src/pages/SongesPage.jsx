@@ -98,6 +98,10 @@ const sp = {
   btnCyanPetit: { background: "var(--df-cyan)", color: "#04121A", border: "none", borderRadius: 10, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   btnOrContour: { background: "rgba(var(--df-gold-rgb), 0.08)", color: "var(--df-gold)", border: "2px solid var(--df-gold)", borderRadius: 12, padding: "16px 20px", fontSize: 15, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
   btnFantome: { background: "rgba(var(--df-cyan-rgb), 0.07)", color: "var(--df-cyan)", border: "1px solid rgba(var(--df-cyan-rgb), 0.6)", borderRadius: 10, padding: "8px 16px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  // Boutons icône carrés du minuteur (Pause/Réinitialiser — refonte visuelle,
+  // chantier 1 passe 1c) : pas d'icônes de la planche (passe suivante), glyphe
+  // unicode en attendant.
+  btnIconCarre: { width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(var(--df-cyan-rgb), 0.08)", border: "1px solid rgba(var(--df-cyan-rgb), 0.4)", borderRadius: 8, color: "var(--df-cyan)", fontSize: 15, cursor: "pointer", padding: 0 },
   lienDiscret: { fontSize: 12, color: "var(--df-text-3)", cursor: "pointer", textDecoration: "underline", background: "none", border: "none", padding: 0, fontFamily: "inherit" },
   pill: (actif) => ({ display: "inline-block", margin: "0 6px 6px 0", background: actif ? "rgba(var(--df-cyan-rgb), 0.18)" : "rgba(var(--df-cyan-rgb), 0.06)", color: actif ? "var(--df-cyan)" : "var(--df-text-2)", border: `1px solid ${actif ? "var(--df-cyan)" : "rgba(var(--df-cyan-rgb), 0.35)"}`, borderRadius: 999, padding: "7px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }),
 }
@@ -592,8 +596,17 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
       {/* Bandeau haut (refonte visuelle, chantier 1 passe 1c) : artwork
           Draconiros pleine largeur, fondu vers le fond en masque alpha
           (recette signature du site, voir dofura-maquette-v2.html). */}
-      <div className="df-songes-banniere">
-        <img src="/assets/oeil/draconiros-banniere.jpg" alt="" />
+      <div style={{ position: "relative" }}>
+        <div className="df-songes-banniere">
+          <img src="/assets/oeil/draconiros-banniere.jpg" alt="" />
+        </div>
+        {/* Retour par-dessus le bandeau (structure, refonte visuelle chantier 1
+            passe 1c) : hors de .df-songes-banniere (qui a son masque de fondu),
+            fond translucide pour rester lisible sur l'artwork. */}
+        <button onClick={onBack} className="df-hover-lift" style={{
+          ...sp.backBtn, position: "absolute", top: 14, left: 16, zIndex: 2, marginBottom: 0,
+          background: "rgba(4,18,26,0.55)", backdropFilter: "blur(4px)",
+        }}>← Retour</button>
       </div>
       <div style={{ position: "relative", textAlign: "center", marginTop: -54, padding: "0 20px 4px" }}>
         <h1 className="df-section-title" style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(26px, 5vw, 36px)", margin: 0, textShadow: "0 2px 20px rgba(4,18,26,0.9)" }}>
@@ -610,12 +623,11 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
       <div className="df-songes-decor df-songes-decor-perso" style={{ backgroundImage: "url('/assets/oeil/xelor-perso.jpg')" }} aria-hidden="true" />
 
       <div style={{ ...sp.page, position: "relative" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 8 }}>
-          <button onClick={onBack} style={{ ...sp.backBtn, marginBottom: 0 }}>← Retour</button>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
           <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
         </div>
 
-        {/* 1. Sélecteur de catégorie, au-dessus du compteur */}
+        {/* 1. Sélecteur de catégorie, au-dessus du bloc stats */}
         <div style={{ marginBottom: 10 }}>
           {ORDRE_CATEGORIES.map(c => (
             <span key={c} onClick={() => changerCategorie(c)} className="df-hover-lift" style={sp.pill(categorieAffichee === c)}>
@@ -624,58 +636,132 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
           ))}
         </div>
 
-        {/* 2. Compteur principal — le héros de l'écran (hiérarchie, refonte
-            visuelle chantier 1 passe 1c) : Cinzel ~80px, cyan, halo pulsant. */}
-        <div style={{ ...sp.card, textAlign: "center", padding: "30px 20px", position: "relative", overflow: "hidden" }}>
-          <div className={`df-songes-compteur-halo${flashCompteur ? " df-songes-flash" : ""}`} style={{
-            position: "absolute", left: "50%", top: "50%", width: 260, height: 200,
-            transform: "translate(-50%, -50%)",
-            background: "radial-gradient(ellipse at center, rgba(44,231,255,0.35), transparent 70%)",
-            pointerEvents: "none",
-          }} />
-          <div style={{ position: "relative", fontSize: 12, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>
-            Sans {CATEGORIE_MOT_SINGULIER[categorieAffichee]} depuis
-          </div>
-          {secheresseSonges == null ? (
-            <div style={{ position: "relative", color: "var(--df-text-3)", fontSize: 14 }}>Aucune donnée pour cette intensité pour l'instant.</div>
-          ) : (
-            <div style={{ position: "relative" }}>
-              <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(44px, 13vw, 80px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1 }}>
-                {formaterNombre(secheresseSonges)}
-              </div>
-              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)", marginTop: 6 }}>runs</div>
-            </div>
-          )}
-        </div>
-
-        {/* Total runs + meilleure série sans légende (chantier 1, passe 1c-A,
-            5 août 2026) — scopées à l'intensité + niveau affichés, comme le
-            compteur principal juste au-dessus (cohérence backend, /songes/stats).
-            Libellés explicites : jamais laisser deviner le périmètre du chiffre
-            (retour Popo). */}
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
-          <div style={{ ...sp.card, flex: "1 1 160px", padding: "12px 16px", marginBottom: 0, textAlign: "center" }}>
-            <div style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              Runs en {INTENSITE_LABEL[intensiteNiveau.intensite] || intensiteNiveau.intensite} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau] || intensiteNiveau.niveau}
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--df-text)", marginTop: 4 }}>
-              {stats?.total_runs ?? "—"}
-            </div>
-          </div>
-          <div style={{ ...sp.card, flex: "1 1 160px", padding: "12px 16px", marginBottom: 0, textAlign: "center" }}>
+        {/* 2. Bloc stats — 3 compteurs sur une ligne (structure, refonte
+            visuelle chantier 1 passe 1c) : gauche = meilleure série (or,
+            ~30px), centre = sans légende depuis (le héros, cyan ~64px + halo
+            pulsant), droite = runs en {intensité}. Sous 700px : colonne,
+            centre en premier (voir pageSonges.css, .df-songes-stats). */}
+        <div className="df-songes-stats">
+          <div className="df-songes-stat-side" style={{ flex: "1 1 0", textAlign: "center" }}>
             <div title="Record pour cette intensité et ce niveau." style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em", cursor: "help" }}>
               Meilleure série
             </div>
             {stats?.meilleure_serie_sans_legende != null ? (
-              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--df-text)", marginTop: 4 }}>
+              <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)", marginTop: 6 }}>
                 {stats.meilleure_serie_sans_legende}
               </div>
             ) : (
-              <div title="Aucune légende ne peut tomber à cette intensité." style={{ fontSize: 24, fontWeight: 800, color: "var(--df-text-3)", marginTop: 4, cursor: "help" }}>
+              <div title="Aucune légende ne peut tomber à cette intensité." style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-text-3)", marginTop: 6, cursor: "help" }}>
                 —
               </div>
             )}
           </div>
+
+          <div className="df-songes-stat-centre" style={{ ...sp.card, flex: "1.6 1 0", textAlign: "center", padding: "22px 18px", position: "relative", overflow: "hidden", marginBottom: 0 }}>
+            <div className={`df-songes-compteur-halo${flashCompteur ? " df-songes-flash" : ""}`} style={{
+              position: "absolute", left: "50%", top: "50%", width: 240, height: 180,
+              transform: "translate(-50%, -50%)",
+              background: "radial-gradient(ellipse at center, rgba(44,231,255,0.35), transparent 70%)",
+              pointerEvents: "none",
+            }} />
+            <div style={{ position: "relative", fontSize: 11, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+              Sans {CATEGORIE_MOT_SINGULIER[categorieAffichee]} depuis
+            </div>
+            {secheresseSonges == null ? (
+              <div style={{ position: "relative", color: "var(--df-text-3)", fontSize: 13 }}>Aucune donnée pour cette intensité pour l'instant.</div>
+            ) : (
+              <div style={{ position: "relative" }}>
+                <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(36px, 9vw, 64px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1 }}>
+                  {formaterNombre(secheresseSonges)}
+                </div>
+                <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)", marginTop: 4 }}>runs</div>
+              </div>
+            )}
+          </div>
+
+          <div className="df-songes-stat-side" style={{ flex: "1 1 0", textAlign: "center" }}>
+            <div style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Runs en {INTENSITE_LABEL[intensiteNiveau.intensite] || intensiteNiveau.intensite} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau] || intensiteNiveau.niveau}
+            </div>
+            <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)", marginTop: 6 }}>
+              {stats?.total_runs ?? "—"}
+            </div>
+          </div>
+        </div>
+
+        {/* 3. RÉGLAGES — team, intensité, Combat à vague (le minuteur en est
+            sorti, voir plus bas) : un seul bloc, poids visuel réduit
+            (hiérarchie, refonte visuelle passe 1c). */}
+        <div style={{ background: "rgba(11, 37, 49, 0.55)", border: "1px solid rgba(var(--df-cyan-rgb), 0.10)", borderRadius: 14, padding: "16px 18px", marginTop: 18 }}>
+          <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-3)", fontWeight: 700, marginBottom: 12 }}>
+            Réglages
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+            <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={{ ...sp.select, fontSize: 12 }}>
+              {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
+            </select>
+            {/* Pastille couleur d'intensité (couleurs, refonte visuelle passe 1c) :
+                violet Paradoxe, bleu Rêve, orange Cauchemar — tokens.css. */}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: INTENSITE_COULEUR[intensiteNiveau.intensite], flexShrink: 0 }} />
+              <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
+                onChange={e => { const [intensite, niveau] = e.target.value.split("_"); changerIntensite(intensite, Number(niveau)) }}
+                style={{ ...sp.select, fontSize: 12 }}>
+                {Object.entries(config.intensites).map(([cle, info]) =>
+                  info.niveaux.map(n => (
+                    <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
+                      {INTENSITE_LABEL[cle] || cle} {NOMS_PALIERS_ROMAINS[n] || n}
+                    </option>
+                  ))
+                )}
+              </select>
+            </span>
+          </div>
+
+          {/* Combat a vagues (SONGES.md §3.2) : compteur −/+ plutot qu'un
+              champ libre, plafonne par intensite (config.vagues_max — Reve 5,
+              Paradoxe 15, Cauchemar illimite), bribes de reve affichees en
+              direct (chantier 1, passe 1b). "Nombre de tours" retire de la
+              saisie (colonne nombre_tours conservee en base, non exposee
+              ici — retour Popo). */}
+          <div style={{ fontSize: 11, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Combat à vague</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button onClick={() => setVagueFinale(v => Math.max(0, v - 1))} className="df-hover-lift"
+              style={{ ...sp.btnFantome, padding: "3px 11px", fontSize: 14, fontWeight: 700 }}>−</button>
+            <span style={{ fontSize: 17, fontWeight: 800, color: "var(--df-gold)", minWidth: 24, textAlign: "center" }}>{vagueFinale}</span>
+            <button
+              onClick={() => setVagueFinale(v => vaguesMaxActuel != null ? Math.min(vaguesMaxActuel, v + 1) : v + 1)}
+              disabled={vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel}
+              className="df-hover-lift"
+              style={{ ...sp.btnFantome, padding: "3px 11px", fontSize: 14, fontWeight: 700, opacity: (vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel) ? 0.5 : 1 }}>+</button>
+          </div>
+          {bribesParVagueActuel != null && (
+            <div style={{ fontSize: 12, color: "var(--df-text-2)", marginTop: 8 }}>
+              {vagueFinale} vague{vagueFinale > 1 ? "s" : ""} × {bribesParVagueActuel} bribes = <span style={{ color: "var(--df-gold)" }}>{formaterNombre(bribesEnCours)}</span>
+            </div>
+          )}
+          {vaguesRequisesActuel != null && (
+            <div style={{ fontSize: 10.5, color: "var(--df-text-3)", marginTop: 4 }}>
+              Victoire acquise dès la {ordinalVaguesRequises} vague.
+            </div>
+          )}
+        </div>
+
+        {/* Le minuteur — sorti des réglages pour devenir une ligne à part
+            entière (structure, refonte visuelle chantier 1 passe 1c) : temps
+            en Cinzel ~22px, "Démarrer" en cyan, Pause/Réinitialiser en
+            boutons icône carrés (glyphes unicode en attendant la planche
+            d'icônes, passe suivante). */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
+          <span style={{ fontFamily: "var(--df-font-logo)", fontSize: 22, color: "var(--df-text)", fontVariantNumeric: "tabular-nums", minWidth: 78 }}>
+            {formaterDuree(chronoSecondes)}
+          </span>
+          {!chronoEnMarche ? (
+            <button onClick={onChronoDemarrerPause} className="df-hover-lift" style={sp.btnCyanPetit}>Démarrer</button>
+          ) : (
+            <button onClick={onChronoDemarrerPause} title="Pause" className="df-hover-lift" style={{ ...sp.btnIconCarre, background: "rgba(242,109,109,0.12)", borderColor: "rgba(242,109,109,0.5)", color: "var(--df-red)" }}>⏸</button>
+          )}
+          <button onClick={onChronoReinitialiser} title="Réinitialiser" className="df-hover-lift" style={sp.btnIconCarre}>↺</button>
         </div>
 
         {/* 4. Actions — l'action principale d'abord, pleine largeur, cyan.
@@ -716,76 +802,6 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
             </button>
           </div>
         )}
-
-        {/* 3. RÉGLAGES — team, intensité, chrono, Combat final : un seul bloc,
-            poids visuel réduit (hiérarchie, refonte visuelle passe 1c). */}
-        <div style={{ background: "rgba(11, 37, 49, 0.55)", border: "1px solid rgba(var(--df-cyan-rgb), 0.10)", borderRadius: 14, padding: "16px 18px", marginTop: 22 }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-3)", fontWeight: 700, marginBottom: 12 }}>
-            Réglages
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
-            <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={{ ...sp.select, fontSize: 12 }}>
-              {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
-            </select>
-            {/* Pastille couleur d'intensité (couleurs, refonte visuelle passe 1c) :
-                violet Paradoxe, bleu Rêve, orange Cauchemar — tokens.css. */}
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: INTENSITE_COULEUR[intensiteNiveau.intensite], flexShrink: 0 }} />
-              <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
-                onChange={e => { const [intensite, niveau] = e.target.value.split("_"); changerIntensite(intensite, Number(niveau)) }}
-                style={{ ...sp.select, fontSize: 12 }}>
-                {Object.entries(config.intensites).map(([cle, info]) =>
-                  info.niveaux.map(n => (
-                    <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
-                      {INTENSITE_LABEL[cle] || cle} {NOMS_PALIERS_ROMAINS[n] || n}
-                    </option>
-                  ))
-                )}
-              </select>
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(var(--df-card-bg), 0.95)", border: "1px solid rgba(var(--df-gold-rgb), 0.4)", borderRadius: 999, padding: "5px 8px 5px 12px", marginLeft: "auto" }}>
-              <span style={{ fontSize: 12, color: "var(--df-text)", fontVariantNumeric: "tabular-nums", minWidth: 50 }}>
-                {formaterDuree(chronoSecondes)}
-              </span>
-              <button onClick={onChronoDemarrerPause} style={{
-                ...sp.btnFantome, padding: "4px 9px", fontSize: 11, fontWeight: 700, border: "none",
-                background: chronoEnMarche ? "var(--df-red)" : "var(--df-cyan)",
-                color: chronoEnMarche ? "#fff" : "#04121A",
-              }}>
-                {chronoEnMarche ? "Pause" : "Démarrer"}
-              </button>
-              <button onClick={onChronoReinitialiser} title="Réinitialiser" className="df-hover-lift" style={{ ...sp.btnFantome, padding: "4px 9px", fontSize: 11 }}>↺</button>
-            </div>
-          </div>
-
-          {/* Combat final a vagues (SONGES.md §3.2) : compteur −/+ plutot qu'un
-              champ libre, plafonne par intensite (config.vagues_max — Reve 5,
-              Paradoxe 15, Cauchemar illimite), bribes de reve affichees en
-              direct (chantier 1, passe 1b). "Nombre de tours" retire de la
-              saisie (colonne nombre_tours conservee en base, non exposee
-              ici — retour Popo). */}
-          <div style={{ fontSize: 11, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Combat à vague</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button onClick={() => setVagueFinale(v => Math.max(0, v - 1))} className="df-hover-lift"
-              style={{ ...sp.btnFantome, padding: "3px 11px", fontSize: 14, fontWeight: 700 }}>−</button>
-            <span style={{ fontSize: 17, fontWeight: 800, color: "var(--df-gold)", minWidth: 24, textAlign: "center" }}>{vagueFinale}</span>
-            <button
-              onClick={() => setVagueFinale(v => vaguesMaxActuel != null ? Math.min(vaguesMaxActuel, v + 1) : v + 1)}
-              disabled={vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel}
-              className="df-hover-lift"
-              style={{ ...sp.btnFantome, padding: "3px 11px", fontSize: 14, fontWeight: 700, opacity: (vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel) ? 0.5 : 1 }}>+</button>
-          </div>
-          {bribesParVagueActuel != null && (
-            <div style={{ fontSize: 12, color: "var(--df-text-2)", marginTop: 8 }}>
-              {vagueFinale} vague{vagueFinale > 1 ? "s" : ""} × {bribesParVagueActuel} bribes = <span style={{ color: "var(--df-gold)" }}>{formaterNombre(bribesEnCours)}</span>
-            </div>
-          )}
-          {vaguesRequisesActuel != null && (
-            <div style={{ fontSize: 10.5, color: "var(--df-text-3)", marginTop: 4 }}>
-              Victoire acquise dès la {ordinalVaguesRequises} vague.
-            </div>
-          )}
-        </div>
 
         {/* 6. Historique des songes */}
         <div style={{ marginTop: 26 }}>
