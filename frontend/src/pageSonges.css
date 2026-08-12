@@ -13,74 +13,236 @@
    ============================================================ */
 
 /* ---------- Fond général ---------- */
-/* #04121A + 3 halos radiaux très diffus (8-10%), pur CSS, aucune image.
-   position:relative : ancre les décors latéraux (écran principal, absolus). */
+/* fond-page-oeil.webp (nébuleuse), plein cadre, fixe au scroll (chantier 1c) —
+   remplace les 3 halos radiaux CSS (doublon une fois l'image en place).
+   Voile sombre + assombrissement vers le bas en un seul calque gradient
+   (rgba(4,18,26,.55) constant jusqu'à ~45%, puis vers .85 en bas) pour que
+   le texte reste lisible par-dessus l'image, quelle que soit la section. */
 .df-songes {
   position: relative;
-  background:
-    radial-gradient(ellipse 900px 460px at 50% -6%, rgba(44, 231, 255, 0.09), transparent 65%),
-    radial-gradient(ellipse 640px 620px at 0% 40%, rgba(77, 166, 255, 0.08), transparent 65%),
-    radial-gradient(ellipse 760px 560px at 100% 105%, rgba(196, 120, 255, 0.08), transparent 65%),
-    #04121A;
+  background-image:
+    linear-gradient(to bottom, rgba(4, 18, 26, .55) 0%, rgba(4, 18, 26, .55) 45%, rgba(4, 18, 26, .85) 100%),
+    url('/assets/oeil/fond-page-oeil.webp');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-color: #04121A;
 }
 
 /* ---------- Bandeau haut (artwork Draconiros, écran principal only) ---------- */
+/* draconiros_1160px.png (1913x1160, passe 1f) remplace l'ancienne source
+   288x174 : assez de résolution pour du object-fit:cover plein largeur sans
+   flou. object-position 35% vertical : cadre sur la tête du dragon tout en
+   gardant le puits lumineux (bas de l'image) visible. Fondu vertical vers
+   le fond en bas uniquement — plus besoin du fond uni ni du fondu gauche/
+   droite de la passe précédente (image plein cadre, plus d'emblème centré
+   flottant sur fond uni). */
 .df-songes-banniere {
   position: relative;
-  height: 150px;
+  height: 220px;
   overflow: hidden;
-  mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 100%);
+  /* Fondu sur les 40% du bas (retour Popo, passe 1l) : la jonction avec le
+     fond nébuleuse faisait une ligne nette avec un dégradé à 2 points (la
+     chute d'alpha en toute fin de fondu reste perceptible même sur un
+     intervalle large — l'œil est plus sensible aux derniers % vers 0).
+     Repères intermédiaires pour ralentir la chute en fin de fondu plutôt
+     qu'une pente constante. */
+  mask-image: linear-gradient(to bottom,
+    black 0%, black 60%,
+    rgba(0,0,0,.85) 70%, rgba(0,0,0,.5) 82%, rgba(0,0,0,.15) 94%,
+    transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom,
+    black 0%, black 60%,
+    rgba(0,0,0,.85) 70%, rgba(0,0,0,.5) 82%, rgba(0,0,0,.15) 94%,
+    transparent 100%);
 }
 .df-songes-banniere img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Ancre en haut (pas de recadrage vertical) : garde la tete du dragon
-     visible, refonte visuelle chantier 1 passe 1c (retour Popo). */
-  object-position: center top;
+  object-position: center 35%;
   display: block;
 }
 
-/* ---------- Décors latéraux (épée + personnage Xélor) ---------- */
-.df-songes-decor {
-  position: absolute;
-  pointer-events: none;
-  background-size: cover;
-  background-position: center;
-  mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
+/* ---------- Étoiles à éclat autour du titre (retour Popo) ---------- */
+/* Deux éclats fins façon artwork Dofus, en CSS pur — ::before/::after du
+   h1, pas d'image. Passe 2 (retour Popo) : premier jet trop gros/opaque,
+   ressemblait à des losanges pleins — réduit de moitié (0.7em x 0.48em,
+   ratio ~1,5:1 conservé) et branches très fines (points du polygon resserrés
+   à 44/56%, contre 38/62% avant) pour un effet filament plutôt que plein.
+   Opacités et rayons du glow baissés pour rester discret. Asymétrie
+   voulue : ::before (gauche) aligné haut des majuscules, ::after (droite)
+   aligné bas/base des lettres — vertical-align différent entre les deux,
+   ne pas réharmoniser. Unités toutes en em : suit fontSize du titre (clamp
+   dans SongesPage.jsx). Masquées sous 500px (titre sur 2 lignes à cette
+   largeur, position imprévisible en inline). */
+.df-songes-titre-eclat::before,
+.df-songes-titre-eclat::after {
+  content: "";
+  display: inline-block;
+  width: 0.7em;
+  height: 0.48em;
+  background: radial-gradient(circle, rgba(255, 255, 255, .8) 0%, rgba(255, 255, 255, .8) 8%, rgba(44, 231, 255, .45) 45%, rgba(44, 231, 255, 0) 75%);
+  clip-path: polygon(
+    50% 0%, 56% 44%, 100% 50%, 56% 56%,
+    50% 100%, 44% 56%, 0% 50%, 44% 44%
+  );
+  filter: drop-shadow(0 0 0.05em rgba(44, 231, 255, .5)) drop-shadow(0 0 0.13em rgba(44, 231, 255, .25));
 }
-.df-songes-decor-epee {
-  left: -10px;
-  top: 130px;
-  width: 210px;
-  height: 620px;
-  opacity: .5;
-}
-.df-songes-decor-perso {
-  right: -10px;
-  bottom: 0;
-  width: 230px;
-  height: 380px;
-  opacity: .42;
-}
-/* Colonnes décoratives : disparaissent sous 1100px, contenu pleine largeur */
-@media (max-width: 1100px) {
-  .df-songes-decor-epee,
-  .df-songes-decor-perso {
+.df-songes-titre-eclat::before { margin-right: 0.45em; vertical-align: 0.26em; }
+.df-songes-titre-eclat::after { margin-left: 0.45em; vertical-align: 0em; }
+@media (max-width: 500px) {
+  .df-songes-titre-eclat::before,
+  .df-songes-titre-eclat::after {
     display: none;
   }
 }
 
+/* ---------- Cadre doré réutilisable (stats + réglages, chantier 1c) ---------- */
+/* Le fond/bordure/chanfrein vivent sur un ::before absolu plutôt que sur
+   l'élément lui-même : un clip-path posé directement sur le conteneur
+   rognerait aussi ses enfants (coins dorés, contenu) exactement dans les
+   coins coupés — c'est justement là qu'on veut voir les équerres. z-index
+   négatif : le ::before doit peindre SOUS le contenu normal du bloc (les
+   éléments flex/en-flux ne sont pas automatiquement au-dessus d'un
+   pseudo-élément positionné à z-index 0/auto). */
+.df-songes-cadre-dore {
+  position: relative;
+  /* Isole le contexte d'empilement local : sans ça, le z-index:-1 du
+     ::before ci-dessous remonte jusqu'au premier ancêtre qui en établit un
+     (aucun entre ce bloc et la racine), et peint sous le fond nébuleuse de
+     toute la page au lieu de rester juste derrière le contenu de CE bloc. */
+  isolation: isolate;
+}
+.df-songes-cadre-dore::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(7, 26, 36, 0.72);
+  border: 1px solid rgba(240, 192, 64, 0.35);
+  clip-path: polygon(
+    14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px),
+    calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px
+  );
+}
+/* Équerres dorées aux 4 coins (composant CoinsDores dans SongesPage.jsx) */
+.df-songes-coin {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+.df-songes-coin-tl { top: -1px; left: -1px; border-top: 2px solid rgba(240, 192, 64, .6); border-left: 2px solid rgba(240, 192, 64, .6); }
+.df-songes-coin-tr { top: -1px; right: -1px; border-top: 2px solid rgba(240, 192, 64, .6); border-right: 2px solid rgba(240, 192, 64, .6); }
+.df-songes-coin-bl { bottom: -1px; left: -1px; border-bottom: 2px solid rgba(240, 192, 64, .6); border-left: 2px solid rgba(240, 192, 64, .6); }
+.df-songes-coin-br { bottom: -1px; right: -1px; border-bottom: 2px solid rgba(240, 192, 64, .6); border-right: 2px solid rgba(240, 192, 64, .6); }
+
+/* ---------- Cartes Réglages (Team / Intensité / Combat à vague) ---------- */
+/* Contenu toujours en retrait du bord (padding), donc pas besoin du montage
+   ::before + isolation utilisé par .df-songes-cadre-dore : ces cartes n'ont
+   pas d'équerres à préserver dans les coins, un clip-path direct suffit.
+   justify-content: flex-start (retour Popo, remplace center) : les 3 cartes
+   n'ont pas le même contenu (Team a un lien "Personnages & teams" en plus),
+   donc les centrer verticalement les désalignait — chaque bloc de contenu,
+   de hauteur différente, se retrouvait décalé différemment. flex-start +
+   même padding-top pour les 3 garantit que les libellés démarrent
+   exactement à la même hauteur. align-items: stretch par défaut sur le
+   conteneur flex parent (non modifié) donne aux 3 cartes la même hauteur
+   totale (calée sur la plus haute, Team). */
+.df-songes-reglage-carte {
+  flex: 1 1 180px;
+  background: rgba(7, 26, 36, 0.6);
+  border: 1px solid rgba(240, 192, 64, 0.25);
+  clip-path: polygon(
+    10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px),
+    calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px
+  );
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  text-align: center;
+}
+.df-songes-reglage-carte-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--df-text-3);
+}
+/* Variante Intensité : bordure teintée + équerres dorées (chantier 1m,
+   retour Popo — le border-image de la passe précédente déformait les
+   coins). Même montage ::before + isolation que .df-songes-cadre-dore :
+   un clip-path posé directement sur .df-songes-reglage-carte rognerait les
+   équerres (enfants) pile dans les coins coupés. Couleur passée en
+   variable CSS depuis le style inline (--df-couleur-intensite). */
+.df-songes-reglage-carte-intensite {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+  border: none;
+  clip-path: none;
+}
+.df-songes-reglage-carte-intensite::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(7, 26, 36, 0.6);
+  border: 1px solid var(--df-couleur-intensite, rgba(240, 192, 64, 0.25));
+  clip-path: polygon(
+    10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px),
+    calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px
+  );
+}
+
+.df-songes-reglage-carte-label img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 /* ---------- Bloc stats (meilleure série / sans légende / runs) ---------- */
-/* Ordre DOM = gauche, centre, droite (correspond déjà à l'ordre visuel en
-   ligne) — sous 700px, empilement en colonne avec le centre en premier
-   (structure, refonte visuelle chantier 1 passe 1c). */
+/* Rectangle allongé (chantier 1c) : le cadre doré (fond/bordure/chanfrein)
+   vient de .df-songes-cadre-dore, ce bloc ne garde que la mise en page —
+   2 separateurs verticaux fins entre colonnes. Ordre DOM = gauche, centre,
+   droite (correspond déjà à l'ordre visuel en ligne) — sous 700px,
+   empilement en colonne avec le centre en premier.
+   Même largeur que la rangée Team/Intensité/Minuteur et l'encadré de fin de
+   songe en dessous, aligné à gauche et à droite avec eux (retour Popo — la
+   largeur 105% précédente débordait à droite sans être centrée). Padding
+   vertical propre au conteneur (en plus du padding par colonne) pour que le
+   bloc reste un peu plus haut que les cartes réglages, sans toucher aux
+   tailles de police. */
 .df-songes-stats {
   display: flex;
-  gap: 14px;
-  align-items: center;
+  align-items: stretch;
+  padding: 25px 0;
+}
+.df-songes-stat-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  position: relative;
+}
+/* Pleine hauteur, dégradé qui s'estompe aux deux extrémités plutôt qu'un
+   trait raccourci à 14%/14% (retour Popo, passe 1j). */
+.df-songes-stat-col + .df-songes-stat-col::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom,
+    transparent 0%, rgba(240, 192, 64, 0.35) 15%,
+    rgba(240, 192, 64, 0.35) 85%, transparent 100%);
 }
 @media (max-width: 700px) {
   .df-songes-stats {
@@ -89,17 +251,24 @@
   .df-songes-stat-centre {
     order: -1;
   }
+  .df-songes-stat-col + .df-songes-stat-col::before {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+    background: linear-gradient(to right,
+      transparent 0%, rgba(240, 192, 64, 0.35) 15%,
+      rgba(240, 192, 64, 0.35) 85%, transparent 100%);
+  }
 }
 
-/* ---------- Halo du compteur (le héros de l'écran) ---------- */
-@keyframes df-songes-pulse {
-  0%, 100% { opacity: .5; transform: scale(1); }
-  50%      { opacity: .85; transform: scale(1.08); }
-}
-.df-songes-compteur-halo {
-  animation: df-songes-pulse 4s ease-in-out infinite;
-}
-/* Réaction visuelle au clic sur "Run terminée" (point 6 du chantier) */
+/* ---------- Compteur (le héros de l'écran) ---------- */
+/* Réaction visuelle au clic sur "Run terminée" (point 6 du chantier) :
+   directement sur le chiffre. Le cadran (horloge-compteur-attenuee.png)
+   reste fixe, aucune rotation (retour Popo — tournait bizarrement sur ce
+   visuel asymétrique, contrairement à l'ancien cercle néon symétrique). */
 @keyframes df-songes-flash-anim {
   0%   { opacity: 1; transform: scale(1.5); }
   100% { opacity: .5; transform: scale(1); }
@@ -110,8 +279,16 @@
 
 /* Accessibilité : aucune animation de cette page sous mouvement réduit */
 @media (prefers-reduced-motion: reduce) {
-  .df-songes-compteur-halo,
   .df-songes-flash {
     animation: none;
   }
 }
+
+/* ---------- Liens "Supprimer"/"Corriger" de l'historique (refonte) ---------- */
+/* Couleur au survol UNIQUEMENT — la couleur de repos est aussi fixée ici
+   (pas en inline dans SongesPage.jsx) car un style inline gagnerait toujours
+   contre une règle de classe et empêcherait :hover de reprendre la main. */
+.df-lien-supprimer { color: #4a6b72; }
+.df-lien-supprimer:hover { color: var(--df-cauchemar); }
+.df-lien-corriger { color: #4a6b72; }
+.df-lien-corriger:hover { color: var(--df-cyan-2); }

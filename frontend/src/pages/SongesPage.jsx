@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
+import { IconeBribe, IconeCoffre, IconeSablier, IconeTeamPersonnages, IconeIntensiteEliatrope } from "../components/IconesSonges.jsx"
 
 // Fichier séparé volontairement (SONGES.md §10 : "App.jsx est déjà très
 // chargé"). Composant autonome : n'importe rien d'App.jsx, réutilise
@@ -77,6 +78,98 @@ function formaterDuree(secondes) {
   return m > 0 ? `${m} min ${s} s` : `${s} s`
 }
 
+// Pastille d'intensité (refonte historique) : remplace l'ancien simple
+// point de couleur. Couleur pleine sur texte + bordure, bordure ramenée à
+// 40% d'opacité via color-mix() plutôt qu'un hex recopié — INTENSITE_COULEUR
+// reste la seule source de vérité des couleurs (voir sa note plus haut).
+function PastilleIntensite({ s }) {
+  const couleur = INTENSITE_COULEUR[s.intensite]
+  return (
+    <span style={{
+      display: "inline-block", textTransform: "uppercase", fontSize: 11, letterSpacing: "0.1em",
+      borderRadius: 20, padding: "2px 9px", lineHeight: 1.4, flexShrink: 0,
+      color: couleur, border: `1px solid color-mix(in srgb, ${couleur} 40%, transparent)`,
+    }}>
+      {INTENSITE_LABEL[s.intensite] || s.intensite} {NOMS_PALIERS_ROMAINS[s.niveau] || s.niveau}
+    </span>
+  )
+}
+
+// Point médian gris, séparateur unique de la ligne d'historique (refonte) —
+// remplace les barres "|" et tirets précédents.
+function PointSeparateur() {
+  return <span style={{ color: "#2b4148" }}> · </span>
+}
+
+// Ligne du bas d'une run (team, date, vague, bribes) — lecture seule,
+// partagée entre la liste d'historique et le rappel de la modale de
+// suppression (même contenu dans les deux, voir consigne "même style que la
+// ligne d'historique"). Le lien "Corriger"/"Renseigner" n'en fait PAS partie
+// : il est propre à la liste interactive, ajouté par l'appelant à côté.
+function InfosBasSonge({ s }) {
+  return (
+    <>
+      <span style={{ color: "#8fa8ad" }}>{s.team_nom || "—"}</span>
+      <PointSeparateur />
+      <span style={{ color: "#5f7d84" }}>{formaterDate(s.date_run)}</span>
+      {s.duree_secondes != null && <><PointSeparateur /><span style={{ color: "#5f7d84" }}>{formaterDuree(s.duree_secondes)}</span></>}
+      {s.nombre_tours != null && <><PointSeparateur /><span style={{ color: "#5f7d84" }}>{s.nombre_tours} tour{s.nombre_tours > 1 ? "s" : ""}</span></>}
+      <PointSeparateur />
+      {s.vague_finale != null ? (
+        <span style={{ color: "#8fa8ad" }}>vague <span style={{ color: "#c9dde0", fontWeight: 500 }}>{s.vague_finale}</span></span>
+      ) : (
+        <span style={{ color: "#8fa8ad" }}>vague non renseignée</span>
+      )}
+      {s.bribes > 0 && (
+        <>
+          <PointSeparateur />
+          <span style={{ color: "var(--df-gold)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <IconeBribe size={14} /> {formaterNombre(s.bribes)} bribes
+          </span>
+        </>
+      )}
+    </>
+  )
+}
+
+// Fond/bordure d'une ligne d'historique selon qu'elle a un drop ou non
+// (refonte) — utilisé par la liste ET le rappel de la modale de suppression,
+// pour que les deux se ressemblent exactement comme demandé.
+function styleConteneurSonge(s) {
+  return s.drops.length > 0 ? {
+    border: "1px solid rgba(240,192,64,.45)",
+    borderLeft: "3px solid var(--df-gold)",
+    background: "linear-gradient(90deg, rgba(240,192,64,.07), rgba(240,192,64,.01))",
+    borderRadius: 10, padding: "12px 14px",
+  } : {
+    border: "1px solid rgba(44,231,255,.13)",
+    background: "rgba(255,255,255,.015)",
+    borderRadius: 10, padding: "12px 14px",
+  }
+}
+
+// Une ligne de drop dans le bloc "s'est passé pendant cette run". onClick et
+// onSupprimer sont optionnels : omis (undefined) -> rendu passif, utilisé
+// par le rappel de la modale de suppression (pas d'action possible là).
+function LigneDropSonge({ d, onClick, onSupprimer, confirmerActif }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+      <span onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 8, cursor: onClick ? "pointer" : "default", flex: 1, minWidth: 0 }}>
+        <span style={{ color: "var(--df-gold)", fontSize: 12, flexShrink: 0 }}>✦</span>
+        {d.item_img ? <img src={d.item_img} alt="" style={{ width: 22, height: 22, objectFit: "contain", flexShrink: 0 }} /> : null}
+        <span style={{ fontSize: 14.5, fontFamily: "var(--df-font-logo)", color: "var(--df-gold)" }}>{d.item_nom}{d.quantite > 1 ? ` ×${d.quantite}` : ""}</span>
+        <span style={{ fontSize: 12.5, color: "#5f7d84" }}>— {d.perso_nom}{d.palier ? ` · palier ${NOMS_PALIERS_ROMAINS[d.palier]}` : ""}</span>
+      </span>
+      {onSupprimer && (
+        <span onClick={onSupprimer} title="Supprimer ce drop"
+          style={{ color: "var(--df-red)", cursor: "pointer", fontWeight: 700, padding: "0 4px", fontSize: confirmerActif ? 11 : 13, whiteSpace: "nowrap" }}>
+          {confirmerActif ? "Confirmer ?" : "✕"}
+        </span>
+      )}
+    </div>
+  )
+}
+
 function IconeRecherche() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -86,15 +179,52 @@ function IconeRecherche() {
   )
 }
 
+// Séparateur doré discret (ligne + losange) sous les chiffres du bloc stats
+// (refonte visuelle) — partagé par les 3 colonnes (gauche, centre, droite),
+// ne pas dupliquer.
+function SeparateurDore() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }} aria-hidden="true">
+      <span style={{ flex: 1, height: 1, background: "rgba(var(--df-gold-rgb), 0.3)" }} />
+      <span style={{ width: 5, height: 5, background: "rgba(var(--df-gold-rgb), 0.5)", transform: "rotate(45deg)", flexShrink: 0 }} />
+      <span style={{ flex: 1, height: 1, background: "rgba(var(--df-gold-rgb), 0.3)" }} />
+    </div>
+  )
+}
+
+// 4 équerres dorées aux coins d'un cadre doré (voir .df-songes-cadre-dore
+// dans pageSonges.css) — à placer en premier enfant du bloc qui porte
+// cette classe (chantier 1c, point 3).
+function CoinsDores() {
+  return (
+    <>
+      <span className="df-songes-coin df-songes-coin-tl" aria-hidden="true" />
+      <span className="df-songes-coin df-songes-coin-tr" aria-hidden="true" />
+      <span className="df-songes-coin df-songes-coin-bl" aria-hidden="true" />
+      <span className="df-songes-coin df-songes-coin-br" aria-hidden="true" />
+    </>
+  )
+}
+
 const sp = {
-  page: { padding: "1.5rem 1.25rem 3rem", maxWidth: 720, margin: "0 auto" },
+  // maxWidth 1100 (chantier 1c, retour Popo "tous les blocs sont trop
+  // étroits") — était 720. Padding vertical réduit en même temps (les
+  // blocs "trop hauts" du même retour).
+  page: { padding: "1.25rem 1.5rem 2.5rem", maxWidth: 1100, margin: "0 auto" },
   backBtn: { background: "transparent", border: "1px solid var(--df-border-cyan)", borderRadius: 6, padding: "5px 12px", fontSize: 12, color: "var(--df-cyan)", cursor: "pointer", marginBottom: 18 },
   card: { background: "rgba(var(--df-card-bg), 0.92)", border: "1px solid var(--df-border-gold)", borderRadius: 16, padding: "20px 20px", marginBottom: 16 },
   champ: { width: "100%", boxSizing: "border-box", background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-cyan-rgb), 0.35)", borderRadius: 8, padding: "9px 12px", fontSize: 13.5, color: "var(--df-text)", outline: "none" },
   select: { background: "rgba(var(--df-card-bg), 0.95)", color: "var(--df-text)", border: "1px solid rgba(var(--df-gold-rgb), 0.4)", borderRadius: 999, padding: "8px 14px", fontSize: 13, cursor: "pointer", outline: "none" },
-  // Cyan = action principale (refonte visuelle, chantier 1 passe 1c) — le
-  // vert menthe précédent ne vient pas de la charte Draconiros (IDENTITE.md).
-  btnCyan: { background: "var(--df-cyan)", color: "#04121A", border: "none", borderRadius: 12, padding: "16px 20px", fontSize: 16, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
+  // Cyan = action principale (refonte visuelle, chantier 1 passe 1c). Doit
+  // ressortir sur le fond nébuleuse (chantier 1c) : bordure or, angles
+  // coupés en biais, ombre portée, Cinzel majuscules espacées.
+  btnCyan: {
+    background: "var(--df-cyan)", color: "#04121A", border: "2px solid rgba(240, 192, 64, 0.5)",
+    padding: "16px 20px", fontSize: 15, fontWeight: 700, cursor: "pointer", flex: "1 1 200px",
+    fontFamily: "var(--df-font-logo)", textTransform: "uppercase", letterSpacing: "0.08em",
+    clipPath: "polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px)",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.55)",
+  },
   btnCyanPetit: { background: "var(--df-cyan)", color: "#04121A", border: "none", borderRadius: 10, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   btnOrContour: { background: "rgba(var(--df-gold-rgb), 0.08)", color: "var(--df-gold)", border: "2px solid var(--df-gold)", borderRadius: 12, padding: "16px 20px", fontSize: 15, fontWeight: 700, cursor: "pointer", flex: "1 1 200px" },
   btnFantome: { background: "rgba(var(--df-cyan-rgb), 0.07)", color: "var(--df-cyan)", border: "1px solid rgba(var(--df-cyan-rgb), 0.6)", borderRadius: 10, padding: "8px 16px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
@@ -390,10 +520,12 @@ function SongesJournalSection({ journal, page, setPage }) {
 function BasculeSongeInterrompu({ nbSallesParRun, songeEchoue, setSongeEchoue, salleAtteinte, setSalleAtteinte }) {
   if (!songeEchoue) {
     // Vrai bouton discret plutôt qu'un lien souligné (refonte visuelle,
-    // chantier 1 passe 1c) : pensé pour vivre à côté de "J'ai drop", pas
-    // seul sur sa propre ligne.
+    // chantier 1 passe 1c) : vit à côté de "J'ai drop", sur la même ligne
+    // dans l'encadré de fin de songe (retour Popo, passe 1j — la carte avec
+    // titre séparé faisait doublon).
     return (
-      <button onClick={() => setSongeEchoue(true)} className="df-hover-lift" style={sp.btnFantome}>
+      <button onClick={() => setSongeEchoue(true)} className="df-hover-lift"
+        style={{ background: "transparent", color: "#7FE9E0", border: "1px solid rgba(127,233,224,.4)", borderRadius: 8, padding: 11, fontSize: 13, cursor: "pointer", width: "100%" }}>
         La run s'est arrêtée en cours de route ?
       </button>
     )
@@ -525,6 +657,71 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
   )
 }
 
+// Modale de confirmation avant suppression d'une run (refonte historique) :
+// remplace l'ancienne confirmation en 2 clics inline sur le bouton
+// "Supprimer" (moins visible, pas de rappel de ce qui allait être perdu).
+// songe = la run concernée ; le parent ne monte ce composant que lorsqu'une
+// suppression est en attente (jamais rendu avec songe=null).
+function ModaleSuppressionSonge({ songe, onAnnuler, onConfirmer }) {
+  const refBoutonGarder = useRef(null)
+  useEffect(() => {
+    refBoutonGarder.current?.focus()
+    const surTouche = e => { if (e.key === "Escape") onAnnuler() }
+    window.addEventListener("keydown", surTouche)
+    return () => window.removeEventListener("keydown", surTouche)
+  }, [onAnnuler])
+
+  return (
+    <div onClick={onAnnuler} style={{
+      position: "fixed", inset: 0, background: "rgba(3,12,17,.75)", backdropFilter: "blur(2px)",
+      display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: "rgba(var(--df-card-bg), 0.97)", border: "1px solid rgba(240,192,64,.35)",
+        borderRadius: 14, padding: "26px 24px", maxWidth: 400, width: "100%",
+      }}>
+        <div style={{ fontFamily: "var(--df-font-logo)", color: "var(--df-gold)", fontSize: 19, textAlign: "center", fontWeight: 700 }}>
+          Effacer ce songe ?
+        </div>
+        <div style={{ color: "#8fa8ad", fontSize: 13.5, textAlign: "center", marginTop: 8 }}>
+          Draconiros oubliera ce passage dans le Puits. Cette action est définitive.
+        </div>
+
+        {/* Rappel de la run concernée, même style que la liste (voir
+            styleConteneurSonge) : le joueur voit ce qu'il s'apprête à perdre. */}
+        <div style={{ marginTop: 18, ...styleConteneurSonge(songe) }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <PastilleIntensite s={songe} />
+            <span style={{ color: "#e8f4f6", fontSize: 15, fontWeight: 500 }}>Run #{songe.id}</span>
+          </div>
+          <div style={{ fontSize: 12.5, marginTop: 6, display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+            <InfosBasSonge s={songe} />
+          </div>
+          {songe.drops.length > 0 && (
+            <div style={{ marginTop: 10, borderTop: "1px solid rgba(240,192,64,.18)", paddingTop: 8 }}>
+              {songe.drops.map(d => <LigneDropSonge key={d.id} d={d} />)}
+            </div>
+          )}
+        </div>
+
+        {/* Ordre volontaire : "Non, garder" à gauche, "Oui, effacer" à
+            droite — ne pas inverser (consigne explicite). */}
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button ref={refBoutonGarder} onClick={onAnnuler} className="df-hover-lift" style={{
+            flex: 1, background: "transparent", color: "#8fa8ad", border: "1px solid rgba(143,168,173,.3)",
+            borderRadius: 8, padding: "10px 14px", fontSize: 13.5, cursor: "pointer",
+          }}>Non, garder</button>
+          <button onClick={onConfirmer} className="df-hover-lift" style={{
+            flex: 1, background: "color-mix(in srgb, var(--df-cauchemar) 14%, transparent)", color: "var(--df-cauchemar)",
+            border: "1px solid color-mix(in srgb, var(--df-cauchemar) 50%, transparent)",
+            borderRadius: 8, padding: "10px 14px", fontSize: 13.5, cursor: "pointer",
+          }}>Oui, effacer</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ============================================================
 // Écran principal
 // ============================================================
@@ -559,8 +756,6 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   const bribesEnCours = vagueFinale * (bribesParVagueActuel || 0)
   const ordinalVaguesRequises = vaguesRequisesActuel === 1 ? "1re" : `${vaguesRequisesActuel}e`
 
-  const totalPagesHistorique = Math.max(Math.ceil((historique.total || 0) / 10), 1)
-
   // Réaction visuelle au clic sur "Run terminée" (point 6 du chantier 1 passe
   // 1c) : purement présentationnel, aucun impact sur enregistrerRun côté
   // parent. Le halo du compteur flashe brièvement puis reprend son pulse.
@@ -570,63 +765,66 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
     setTimeout(() => setFlashCompteur(false), 650)
   }
 
-  // Confirmation en 2 clics (pas de window.confirm() : coupe avec la charte
-  // graphique custom et bloquerait l'automatisation de test navigateur).
-  // Premier clic sur un id -> affiche "Confirmer ?" ; second clic sur le
-  // MEME id -> supprime. Cliquer ailleurs annule implicitement (l'id
-  // courant change).
-  const [confirmerSongeId, setConfirmerSongeId] = useState(null)
+  // Suppression d'une run : modale de confirmation (refonte historique),
+  // songeASupprimer porte l'objet complet (pas juste l'id) pour que la
+  // modale puisse afficher le rappel sans redemander l'historique.
+  const [songeASupprimer, setSongeASupprimer] = useState(null)
+  // Confirmation en 2 clics pour les drops individuels (inchangé — pas de
+  // window.confirm() : coupe avec la charte graphique custom et bloquerait
+  // l'automatisation de test navigateur). Premier clic -> "Confirmer ?" ;
+  // second clic sur le MEME id -> supprime.
   const [confirmerDropId, setConfirmerDropId] = useState(null)
   // Rattrapage vague finale (chantier 1, passe 1b) : { id, valeur } de la
   // run en cours de correction, ou null si aucune. UNIQUEMENT vague_finale
   // — aucun autre champ de la run n'est éditable ici (consigne explicite).
   const [vagueFinaleEnEdition, setVagueFinaleEnEdition] = useState(null)
 
-  const clicSupprimerSonge = (id) => {
-    if (confirmerSongeId === id) { onSupprimerSonge(id); setConfirmerSongeId(null) }
-    else { setConfirmerSongeId(id); setConfirmerDropId(null) }
-  }
   const clicSupprimerDrop = (id) => {
     if (confirmerDropId === id) { onSupprimerDrop(id); setConfirmerDropId(null) }
-    else { setConfirmerDropId(id); setConfirmerSongeId(null) }
+    else { setConfirmerDropId(id) }
   }
 
   return (
     <div className="df-songes">
-      {/* Bandeau haut (refonte visuelle, chantier 1 passe 1c) : artwork
-          Draconiros pleine largeur, fondu vers le fond en masque alpha
-          (recette signature du site, voir dofura-maquette-v2.html). */}
+      {/* Bandeau haut (refonte visuelle, chantier 1 passe 1d) : artwork
+          Draconiros à taille native (290x180, trop petit pour du plein
+          largeur — retour Popo), fond uni de chaque côté, fondu vertical
+          vers le fond en bas. Le titre n'est plus superposé sur l'image
+          (ancienne marge négative) : il passe dans un cartouche SOUS le
+          bandeau, voir .df-songes-cartouche. */}
       <div style={{ position: "relative" }}>
         <div className="df-songes-banniere">
-          <img src="/assets/oeil/draconiros-banniere.jpg" alt="" />
+          <img src="/assets/oeil/draconiros_1160px.png" alt="" />
         </div>
-        {/* Retour par-dessus le bandeau (structure, refonte visuelle chantier 1
-            passe 1c) : hors de .df-songes-banniere (qui a son masque de fondu),
-            fond translucide pour rester lisible sur l'artwork. */}
         <button onClick={onBack} className="df-hover-lift" style={{
           ...sp.backBtn, position: "absolute", top: 14, left: 16, zIndex: 2, marginBottom: 0,
           background: "rgba(4,18,26,0.55)", backdropFilter: "blur(4px)",
         }}>← Retour</button>
       </div>
-      <div style={{ position: "relative", textAlign: "center", marginTop: -54, padding: "0 20px 4px" }}>
-        <h1 className="df-section-title" style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(26px, 5vw, 36px)", margin: 0, textShadow: "0 2px 20px rgba(4,18,26,0.9)" }}>
+      {/* Titre sur le modèle du hero de l'accueil (retour Popo, passe 1k —
+          voir h1/.lede dans AccueilPage.jsx + pageAccueil.css) : titre
+          Cinzel, sous-titre gris. Plus de cartouche encadré : posé
+          directement sur le fond. Surtitre retiré (passe 1m, retour Popo). */}
+      <div style={{ textAlign: "center", padding: "22px 20px 4px" }}>
+        {/* Halo cyan multi-couches (retour Popo) : remplace l'ombre portée
+            sombre par une lueur qui irradie — texte du plus serré (opacité
+            haute) au plus étalé (opacité basse), couleur charte #2CE7FF.
+            Le titre n'est plus superposé à l'artwork (voir commentaire du
+            bandeau ci-dessus), posé sur le fond sombre : pas besoin d'ombre
+            de contraste en plus du halo. */}
+        {/* Étoiles à éclat de part et d'autre du titre (retour Popo) : voir
+            .df-songes-titre-eclat dans pageSonges.css — pseudo-éléments
+            ::before/::after, pas d'image, unités em pour suivre la taille
+            du titre. */}
+        <h1 className="df-songes-titre-eclat" style={{ fontFamily: "var(--df-font-logo)", fontWeight: 700, fontSize: "clamp(32px, 6vw, 52px)", color: "var(--df-text)", margin: "0 0 10px", lineHeight: 1.06, textShadow: "0 0 4px rgba(44,231,255,.85), 0 0 14px rgba(44,231,255,.55), 0 0 32px rgba(44,231,255,.32), 0 0 60px rgba(44,231,255,.16)" }}>
           L'Œil de Draconiros
         </h1>
-        <p style={{ margin: "8px auto 0", maxWidth: 560, fontStyle: "italic", fontSize: 12.5, color: "var(--df-text-2)" }}>
-          Xélor, dieu du temps et des compteurs, sera-t-il clément ? Draconiros te surveille du coin de l'œil.
+        <p style={{ margin: "0 auto", maxWidth: 480, fontSize: 14.5, fontWeight: 300, color: "var(--df-text-2)" }}>
+          Dans les songes, Draconiros veille sur ton drop et juge ton endurance.
         </p>
       </div>
 
-      {/* Décors latéraux (épée + personnage Xélor) : disparaissent sous
-          1100px (voir pageSonges.css), jamais de bord net (masque radial). */}
-      <div className="df-songes-decor df-songes-decor-epee" style={{ backgroundImage: "url('/assets/oeil/xelor-epee.jpg')" }} aria-hidden="true" />
-      <div className="df-songes-decor df-songes-decor-perso" style={{ backgroundImage: "url('/assets/oeil/xelor-perso.jpg')" }} aria-hidden="true" />
-
       <div style={{ ...sp.page, position: "relative" }}>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
-          <button onClick={onOuvrirGestion} style={sp.lienDiscret}>⚙ Personnages & teams</button>
-        </div>
-
         {/* 1. Sélecteur de catégorie, au-dessus du bloc stats */}
         <div style={{ marginBottom: 10 }}>
           {ORDRE_CATEGORIES.map(c => (
@@ -636,77 +834,122 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
           ))}
         </div>
 
-        {/* 2. Bloc stats — 3 compteurs sur une ligne (structure, refonte
-            visuelle chantier 1 passe 1c) : gauche = meilleure série (or,
-            ~30px), centre = sans légende depuis (le héros, cyan ~64px + halo
-            pulsant), droite = runs en {intensité}. Sous 700px : colonne,
-            centre en premier (voir pageSonges.css, .df-songes-stats). */}
-        <div className="df-songes-stats">
-          <div className="df-songes-stat-side" style={{ flex: "1 1 0", textAlign: "center" }}>
+        {/* 2. Bloc stats — un seul cadre continu, rectangle allongé (marges
+            verticales réduites, passe 1i — voir .df-songes-stats). Gauche =
+            meilleure série (or), centre = sans légende depuis, droite = runs
+            en {intensité}. Les 3 colonnes suivent EXACTEMENT le même schéma :
+            label, case chiffre de hauteur fixe 44px (centrage flex), case
+            légende de hauteur fixe 18px (vide sauf au centre où vit "runs"),
+            SeparateurDore identique et jamais enveloppé dans une marge
+            spécifique (retour Popo). Le chiffre central est ~1,3x les
+            latéraux — reste la stat mise en avant (cyan) sans écraser le
+            bloc (gardait par erreur la taille du cadran d'horloge retiré).
+            Ces hauteurs fixes garantissent que labels, chiffres et filets
+            tombent sur la même ligne horizontale entre les 3 colonnes
+            (justify-content: flex-start sur .df-songes-stat-col) sans aucune
+            marge de compensation : "runs" vit dans sa propre case réservée,
+            il ne décale ni le chiffre ni le filet. Sous 700px : colonne,
+            centre en premier. */}
+        <div className="df-songes-stats df-songes-cadre-dore">
+          <CoinsDores />
+          <div className="df-songes-stat-col" style={{ flex: "1 1 0", textAlign: "center", padding: "8px 20px" }}>
             <div title="Record pour cette intensité et ce niveau." style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em", cursor: "help" }}>
               Meilleure série
             </div>
-            {stats?.meilleure_serie_sans_legende != null ? (
-              <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)", marginTop: 6 }}>
-                {stats.meilleure_serie_sans_legende}
-              </div>
-            ) : (
-              <div title="Aucune légende ne peut tomber à cette intensité." style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-text-3)", marginTop: 6, cursor: "help" }}>
-                —
-              </div>
-            )}
+            <div style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
+              {stats?.meilleure_serie_sans_legende != null ? (
+                <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)" }}>
+                  {stats.meilleure_serie_sans_legende}
+                </div>
+              ) : (
+                <div title="Aucune légende ne peut tomber à cette intensité." style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-text-3)", cursor: "help" }}>
+                  —
+                </div>
+              )}
+            </div>
+            <div style={{ height: 18 }} />
+            <SeparateurDore />
           </div>
 
-          <div className="df-songes-stat-centre" style={{ ...sp.card, flex: "1.6 1 0", textAlign: "center", padding: "22px 18px", position: "relative", overflow: "hidden", marginBottom: 0 }}>
-            <div className={`df-songes-compteur-halo${flashCompteur ? " df-songes-flash" : ""}`} style={{
-              position: "absolute", left: "50%", top: "50%", width: 240, height: 180,
-              transform: "translate(-50%, -50%)",
-              background: "radial-gradient(ellipse at center, rgba(44,231,255,0.35), transparent 70%)",
-              pointerEvents: "none",
-            }} />
-            <div style={{ position: "relative", fontSize: 11, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+          <div className="df-songes-stat-col df-songes-stat-centre" style={{ flex: "1.6 1 0", textAlign: "center", padding: "8px 18px" }}>
+            <div style={{ fontSize: 11, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase" }}>
               Sans {CATEGORIE_MOT_SINGULIER[categorieAffichee]} depuis
             </div>
-            {secheresseSonges == null ? (
-              <div style={{ position: "relative", color: "var(--df-text-3)", fontSize: 13 }}>Aucune donnée pour cette intensité pour l'instant.</div>
-            ) : (
-              <div style={{ position: "relative" }}>
-                <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(36px, 9vw, 64px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1 }}>
+            <div style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
+              {secheresseSonges == null ? (
+                <div style={{ color: "var(--df-text-2)", fontSize: 11 }}>Aucune donnée.</div>
+              ) : (
+                <div className={flashCompteur ? "df-songes-flash" : ""} style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(29px, 5.2vw, 39px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1, textShadow: "0 0 14px rgba(44,231,255,0.5)" }}>
                   {formaterNombre(secheresseSonges)}
                 </div>
-                <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)", marginTop: 4 }}>runs</div>
-              </div>
-            )}
+              )}
+            </div>
+            <div style={{ height: 18 }}>
+              {secheresseSonges != null && (
+                <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)" }}>runs</div>
+              )}
+            </div>
+            <SeparateurDore />
           </div>
 
-          <div className="df-songes-stat-side" style={{ flex: "1 1 0", textAlign: "center" }}>
+          <div className="df-songes-stat-col" style={{ flex: "1 1 0", textAlign: "center", padding: "8px 20px" }}>
             <div style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Runs en {INTENSITE_LABEL[intensiteNiveau.intensite] || intensiteNiveau.intensite} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau] || intensiteNiveau.niveau}
             </div>
-            <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)", marginTop: 6 }}>
-              {stats?.total_runs ?? "—"}
+            <div style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
+              <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)" }}>
+                {stats?.total_runs ?? "—"}
+              </div>
             </div>
+            <div style={{ height: 18 }} />
+            <SeparateurDore />
           </div>
         </div>
 
-        {/* 3. RÉGLAGES — team, intensité, Combat à vague (le minuteur en est
-            sorti, voir plus bas) : un seul bloc, poids visuel réduit
-            (hiérarchie, refonte visuelle passe 1c). */}
-        <div style={{ background: "rgba(11, 37, 49, 0.55)", border: "1px solid rgba(var(--df-cyan-rgb), 0.10)", borderRadius: 14, padding: "16px 18px", marginTop: 18 }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-3)", fontWeight: 700, marginBottom: 12 }}>
-            Réglages
+        {/* 3. RÉGLAGES — 3 cartes côte à côte (retour Popo, passe 1l : le
+            minuteur prend la place de "Combat à vague" dans les cartes,
+            "Combat à vague" descend sur la ligne du bas avec le détail des
+            bribes). */}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 16 }}>
+          {/* Sélecteur centré verticalement dans l'espace restant sous le
+              libellé (retour Popo) : un wrapper flex:1 dédié, séparé du
+              libellé qui reste épinglé en haut (padding-top de la carte,
+              inchangé — sinon les 3 libellés de la rangée ne tombent plus
+              sur la même ligne). Le bouton "Personnages & teams" est sorti
+              du flux (position absolute, ancré en bas) pour ne pas peser
+              dans le calcul de centrage du select — c'est ce qui permet au
+              select d'atterrir exactement à la même hauteur que dans la
+              carte Intensité (même espace disponible des deux côtés). */}
+          <div className="df-songes-reglage-carte" style={{ position: "relative" }}>
+            <div className="df-songes-reglage-carte-label">
+              <IconeTeamPersonnages size={20} style={{ objectFit: "contain" }} />
+              <span>Team</span>
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", width: "100%" }}>
+              <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={{ ...sp.select, fontSize: 12, width: "100%", boxSizing: "border-box" }}>
+                {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
+              </select>
+            </div>
+            <button onClick={onOuvrirGestion} className="df-hover-lift" style={{ ...sp.lienDiscret, fontSize: 10.5, position: "absolute", bottom: 14, left: 0, right: 0, textAlign: "center" }}>⚙ Personnages & teams</button>
           </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
-            <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={{ ...sp.select, fontSize: 12 }}>
-              {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
-            </select>
-            {/* Pastille couleur d'intensité (couleurs, refonte visuelle passe 1c) :
-                violet Paradoxe, bleu Rêve, orange Cauchemar — tokens.css. */}
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: INTENSITE_COULEUR[intensiteNiveau.intensite], flexShrink: 0 }} />
+
+          {/* Bordure CSS teintée par intensité (chantier 1m, retour Popo : le
+              border-image de la passe précédente déformait les coins).
+              Équerres dorées comme les autres blocs — ce qui impose le même
+              montage ::before + isolation que .df-songes-cadre-dore (sinon
+              le clip-path du conteneur rogne les équerres pile dans les
+              coins coupés), voir .df-songes-reglage-carte-intensite. */}
+          <div className="df-songes-reglage-carte df-songes-reglage-carte-intensite"
+            style={{ "--df-couleur-intensite": INTENSITE_COULEUR[intensiteNiveau.intensite] }}>
+            <CoinsDores />
+            <div className="df-songes-reglage-carte-label">
+              <IconeIntensiteEliatrope size={20} style={{ objectFit: "contain" }} />
+              <span>Intensité</span>
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", width: "100%" }}>
               <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
                 onChange={e => { const [intensite, niveau] = e.target.value.split("_"); changerIntensite(intensite, Number(niveau)) }}
-                style={{ ...sp.select, fontSize: 12 }}>
+                style={{ ...sp.select, fontSize: 12, width: "100%", boxSizing: "border-box" }}>
                 {Object.entries(config.intensites).map(([cle, info]) =>
                   info.niveaux.map(n => (
                     <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
@@ -715,68 +958,83 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
                   ))
                 )}
               </select>
+            </div>
+          </div>
+
+          {/* Minuteur : temps + les 3 boutons fixes (Démarrer désactivé en
+              marche, Pause désactivé à l'arrêt, Réinitialiser toujours actif). */}
+          <div className="df-songes-reglage-carte">
+            <div className="df-songes-reglage-carte-label">
+              <IconeSablier size={20} style={{ objectFit: "contain" }} />
+              <span>Minuteur</span>
+            </div>
+            <span style={{ fontFamily: "var(--df-font-logo)", fontSize: 22, color: "var(--df-text)", fontVariantNumeric: "tabular-nums" }}>
+              {formaterDuree(chronoSecondes)}
             </span>
-          </div>
-
-          {/* Combat a vagues (SONGES.md §3.2) : compteur −/+ plutot qu'un
-              champ libre, plafonne par intensite (config.vagues_max — Reve 5,
-              Paradoxe 15, Cauchemar illimite), bribes de reve affichees en
-              direct (chantier 1, passe 1b). "Nombre de tours" retire de la
-              saisie (colonne nombre_tours conservee en base, non exposee
-              ici — retour Popo). */}
-          <div style={{ fontSize: 11, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Combat à vague</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button onClick={() => setVagueFinale(v => Math.max(0, v - 1))} className="df-hover-lift"
-              style={{ ...sp.btnFantome, padding: "3px 11px", fontSize: 14, fontWeight: 700 }}>−</button>
-            <span style={{ fontSize: 17, fontWeight: 800, color: "var(--df-gold)", minWidth: 24, textAlign: "center" }}>{vagueFinale}</span>
-            <button
-              onClick={() => setVagueFinale(v => vaguesMaxActuel != null ? Math.min(vaguesMaxActuel, v + 1) : v + 1)}
-              disabled={vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel}
-              className="df-hover-lift"
-              style={{ ...sp.btnFantome, padding: "3px 11px", fontSize: 14, fontWeight: 700, opacity: (vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel) ? 0.5 : 1 }}>+</button>
-          </div>
-          {bribesParVagueActuel != null && (
-            <div style={{ fontSize: 12, color: "var(--df-text-2)", marginTop: 8 }}>
-              {vagueFinale} vague{vagueFinale > 1 ? "s" : ""} × {bribesParVagueActuel} bribes = <span style={{ color: "var(--df-gold)" }}>{formaterNombre(bribesEnCours)}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button onClick={onChronoDemarrerPause} disabled={chronoEnMarche} className="df-hover-lift"
+                style={{ ...sp.btnCyanPetit, opacity: chronoEnMarche ? 0.4 : 1, cursor: chronoEnMarche ? "default" : "pointer" }}>Démarrer</button>
+              <button onClick={onChronoDemarrerPause} disabled={!chronoEnMarche} title="Pause" className="df-hover-lift"
+                style={{ ...sp.btnIconCarre, background: "rgba(242,109,109,0.12)", borderColor: "rgba(242,109,109,0.5)", color: "var(--df-red)", opacity: chronoEnMarche ? 1 : 0.4, cursor: chronoEnMarche ? "pointer" : "default" }}>⏸</button>
+              <button onClick={onChronoReinitialiser} title="Réinitialiser" className="df-hover-lift" style={sp.btnIconCarre}>↺</button>
             </div>
-          )}
-          {vaguesRequisesActuel != null && (
-            <div style={{ fontSize: 10.5, color: "var(--df-text-3)", marginTop: 4 }}>
-              Victoire acquise dès la {ordinalVaguesRequises} vague.
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Le minuteur — sorti des réglages pour devenir une ligne à part
-            entière (structure, refonte visuelle chantier 1 passe 1c) : temps
-            en Cinzel ~22px, "Démarrer" en cyan, Pause/Réinitialiser en
-            boutons icône carrés (glyphes unicode en attendant la planche
-            d'icônes, passe suivante). */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
-          <span style={{ fontFamily: "var(--df-font-logo)", fontSize: 22, color: "var(--df-text)", fontVariantNumeric: "tabular-nums", minWidth: 78 }}>
-            {formaterDuree(chronoSecondes)}
-          </span>
-          {!chronoEnMarche ? (
-            <button onClick={onChronoDemarrerPause} className="df-hover-lift" style={sp.btnCyanPetit}>Démarrer</button>
-          ) : (
-            <button onClick={onChronoDemarrerPause} title="Pause" className="df-hover-lift" style={{ ...sp.btnIconCarre, background: "rgba(242,109,109,0.12)", borderColor: "rgba(242,109,109,0.5)", color: "var(--df-red)" }}>⏸</button>
-          )}
-          <button onClick={onChronoReinitialiser} title="Réinitialiser" className="df-hover-lift" style={sp.btnIconCarre}>↺</button>
-        </div>
+        {/* Encadré unique de fin de songe (refonte visuelle) : bribes de la
+            run en cours (compteur −/+ toujours §3.2, plafonné par
+            config.vagues_max), puis actions ("J'ai drop" / run interrompue),
+            puis RUN TERMINÉE en pleine largeur — remplace les 3 blocs
+            empilés précédents (compteur, gros bouton, deux actions). Aucun
+            changement de logique : mêmes handlers, mêmes conditions. */}
+        <div style={{ border: "1px solid rgba(44,231,255,.28)", borderRadius: 12, padding: 16, background: "rgba(44,231,255,.04)", marginTop: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, borderBottom: "1px solid rgba(44,231,255,.15)", paddingBottom: 14 }}>
+            <div style={{ flex: 1 }}>
+              {bribesParVagueActuel != null && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <button onClick={() => setVagueFinale(v => Math.max(0, v - 1))} className="df-hover-lift"
+                    style={{ ...sp.btnFantome, padding: "1px 9px", fontSize: 13, fontWeight: 700 }}>−</button>
+                  <button
+                    onClick={() => setVagueFinale(v => vaguesMaxActuel != null ? Math.min(vaguesMaxActuel, v + 1) : v + 1)}
+                    disabled={vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel}
+                    className="df-hover-lift"
+                    style={{ ...sp.btnFantome, padding: "1px 9px", fontSize: 13, fontWeight: 700, opacity: (vaguesMaxActuel != null && vagueFinale >= vaguesMaxActuel) ? 0.5 : 1 }}>+</button>
+                  <span style={{ fontSize: 12, color: "#5f8a90" }}>
+                    {vagueFinale} vague{vagueFinale > 1 ? "s" : ""} × {bribesParVagueActuel} bribes
+                    {vaguesRequisesActuel != null && ` · victoire dès la ${ordinalVaguesRequises} vague`}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "none" }}>
+              <IconeBribe size={34} />
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                  <span style={{ fontFamily: "var(--df-font-logo)", fontSize: 22, fontWeight: 700, color: "#F0C040" }}>
+                    {bribesParVagueActuel != null ? formaterNombre(bribesEnCours) : "—"}
+                  </span>
+                  <span style={{ fontSize: 13, color: "#7FE9E0" }}>bribes de rêve</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* 4. Actions — l'action principale d'abord, pleine largeur, cyan.
-            Réaction visuelle sur le compteur au clic (point 6 du chantier). */}
-        <button disabled={enregistrement} onClick={() => { onSongeTermine(); declencherFlashCompteur() }} className="df-hover-lift"
-          style={{ ...sp.btnCyan, width: "100%", marginTop: 18, opacity: enregistrement ? 0.6 : 1 }}>
-          Run terminée
-        </button>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginTop: 10 }}>
-          <button onClick={onOuvrirAjoutDrop} className="df-hover-lift" style={{ ...sp.btnOrContour, flex: "0 1 auto", padding: "9px 18px", fontSize: 13 }}>
-            J'ai drop
+          <div style={{ display: "flex", gap: 10, margin: "14px 0" }}>
+            <button onClick={onOuvrirAjoutDrop} className="df-hover-lift"
+              style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#F0C040", color: "#1a1408", border: "none", borderRadius: 8, padding: 11, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+              <IconeCoffre size={18} />
+              J'ai drop
+            </button>
+            <div style={{ flex: 1 }}>
+              <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
+                salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
+            </div>
+          </div>
+
+          <button disabled={enregistrement} onClick={() => { onSongeTermine(); declencherFlashCompteur() }} className="df-hover-lift"
+            style={{ ...sp.btnCyan, width: "100%", opacity: enregistrement ? 0.6 : 1 }}>
+            Run terminée
           </button>
-          {/* 5. "La run s'est arrêtée ?" — vrai bouton discret à côté, plus un lien */}
-          <BasculeSongeInterrompu nbSallesParRun={config.nb_salles_par_run} songeEchoue={songeEchoue} setSongeEchoue={setSongeEchoue}
-            salleAtteinte={salleAtteinte} setSalleAtteinte={setSalleAtteinte} />
         </div>
 
         {dropsEnCours.length > 0 && (
@@ -807,90 +1065,77 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         <div style={{ marginTop: 26 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div className="df-block-title" style={{ margin: 0 }}>Historique des runs</div>
-            <button onClick={onOuvrirMesDrops} style={sp.lienDiscret}>🎁 Mes drops</button>
+            <button onClick={onOuvrirMesDrops} style={{ ...sp.lienDiscret, display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <IconeCoffre size={14} />
+              Mes drops
+            </button>
           </div>
           {historique.songes.length === 0 ? (
             <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucune run enregistrée pour l'instant.</div>
           ) : historique.songes.map(s => (
-            <div key={s.id} style={{ background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid rgba(var(--df-gold-rgb), 0.13)", borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
+            <div key={s.id} style={{ ...styleConteneurSonge(s), marginBottom: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: INTENSITE_COULEUR[s.intensite], flexShrink: 0 }} />
-                    <span style={{ color: "var(--df-gold)", fontWeight: 700, fontSize: 13.5 }}>
-                      Run #{s.id}
-                      {!s.terminee && <span style={{ color: "var(--df-text-3)", fontWeight: 400 }}> (interrompu, salle {s.salle_atteinte})</span>}
-                    </span>
-                  </div>
-                  <div style={{ color: "var(--df-text-3)", fontSize: 11.5, marginTop: 2, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
-                    <span>
-                      {INTENSITE_LABEL[s.intensite] || s.intensite} {NOMS_PALIERS_ROMAINS[s.niveau] || s.niveau} · {s.team_nom || "—"} · {formaterDate(s.date_run)}
-                      {s.duree_secondes != null ? ` · durée : ${formaterDuree(s.duree_secondes)}` : ""}
-                      {s.nombre_tours != null ? ` · ${s.nombre_tours} tour${s.nombre_tours > 1 ? "s" : ""}` : ""}
-                    </span>
-                    {/* Rattrapage vague finale (chantier 1, passe 1b) : UNIQUEMENT ce
-                        champ est corrigeable depuis l'historique, rien d'autre.
-                        Refresh de l'historique après enregistrement -> les bribes
-                        affichées (calculées côté backend) se recalculent aussitôt.
-                        Séparateur (bordure) + gap garantissent l'espacement avant
-                        "Corriger" (refonte visuelle, passe 1c, point 7). */}
-                    {vagueFinaleEnEdition?.id === s.id ? (
-                      <span style={{ display: "flex", alignItems: "center", gap: 6, borderLeft: "1px solid rgba(var(--df-cyan-rgb), 0.2)", paddingLeft: 8 }}>
-                        Vague finale :
-                        <input type="number" min={1} value={vagueFinaleEnEdition.valeur}
-                          onChange={e => setVagueFinaleEnEdition({ id: s.id, valeur: e.target.value })}
-                          style={{ width: 48, ...sp.champ, padding: "2px 6px", fontSize: 11.5 }} />
-                        <button onClick={() => { onCorrigerVagueFinale(s.id, Number(vagueFinaleEnEdition.valeur)); setVagueFinaleEnEdition(null) }}
-                          style={{ ...sp.lienDiscret, color: "var(--df-cyan)" }}>Enregistrer</button>
-                        <button onClick={() => setVagueFinaleEnEdition(null)} style={sp.lienDiscret}>Annuler</button>
-                      </span>
-                    ) : (
-                      <span style={{ display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid rgba(var(--df-cyan-rgb), 0.15)", paddingLeft: 8 }}>
-                        <span>
-                          {s.vague_finale != null ? `Vague finale : ${s.vague_finale}` : "Vague finale non renseignée"}
-                          {s.bribes > 0 && <span style={{ color: "var(--df-gold)" }}> · 💠 {formaterNombre(s.bribes)} bribes</span>}
-                        </span>
-                        <button onClick={() => setVagueFinaleEnEdition({ id: s.id, valeur: s.vague_finale || 1 })} style={sp.lienDiscret}>
-                          {s.vague_finale != null ? "Corriger" : "Renseigner"}
-                        </button>
-                      </span>
-                    )}
-                  </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <PastilleIntensite s={s} />
+                  <span style={{ color: "#e8f4f6", fontSize: 15, fontWeight: 500 }}>
+                    Run #{s.id}
+                    {!s.terminee && <span style={{ color: "#5f7d84", fontWeight: 400 }}> (interrompu, salle {s.salle_atteinte})</span>}
+                  </span>
                 </div>
-                <button onClick={() => clicSupprimerSonge(s.id)} style={{ ...sp.lienDiscret, color: "var(--df-red)" }}>
-                  {confirmerSongeId === s.id ? "Confirmer la suppression ?" : "Supprimer"}
+                <button onClick={() => setSongeASupprimer(s)} className="df-lien-supprimer"
+                  style={{ fontSize: 12, cursor: "pointer", textDecoration: "underline", background: "none", border: "none", padding: 0, fontFamily: "inherit" }}>
+                  Supprimer
                 </button>
               </div>
+              <div style={{ fontSize: 12.5, marginTop: 6, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+                  {/* Rattrapage vague finale (chantier 1, passe 1b) : UNIQUEMENT ce
+                      champ est corrigeable depuis l'historique, rien d'autre.
+                      Refresh de l'historique après enregistrement -> les bribes
+                      affichées (calculées côté backend) se recalculent aussitôt. */}
+                  {vagueFinaleEnEdition?.id === s.id ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ color: "#8fa8ad" }}>{s.team_nom || "—"}</span>
+                      <PointSeparateur />
+                      Vague finale :
+                      <input type="number" min={1} value={vagueFinaleEnEdition.valeur}
+                        onChange={e => setVagueFinaleEnEdition({ id: s.id, valeur: e.target.value })}
+                        style={{ width: 48, ...sp.champ, padding: "2px 6px", fontSize: 11.5 }} />
+                      <button onClick={() => { onCorrigerVagueFinale(s.id, Number(vagueFinaleEnEdition.valeur)); setVagueFinaleEnEdition(null) }}
+                        style={{ color: "var(--df-cyan-2)", fontSize: 12, cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Enregistrer</button>
+                      <button onClick={() => setVagueFinaleEnEdition(null)}
+                        style={{ color: "#4a6b72", fontSize: 12, cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Annuler</button>
+                    </span>
+                  ) : (
+                    <InfosBasSonge s={s} />
+                  )}
+                </div>
+                {vagueFinaleEnEdition?.id !== s.id && (
+                  <button onClick={() => setVagueFinaleEnEdition({ id: s.id, valeur: s.vague_finale || 1 })} className="df-lien-corriger"
+                    style={{ fontSize: 12, cursor: "pointer", textDecoration: "underline", background: "none", border: "none", padding: 0, fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                    {s.vague_finale != null ? "Corriger" : "Renseigner"}
+                  </button>
+                )}
+              </div>
               {s.drops.length > 0 && (
-                <div style={{ marginTop: 10, borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: 8 }}>
+                <div style={{ marginTop: 10, borderTop: "1px solid rgba(240,192,64,.18)", paddingTop: 8 }}>
                   {s.drops.map(d => (
-                    <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
-                      <span onClick={() => onSelectObjet(d.item_id)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: 1, minWidth: 0 }}>
-                        {d.item_img ? <img src={d.item_img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} /> : null}
-                        <span style={{ fontSize: 13, color: "var(--df-text)" }}>{d.item_nom}{d.quantite > 1 ? ` ×${d.quantite}` : ""}</span>
-                        <span style={{ fontSize: 11.5, color: "var(--df-text-3)" }}>— {d.perso_nom}{d.palier ? ` · palier ${NOMS_PALIERS_ROMAINS[d.palier]}` : ""}</span>
-                      </span>
-                      <span onClick={() => clicSupprimerDrop(d.id)} title="Supprimer ce drop"
-                        style={{ color: "var(--df-red)", cursor: "pointer", fontWeight: 700, padding: "0 4px", fontSize: confirmerDropId === d.id ? 11 : 13, whiteSpace: "nowrap" }}>
-                        {confirmerDropId === d.id ? "Confirmer ?" : "✕"}
-                      </span>
-                    </div>
+                    <LigneDropSonge key={d.id} d={d}
+                      onClick={() => onSelectObjet(d.item_id)}
+                      onSupprimer={() => clicSupprimerDrop(d.id)}
+                      confirmerActif={confirmerDropId === d.id} />
                   ))}
                 </div>
               )}
             </div>
           ))}
-          {totalPagesHistorique > 1 && (
-            <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 10 }}>
-              <button disabled={pageHistorique <= 1} onClick={() => setPageHistorique(p => p - 1)}
-                className="df-hover-lift" style={{ ...sp.btnFantome, opacity: pageHistorique <= 1 ? 0.5 : 1 }}>← Précédent</button>
-              <span style={{ fontSize: 12, color: "var(--df-text-2)" }}>Page {pageHistorique} / {totalPagesHistorique}</span>
-              <button disabled={pageHistorique >= totalPagesHistorique} onClick={() => setPageHistorique(p => p + 1)}
-                className="df-hover-lift" style={{ ...sp.btnFantome, opacity: pageHistorique >= totalPagesHistorique ? 0.5 : 1 }}>Suivant →</button>
-            </div>
-          )}
         </div>
       </div>
+      {songeASupprimer && (
+        <ModaleSuppressionSonge songe={songeASupprimer}
+          onAnnuler={() => setSongeASupprimer(null)}
+          onConfirmer={() => { onSupprimerSonge(songeASupprimer.id); setSongeASupprimer(null) }} />
+      )}
     </div>
   )
 }
@@ -1101,9 +1346,13 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
   }
   useEffect(rafraichirStats, [token, teamId, intensiteNiveau]) // eslint-disable-line
 
+  // page_size=5 (refonte historique) : seules les 5 runs les plus récentes
+  // sont affichées pour l'instant, pas de bouton "voir plus" (page
+  // d'historique complet pas encore construite) — l'endpoint acceptait déjà
+  // page_size en paramètre, son contrat n'a pas changé.
   const rafraichirHistorique = (page = pageHistorique) => {
     if (!token) return
-    fetch(`${API}/songes/historique?page=${page}&page_size=10`, { headers: authHeaders(token) })
+    fetch(`${API}/songes/historique?page=${page}&page_size=5`, { headers: authHeaders(token) })
       .then(r => r.json()).then(setHistorique)
   }
   useEffect(() => rafraichirHistorique(pageHistorique), [token, pageHistorique]) // eslint-disable-line
