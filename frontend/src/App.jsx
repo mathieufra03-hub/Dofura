@@ -3426,40 +3426,35 @@ function AppInterne() {
   const onSelectMonstreDepuisNavbar = (id) => { setQuery(""); setResults([]); onSelectMonstre(id) }
 
   const handleNav = (cible) => {
-    if (CIBLE_VERS_URL[cible]) { setQuery(""); setResults([]); navigate(CIBLE_VERS_URL[cible]); return }
-    // Résidu mort : cible "donjon"/"zone"/"quete"/"succes", jamais envoyée
-    // par un composant monté aujourd'hui (seul EncycloGrid, orphelin, les
-    // utilisait) — comportement d'origine intact, non migré au routeur.
-    resetNavDead(); setBrowsingDead(cible)
+    if (CIBLE_VERS_URL[cible]) { setQuery(""); setResults([]); navigate(CIBLE_VERS_URL[cible]) }
   }
   const handleHome = () => { setQuery(""); setResults([]); navigate("/") }
 
   // ------------------------------------------------------------
-  // Résidus morts : donjons, zones/sous-zones, quêtes, succès, panoplies.
-  // Hors périmètre produit (voir CLAUDE.md) — mécanisme d'origine (setState
-  // + rendu conditionnel) strictement inchangé, jamais migré vers une route,
-  // jamais supprimé. onBack ne touche jamais l'URL (elle n'a jamais bougé
-  // pendant que ces branches s'affichaient), donc en sortir retombe pile sur
-  // ce que le routeur affichait déjà avant.
+  // Résidus morts : donjons, quêtes, succès, panoplies (fiches détail
+  // uniquement — les listes et le cluster zones ont été supprimés, nettoyage
+  // post-pivot vague 1/2). Hors périmètre produit (voir CLAUDE.md) —
+  // mécanisme d'origine (setState + rendu conditionnel) strictement
+  // inchangé, jamais migré vers une route : ces 4 fiches restent
+  // atteignables depuis ObjetDetailPage (liens croisés panoplie/donjon
+  // d'une légende de songe, et donjon -> quête/succès associés). onBack ne
+  // touche jamais l'URL (elle n'a jamais bougé pendant que ces branches
+  // s'affichaient), donc en sortir retombe pile sur ce que le routeur
+  // affichait déjà avant.
   // ------------------------------------------------------------
   const [selectedDonjon, setSelectedDonjon]     = useState(null)
   const [selectedPanoplie, setSelectedPanoplie] = useState(null)
-  const [selectedRegion, setSelectedRegion]     = useState(null)
-  const [selectedSousZone, setSelectedSousZone] = useState(null)
   const [selectedQuete, setSelectedQuete]       = useState(null)
   const [selectedSucces, setSelectedSucces]     = useState(null)
-  const [browsingDead, setBrowsingDead]         = useState(null) // "donjon" | "zone" | "quete" | "succes"
 
-  const resetNavDead = () => { setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setSelectedSucces(null); setBrowsingDead(null) }
+  const resetNavDead = () => { setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedQuete(null); setSelectedSucces(null) }
   const handleSelectDonjon   = (id) => { resetNavDead(); setSelectedDonjon(id) }
   const handleSelectPanoplie = (id) => { resetNavDead(); setSelectedPanoplie(id) }
-  const handleSelectRegion   = (nom) => { resetNavDead(); setSelectedRegion(nom) }
-  const handleSelectSousZone = (nom) => { resetNavDead(); setSelectedSousZone(nom) }
   const handleSelectQuete    = (id) => { resetNavDead(); setSelectedQuete(id) }
   const handleSelectSucces   = (id) => { resetNavDead(); setSelectedSucces(id) }
   const handleHomeDead       = () => { resetNavDead() }
 
-  const cibleDead = selectedDonjon || selectedPanoplie || selectedRegion || selectedSousZone || selectedQuete || selectedSucces || browsingDead
+  const cibleDead = selectedDonjon || selectedPanoplie || selectedQuete || selectedSucces
 
   // Lien nav actif : dérivé de l'écran de FOND (celui qui reste visible même
   // si une fiche est ouverte par-dessus), pas de l'URL réelle — identique au
@@ -3487,22 +3482,10 @@ function AppInterne() {
               <DonjonDetailPage id={selectedDonjon} token={token} onSelectMonstre={onSelectMonstre} onSelectObjet={onSelectObjet} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onBack={handleHomeDead} />
             ) : selectedPanoplie ? (
               <PanoplieDetailPage id={selectedPanoplie} onSelectObjet={onSelectObjet} onBack={handleHomeDead} />
-            ) : selectedSousZone ? (
-              <SousZoneDetailPage nom={selectedSousZone} onSelectRegion={handleSelectRegion} onSelectMonstre={onSelectMonstre} onBack={handleHomeDead} />
-            ) : selectedRegion ? (
-              <RegionDetailPage nom={selectedRegion} onSelectSousZone={handleSelectSousZone} onSelectDonjon={handleSelectDonjon} onBack={handleHomeDead} />
             ) : selectedQuete ? (
               <QuetePage id={selectedQuete} token={token} onSelect={handleSelectQuete} onSelectObjet={onSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHomeDead} />
-            ) : selectedSucces ? (
-              <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={onSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHomeDead} />
-            ) : browsingDead === "donjon" ? (
-              <DonjonsPage onSelect={handleSelectDonjon} onBack={handleHomeDead} />
-            ) : browsingDead === "zone" ? (
-              <RegionsPage onSelect={handleSelectRegion} onSelectSousZone={handleSelectSousZone} onBack={handleHomeDead} />
-            ) : browsingDead === "quete" ? (
-              <QuetesPage token={token} onSelect={handleSelectQuete} onBack={handleHomeDead} />
             ) : (
-              <SuccesPage token={token} onSelect={handleSelectSucces} onBack={handleHomeDead} />
+              <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={onSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHomeDead} />
             )
           ) : (
             <>
