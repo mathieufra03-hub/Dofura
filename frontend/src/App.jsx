@@ -2789,29 +2789,6 @@ function DonjonDetailPage({ id, token, onSelectMonstre, onSelectObjet, onSelectQ
 
 const CATEGORIE_QUETE_LABELS = { repetable:"Répétable", autre:"Quête" }
 
-// Regroupement sous en-tetes : "zone" (defaut §5 specs) groupe par region
-// (ou "Sans zone" — voir CLAUDE.md, ~6% des quetes sans position resolue,
-// gap de donnee assume comme les autres domaines), "niveau" par tranche de
-// 20 (specs : "tranches de 20", contrairement aux tranches de 50 des objets).
-function grouperQuetes(quetes, tri) {
-  const cleDe = (q) => {
-    if (tri === "niveau") {
-      const base = Math.floor((q.niveau_min - 1) / 20) * 20 + 1
-      return `Niv. ${base} à ${base + 19}`
-    }
-    if (tri === "az") return (q.nom.charAt(0) || "?").toUpperCase()
-    return q.zone || "Sans zone"
-  }
-  const groupes = []
-  quetes.forEach(q => {
-    const cle = cleDe(q)
-    const dernier = groupes[groupes.length - 1]
-    if (dernier && dernier.cle === cle) dernier.items.push(q)
-    else groupes.push({ cle, items:[q] })
-  })
-  return groupes
-}
-
 // Lien externe DofusPourLesNoobs : jamais d'URL de fiche devinee (teste :
 // une URL construite depuis le nom renvoie du 404 sans filet). Toujours la
 // page de recherche interne du site, qui repond 200 meme sans resultat —
@@ -3159,20 +3136,6 @@ function QuetePage({ id, token, onSelect, onSelectObjet, onSelectDonjon, onBack 
     </div>
   )
 }
-
-// Regroupement sous en-tetes de categorie : la liste arrive deja triee dans
-// cet ordre par le backend (CATEGORIES_SUCCES_ORDRE), on regroupe juste les
-// lignes consecutives — meme mecanisme que grouperQuetes.
-function grouperSucces(succes) {
-  const groupes = []
-  succes.forEach(s => {
-    const dernier = groupes[groupes.length - 1]
-    if (dernier && dernier.cle === s.categorie) dernier.items.push(s)
-    else groupes.push({ cle: s.categorie, items: [s] })
-  })
-  return groupes
-}
-
 
 function SuccePage({ id, token, onSelectQuete, onSelectObjet, onSelectDonjon, onBack }) {
   const [data, setData] = useState(null)
