@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react"
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom"
 import SongesPage from "./pages/SongesPage"
 import AccueilPage from "./pages/AccueilPage"
 import TauxPage from "./pages/TauxPage"
@@ -1117,6 +1118,19 @@ function MonstrePage({ id, onSelectDonjon, onBack }) {
   }, [id])
 
   if (!data) return <div style={{ padding:"3rem 2rem", textAlign:"center", color:C.txt2, fontSize:14 }}>Chargement...</div>
+  // Cas "introuvable" (chantier react-router, palier 1) : id manquant ou
+  // supprimé, fiche jamais atteignable par erreur avant (les id venaient
+  // toujours d'un clic sur un résultat réel) — devient possible dès que
+  // l'URL est publique (lien partagé, saisie manuelle). Même convention
+  // que ObjetDetailPage (data.erreur), l'API renvoie déjà cette forme.
+  if (data.erreur) return (
+    <div translate="no" style={{ padding:"1.5rem 2rem", maxWidth:900, margin:"0 auto" }}>
+      <button onClick={onBack} style={{ background:"transparent", border:`0.5px solid ${C.bdr2}`, borderRadius:6, padding:"5px 12px", fontSize:12, color:C.prp2, cursor:"pointer", marginBottom:20 }}>
+        ← Retour
+      </button>
+      <div style={{ padding:"3rem 0", textAlign:"center", color:C.txt2, fontSize:14 }}>{data.erreur}</div>
+    </div>
+  )
 
   const g = data.grades?.[gradeIdx] || {}
   const resVal = (v) => {
@@ -2211,18 +2225,60 @@ function GrimoireTuile({ item, typeId, onClick }) {
   )
 }
 
-// Panneau lateral : reutilise les fiches detail existantes telles quelles
-// (memes props, meme composant), juste dans un cadre flottant plutot
-// qu'une page pleine. Pile de navigation interne (ex. panoplie -> objet
-// membre -> ...) : le "← Retour" de la fiche depile un niveau, le "✕" ferme
-// tout d'un coup quel que soit la profondeur. Sur mobile, le panneau
-// occupe l'ecran entier (100vw) — meme mecanique, juste plus large.
-function GrimoirePanel({ pile, onBack, onClose, onPushObjet, onPushMonstre, onPushPanoplie, onSelectDonjon }) {
-  if (pile.length === 0) return null
-  const actuel = pile[pile.length - 1]
+// ============================================================
+// Fiches en panneau overlay (chantier react-router, palier 1)
+// ============================================================
+// Remplace l'ancien GrimoirePanel (pile de navigation locale à GrimoirePage,
+// setState pur) par un mécanisme global au routeur : les fiches monstre/objet
+// vivent maintenant à leurs propres URL (/monstres/:id, /objets/:id) et
+// s'ouvrent en overlay AU-DESSUS DE L'ÉCRAN COURANT, quel qu'il soit
+// (Bibliothèque, Les Taux, L'Œil de Draconiros, ou la recherche navbar
+// depuis n'importe quel écran) — pas seulement au-dessus de la Bibliothèque
+// comme l'ancien mécanisme. Pattern "backgroundLocation" officiel de
+// react-router : l'écran d'où part le clic est mémorisé dans l'état de
+// navigation (location.state.backgroundLocation), voir AppInterne plus bas
+// qui rend ce fond via un second <Routes> sans changer la location visible.
+
+// Ouvre une fiche en overlay. Si on est DÉJÀ dans une fiche (backgroundLocation
+// présent), on le PROPAGE tel quel plutôt que d'écraser par la fiche qu'on
+// quitte — sinon le fond visible changerait à chaque saut objet<->monstre
+// imbriqué (ex. depuis un objet, cliquer sur "dropé par" un monstre).
+function useOuvrirFiche() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  return (chemin) => {
+    const fond = location.state?.backgroundLocation || location
+    navigate(chemin, { state: { backgroundLocation: fond } })
+  }
+}
+
+// Ferme une fiche. "← Retour" (rendu par la fiche elle-même) dépile un
+// niveau via l'historique du navigateur — utile pour les chaînes
+// monstre -> objet -> monstre imbriquées, chacune poussée comme sa propre
+// entrée d'historique. La croix (rendue par le panneau) revient directement
+// à l'écran de fond mémorisé, quelle que soit la profondeur. Sans
+// backgroundLocation (arrivée directe sur l'URL, F5, lien partagé) : pas
+// d'historique interne à dépiler — naviguer en arrière sortirait du site,
+// donc les DEUX replient sur /bibliotheque au lieu de faire navigate(-1).
+function useFermerFiche() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const fond = location.state?.backgroundLocation
+  return {
+    onRetour: () => { fond ? navigate(-1) : navigate("/bibliotheque", { replace:true }) },
+    onFermer: () => { fond ? navigate(fond) : navigate("/bibliotheque", { replace:true }) },
+  }
+}
+
+// Chrome du panneau flottant — extrait à l'identique de l'ancien
+// GrimoirePanel (fond assombri, cadre ancré à droite, croix fixe en haut à
+// droite) pour être partagé par toutes les fiches en overlay désormais,
+// quel que soit l'écran de fond. Sur mobile, occupe l'écran entier
+// (100vw) — même mécanique qu'avant, juste plus large.
+function PanneauFiche({ onFermer, children }) {
   return (
     <>
-      <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(6,8,16,0.6)", zIndex:300 }} />
+      <div onClick={onFermer} style={{ position:"fixed", inset:0, background:"rgba(6,8,16,0.6)", zIndex:300 }} />
       <div style={{
         position:"fixed", top:0, right:0, height:"100vh", width:"min(860px, 100vw)",
         background:"var(--df-panel-bg)", borderLeft:"1px solid rgba(255,198,61,0.25)",
@@ -2230,23 +2286,52 @@ function GrimoirePanel({ pile, onBack, onClose, onPushObjet, onPushMonstre, onPu
       }}>
         {/* position:fixed (pas absolute) : reste ancré en haut à droite du
             viewport quel que soit le defilement interne du panneau. */}
-        <button onClick={onClose} title="Fermer" style={{
+        <button onClick={onFermer} title="Fermer" style={{
           position:"fixed", top:14, right:14, zIndex:302, width:32, height:32, borderRadius:"50%",
           background:"rgba(20,26,46,0.9)", border:"1px solid rgba(255,198,61,0.4)", color:"var(--df-gold)",
           fontSize:16, cursor:"pointer", lineHeight:"30px",
         }}>✕</button>
-        {actuel.type === "objet" && (
-          <ObjetDetailPage id={actuel.id} onSelect={onPushObjet} onSelectPanoplie={onPushPanoplie}
-            onSelectMonstre={onPushMonstre} onSelectDonjon={onSelectDonjon} onBack={onBack} />
-        )}
-        {actuel.type === "monstre" && (
-          <MonstrePage id={actuel.id} onSelectDonjon={onSelectDonjon} onBack={onBack} />
-        )}
-        {actuel.type === "panoplie" && (
-          <PanoplieDetailPage id={actuel.id} onSelectObjet={onPushObjet} onBack={onBack} />
-        )}
+        {children}
       </div>
     </>
+  )
+}
+
+// id lu via useParams() (jamais reçu en mémoire) : MonstrePage/ObjetDetailPage
+// font déjà leur propre fetch par id (voir leur useEffect), donc un F5 direct
+// sur /monstres/:id fonctionne sans rien changer à ces composants — juste
+// les envelopper ici. onSelectDonjon reste branché sur le résidu mort
+// (handleSelectDonjon, inchangé, voir AppInterne) : les donjons ne font plus
+// partie du produit mais ce lien croisé existant ne doit pas planter.
+function MonstreOverlay({ onSelectDonjon }) {
+  const { id } = useParams()
+  const { onRetour, onFermer } = useFermerFiche()
+  return (
+    <PanneauFiche onFermer={onFermer}>
+      <MonstrePage id={id} onSelectDonjon={onSelectDonjon} onBack={onRetour} />
+    </PanneauFiche>
+  )
+}
+
+// onSelectPanoplie reste lui aussi branché sur le résidu mort
+// (handleSelectPanoplie) : les panoplies ne font plus partie du produit.
+// Différence connue avec l'ancien comportement, signalée séparément —
+// aujourd'hui ce lien restait dans le MÊME panneau flottant (pile locale à
+// GrimoirePage), après la bascule il fait sortir de l'overlay vers l'ancien
+// mécanisme plein-écran (résidu inchangé, pas de nouvelle route créée pour
+// un domaine hors périmètre).
+function ObjetOverlay({ onSelectDonjon, onSelectPanoplie }) {
+  const { id } = useParams()
+  const { onRetour, onFermer } = useFermerFiche()
+  const abrirFiche = useOuvrirFiche()
+  return (
+    <PanneauFiche onFermer={onFermer}>
+      <ObjetDetailPage id={id}
+        onSelect={(nouvelId) => abrirFiche(`/objets/${nouvelId}`)}
+        onSelectMonstre={(nouvelId) => abrirFiche(`/monstres/${nouvelId}`)}
+        onSelectDonjon={onSelectDonjon} onSelectPanoplie={onSelectPanoplie}
+        onBack={onRetour} />
+    </PanneauFiche>
   )
 }
 
@@ -2273,7 +2358,7 @@ function grimoireParams(typeId, f) {
   return {}
 }
 
-function GrimoirePage({ onBack, onSelectDonjon }) {
+function GrimoirePage({ onBack, onSelectMonstre, onSelectObjet }) {
   // Renommee "La Bibliotheque" (2 août 2026, ex-"Grimoire des Secrets") —
   // premiere page du site a piloter document.title (aucune autre page ne le
   // fait aujourd'hui, pas de mecanisme partage a reutiliser).
@@ -2283,7 +2368,6 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
-  const [pile, setPile] = useState([]) // panneau lateral : [] = ferme
   const [showFilters, setShowFilters] = useState(false)
 
   const [resultats, setResultats] = useState({ total:0, items:[] })
@@ -2377,16 +2461,15 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
   const toggleCategorieMonstre = (c) => { setCategoriesMonstre(cs => cs.includes(c) ? cs.filter(x=>x!==c) : [...cs, c]); setPage(1) }
   const libelleCategorieMonstre = (v) => categoriesDispo.find(c=>c.valeur===v)?.label || v
 
-  const pushPanel = (type, id) => setPile(p => [...p, { type, id }])
-  const backPanel = () => setPile(p => p.length > 1 ? p.slice(0, -1) : [])
-  const closePanel = () => setPile([])
-
   // Un item de songe est un objet (dont les 26 légendes, des équipements à
   // part entière) — sa fiche complète (effets + recette) vit dans
-  // ObjetDetailPage, réutilisée telle quelle via le panneau type "objet".
+  // ObjetDetailPage, réutilisée telle quelle via /objets/:id (chantier
+  // react-router, palier 1 : navigue maintenant vers l'URL de la fiche au
+  // lieu d'empiler un état local — voir onSelectMonstre/onSelectObjet,
+  // câblés par AppInterne avec le pattern backgroundLocation).
   const onClicResultat = (typeId, id) => {
-    const type = typeId === "songe" ? "objet" : typeId
-    pushPanel(type, id)
+    if (typeId === "songe") onSelectObjet(id)
+    else onSelectMonstre(id)
   }
 
   const reinitialiserFiltres = () => {
@@ -2550,10 +2633,6 @@ function GrimoirePage({ onBack, onSelectDonjon }) {
           )}
         </div>
       </div>
-
-      <GrimoirePanel pile={pile} onBack={backPanel} onClose={closePanel}
-        onPushObjet={id=>pushPanel("objet", id)} onPushMonstre={id=>pushPanel("monstre", id)} onPushPanoplie={id=>pushPanel("panoplie", id)}
-        onSelectDonjon={onSelectDonjon} />
     </div>
   )
 }
@@ -4027,19 +4106,43 @@ function SuccePage({ id, token, onSelectQuete, onSelectObjet, onSelectDonjon, on
   )
 }
 
+// ============================================================
+// App — chantier react-router, palier 1
+// ============================================================
+// BrowserRouter à la racine ; AppInterne (sous le Router) est ce qui portait
+// tout App() avant — useNavigate/useLocation exigent d'être sous
+// <BrowserRouter>, d'où la scission. Token/user restent déclarés ici : tant
+// qu'AppInterne ne démonte jamais (il ne le fait pas, un seul <Route> ne
+// remplace jamais son parent), la session survit à tous les changements
+// de route sans rien de spécial à faire.
 export default function App() {
+  return (
+    <BrowserRouter>
+      <AppInterne />
+    </BrowserRouter>
+  )
+}
+
+// Cibles historiques de onNav()/handleNav — seuls les 4 écrans réellement
+// actifs sont routés. "donjon"/"zone"/"quete"/"succes" restent des résidus
+// morts (voir plus bas), jamais dans cette table.
+const CIBLE_VERS_URL = { songes:"/songes", taux:"/taux", grimoire:"/bibliotheque", comprendre:"/comprendre" }
+
+function AppInterne() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  // Pattern "backgroundLocation" (react-router) : présent seulement quand on
+  // est arrivé sur une fiche via un clic in-app (useOuvrirFiche l'a posé
+  // dans l'état de navigation) — absent sur une arrivée directe (F5, lien
+  // partagé), voir useFermerFiche plus haut pour le repli associé.
+  const backgroundLocation = location.state?.backgroundLocation
+  const abrirFiche = useOuvrirFiche()
+  const onSelectMonstre = (id) => abrirFiche(`/monstres/${id}`)
+  const onSelectObjet   = (id) => abrirFiche(`/objets/${id}`)
+
   const [query, setQuery]       = useState("")
   const [results, setResults]   = useState([])
   const [loading, setLoading]   = useState(false)
-  const [selectedMonstre, setSelectedMonstre]   = useState(null)
-  const [selectedObjet, setSelectedObjet]       = useState(null)
-  const [selectedDonjon, setSelectedDonjon]     = useState(null)
-  const [selectedPanoplie, setSelectedPanoplie] = useState(null)
-  const [selectedRegion, setSelectedRegion]     = useState(null)
-  const [selectedSousZone, setSelectedSousZone] = useState(null)
-  const [selectedQuete, setSelectedQuete]       = useState(null)
-  const [selectedSucces, setSelectedSucces]     = useState(null)
-  const [browsing, setBrowsing] = useState(null) // null | "monstres" | "equipement" | "ressource" | "donjon" | "panoplie" | "zone" | "quete" | "succes" | "taux"
   const [token, setToken] = useState(() => localStorage.getItem("dofura_token") || null)
   const [user, setUser]   = useState(null)
 
@@ -4075,17 +4178,54 @@ export default function App() {
     setToken(null)
   }
 
-  const resetNav = () => { setSelectedMonstre(null); setSelectedObjet(null); setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setSelectedSucces(null); setBrowsing(null); setQuery(""); setResults([]) }
-  const handleSelectMonstre  = (id) => { resetNav(); setSelectedMonstre(id) }
-  const handleSelectObjet    = (id) => { resetNav(); setSelectedObjet(id) }
-  const handleSelectDonjon   = (id) => { resetNav(); setSelectedDonjon(id) }
-  const handleSelectPanoplie = (id) => { resetNav(); setSelectedPanoplie(id) }
-  const handleSelectRegion   = (nom) => { resetNav(); setSelectedRegion(nom) }
-  const handleSelectSousZone = (nom) => { resetNav(); setSelectedSousZone(nom) }
-  const handleSelectQuete    = (id) => { resetNav(); setSelectedQuete(id) }
-  const handleSelectSucces   = (id) => { resetNav(); setSelectedSucces(id) }
-  const handleHome          = () => { resetNav() }
-  const handleNav            = (cible) => { resetNav(); setBrowsing(cible) }
+  // Recherche navbar -> monstre : ferme le dropdown de recherche EN PLUS de
+  // naviguer (resetNav() le faisait déjà avant ; les autres points d'entrée
+  // — Bibliothèque, Les Taux, L'Œil — n'ont jamais query/results non vides
+  // au moment du clic, pas besoin d'y toucher là-bas).
+  const onSelectMonstreDepuisNavbar = (id) => { setQuery(""); setResults([]); onSelectMonstre(id) }
+
+  const handleNav = (cible) => {
+    if (CIBLE_VERS_URL[cible]) { setQuery(""); setResults([]); navigate(CIBLE_VERS_URL[cible]); return }
+    // Résidu mort : cible "donjon"/"zone"/"quete"/"succes", jamais envoyée
+    // par un composant monté aujourd'hui (seul EncycloGrid, orphelin, les
+    // utilisait) — comportement d'origine intact, non migré au routeur.
+    resetNavDead(); setBrowsingDead(cible)
+  }
+  const handleHome = () => { setQuery(""); setResults([]); navigate("/") }
+
+  // ------------------------------------------------------------
+  // Résidus morts : donjons, zones/sous-zones, quêtes, succès, panoplies.
+  // Hors périmètre produit (voir CLAUDE.md) — mécanisme d'origine (setState
+  // + rendu conditionnel) strictement inchangé, jamais migré vers une route,
+  // jamais supprimé. onBack ne touche jamais l'URL (elle n'a jamais bougé
+  // pendant que ces branches s'affichaient), donc en sortir retombe pile sur
+  // ce que le routeur affichait déjà avant.
+  // ------------------------------------------------------------
+  const [selectedDonjon, setSelectedDonjon]     = useState(null)
+  const [selectedPanoplie, setSelectedPanoplie] = useState(null)
+  const [selectedRegion, setSelectedRegion]     = useState(null)
+  const [selectedSousZone, setSelectedSousZone] = useState(null)
+  const [selectedQuete, setSelectedQuete]       = useState(null)
+  const [selectedSucces, setSelectedSucces]     = useState(null)
+  const [browsingDead, setBrowsingDead]         = useState(null) // "donjon" | "zone" | "quete" | "succes"
+
+  const resetNavDead = () => { setSelectedDonjon(null); setSelectedPanoplie(null); setSelectedRegion(null); setSelectedSousZone(null); setSelectedQuete(null); setSelectedSucces(null); setBrowsingDead(null) }
+  const handleSelectDonjon   = (id) => { resetNavDead(); setSelectedDonjon(id) }
+  const handleSelectPanoplie = (id) => { resetNavDead(); setSelectedPanoplie(id) }
+  const handleSelectRegion   = (nom) => { resetNavDead(); setSelectedRegion(nom) }
+  const handleSelectSousZone = (nom) => { resetNavDead(); setSelectedSousZone(nom) }
+  const handleSelectQuete    = (id) => { resetNavDead(); setSelectedQuete(id) }
+  const handleSelectSucces   = (id) => { resetNavDead(); setSelectedSucces(id) }
+  const handleHomeDead       = () => { resetNavDead() }
+
+  const cibleDead = selectedDonjon || selectedPanoplie || selectedRegion || selectedSousZone || selectedQuete || selectedSucces || browsingDead
+
+  // Lien nav actif : dérivé de l'écran de FOND (celui qui reste visible même
+  // si une fiche est ouverte par-dessus), pas de l'URL réelle — identique au
+  // comportement d'avant (browsing ne changeait pas quand le panneau
+  // s'ouvrait par-dessus la Bibliothèque).
+  const cheminActif = (backgroundLocation || location).pathname
+  const browsingActif = cheminActif === "/songes" ? "songes" : cheminActif === "/taux" ? "taux" : cheminActif === "/bibliotheque" ? "grimoire" : null
 
   return (
     <div translate="no" style={{ position:"relative", minHeight:"100vh", overflow:"hidden", background:"var(--df-bg)", display:"flex", flexDirection:"column" }}>
@@ -4098,44 +4238,60 @@ export default function App() {
       <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.22)", pointerEvents:"none" }} />
 
       <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>
-        <Navbar onHome={handleHome} onNav={handleNav} browsing={browsing} user={user} onLogin={handleLogin} onLogout={handleLogout}
-          query={query} setQuery={setQuery} results={results} loading={loading} onSelectMonstre={handleSelectMonstre} />
+        <Navbar onHome={handleHome} onNav={handleNav} browsing={browsingActif} user={user} onLogin={handleLogin} onLogout={handleLogout}
+          query={query} setQuery={setQuery} results={results} loading={loading} onSelectMonstre={onSelectMonstreDepuisNavbar} />
         <div style={{ flex:1 }}>
-      {selectedMonstre ? (
-        <MonstrePage id={selectedMonstre} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
-      ) : selectedObjet ? (
-        <ObjetDetailPage id={selectedObjet} onSelect={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
-      ) : selectedDonjon ? (
-        <DonjonDetailPage id={selectedDonjon} token={token} onSelectMonstre={handleSelectMonstre} onSelectObjet={handleSelectObjet} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onBack={handleHome} />
-      ) : selectedPanoplie ? (
-        <PanoplieDetailPage id={selectedPanoplie} onSelectObjet={handleSelectObjet} onBack={handleHome} />
-      ) : selectedSousZone ? (
-        <SousZoneDetailPage nom={selectedSousZone} onSelectRegion={handleSelectRegion} onSelectMonstre={handleSelectMonstre} onBack={handleHome} />
-      ) : selectedRegion ? (
-        <RegionDetailPage nom={selectedRegion} onSelectSousZone={handleSelectSousZone} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
-      ) : selectedQuete ? (
-        <QuetePage id={selectedQuete} token={token} onSelect={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
-      ) : selectedSucces ? (
-        <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={handleSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHome} />
-      ) : browsing === "grimoire" ? (
-        <GrimoirePage onBack={handleHome} onSelectDonjon={handleSelectDonjon} />
-      ) : browsing === "donjon" ? (
-        <DonjonsPage onSelect={handleSelectDonjon} onBack={handleHome} />
-      ) : browsing === "zone" ? (
-        <RegionsPage onSelect={handleSelectRegion} onSelectSousZone={handleSelectSousZone} onBack={handleHome} />
-      ) : browsing === "quete" ? (
-        <QuetesPage token={token} onSelect={handleSelectQuete} onBack={handleHome} />
-      ) : browsing === "succes" ? (
-        <SuccesPage token={token} onSelect={handleSelectSucces} onBack={handleHome} />
-      ) : browsing === "songes" ? (
-        <SongesPage token={token} onSelectObjet={handleSelectObjet} onBack={handleHome} />
-      ) : browsing === "taux" ? (
-        <TauxPage onSelectObjet={handleSelectObjet} onBack={handleHome} />
-      ) : browsing === "comprendre" ? (
-        <ComprendrePage onBack={handleHome} />
-      ) : (
-        <AccueilPage onNav={handleNav} />
-      )}
+          {cibleDead ? (
+            selectedDonjon ? (
+              <DonjonDetailPage id={selectedDonjon} token={token} onSelectMonstre={onSelectMonstre} onSelectObjet={onSelectObjet} onSelectQuete={handleSelectQuete} onSelectSucces={handleSelectSucces} onBack={handleHomeDead} />
+            ) : selectedPanoplie ? (
+              <PanoplieDetailPage id={selectedPanoplie} onSelectObjet={onSelectObjet} onBack={handleHomeDead} />
+            ) : selectedSousZone ? (
+              <SousZoneDetailPage nom={selectedSousZone} onSelectRegion={handleSelectRegion} onSelectMonstre={onSelectMonstre} onBack={handleHomeDead} />
+            ) : selectedRegion ? (
+              <RegionDetailPage nom={selectedRegion} onSelectSousZone={handleSelectSousZone} onSelectDonjon={handleSelectDonjon} onBack={handleHomeDead} />
+            ) : selectedQuete ? (
+              <QuetePage id={selectedQuete} token={token} onSelect={handleSelectQuete} onSelectObjet={onSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHomeDead} />
+            ) : selectedSucces ? (
+              <SuccePage id={selectedSucces} token={token} onSelectQuete={handleSelectQuete} onSelectObjet={onSelectObjet} onSelectDonjon={handleSelectDonjon} onBack={handleHomeDead} />
+            ) : browsingDead === "donjon" ? (
+              <DonjonsPage onSelect={handleSelectDonjon} onBack={handleHomeDead} />
+            ) : browsingDead === "zone" ? (
+              <RegionsPage onSelect={handleSelectRegion} onSelectSousZone={handleSelectSousZone} onBack={handleHomeDead} />
+            ) : browsingDead === "quete" ? (
+              <QuetesPage token={token} onSelect={handleSelectQuete} onBack={handleHomeDead} />
+            ) : (
+              <SuccesPage token={token} onSelect={handleSelectSucces} onBack={handleHomeDead} />
+            )
+          ) : (
+            <>
+              {/* Écran de fond : rendu à la location réelle, SAUF si on est
+                  sur une fiche arrivée par clic in-app, auquel cas on rend
+                  l'écran d'origine mémorisé (backgroundLocation) — c'est ce
+                  qui fait qu'ouvrir une fiche ne démonte jamais la liste
+                  derrière. /monstres/:id et /objets/:id sont aussi mappés
+                  ici sur la Bibliothèque : c'est le repli pour une arrivée
+                  directe (F5, lien partagé) sans backgroundLocation. */}
+              <Routes location={backgroundLocation || location}>
+                <Route path="/" element={<AccueilPage onNav={handleNav} />} />
+                <Route path="/songes" element={<SongesPage token={token} onSelectObjet={onSelectObjet} onBack={handleHome} />} />
+                <Route path="/taux" element={<TauxPage onSelectObjet={onSelectObjet} onBack={handleHome} />} />
+                <Route path="/bibliotheque" element={<GrimoirePage onBack={handleHome} onSelectMonstre={onSelectMonstre} onSelectObjet={onSelectObjet} />} />
+                <Route path="/comprendre" element={<ComprendrePage onBack={handleHome} />} />
+                <Route path="/monstres/:id" element={<GrimoirePage onBack={handleHome} onSelectMonstre={onSelectMonstre} onSelectObjet={onSelectObjet} />} />
+                <Route path="/objets/:id" element={<GrimoirePage onBack={handleHome} onSelectMonstre={onSelectMonstre} onSelectObjet={onSelectObjet} />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+
+              {/* Overlay : rendu à la vraie location (jamais remplacée par
+                  backgroundLocation) chaque fois que l'URL pointe vers une
+                  fiche — avec ou sans fond mémorisé. */}
+              <Routes>
+                <Route path="/monstres/:id" element={<MonstreOverlay onSelectDonjon={handleSelectDonjon} />} />
+                <Route path="/objets/:id" element={<ObjetOverlay onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} />} />
+              </Routes>
+            </>
+          )}
         </div>
         <Footer />
       </div>
