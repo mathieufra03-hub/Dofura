@@ -2275,6 +2275,7 @@ function AppInterne() {
               <Routes>
                 <Route path="/monstres/:id" element={<MonstreOverlay onSelectDonjon={handleSelectDonjon} />} />
                 <Route path="/objets/:id" element={<ObjetOverlay onSelectDonjon={handleSelectDonjon} onSelectPanoplie={handleSelectPanoplie} />} />
+                <Route path="*" element={null} />
               </Routes>
             </>
           )}
