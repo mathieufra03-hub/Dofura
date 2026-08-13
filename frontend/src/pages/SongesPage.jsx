@@ -853,26 +853,26 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         {/* 2. Bloc stats — un seul cadre continu, rectangle allongé (marges
             verticales réduites, passe 1i — voir .df-songes-stats). Gauche =
             meilleure série (or), centre = sans légende depuis, droite = runs
-            en {intensité}. Les 3 colonnes suivent EXACTEMENT le même schéma :
-            label, case chiffre de hauteur fixe 44px (centrage flex), case
-            légende de hauteur fixe 18px (vide sauf au centre où vit "runs"),
-            SeparateurDore identique et jamais enveloppé dans une marge
-            spécifique (retour Popo). Le chiffre central est ~1,3x les
-            latéraux — reste la stat mise en avant (cyan) sans écraser le
-            bloc (gardait par erreur la taille du cadran d'horloge retiré).
-            Ces hauteurs fixes garantissent que labels, chiffres et filets
-            tombent sur la même ligne horizontale entre les 3 colonnes
-            (justify-content: flex-start sur .df-songes-stat-col) sans aucune
-            marge de compensation : "runs" vit dans sa propre case réservée,
-            il ne décale ni le chiffre ni le filet. Sous 700px : colonne,
-            centre en premier. */}
+            en {intensité}. Les 3 colonnes suivent le même schéma : label,
+            zone chiffre flex:1 + minHeight partagée (centrage réel du
+            chiffre dans tout l'espace label→filet, retour Popo 13 aout
+            2026 — remplace l'ancien duo "case chiffre 44px + case légende
+            18px vide" qui calait le chiffre à la main au lieu de le
+            centrer), SeparateurDore identique et jamais enveloppé dans une
+            marge spécifique. Le chiffre central est ~1,3x les latéraux —
+            reste la stat mise en avant (cyan) sans écraser le bloc. Le
+            sous-libellé "runs" du centre est en position absolute, ancré en
+            bas de sa zone chiffre : il ne pèse plus dans le calcul de
+            centrage, donc ne décale plus le chiffre par rapport aux deux
+            colonnes qui n'en ont pas. Sous 700px : colonne, centre en
+            premier. */}
         <div className="df-songes-stats df-songes-cadre-dore">
           <CoinsDores />
           <div className="df-songes-stat-col" style={{ flex: "1 1 0", textAlign: "center", padding: "8px 20px" }}>
             <div title="Record pour cette intensité et ce niveau." style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em", cursor: "help" }}>
               Meilleure série
             </div>
-            <div style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
+            <div style={{ flex: 1, minHeight: 62, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
               {stats?.meilleure_serie_sans_legende != null ? (
                 <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)" }}>
                   {stats.meilleure_serie_sans_legende}
@@ -883,26 +883,31 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
                 </div>
               )}
             </div>
-            <div style={{ height: 18 }} />
             <SeparateurDore />
           </div>
 
+          {/* Zone chiffre en flex:1 + minHeight partagee entre les 3 colonnes
+              (retour Popo, 13 aout 2026) : le sous-libellé "runs" du centre
+              est sorti du flux (position absolute, ancré en bas de CETTE
+              zone) pour ne plus peser dans le calcul de centrage du chiffre
+              — remplace l'ancien decoupage chiffre 44px + case 18px vide sur
+              les colonnes laterales, qui calait a la main plutot que de
+              centrer reellement. Les 3 chiffres tombent maintenant sur la
+              meme ligne quelle que soit la presence du sous-libellé. */}
           <div className="df-songes-stat-col df-songes-stat-centre" style={{ flex: "1.6 1 0", textAlign: "center", padding: "8px 18px" }}>
             <div style={{ fontSize: 11, color: "var(--df-text-3)", letterSpacing: 1, textTransform: "uppercase" }}>
               Sans {CATEGORIE_MOT_SINGULIER[categorieAffichee]} depuis
             </div>
-            <div style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
+            <div style={{ flex: 1, minHeight: 62, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6, position: "relative" }}>
               {secheresseSonges == null ? (
                 <div style={{ color: "var(--df-text-2)", fontSize: 11 }}>Aucune donnée.</div>
               ) : (
-                <div className={flashCompteur ? "df-songes-flash" : ""} style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(29px, 5.2vw, 39px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1, textShadow: "0 0 14px rgba(44,231,255,0.5)" }}>
-                  {formaterNombre(secheresseSonges)}
-                </div>
-              )}
-            </div>
-            <div style={{ height: 18 }}>
-              {secheresseSonges != null && (
-                <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)" }}>runs</div>
+                <>
+                  <div className={flashCompteur ? "df-songes-flash" : ""} style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(29px, 5.2vw, 39px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1, textShadow: "0 0 14px rgba(44,231,255,0.5)" }}>
+                    {formaterNombre(secheresseSonges)}
+                  </div>
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)" }}>runs</div>
+                </>
               )}
             </div>
             <SeparateurDore />
@@ -912,12 +917,11 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
             <div style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Runs en {INTENSITE_LABEL[intensiteNiveau.intensite] || intensiteNiveau.intensite} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau] || intensiteNiveau.niveau}
             </div>
-            <div style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
+            <div style={{ flex: 1, minHeight: 62, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
               <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)" }}>
                 {stats?.total_runs ?? "—"}
               </div>
             </div>
-            <div style={{ height: 18 }} />
             <SeparateurDore />
           </div>
         </div>
