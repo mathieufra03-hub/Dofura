@@ -15,6 +15,7 @@ import shutil
 import hmac
 import bcrypt
 import jwt
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from config import songes as songes_config
 from taux_songes import migrer as migrer_taux_songes, calculer_bribes
@@ -319,9 +320,28 @@ def effet_visible(effet):
     # combat), il n'est pas cense etre montre au joueur en jeu non plus.
     return bool(effet.get("visibleInTooltip") or effet.get("visibleInBuffUi") or effet.get("visibleInFightLog"))
 
+# MIROIR de frontend/src/texte.js (normaliserTexte) — chantier recherche
+# backend insensible aux accents, 13 aout 2026. Les deux DOIVENT produire
+# exactement le meme resultat caractere pour caractere (memes accents/casse/
+# apostrophes geres, meme ordre d'operations) : la recherche navbar et
+# Bibliotheque > Bestiaire passent par celle-ci (SQL), les recherches
+# frontend (Items de songe, "J'ai drop") par l'autre (JS). Si l'une evolue,
+# repercuter le changement dans l'autre — sinon meme requete tapee donne des
+# resultats differents selon l'endpoint, bug silencieux et penible a
+# diagnostiquer. Verifie caractere par caractere sur une serie de cas
+# (accents, majuscules, apostrophes droites/typographiques, tirets, noms
+# composes) au moment d'ecrire ce commentaire.
+def normaliser_texte(s):
+    if not s:
+        return ""
+    s = unicodedata.normalize("NFD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return s.lower().replace("'", "").replace("’", "").replace("‘", "").replace("`", "")
+
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.create_function("normaliser_texte", 1, normaliser_texte)
     return conn
 
 SANS_VALEUR = "__aucune__"
@@ -380,8 +400,8 @@ def liste_monstres(search: str = "", region: str = "", sous_zone: str = "", cate
     # jamais un total en dur, juste une marge technique de pagination).
     page_size = min(max(page_size, 1), 400)
 
-    conditions = ["m.nom LIKE ?"]
-    params = [f"%{search}%"]
+    conditions = ["normaliser_texte(m.nom) LIKE ?"]
+    params = [f"%{normaliser_texte(search)}%"]
 
     regions_choisies = [r for r in region.split(",") if r]
     if regions_choisies:
