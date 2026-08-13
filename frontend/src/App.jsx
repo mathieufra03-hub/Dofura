@@ -4,6 +4,7 @@ import SongesPage from "./pages/SongesPage"
 import AccueilPage from "./pages/AccueilPage"
 import TauxPage from "./pages/TauxPage"
 import ComprendrePage from "./pages/ComprendrePage"
+import { normaliserTexte } from "./texte"
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
@@ -1161,8 +1162,8 @@ function GrimoirePage({ onBack, onSelectMonstre, onSelectObjet }) {
   const songeFiltres = useMemo(() => {
     if (!songeItemsTous) return []
     if (!search) return songeItemsTous
-    const q = search.toLowerCase()
-    return songeItemsTous.filter(it => it.nom.toLowerCase().includes(q))
+    const q = normaliserTexte(search)
+    return songeItemsTous.filter(it => normaliserTexte(it.nom).includes(q))
   }, [songeItemsTous, search])
 
   useEffect(() => {

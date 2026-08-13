@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { IconeBribe, IconeCoffre, IconeSablier, IconeTeamPersonnages, IconeIntensiteEliatrope } from "../components/IconesSonges.jsx"
+import { normaliserTexte } from "../texte"
 
 // Fichier séparé volontairement (SONGES.md §10 : "App.jsx est déjà très
 // chargé"). Composant autonome : n'importe rien d'App.jsx, réutilise
@@ -553,10 +554,10 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
   const [palier, setPalier] = useState("")
 
   const itemsFiltres = useMemo(() => {
-    const r = recherche.trim().toLowerCase()
+    const r = normaliserTexte(recherche.trim())
     return itemsTrackables.filter(i =>
       (!categorieFiltre || i.categorie === categorieFiltre) &&
-      (!r || i.nom.toLowerCase().includes(r))
+      (!r || normaliserTexte(i.nom).includes(r))
     )
   }, [itemsTrackables, recherche, categorieFiltre])
 
@@ -572,11 +573,25 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
 
   const retirerDrop = (index) => setDropsEnCours(ds => ds.filter((_, i) => i !== index))
 
+  // Bouton "Valider le drop" intelligent : un item selectionne (pret, avec
+  // son personnage) se fait ajouter a la pile avant validation, meme si la
+  // pile contient deja d'autres drops — plus besoin de cliquer d'abord sur
+  // "Ajouter ce drop" separement. Bouton inactif si rien a valider.
+  const dropSelectionnePret = itemSelectionne && personnageId
+  const peutValider = dropSelectionnePret || dropsEnCours.length > 0
+  const validerDrop = () => {
+    if (dropSelectionnePret) ajouterDrop()
+    onValider()
+  }
+
   return (
     <div className="df-songes">
     <div style={sp.page}>
       <button onClick={onAnnuler} style={sp.backBtn}>← Retour</button>
-      <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>J'ai drop</h1>
+      <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px", display: "flex", alignItems: "center", gap: 8 }}>
+        <IconeCoffre size={22} />
+        J'ai drop
+      </h1>
 
       <div style={sp.card}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(var(--df-card-bg), 0.95)", border: "1px solid rgba(var(--df-cyan-rgb), 0.5)", borderRadius: 10, padding: "9px 14px", marginBottom: 12 }}>
@@ -636,7 +651,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
 
         {dropsEnCours.length > 0 && (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 11.5, color: "var(--df-text-3)", marginBottom: 6 }}>Drops de cette run ({dropsEnCours.length})</div>
+            <div style={{ fontSize: 11.5, color: "var(--df-text-3)", marginBottom: 6 }}>Drops de ce songe ({dropsEnCours.length})</div>
             {dropsEnCours.map((d, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
                 {d._img ? <img src={d._img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} /> : null}
@@ -648,7 +663,8 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
           </div>
         )}
 
-        <button onClick={onValider} className="df-hover-lift" style={{ ...sp.btnCyan, width: "100%", marginTop: 16 }}>
+        <button disabled={!peutValider} onClick={validerDrop} className="df-hover-lift"
+          style={{ ...sp.btnCyan, width: "100%", marginTop: 16, opacity: peutValider ? 1 : 0.5, cursor: peutValider ? "pointer" : "not-allowed" }}>
           Valider le drop
         </button>
       </div>
@@ -1038,9 +1054,14 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         </div>
 
         {dropsEnCours.length > 0 && (
-          <div style={{ fontSize: 12.5, color: "var(--df-gold)", marginTop: 8 }}>
+          <button onClick={onOuvrirAjoutDrop} className="df-hover-lift" style={{
+            display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8,
+            background: "rgba(var(--df-gold-rgb), 0.12)", color: "var(--df-gold)",
+            border: "1px solid var(--df-gold)", borderRadius: 999, padding: "6px 14px",
+            fontSize: 13.5, fontWeight: 700, cursor: "pointer",
+          }}>
             {dropsEnCours.length} drop{dropsEnCours.length > 1 ? "s" : ""} en attente
-          </div>
+          </button>
         )}
 
         {songeEchoue && (
