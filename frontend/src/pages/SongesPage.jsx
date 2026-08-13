@@ -903,7 +903,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
                 <div style={{ color: "var(--df-text-2)", fontSize: 11 }}>Aucune donnée.</div>
               ) : (
                 <>
-                  <div className={flashCompteur ? "df-songes-flash" : ""} style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(29px, 5.2vw, 39px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1, textShadow: "0 0 14px rgba(44,231,255,0.5)", marginTop: -3 }}>
+                  <div className={flashCompteur ? "df-songes-flash" : ""} style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(29px, 5.2vw, 39px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1, textShadow: "0 0 14px rgba(44,231,255,0.5)", marginTop: -6 }}>
                     {formaterNombre(secheresseSonges)}
                   </div>
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)" }}>runs</div>
