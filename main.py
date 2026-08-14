@@ -2778,32 +2778,54 @@ def songes_corriger_vague_finale(run_id: int, body: VagueFinaleBody, user: dict 
     return {"id": run_id, "vague_finale": body.vague_finale}
 
 @app.get("/songes/historique")
-def songes_historique(page: int = 1, page_size: int = 20, user: dict = Depends(utilisateur_courant)):
+def songes_historique(page: int = 1, page_size: int = 20, mes_drops: bool = False, categorie: str = "",
+                       user: dict = Depends(utilisateur_courant)):
     """Historique des SONGES (vocabulaire interface, chantier 1 passe 1a :
     "songe" pour le recit/titres, "run" pour compter/agir — voir CLAUDE.md ;
     "run" reste par ailleurs le terme du code/BDD, cf. songe_runs), du plus
     recent au plus ancien, drops eventuels imbriques. Les id de songe ne sont
     JAMAIS renumerotes apres suppression — un trou dans la numerotation est
     normal. bribes = calculer_bribes(vague_finale x bribes_par_vague), 0 si
-    vague_finale absente (chantier 1 passe 1b)."""
+    vague_finale absente (chantier 1 passe 1b).
+
+    mes_drops/categorie (chantier Historique general, 14 aout 2026) : filtrent
+    quels SONGES remontent (au moins un drop / au moins un drop de cette
+    categorie), pas les drops affiches dans une ligne — un songe qui matche
+    garde tous ses drops. EXISTS plutot qu'un JOIN + DISTINCT : un songe a
+    potentiellement plusieurs drops, un JOIN dupliquerait la ligne et
+    fausserait total/pagination. Aucun changement de schema : les deux
+    s'appuient sur songe_drops/songe_items_trackables, deja en place."""
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT COUNT(*) FROM songe_runs WHERE user_id = ?", (user["id"],))
+    conditions = ["r.user_id = ?"]
+    params = [user["id"]]
+    if mes_drops:
+        conditions.append("EXISTS (SELECT 1 FROM songe_drops d WHERE d.run_id = r.id)")
+    if categorie:
+        conditions.append("""EXISTS (
+            SELECT 1 FROM songe_drops d
+            JOIN songe_items_trackables si ON si.item_id = d.item_id
+            WHERE d.run_id = r.id AND si.categorie = ?
+        )""")
+        params.append(categorie)
+    where_clause = " AND ".join(conditions)
+
+    cur.execute(f"SELECT COUNT(*) FROM songe_runs r WHERE {where_clause}", params)
     total = cur.fetchone()[0]
 
-    cur.execute("""
+    cur.execute(f"""
         SELECT r.id, r.date_run, r.intensite, r.niveau, r.terminee, r.salle_atteinte,
                r.nb_combats, r.source_nb_combats, t.nom AS team_nom,
                r.duree_secondes, r.vague_finale, r.nombre_tours
         FROM songe_runs r
         LEFT JOIN songe_teams t ON t.id = r.team_id
-        WHERE r.user_id = ?
+        WHERE {where_clause}
         ORDER BY r.date_run DESC, r.id DESC
         LIMIT ? OFFSET ?
-    """, (user["id"], page_size, (page - 1) * page_size))
+    """, params + [page_size, (page - 1) * page_size])
     runs = cur.fetchall()
 
     drops_par_run = {}
