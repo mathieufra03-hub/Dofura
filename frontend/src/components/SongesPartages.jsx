@@ -199,7 +199,7 @@ export function LigneSonge({ s, onSupprimer, onCorrigerVagueFinale, onSupprimerD
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <PastilleIntensite s={s} />
           <span style={{ color: "#e8f4f6", fontSize: 15, fontWeight: 500 }}>
-            Run #{s.id}
+            Songe n°{s.id}
             {!s.terminee && <span style={{ color: "#5f7d84", fontWeight: 400 }}> (interrompu, salle {s.salle_atteinte})</span>}
           </span>
         </div>
@@ -287,7 +287,7 @@ export function ModaleSuppressionSonge({ songe, onAnnuler, onConfirmer }) {
         <div style={{ marginTop: 18, ...styleConteneurSonge(songe) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <PastilleIntensite s={songe} />
-            <span style={{ color: "#e8f4f6", fontSize: 15, fontWeight: 500 }}>Run #{songe.id}</span>
+            <span style={{ color: "#e8f4f6", fontSize: 15, fontWeight: 500 }}>Songe n°{songe.id}</span>
           </div>
           <div style={{ fontSize: 12.5, marginTop: 6, display: "flex", alignItems: "center", flexWrap: "wrap" }}>
             <InfosBasSonge s={songe} />
