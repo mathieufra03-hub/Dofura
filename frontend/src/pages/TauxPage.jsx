@@ -120,14 +120,19 @@ const tp = {
   champ: { background: "rgba(var(--df-card-bg), 0.95)", color: "var(--df-text)", border: "1px solid rgba(var(--df-cyan-rgb), 0.35)", borderRadius: 8, padding: "8px 12px", fontSize: 13.5, outline: "none" },
 }
 
-// Raccourci cliquable pour l'objectif (reference d'achat verifiee par
-// Popo, 14 aout 2026 ; "1 sac" retire, 14 aout 2026 — un seul raccourci
-// desormais, qui sert a revenir a la valeur par defaut apres avoir saisi
-// autre chose). Narkoffret Infini = 20 sacs de Bribes de reve = 20 000,
-// aussi la valeur pre-remplie par defaut du champ objectif (voir
-// SimulateurBribes) : une seule source pour ce nombre.
-const RACCOURCIS_OBJECTIF = [
-  { label: "Narkoffret Infini", valeur: 20000 },
+// Objectifs predefinis en bribes (reference d'achat verifiee par Popo :
+// 1 sac de Bribes de reve = 1000 bribes — prix en jeu en SACS, convertis
+// ici en bribes pour rester coherent avec le reste du calcul, qui ne
+// raisonne jamais en sacs). Passes de boutons-raccourcis a liste
+// deroulante le 15 aout 2026 (3 objectifs + "Personnalise" auraient
+// deborde en mobile en boutons ; la liste permet aussi d'en ajouter
+// d'autres plus tard sans toucher la mise en page). Premier element =
+// choix par defaut ET valeur pre-remplie du champ objectif au montage
+// (voir SimulateurBribes) : une seule source pour ce nombre.
+const OBJECTIFS_PREDEFINIS = [
+  { cle: "narkoffret", label: "Narkoffret Infini", valeur: 20000 }, // 20 sacs
+  { cle: "narkasseth", label: "Narkasseth Infinie", valeur: 9000 }, // 9 sacs
+  { cle: "ornement", label: "Ornement de la Fontaine onirique", valeur: 40000 }, // 40 sacs
 ]
 
 // "Combien de runs pour atteindre X bribes ?" (chantier dedie, 14 aout
@@ -152,10 +157,26 @@ function SimulateurBribes({ config, intensiteNiveau }) {
   const vaguesMax = config.vagues_max[intensiteNiveau.intensite] // null = illimité
 
   const [vagues, setVagues] = useState(vaguesMin)
-  // Pre-rempli a la valeur du raccourci Narkoffret Infini (retour Popo, 14
-  // aout 2026) : le resultat s'affiche des l'arrivee sur l'onglet, sans
-  // action du joueur. Champ librement modifiable ensuite.
-  const [objectifTexte, setObjectifTexte] = useState(String(RACCOURCIS_OBJECTIF[0].valeur))
+  // Pre-rempli a la valeur du premier objectif predefini (Narkoffret
+  // Infini, retour Popo 14 aout 2026) : le resultat s'affiche des
+  // l'arrivee sur l'onglet, sans action du joueur.
+  const [objectifTexte, setObjectifTexte] = useState(String(OBJECTIFS_PREDEFINIS[0].valeur))
+  const [objectifCle, setObjectifCle] = useState(OBJECTIFS_PREDEFINIS[0].cle)
+
+  // Choisir un objectif predefini remplit le champ (en bribes). Choisir
+  // "personnalise" explicitement dans la liste ne touche pas au champ —
+  // c'est aussi l'etat vers lequel on bascule automatiquement des que le
+  // joueur tape a la main (voir l'input plus bas), pas seulement un choix
+  // actif de la liste.
+  const changerObjectif = (cle) => {
+    setObjectifCle(cle)
+    const preset = OBJECTIFS_PREDEFINIS.find(o => o.cle === cle)
+    if (preset) setObjectifTexte(String(preset.valeur))
+  }
+  const changerObjectifTexte = (v) => {
+    setObjectifTexte(v)
+    setObjectifCle("personnalise")
+  }
 
   const clampVagues = (v, min, max) => Math.min(max ?? Infinity, Math.max(min, v))
 
@@ -195,17 +216,19 @@ function SimulateurBribes({ config, intensiteNiveau }) {
 
         <div>
           <div style={{ fontSize: 11, color: "var(--df-text-3)", marginBottom: 6 }}>Objectif en bribes</div>
-          <input type="number" min={0} value={objectifTexte} onChange={e => setObjectifTexte(e.target.value)}
+          <input type="number" min={0} value={objectifTexte} onChange={e => changerObjectifTexte(e.target.value)}
             placeholder="ex. 20000" style={{ ...tp.champ, width: 120 }} />
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-        {RACCOURCIS_OBJECTIF.map(r => (
-          <span key={r.label} onClick={() => setObjectifTexte(String(r.valeur))} style={tp.pill(false)}>
-            {r.label} — {fmt(r.valeur)}
-          </span>
-        ))}
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 11, color: "var(--df-text-3)", marginBottom: 6 }}>Objectifs prédéfinis</div>
+        <select value={objectifCle} onChange={e => changerObjectif(e.target.value)} style={tp.select}>
+          {OBJECTIFS_PREDEFINIS.map(o => (
+            <option key={o.cle} value={o.cle}>{o.label} — {fmt(o.valeur)}</option>
+          ))}
+          <option value="personnalise">Personnalisé</option>
+        </select>
       </div>
 
       {/* Resultat (retour Popo, 14 aout 2026) — calcul inchange, seul
