@@ -120,11 +120,13 @@ const tp = {
   champ: { background: "rgba(var(--df-card-bg), 0.95)", color: "var(--df-text)", border: "1px solid rgba(var(--df-cyan-rgb), 0.35)", borderRadius: 8, padding: "8px 12px", fontSize: 13.5, outline: "none" },
 }
 
-// Raccourcis cliquables pour l'objectif (reference d'achat verifiee par
-// Popo, 14 aout 2026) : 1 Sac de Bribes de reve = 1000, Narkoffret Infini
-// = 20 sacs = 20 000.
+// Raccourci cliquable pour l'objectif (reference d'achat verifiee par
+// Popo, 14 aout 2026 ; "1 sac" retire, 14 aout 2026 — un seul raccourci
+// desormais, qui sert a revenir a la valeur par defaut apres avoir saisi
+// autre chose). Narkoffret Infini = 20 sacs de Bribes de reve = 20 000,
+// aussi la valeur pre-remplie par defaut du champ objectif (voir
+// SimulateurBribes) : une seule source pour ce nombre.
 const RACCOURCIS_OBJECTIF = [
-  { label: "1 sac", valeur: 1000 },
   { label: "Narkoffret Infini", valeur: 20000 },
 ]
 
@@ -150,7 +152,10 @@ function SimulateurBribes({ config, intensiteNiveau }) {
   const vaguesMax = config.vagues_max[intensiteNiveau.intensite] // null = illimité
 
   const [vagues, setVagues] = useState(vaguesMin)
-  const [objectifTexte, setObjectifTexte] = useState("")
+  // Pre-rempli a la valeur du raccourci Narkoffret Infini (retour Popo, 14
+  // aout 2026) : le resultat s'affiche des l'arrivee sur l'onglet, sans
+  // action du joueur. Champ librement modifiable ensuite.
+  const [objectifTexte, setObjectifTexte] = useState(String(RACCOURCIS_OBJECTIF[0].valeur))
 
   const clampVagues = (v, min, max) => Math.min(max ?? Infinity, Math.max(min, v))
 
@@ -203,23 +208,33 @@ function SimulateurBribes({ config, intensiteNiveau }) {
         ))}
       </div>
 
-      {/* Resultat (refonte presentation, chantier onglets 14 aout 2026) —
-          calcul inchange, seul l'affichage change : rien tant qu'aucun
-          objectif valide (pas de cases "—" vides), une phrase avec le
-          nombre de runs en avant des qu'un objectif donne un resultat. */}
+      {/* Resultat (retour Popo, 14 aout 2026) — calcul inchange, seul
+          l'affichage change : rien tant qu'aucun objectif valide (champ
+          vide -> pas de NaN, juste les bribes par run), le nombre de runs
+          en tres gros/cyan des qu'un objectif donne un resultat — c'est
+          l'info principale, tout le reste (bribes/run, total, surplus)
+          en petit et en retrait a cote. clamp() sur la taille du gros
+          chiffre : reste lisible sans deborder a 390px meme a 6-7
+          chiffres (ex. objectif a 7 chiffres en Reve). */}
       {runsNecessaires == null ? (
         <div>
           <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Bribes par run</div>
           <div style={{ fontSize: 22, fontWeight: 700, color: "var(--df-gold)" }}>{fmt(bribesParRun)}</div>
         </div>
       ) : (
-        <div>
-          <div style={{ fontSize: 14, color: "var(--df-text)", lineHeight: 1.5 }}>
-            En {capitaliser(intensiteNiveau.intensite)} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau]} à {vagues} vague{vagues > 1 ? "s" : ""}, il te faut{" "}
-            <span style={{ fontSize: 22, fontWeight: 700, color: "var(--df-cyan)" }}>{fmt(runsNecessaires)} run{runsNecessaires > 1 ? "s" : ""}</span>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 22, flexWrap: "wrap" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "clamp(34px, 11vw, 46px)", fontWeight: 700, color: "#2CE7FF", lineHeight: 1, textShadow: "0 0 14px rgba(44,231,255,0.5)" }}>
+              {fmt(runsNecessaires)}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--df-text-3)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              run{runsNecessaires > 1 ? "s" : ""}
+            </div>
           </div>
-          <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--df-text-3)" }}>
-            Total obtenu : {fmt(totalObtenu)} · Surplus : {fmt(surplus)}
+          <div style={{ display: "flex", flexDirection: "column", gap: 5, paddingBottom: 5, fontSize: 11.5, color: "var(--df-text-3)" }}>
+            <div>Bribes par run : <span style={{ color: "var(--df-text)", fontWeight: 600 }}>{fmt(bribesParRun)}</span></div>
+            <div>Total obtenu : <span style={{ color: "var(--df-text)", fontWeight: 600 }}>{fmt(totalObtenu)}</span></div>
+            <div>Surplus : <span style={{ color: "var(--df-text)", fontWeight: 600 }}>{fmt(surplus)}</span></div>
           </div>
         </div>
       )}
