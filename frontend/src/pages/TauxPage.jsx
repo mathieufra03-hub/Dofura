@@ -108,6 +108,11 @@ const tp = {
   mentions: { marginTop: 22, paddingTop: 16, borderTop: "1px solid rgba(var(--df-gold-rgb), 0.15)", color: "var(--df-text-3)", fontSize: 11.5, lineHeight: 1.6 },
   sousLigne: { fontSize: 11.5, color: "var(--df-text-3)", fontStyle: "italic", padding: "0 14px 8px" },
   avertissement: { fontSize: 11.5, color: "#f0a840", padding: "0 14px 8px", lineHeight: 1.5 },
+  // Onglets Drops/Bribes (chantier "onglets", 14 août 2026) — surcharge de
+  // taille locale sur .df-chip-filter (retour Popo : agrandir CES deux
+  // onglets seulement, pas toucher la classe partagée avec les chips de
+  // filtre de cette page et les onglets de la Bibliothèque ailleurs).
+  ongletTaille: { fontSize: 15, padding: "10px 20px" },
   // Simulateur de bribes (chantier dédié, 14 août 2026) — ajouts locaux à
   // cette page, mêmes tokens que le reste (pas de nouvelle couleur).
   carte: { background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid var(--df-border-gold)", borderRadius: 14, padding: "18px 20px", marginBottom: 22 },
@@ -408,13 +413,13 @@ export default function TauxPage({ onBack, onSelectObjet }) {
             que les onglets de la Bibliotheque (GrimoirePage, App.jsx) :
             .df-chip-filter + override inline identique quand actif, pas
             de nouveau composant pour deux boutons. */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", margin: "0 0 18px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", margin: "0 0 18px" }}>
           <button onClick={() => changerOnglet("drops")} className="df-chip-filter"
-            style={onglet === "drops" ? { background: "rgba(77,216,230,0.18)", color: "var(--df-cyan)", borderColor: "var(--df-cyan)" } : undefined}>
+            style={{ ...tp.ongletTaille, ...(onglet === "drops" ? { background: "rgba(77,216,230,0.18)", color: "var(--df-cyan)", borderColor: "var(--df-cyan)" } : {}) }}>
             Drops
           </button>
           <button onClick={() => changerOnglet("bribes")} className="df-chip-filter"
-            style={onglet === "bribes" ? { background: "rgba(77,216,230,0.18)", color: "var(--df-cyan)", borderColor: "var(--df-cyan)" } : undefined}>
+            style={{ ...tp.ongletTaille, ...(onglet === "bribes" ? { background: "rgba(77,216,230,0.18)", color: "var(--df-cyan)", borderColor: "var(--df-cyan)" } : {}) }}>
             Bribes
           </button>
         </div>
