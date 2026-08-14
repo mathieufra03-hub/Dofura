@@ -107,6 +107,131 @@ const tp = {
   mentions: { marginTop: 22, paddingTop: 16, borderTop: "1px solid rgba(var(--df-gold-rgb), 0.15)", color: "var(--df-text-3)", fontSize: 11.5, lineHeight: 1.6 },
   sousLigne: { fontSize: 11.5, color: "var(--df-text-3)", fontStyle: "italic", padding: "0 14px 8px" },
   avertissement: { fontSize: 11.5, color: "#f0a840", padding: "0 14px 8px", lineHeight: 1.5 },
+  // Simulateur de bribes (chantier dédié, 14 août 2026) — ajouts locaux à
+  // cette page, mêmes tokens que le reste (pas de nouvelle couleur).
+  carte: { background: "rgba(var(--df-card-bg), 0.9)", border: "1px solid var(--df-border-gold)", borderRadius: 14, padding: "18px 20px", marginBottom: 22 },
+  btnCompteur: { width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(var(--df-cyan-rgb), 0.08)", border: "1px solid rgba(var(--df-cyan-rgb), 0.4)", borderRadius: 8, color: "var(--df-cyan)", fontSize: 15, fontWeight: 700, cursor: "pointer", padding: 0, flexShrink: 0 },
+  champ: { background: "rgba(var(--df-card-bg), 0.95)", color: "var(--df-text)", border: "1px solid rgba(var(--df-cyan-rgb), 0.35)", borderRadius: 8, padding: "8px 12px", fontSize: 13.5, outline: "none" },
+}
+
+// Raccourcis cliquables pour l'objectif (reference d'achat verifiee par
+// Popo, 14 aout 2026) : 1 Sac de Bribes de reve = 1000, Narkoffret Infini
+// = 20 sacs = 20 000.
+const RACCOURCIS_OBJECTIF = [
+  { label: "1 sac", valeur: 1000 },
+  { label: "Narkoffret Infini", valeur: 20000 },
+]
+
+// "Combien de runs pour atteindre X bribes ?" (chantier dedie, 14 aout
+// 2026) — entierement cote frontend, sur les donnees deja chargees par
+// TauxPage (config.bribes_par_vague/vagues_max/vagues_requises, memes
+// sources que le calcul "0 vague x 75 bribes" de L'Oeil, jamais recopiees
+// en dur ici). Vocabulaire "run" (ce que le joueur manipule) — regle
+// CLAUDE.md. Plancher de vagues = vagues_requises[intensite] (PAS un 1
+// generique : simuler une run perdue, ex. "Paradoxe I, 1 vague", n'aurait
+// pas de sens — retour Popo). Plafond = vagues_max[intensite] (null =
+// illimite en Cauchemar). Au changement d'intensite, la valeur courante
+// est clampee dans la nouvelle plage plutot que reinitialisee — ne
+// touche jamais au compteur de vagues de L'Oeil (SongesPage.jsx), qui
+// part de 0 et enregistre une vraie run, ratee ou non : contrainte
+// propre a ce simulateur.
+function SimulateurBribes({ config }) {
+  const [intensiteNiveau, setIntensiteNiveau] = useState({
+    intensite: config.intensite_defaut.intensite,
+    niveau: config.intensite_defaut.niveau,
+  })
+  const [vagues, setVagues] = useState(config.vagues_requises[config.intensite_defaut.intensite])
+  const [objectifTexte, setObjectifTexte] = useState("")
+
+  const vaguesMin = config.vagues_requises[intensiteNiveau.intensite]
+  const vaguesMax = config.vagues_max[intensiteNiveau.intensite] // null = illimité
+
+  const clampVagues = (v, min, max) => Math.min(max ?? Infinity, Math.max(min, v))
+
+  const changerIntensite = (intensite, niveau) => {
+    setIntensiteNiveau({ intensite, niveau })
+    const min = config.vagues_requises[intensite]
+    const max = config.vagues_max[intensite]
+    setVagues(v => clampVagues(v, min, max))
+  }
+
+  const incrementerVagues = (delta) => setVagues(v => clampVagues(v + delta, vaguesMin, vaguesMax))
+
+  const bribesParVague = config.bribes_par_vague[`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`] ?? 0
+  const bribesParRun = vagues * bribesParVague
+
+  const objectif = Number(objectifTexte)
+  const objectifValide = objectifTexte !== "" && Number.isFinite(objectif) && objectif > 0
+  const runsNecessaires = objectifValide && bribesParRun > 0 ? Math.ceil(objectif / bribesParRun) : null
+  const totalObtenu = runsNecessaires != null ? runsNecessaires * bribesParRun : null
+  const surplus = totalObtenu != null ? totalObtenu - objectif : null
+
+  const fmt = (n) => n.toLocaleString("fr-FR")
+
+  return (
+    <div style={tp.carte}>
+      <div className="df-block-title" style={{ margin: "0 0 14px" }}>Simulateur de bribes</div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 11, color: "var(--df-text-3)", marginBottom: 6 }}>Intensité</div>
+          <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
+            onChange={e => { const [intensite, niveau] = e.target.value.split("_"); changerIntensite(intensite, Number(niveau)) }}
+            style={tp.select}>
+            {Object.entries(config.intensites).map(([cle, info]) =>
+              info.niveaux.map(n => (
+                <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
+                  {capitaliser(cle)} {NOMS_PALIERS_ROMAINS[n] || n}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 11, color: "var(--df-text-3)", marginBottom: 6 }}>Vagues par run</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => incrementerVagues(-1)} disabled={vagues <= vaguesMin} style={{ ...tp.btnCompteur, opacity: vagues <= vaguesMin ? 0.5 : 1 }}>−</button>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "var(--df-text)", minWidth: 22, textAlign: "center" }}>{vagues}</span>
+            <button onClick={() => incrementerVagues(1)} disabled={vaguesMax != null && vagues >= vaguesMax} style={{ ...tp.btnCompteur, opacity: (vaguesMax != null && vagues >= vaguesMax) ? 0.5 : 1 }}>+</button>
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 11, color: "var(--df-text-3)", marginBottom: 6 }}>Objectif en bribes</div>
+          <input type="number" min={0} value={objectifTexte} onChange={e => setObjectifTexte(e.target.value)}
+            placeholder="ex. 20000" style={{ ...tp.champ, width: 120 }} />
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+        {RACCOURCIS_OBJECTIF.map(r => (
+          <span key={r.label} onClick={() => setObjectifTexte(String(r.valeur))} style={tp.pill(false)}>
+            {r.label} — {fmt(r.valeur)}
+          </span>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+        <div>
+          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Bribes par run</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--df-gold)" }}>{fmt(bribesParRun)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Runs nécessaires</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--df-cyan)" }}>{runsNecessaires != null ? fmt(runsNecessaires) : "—"}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Total obtenu</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--df-text)" }}>{totalObtenu != null ? fmt(totalObtenu) : "—"}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Surplus</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--df-text)" }}>{surplus != null ? fmt(surplus) : "—"}</div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function LigneItem({ it, categorie, combatsParPalier, nbPersonnages, onSelectObjet }) {
@@ -269,6 +394,8 @@ export default function TauxPage({ onBack, onSelectObjet }) {
           )}
         </select>
       </div>
+
+      <SimulateurBribes config={config} />
 
       <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
         <div>
