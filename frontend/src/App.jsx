@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom"
 import SongesPage from "./pages/SongesPage"
+import HistoriquePage from "./pages/HistoriquePage"
 import AccueilPage from "./pages/AccueilPage"
 import TauxPage from "./pages/TauxPage"
 import ComprendrePage from "./pages/ComprendrePage"
@@ -2262,6 +2263,7 @@ function AppInterne() {
               <Routes location={backgroundLocation || location}>
                 <Route path="/" element={<AccueilPage onNav={handleNav} />} />
                 <Route path="/songes" element={<SongesPage token={token} onSelectObjet={onSelectObjet} onBack={handleHome} />} />
+                <Route path="/historique" element={<HistoriquePage token={token} onSelectObjet={onSelectObjet} onBack={handleHome} />} />
                 <Route path="/taux" element={<TauxPage onSelectObjet={onSelectObjet} onBack={handleHome} />} />
                 <Route path="/bibliotheque" element={<GrimoirePage onBack={handleHome} onSelectMonstre={onSelectMonstre} onSelectObjet={onSelectObjet} />} />
                 <Route path="/comprendre" element={<ComprendrePage onBack={handleHome} />} />
