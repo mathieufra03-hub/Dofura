@@ -53,7 +53,6 @@ const nomCourt = (categorie, nom) => {
   return regex ? nom.replace(regex, "") : nom
 }
 
-const formaterTaux = (v) => v.toLocaleString("fr-FR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })
 const capitaliser = (s) => s.charAt(0).toUpperCase() + s.slice(1)
 
 // SONGES.md / consigne Popo (31 juillet 2026, généralisée le 2 août pour
@@ -265,6 +264,13 @@ function SimulateurBribes({ config, intensiteNiveau }) {
   )
 }
 
+// Colonnes de pourcentages (III/IV/V) retirees de l'affichage (retour
+// Popo, 15 aout 2026) : le pourcentage est deja visible en jeu, ce que
+// le joueur n'a nulle part c'est la traduction en nombre de runs — c'est
+// elle qu'on met en avant desormais. it.taux_par_palier/paliers_eligibles
+// restent lus par calculerSongesItems (le calcul du nombre de runs en
+// depend toujours), seul l'affichage des pourcentages disparait — ne pas
+// toucher aux donnees en base ni dans dofura_songes_taux.json.
 function LigneItem({ it, categorie, combatsParPalier, nbPersonnages, onSelectObjet }) {
   const clickable = it.item_id != null
   const songes = calculerSongesItems([it], combatsParPalier, nbPersonnages)
@@ -283,32 +289,22 @@ function LigneItem({ it, categorie, combatsParPalier, nbPersonnages, onSelectObj
           {nomCourt(categorie, it.nom)}
         </span>
       </span>
-      <div style={{ display: "flex", gap: 14, marginLeft: "auto", alignItems: "center", overflowX: "auto", flexWrap: "nowrap", minWidth: 0 }}>
-        {it.paliers_eligibles.map(p => {
-          const v = it.taux_par_palier[String(p)]
-          return (
-            <div key={p} style={{ textAlign: "center", minWidth: 46, flexShrink: 0 }}>
-              <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>{NOMS_PALIERS_ROMAINS[p]}</div>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: v != null ? "var(--df-cyan)" : "var(--df-text-3)" }}>
-                {v != null ? `${formaterTaux(v)} %` : "—"}
-              </div>
-            </div>
-          )
-        })}
-        <div style={{ textAlign: "center", minWidth: 96, flexShrink: 0, borderLeft: "1px solid rgba(var(--df-gold-rgb), 0.2)", paddingLeft: 14 }}>
-          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>1 tous les</div>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--df-gold)" }}>{formaterSonges(songes)}</div>
-        </div>
+      <div style={{ textAlign: "right", marginLeft: "auto", flexShrink: 0 }}>
+        <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>1 tous les</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--df-gold)" }}>{formaterSonges(songes)}</div>
       </div>
     </div>
   )
 }
 
+// Idem LigneItem : colonnes de pourcentages (et le "taux variables" qui
+// les remplacait pour les categories non uniformes) retirees de
+// l'affichage (retour Popo, 15 aout 2026) — profil.taux_par_palier reste
+// lu par calculerSongesItems, seul l'affichage change.
 function LigneCategorie({ categorie, items, combatsParPalier, nbPersonnages, expanded, onToggle, onSelectObjet }) {
   const uniforme = CATEGORIES_UNIFORMES.has(categorie)
   const estCosmetique = categorie === "cosmetique"
   const estRune = categorie === "rune_astrale"
-  const profil = uniforme ? items[0] : null
   const songesAgrege = estRune ? null : calculerSongesItems(items, combatsParPalier, nbPersonnages)
   const songesPrecis = uniforme ? calculerSongesItems([items[0]], combatsParPalier, nbPersonnages) : null
   const avertissementProspection = "⚠️ Ces taux varient selon la prospection de chaque personnage, individuellement. Les valeurs ci-dessous sont les taux bruts affichés en jeu, sans prospection."
@@ -322,29 +318,10 @@ function LigneCategorie({ categorie, items, combatsParPalier, nbPersonnages, exp
             {CATEGORIE_LABELS[categorie]} ({items.length})
           </span>
         </span>
-        <div style={{ display: "flex", gap: 14, marginLeft: "auto", alignItems: "center", overflowX: "auto", flexWrap: "nowrap", minWidth: 0 }}>
-          {uniforme ? (
-            profil.paliers_eligibles.map(p => {
-              const v = profil.taux_par_palier[String(p)]
-              return (
-                <div key={p} style={{ textAlign: "center", minWidth: 46, flexShrink: 0 }}>
-                  <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>{NOMS_PALIERS_ROMAINS[p]}</div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: v != null ? "var(--df-cyan)" : "var(--df-text-3)" }}>
-                    {v != null ? `${formaterTaux(v)} %` : "—"}
-                  </div>
-                </div>
-              )
-            })
-          ) : (
-            <div style={{ fontSize: 12, color: "var(--df-text-3)", fontStyle: "italic", padding: "0 8px", flexShrink: 0, whiteSpace: "nowrap" }}>
-              taux variables
-            </div>
-          )}
-          <div style={{ textAlign: "center", minWidth: 96, flexShrink: 0, borderLeft: "1px solid rgba(var(--df-gold-rgb), 0.2)", paddingLeft: 14 }}>
-            <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>1 tous les</div>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--df-gold)" }}>
-              {estRune ? "—" : formaterSonges(songesAgrege)}
-            </div>
+        <div style={{ textAlign: "right", marginLeft: "auto", flexShrink: 0 }}>
+          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>1 tous les</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--df-gold)" }}>
+            {estRune ? "—" : formaterSonges(songesAgrege)}
           </div>
         </div>
       </div>
@@ -485,6 +462,14 @@ export default function TauxPage({ onBack, onSelectObjet }) {
                 <span key={n} onClick={() => setNbPersonnages(n)} style={tp.pill(nbPersonnages === n)}>{n}</span>
               ))}
             </div>
+          </div>
+
+          {/* Avertissement taux minimal (retour Popo, 15 aout 2026) — meme
+              style que l'avertissement prospection des Cosmetiques
+              (tp.avertissement, LigneCategorie), place ici avant la liste
+              des categories pour etre lu avant les chiffres. */}
+          <div style={{ ...tp.avertissement, marginBottom: 14 }}>
+            ⚠️ Ces estimations sont calculées sur le taux de drop minimal de l'intensité. En jeu, la difficulté des salles que tu choisis augmente ton taux réel — le nombre de runs indiqué est donc un maximum, pas une moyenne.
           </div>
 
           {chargement ? (
