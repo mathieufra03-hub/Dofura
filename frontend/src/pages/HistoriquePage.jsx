@@ -82,7 +82,7 @@ export default function HistoriquePage({ token, onSelectObjet, onBack }) {
 
   if (!token) {
     return (
-      <div className="df-songes">
+      <div className="df-songes" style={{ minHeight: "100vh" }}>
         <div style={sp.page}>
           <button onClick={onBack} style={sp.backBtn}>← Retour</button>
           <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
@@ -97,7 +97,13 @@ export default function HistoriquePage({ token, onSelectObjet, onBack }) {
   }
 
   return (
-    <div className="df-songes">
+    // minHeight:100vh (retour Popo, chantier Historique general) : .df-songes
+    // (pageSonges.css) utilise background-attachment:fixed sans hauteur
+    // minimale — sur une page courte (peu de runs, pas de banniere comme
+    // L'Oeil), le fond s'arretait a la fin du contenu et laissait un vide en
+    // dessous. Fix scope a cette page (pas touche a la regle .df-songes
+    // partagee, utilisee par d'autres ecrans du tracker).
+    <div className="df-songes" style={{ minHeight: "100vh" }}>
       <div style={sp.page}>
         <button onClick={onBack} style={sp.backBtn}>← Retour</button>
         <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>Historique des songes</h1>

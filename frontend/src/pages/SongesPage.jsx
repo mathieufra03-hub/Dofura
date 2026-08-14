@@ -861,16 +861,19 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         {/* 6. Historique des songes — plus de toggle "Mes drops" ici (retour
             Popo, chantier Historique general 14 aout 2026) : le filtrage vit
             maintenant sur /historique (toggle + categorie), cette liste se
-            contente des 5 derniers songes. Titre cliquable (fleche cyan,
-            meme convention que "Guide complet sur DofusPourLesNoobs →" /
-            "QUÊTE →" ailleurs sur le site) + bouton explicite en dessous,
-            les deux menent a /historique. */}
+            contente des 5 derniers songes. Titre simple texte (retour Popo :
+            plus cliquable, la fleche retiree — un seul lien vers /historique
+            suffit) ; "Voir tout mon historique" reprend la place et le style
+            qu'occupait "Mes drops" avant (lien discret en haut a droite, pas
+            un bouton pleine largeur). flexWrap : a 390px, passe sur 2 lignes
+            plutot que de chevaucher le titre. */}
         <div style={{ marginTop: 26 }}>
-          <button onClick={() => navigate("/historique")} className="df-hover-lift df-block-title"
-            style={{ margin: "0 0 16px", background: "none", border: "none", padding: 0, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}>
-            Historique des songes
-            <span style={{ color: "var(--df-cyan)", fontSize: 11 }}>→</span>
-          </button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            <div className="df-block-title" style={{ margin: 0 }}>Historique des songes</div>
+            <button onClick={() => navigate("/historique")} className="df-hover-lift" style={sp.lienDiscret}>
+              Voir tout mon historique
+            </button>
+          </div>
           {historique.songes.length === 0 ? (
             <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucune run enregistrée pour l'instant.</div>
           ) : historique.songes.map(s => (
@@ -880,9 +883,6 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
               onSupprimerDrop={onSupprimerDrop}
               onSelectObjet={onSelectObjet} />
           ))}
-          <button onClick={() => navigate("/historique")} className="df-hover-lift" style={{ ...sp.btnFantome, width: "100%", marginTop: 10 }}>
-            Voir tout mon historique
-          </button>
         </div>
       </div>
       {songeASupprimer && (
