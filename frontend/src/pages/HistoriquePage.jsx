@@ -88,7 +88,7 @@ export default function HistoriquePage({ token, onSelectObjet, onBack }) {
           <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
             <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 10px" }}>Historique des songes</h1>
             <p style={{ color: "var(--df-text-2)", fontSize: 14, margin: 0 }}>
-              Connecte-toi pour consulter l'historique de tes songes.
+              Connecte-toi pour consulter l'historique de tes runs.
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function HistoriquePage({ token, onSelectObjet, onBack }) {
         {chargement ? (
           <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Chargement...</div>
         ) : donnees.songes.length === 0 ? (
-          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Aucun songe ne correspond.</div>
+          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Aucune run ne correspond.</div>
         ) : (
           donnees.songes.map(s => (
             <LigneSonge key={s.id} s={s}

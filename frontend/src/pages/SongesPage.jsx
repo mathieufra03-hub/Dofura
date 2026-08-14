@@ -96,7 +96,7 @@ function SongesConnexionRequise({ onBack }) {
         <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
           <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 10px" }}>L'Œil de Draconiros</h1>
           <p style={{ color: "var(--df-text-2)", fontSize: 14, margin: 0 }}>
-            Connecte-toi pour compter tes songes et enregistrer tes drops — tes données te suivent sur tous tes appareils.
+            Connecte-toi pour compter tes runs et enregistrer tes drops — tes données te suivent sur tous tes appareils.
           </p>
         </div>
       </div>
@@ -305,7 +305,7 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
       {!confirmation ? (
         <>
           <p style={{ color: "var(--df-text-2)", fontSize: 13, margin: "6px 0 12px" }}>
-            Supprime tous tes songes, leurs participants, leurs drops et tes dépenses de bribes enregistrées. Tes
+            Supprime toutes tes runs, leurs participants, leurs drops et tes dépenses de bribes enregistrées. Tes
             personnages et tes teams ne sont pas touchés. Chaque drop est archivé dans le Journal avant suppression.
           </p>
           <button onClick={() => setConfirmation(true)} className="df-hover-lift" style={{ ...sp.btnFantome, color: "var(--df-red)", borderColor: "rgba(242,109,109,0.5)" }}>
@@ -315,7 +315,7 @@ function SongesZoneDangereuse({ onToutSupprimer }) {
       ) : (
         <>
           <p style={{ color: "var(--df-red)", fontSize: 13.5, fontWeight: 700, margin: "6px 0 12px" }}>
-            Action irréversible : tous tes songes, tous tes drops et toutes tes dépenses de bribes seront définitivement
+            Action irréversible : toutes tes runs, tous tes drops et toutes tes dépenses de bribes seront définitivement
             supprimés (tes personnages et teams resteront). Confirmer ?
           </p>
           <div style={{ display: "flex", gap: 10 }}>
@@ -374,7 +374,7 @@ function BasculeSongeInterrompu({ nbSallesParRun, songeEchoue, setSongeEchoue, s
     return (
       <button onClick={() => setSongeEchoue(true)} className="df-hover-lift"
         style={{ background: "transparent", color: "#7FE9E0", border: "1px solid rgba(127,233,224,.4)", borderRadius: 8, padding: 11, fontSize: 13, cursor: "pointer", width: "100%" }}>
-        Le songe s'est arrêté en cours de route ?
+        La run s'est arrêtée en cours de route ?
       </button>
     )
   }
@@ -678,7 +678,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
                   <div className={flashCompteur ? "df-songes-flash" : ""} style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(29px, 5.2vw, 39px)", fontWeight: 700, color: "var(--df-cyan)", lineHeight: 1, textShadow: "0 0 14px rgba(44,231,255,0.5)", marginTop: -6 }}>
                     {formaterNombre(secheresseSonges)}
                   </div>
-                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)" }}>songes</div>
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--df-text-2)" }}>runs</div>
                 </>
               )}
             </div>
@@ -687,7 +687,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
 
           <div className="df-songes-stat-col" style={{ flex: "1 1 0", textAlign: "center", padding: "8px 20px" }}>
             <div style={{ fontSize: 10.5, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              Songes en {INTENSITE_LABEL[intensiteNiveau.intensite] || intensiteNiveau.intensite} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau] || intensiteNiveau.niveau}
+              Runs en {INTENSITE_LABEL[intensiteNiveau.intensite] || intensiteNiveau.intensite} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau] || intensiteNiveau.niveau}
             </div>
             <div style={{ flex: 1, minHeight: 62, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
               <div style={{ fontFamily: "var(--df-font-logo)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: "var(--df-gold)" }}>
@@ -825,7 +825,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
 
           <button disabled={enregistrement} onClick={() => { onSongeTermine(); declencherFlashCompteur() }} className="df-hover-lift"
             style={{ ...sp.btnCyan, width: "100%", opacity: enregistrement ? 0.6 : 1 }}>
-            Songe terminé
+            Run terminée
           </button>
         </div>
 
@@ -842,7 +842,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
 
         {songeEchoue && (
           <button disabled={enregistrement} onClick={onSongeTermine} className="df-hover-lift" style={{ ...sp.btnCyanPetit, marginTop: 10 }}>
-            Enregistrer ce songe
+            Enregistrer cette run
           </button>
         )}
 
@@ -853,7 +853,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         {dernierRunId && (
           <div style={{ marginTop: 14 }}>
             <button onClick={onAnnulerDernierSonge} style={sp.lienDiscret}>
-              Annuler le dernier songe enregistré (Songe n°{dernierRunId})
+              Annuler la dernière run enregistrée (Run #{dernierRunId})
             </button>
           </div>
         )}
@@ -872,7 +872,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
             <span style={{ color: "var(--df-cyan)", fontSize: 11 }}>→</span>
           </button>
           {historique.songes.length === 0 ? (
-            <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucun songe enregistré pour l'instant.</div>
+            <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "12px 0" }}>Aucune run enregistrée pour l'instant.</div>
           ) : historique.songes.map(s => (
             <LigneSonge key={s.id} s={s}
               onSupprimer={setSongeASupprimer}
