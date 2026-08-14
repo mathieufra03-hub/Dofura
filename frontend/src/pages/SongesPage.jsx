@@ -718,7 +718,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
               <span>Team</span>
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", width: "100%" }}>
-              <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={{ ...sp.select, fontSize: 12, width: "100%", boxSizing: "border-box" }}>
+              <select value={teamId || ""} onChange={e => changerTeam(Number(e.target.value))} style={{ ...sp.select, fontSize: 12, width: "100%", boxSizing: "border-box", textAlign: "center" }}>
                 {teams.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
               </select>
             </div>
@@ -741,7 +741,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", width: "100%" }}>
               <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
                 onChange={e => { const [intensite, niveau] = e.target.value.split("_"); changerIntensite(intensite, Number(niveau)) }}
-                style={{ ...sp.select, fontSize: 12, width: "100%", boxSizing: "border-box" }}>
+                style={{ ...sp.select, fontSize: 12, width: "100%", boxSizing: "border-box", textAlign: "center" }}>
                 {Object.entries(config.intensites).map(([cle, info]) =>
                   info.niveaux.map(n => (
                     <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
@@ -870,7 +870,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
         <div style={{ marginTop: 26 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
             <div className="df-block-title" style={{ margin: 0 }}>Historique des songes</div>
-            <button onClick={() => navigate("/historique")} className="df-hover-lift" style={sp.lienDiscret}>
+            <button onClick={() => navigate("/historique")} className="df-hover-lift" style={{ ...sp.lienDiscret, color: "var(--df-cyan)" }}>
               Voir tout mon historique
             </button>
           </div>
