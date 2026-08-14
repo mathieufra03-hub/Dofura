@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 
 // Page "Les Taux" (1er août 2026) — construite en remplacement du lien mort
 // de l'accueil qui pointait vers une bande d'intensités elle-même supprimée
@@ -123,37 +124,37 @@ const RACCOURCIS_OBJECTIF = [
 ]
 
 // "Combien de runs pour atteindre X bribes ?" (chantier dedie, 14 aout
-// 2026) — entierement cote frontend, sur les donnees deja chargees par
-// TauxPage (config.bribes_par_vague/vagues_max/vagues_requises, memes
-// sources que le calcul "0 vague x 75 bribes" de L'Oeil, jamais recopiees
-// en dur ici). Vocabulaire "run" (ce que le joueur manipule) — regle
-// CLAUDE.md. Plancher de vagues = vagues_requises[intensite] (PAS un 1
-// generique : simuler une run perdue, ex. "Paradoxe I, 1 vague", n'aurait
-// pas de sens — retour Popo). Plafond = vagues_max[intensite] (null =
-// illimite en Cauchemar). Au changement d'intensite, la valeur courante
-// est clampee dans la nouvelle plage plutot que reinitialisee — ne
-// touche jamais au compteur de vagues de L'Oeil (SongesPage.jsx), qui
-// part de 0 et enregistre une vraie run, ratee ou non : contrainte
-// propre a ce simulateur.
-function SimulateurBribes({ config }) {
-  const [intensiteNiveau, setIntensiteNiveau] = useState({
-    intensite: config.intensite_defaut.intensite,
-    niveau: config.intensite_defaut.niveau,
-  })
-  const [vagues, setVagues] = useState(config.vagues_requises[config.intensite_defaut.intensite])
-  const [objectifTexte, setObjectifTexte] = useState("")
-
+// 2026 ; passe en onglet + intensite unifiee, 14 aout 2026) — entierement
+// cote frontend, sur les donnees deja chargees par TauxPage
+// (config.bribes_par_vague/vagues_max/vagues_requises, memes sources que
+// le calcul "0 vague x 75 bribes" de L'Oeil, jamais recopiees en dur ici).
+// Vocabulaire "run" (ce que le joueur manipule) — regle CLAUDE.md.
+// intensiteNiveau vient maintenant du PARENT (TauxPage, un seul selecteur
+// pour toute la page — plus de select local ici, deux intensites qui
+// pouvaient se contredire avant cette passe). Plancher de vagues =
+// vagues_requises[intensite] (PAS un 1 generique : simuler une run
+// perdue, ex. "Paradoxe I, 1 vague", n'aurait pas de sens — retour Popo).
+// Plafond = vagues_max[intensite] (null = illimite en Cauchemar). Au
+// changement d'intensite (prop), useEffect clampe vagues dans la
+// nouvelle plage plutot que de le reinitialiser — ne touche jamais au
+// compteur de vagues de L'Oeil (SongesPage.jsx), qui part de 0 et
+// enregistre une vraie run, ratee ou non : contrainte propre a ce
+// simulateur.
+function SimulateurBribes({ config, intensiteNiveau }) {
   const vaguesMin = config.vagues_requises[intensiteNiveau.intensite]
   const vaguesMax = config.vagues_max[intensiteNiveau.intensite] // null = illimité
 
+  const [vagues, setVagues] = useState(vaguesMin)
+  const [objectifTexte, setObjectifTexte] = useState("")
+
   const clampVagues = (v, min, max) => Math.min(max ?? Infinity, Math.max(min, v))
 
-  const changerIntensite = (intensite, niveau) => {
-    setIntensiteNiveau({ intensite, niveau })
-    const min = config.vagues_requises[intensite]
-    const max = config.vagues_max[intensite]
-    setVagues(v => clampVagues(v, min, max))
-  }
+  // Le selecteur d'intensite vit desormais dans TauxPage (onglets) : ce
+  // qui pilotait autrefois changerIntensite (appele au onChange du select
+  // local) doit maintenant reagir au changement de la PROP.
+  useEffect(() => {
+    setVagues(v => clampVagues(v, vaguesMin, vaguesMax))
+  }, [intensiteNiveau.intensite]) // eslint-disable-line
 
   const incrementerVagues = (delta) => setVagues(v => clampVagues(v + delta, vaguesMin, vaguesMax))
 
@@ -173,21 +174,6 @@ function SimulateurBribes({ config }) {
       <div className="df-block-title" style={{ margin: "0 0 14px" }}>Simulateur de bribes</div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginBottom: 16 }}>
-        <div>
-          <div style={{ fontSize: 11, color: "var(--df-text-3)", marginBottom: 6 }}>Intensité</div>
-          <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
-            onChange={e => { const [intensite, niveau] = e.target.value.split("_"); changerIntensite(intensite, Number(niveau)) }}
-            style={tp.select}>
-            {Object.entries(config.intensites).map(([cle, info]) =>
-              info.niveaux.map(n => (
-                <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
-                  {capitaliser(cle)} {NOMS_PALIERS_ROMAINS[n] || n}
-                </option>
-              ))
-            )}
-          </select>
-        </div>
-
         <div>
           <div style={{ fontSize: 11, color: "var(--df-text-3)", marginBottom: 6 }}>Vagues par run</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -212,24 +198,26 @@ function SimulateurBribes({ config }) {
         ))}
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+      {/* Resultat (refonte presentation, chantier onglets 14 aout 2026) —
+          calcul inchange, seul l'affichage change : rien tant qu'aucun
+          objectif valide (pas de cases "—" vides), une phrase avec le
+          nombre de runs en avant des qu'un objectif donne un resultat. */}
+      {runsNecessaires == null ? (
         <div>
           <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Bribes par run</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--df-gold)" }}>{fmt(bribesParRun)}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "var(--df-gold)" }}>{fmt(bribesParRun)}</div>
         </div>
+      ) : (
         <div>
-          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Runs nécessaires</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--df-cyan)" }}>{runsNecessaires != null ? fmt(runsNecessaires) : "—"}</div>
+          <div style={{ fontSize: 14, color: "var(--df-text)", lineHeight: 1.5 }}>
+            En {capitaliser(intensiteNiveau.intensite)} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau]} à {vagues} vague{vagues > 1 ? "s" : ""}, il te faut{" "}
+            <span style={{ fontSize: 22, fontWeight: 700, color: "var(--df-cyan)" }}>{fmt(runsNecessaires)} run{runsNecessaires > 1 ? "s" : ""}</span>
+          </div>
+          <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--df-text-3)" }}>
+            Total obtenu : {fmt(totalObtenu)} · Surplus : {fmt(surplus)}
+          </div>
         </div>
-        <div>
-          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Total obtenu</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--df-text)" }}>{totalObtenu != null ? fmt(totalObtenu) : "—"}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: 10, color: "var(--df-text-3)" }}>Surplus</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--df-text)" }}>{surplus != null ? fmt(surplus) : "—"}</div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -339,7 +327,23 @@ function LigneCategorie({ categorie, items, combatsParPalier, nbPersonnages, exp
   )
 }
 
+// Onglet dans l'URL (chantier "onglets", 14 aout 2026, demande explicite
+// Popo — /taux?onglet=bribes doit rester un lien partageable, ex. sur
+// Discord, contrairement au choix par defaut sans URL de GrimoirePage,
+// qu'on ne touche pas ici). Sans parametre OU valeur inconnue -> "drops"
+// (contenu principal, cible SEO), jamais d'erreur. Meme pattern
+// useSearchParams que HistoriquePage.jsx.
+const ONGLET_PAR_DEFAUT = "drops"
+
 export default function TauxPage({ onBack, onSelectObjet }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const onglet = searchParams.get("onglet") === "bribes" ? "bribes" : ONGLET_PAR_DEFAUT
+  const changerOnglet = (o) => {
+    const next = new URLSearchParams(searchParams)
+    next.set("onglet", o)
+    setSearchParams(next)
+  }
+
   const [config, setConfig] = useState(null)
   const [intensiteNiveau, setIntensiteNiveau] = useState(null)
   const [categorieFiltre, setCategorieFiltre] = useState(null)
@@ -400,46 +404,70 @@ export default function TauxPage({ onBack, onSelectObjet }) {
           </select>
         </div>
 
-        <SimulateurBribes config={config} />
-
-        <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-          <div>
-            <span onClick={() => setCategorieFiltre(null)} style={tp.pill(categorieFiltre === null)}>Toutes</span>
-            {ORDRE_CATEGORIES.map(c => (
-              <span key={c} onClick={() => setCategorieFiltre(c)} style={tp.pill(categorieFiltre === c)}>{CATEGORIE_LABELS[c]}</span>
-            ))}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 11.5, color: "var(--df-text-3)", marginRight: 4 }}>Personnages</span>
-            {[1, 2, 3, 4].map(n => (
-              <span key={n} onClick={() => setNbPersonnages(n)} style={tp.pill(nbPersonnages === n)}>{n}</span>
-            ))}
-          </div>
+        {/* Onglets (chantier "onglets", 14 aout 2026) — meme classe/style
+            que les onglets de la Bibliotheque (GrimoirePage, App.jsx) :
+            .df-chip-filter + override inline identique quand actif, pas
+            de nouveau composant pour deux boutons. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", margin: "0 0 18px" }}>
+          <button onClick={() => changerOnglet("drops")} className="df-chip-filter"
+            style={onglet === "drops" ? { background: "rgba(77,216,230,0.18)", color: "var(--df-cyan)", borderColor: "var(--df-cyan)" } : undefined}>
+            Drops
+          </button>
+          <button onClick={() => changerOnglet("bribes")} className="df-chip-filter"
+            style={onglet === "bribes" ? { background: "rgba(77,216,230,0.18)", color: "var(--df-cyan)", borderColor: "var(--df-cyan)" } : undefined}>
+            Bribes
+          </button>
         </div>
 
-        {chargement ? (
-          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Chargement...</div>
-        ) : !auMoinsUnTaux ? (
-          <div style={{ ...tp.row, flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12, padding: "28px 16px" }}>
-            <div style={{ color: "var(--df-text-2)", fontSize: 13.5, lineHeight: 1.6 }}>
-              Ces taux n'ont pas encore été relevés.<br />
-              Tu joues en {capitaliser(intensiteNiveau.intensite)} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau]} ? Aide-nous à compléter le tableau.
+        {/* Les deux onglets restent montes en permanence (display:none sur
+            l'inactif plutot qu'un rendu conditionnel) : le Simulateur
+            garde son compteur de vagues et son objectif saisi meme apres
+            un aller-retour vers l'onglet Drops, au lieu de les perdre a
+            chaque demontage/remontage. */}
+        <div style={{ display: onglet === "bribes" ? "block" : "none" }}>
+          <SimulateurBribes config={config} intensiteNiveau={intensiteNiveau} />
+        </div>
+
+        <div style={{ display: onglet === "drops" ? "block" : "none" }}>
+          <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+            <div>
+              <span onClick={() => setCategorieFiltre(null)} style={tp.pill(categorieFiltre === null)}>Toutes</span>
+              {ORDRE_CATEGORIES.map(c => (
+                <span key={c} onClick={() => setCategorieFiltre(c)} style={tp.pill(categorieFiltre === c)}>{CATEGORIE_LABELS[c]}</span>
+              ))}
             </div>
-            <a href={LIEN_DISCORD} target="_blank" rel="noopener noreferrer" style={tp.discordBtn}>Rejoindre le Discord</a>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 11.5, color: "var(--df-text-3)", marginRight: 4 }}>Personnages</span>
+              {[1, 2, 3, 4].map(n => (
+                <span key={n} onClick={() => setNbPersonnages(n)} style={tp.pill(nbPersonnages === n)}>{n}</span>
+              ))}
+            </div>
           </div>
-        ) : groupesAffiches.length === 0 ? (
-          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Aucun item dans cette catégorie à cette intensité.</div>
-        ) : (
-          groupesAffiches.map(g => (
-            <LigneCategorie
-              key={g.categorie} categorie={g.categorie} items={g.items}
-              combatsParPalier={config.combats_par_palier} nbPersonnages={nbPersonnages}
-              expanded={!!expanded[g.categorie]}
-              onToggle={() => setExpanded(e => ({ ...e, [g.categorie]: !e[g.categorie] }))}
-              onSelectObjet={onSelectObjet}
-            />
-          ))
-        )}
+
+          {chargement ? (
+            <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Chargement...</div>
+          ) : !auMoinsUnTaux ? (
+            <div style={{ ...tp.row, flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12, padding: "28px 16px" }}>
+              <div style={{ color: "var(--df-text-2)", fontSize: 13.5, lineHeight: 1.6 }}>
+                Ces taux n'ont pas encore été relevés.<br />
+                Tu joues en {capitaliser(intensiteNiveau.intensite)} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau]} ? Aide-nous à compléter le tableau.
+              </div>
+              <a href={LIEN_DISCORD} target="_blank" rel="noopener noreferrer" style={tp.discordBtn}>Rejoindre le Discord</a>
+            </div>
+          ) : groupesAffiches.length === 0 ? (
+            <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Aucun item dans cette catégorie à cette intensité.</div>
+          ) : (
+            groupesAffiches.map(g => (
+              <LigneCategorie
+                key={g.categorie} categorie={g.categorie} items={g.items}
+                combatsParPalier={config.combats_par_palier} nbPersonnages={nbPersonnages}
+                expanded={!!expanded[g.categorie]}
+                onToggle={() => setExpanded(e => ({ ...e, [g.categorie]: !e[g.categorie] }))}
+                onSelectObjet={onSelectObjet}
+              />
+            ))
+          )}
+        </div>
 
         <div style={tp.mentions}>
           <p style={{ margin: "0 0 6px" }}>Taux relevés en jeu, à la main. Ils ne viennent d'aucune API et ne sont publiés nulle part ailleurs.</p>
