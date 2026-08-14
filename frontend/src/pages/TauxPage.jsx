@@ -310,11 +310,15 @@ function LigneCategorie({ categorie, items, combatsParPalier, nbPersonnages, exp
   const avertissementProspection = "⚠️ Ces taux varient selon la prospection de chaque personnage, individuellement. Les valeurs ci-dessous sont les taux bruts affichés en jeu, sans prospection."
 
   return (
-    <div style={{ marginBottom: 8 }}>
-      <div onClick={onToggle} style={{ ...tp.row, cursor: "pointer" }}>
+    <div style={{ marginBottom: 10 }}>
+      {/* Barre grossie (retour Popo, 15 aout 2026) — padding et taille du
+          titre augmentes localement (pas de changement sur tp.row, partage
+          avec LigneItem/lignes d'item individuelles) pour donner plus de
+          presence aux 4 categories, elements principaux de la page. */}
+      <div onClick={onToggle} style={{ ...tp.row, cursor: "pointer", padding: "16px 16px" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 10, flex: "0 0 200px", minWidth: 200 }}>
           <span style={{ fontSize: 11, color: "var(--df-text-3)", width: 10, display: "inline-block" }}>{expanded ? "▾" : "▸"}</span>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--df-text)" }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--df-text)" }}>
             {CATEGORIE_LABELS[categorie]} ({items.length})
           </span>
         </span>
@@ -469,7 +473,7 @@ export default function TauxPage({ onBack, onSelectObjet }) {
               (tp.avertissement, LigneCategorie), place ici avant la liste
               des categories pour etre lu avant les chiffres. */}
           <div style={{ ...tp.avertissement, marginBottom: 14 }}>
-            ⚠️ Ces estimations sont calculées sur le taux de drop minimal de l'intensité. En jeu, la difficulté des salles que tu choisis augmente ton taux réel — le nombre de runs indiqué est donc un maximum, pas une moyenne.
+            ⚠️ Ces estimations sont calculées sur le taux de drop minimal de l'intensité. La difficulté des salles que tu choisis fait varier ton taux réel — le nombre de runs indiqué est une moyenne générale.
           </div>
 
           {chargement ? (
