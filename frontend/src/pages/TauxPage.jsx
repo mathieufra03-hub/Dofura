@@ -363,7 +363,11 @@ export default function TauxPage({ onBack, onSelectObjet }) {
   }, [intensiteNiveau])
 
   if (!config || !intensiteNiveau) {
-    return <div style={{ padding: "3rem 2rem", textAlign: "center", color: "var(--df-text-2)", fontSize: 14 }}>Chargement...</div>
+    return (
+      <div className="df-fond-nebuleuse" style={{ minHeight: "100vh" }}>
+        <div style={{ padding: "3rem 2rem", textAlign: "center", color: "var(--df-text-2)", fontSize: 14 }}>Chargement...</div>
+      </div>
+    )
   }
 
   const tousLesItems = donnees?.items || []
@@ -374,71 +378,73 @@ export default function TauxPage({ onBack, onSelectObjet }) {
   const groupesAffiches = categorieFiltre ? groupes.filter(g => g.categorie === categorieFiltre) : groupes
 
   return (
-    <div style={tp.page}>
-      <button onClick={onBack} style={tp.backBtn}>← Retour</button>
-      <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 4px" }}>Les Taux</h1>
-      <p style={{ margin: "0 0 18px", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--df-text-2)" }}>
-        Relevés en jeu, jamais estimés
-      </p>
+    <div className="df-fond-nebuleuse" style={{ minHeight: "100vh" }}>
+      <div style={tp.page}>
+        <button onClick={onBack} style={tp.backBtn}>← Retour</button>
+        <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 4px" }}>Les Taux</h1>
+        <p style={{ margin: "0 0 18px", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--df-text-2)" }}>
+          Relevés en jeu, jamais estimés
+        </p>
 
-      <div style={{ marginBottom: 14 }}>
-        <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
-          onChange={e => { const [intensite, niveau] = e.target.value.split("_"); setIntensiteNiveau({ intensite, niveau: Number(niveau) }) }}
-          style={tp.select}>
-          {Object.entries(config.intensites).map(([cle, info]) =>
-            info.niveaux.map(n => (
-              <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
-                {capitaliser(cle)} {NOMS_PALIERS_ROMAINS[n] || n}
-              </option>
-            ))
-          )}
-        </select>
-      </div>
-
-      <SimulateurBribes config={config} />
-
-      <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-        <div>
-          <span onClick={() => setCategorieFiltre(null)} style={tp.pill(categorieFiltre === null)}>Toutes</span>
-          {ORDRE_CATEGORIES.map(c => (
-            <span key={c} onClick={() => setCategorieFiltre(c)} style={tp.pill(categorieFiltre === c)}>{CATEGORIE_LABELS[c]}</span>
-          ))}
+        <div style={{ marginBottom: 14 }}>
+          <select value={`${intensiteNiveau.intensite}_${intensiteNiveau.niveau}`}
+            onChange={e => { const [intensite, niveau] = e.target.value.split("_"); setIntensiteNiveau({ intensite, niveau: Number(niveau) }) }}
+            style={tp.select}>
+            {Object.entries(config.intensites).map(([cle, info]) =>
+              info.niveaux.map(n => (
+                <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
+                  {capitaliser(cle)} {NOMS_PALIERS_ROMAINS[n] || n}
+                </option>
+              ))
+            )}
+          </select>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 11.5, color: "var(--df-text-3)", marginRight: 4 }}>Personnages</span>
-          {[1, 2, 3, 4].map(n => (
-            <span key={n} onClick={() => setNbPersonnages(n)} style={tp.pill(nbPersonnages === n)}>{n}</span>
-          ))}
-        </div>
-      </div>
 
-      {chargement ? (
-        <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Chargement...</div>
-      ) : !auMoinsUnTaux ? (
-        <div style={{ ...tp.row, flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12, padding: "28px 16px" }}>
-          <div style={{ color: "var(--df-text-2)", fontSize: 13.5, lineHeight: 1.6 }}>
-            Ces taux n'ont pas encore été relevés.<br />
-            Tu joues en {capitaliser(intensiteNiveau.intensite)} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau]} ? Aide-nous à compléter le tableau.
+        <SimulateurBribes config={config} />
+
+        <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+          <div>
+            <span onClick={() => setCategorieFiltre(null)} style={tp.pill(categorieFiltre === null)}>Toutes</span>
+            {ORDRE_CATEGORIES.map(c => (
+              <span key={c} onClick={() => setCategorieFiltre(c)} style={tp.pill(categorieFiltre === c)}>{CATEGORIE_LABELS[c]}</span>
+            ))}
           </div>
-          <a href={LIEN_DISCORD} target="_blank" rel="noopener noreferrer" style={tp.discordBtn}>Rejoindre le Discord</a>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11.5, color: "var(--df-text-3)", marginRight: 4 }}>Personnages</span>
+            {[1, 2, 3, 4].map(n => (
+              <span key={n} onClick={() => setNbPersonnages(n)} style={tp.pill(nbPersonnages === n)}>{n}</span>
+            ))}
+          </div>
         </div>
-      ) : groupesAffiches.length === 0 ? (
-        <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Aucun item dans cette catégorie à cette intensité.</div>
-      ) : (
-        groupesAffiches.map(g => (
-          <LigneCategorie
-            key={g.categorie} categorie={g.categorie} items={g.items}
-            combatsParPalier={config.combats_par_palier} nbPersonnages={nbPersonnages}
-            expanded={!!expanded[g.categorie]}
-            onToggle={() => setExpanded(e => ({ ...e, [g.categorie]: !e[g.categorie] }))}
-            onSelectObjet={onSelectObjet}
-          />
-        ))
-      )}
 
-      <div style={tp.mentions}>
-        <p style={{ margin: "0 0 6px" }}>Taux relevés en jeu, à la main. Ils ne viennent d'aucune API et ne sont publiés nulle part ailleurs.</p>
-        <p style={{ margin: 0 }}>Le nombre de runs est une moyenne statistique, pas une garantie. Certains dropperont dès la troisième run, d'autres à la cinquantième.</p>
+        {chargement ? (
+          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Chargement...</div>
+        ) : !auMoinsUnTaux ? (
+          <div style={{ ...tp.row, flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12, padding: "28px 16px" }}>
+            <div style={{ color: "var(--df-text-2)", fontSize: 13.5, lineHeight: 1.6 }}>
+              Ces taux n'ont pas encore été relevés.<br />
+              Tu joues en {capitaliser(intensiteNiveau.intensite)} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau]} ? Aide-nous à compléter le tableau.
+            </div>
+            <a href={LIEN_DISCORD} target="_blank" rel="noopener noreferrer" style={tp.discordBtn}>Rejoindre le Discord</a>
+          </div>
+        ) : groupesAffiches.length === 0 ? (
+          <div style={{ color: "var(--df-text-3)", fontSize: 13, padding: "20px 0" }}>Aucun item dans cette catégorie à cette intensité.</div>
+        ) : (
+          groupesAffiches.map(g => (
+            <LigneCategorie
+              key={g.categorie} categorie={g.categorie} items={g.items}
+              combatsParPalier={config.combats_par_palier} nbPersonnages={nbPersonnages}
+              expanded={!!expanded[g.categorie]}
+              onToggle={() => setExpanded(e => ({ ...e, [g.categorie]: !e[g.categorie] }))}
+              onSelectObjet={onSelectObjet}
+            />
+          ))
+        )}
+
+        <div style={tp.mentions}>
+          <p style={{ margin: "0 0 6px" }}>Taux relevés en jeu, à la main. Ils ne viennent d'aucune API et ne sont publiés nulle part ailleurs.</p>
+          <p style={{ margin: 0 }}>Le nombre de runs est une moyenne statistique, pas une garantie. Certains dropperont dès la troisième run, d'autres à la cinquantième.</p>
+        </div>
       </div>
     </div>
   )

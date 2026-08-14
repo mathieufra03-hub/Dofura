@@ -13,22 +13,11 @@
    ============================================================ */
 
 /* ---------- Fond général ---------- */
-/* fond-page-oeil.webp (nébuleuse), plein cadre, fixe au scroll (chantier 1c) —
-   remplace les 3 halos radiaux CSS (doublon une fois l'image en place).
-   Voile sombre + assombrissement vers le bas en un seul calque gradient
-   (rgba(4,18,26,.55) constant jusqu'à ~45%, puis vers .85 en bas) pour que
-   le texte reste lisible par-dessus l'image, quelle que soit la section. */
-.df-songes {
-  position: relative;
-  background-image:
-    linear-gradient(to bottom, rgba(4, 18, 26, .55) 0%, rgba(4, 18, 26, .55) 45%, rgba(4, 18, 26, .85) 100%),
-    url('/assets/oeil/fond-page-oeil.webp');
-  background-size: cover;
-  background-position: center top;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-color: #04121A;
-}
+/* Déplacé dans tokens.css sous .df-fond-nebuleuse (chantier "même fond
+   partout", 14 août 2026) : Les Taux et la Bibliothèque le réutilisent
+   maintenant aussi, une seule définition partagée entre toutes les pages
+   plutôt qu'une copie locale ici. Les composants de cette page continuent
+   d'utiliser la classe "df-fond-nebuleuse" (SongesPage.jsx, HistoriquePage.jsx). */
 
 /* ---------- Bandeau haut (artwork Draconiros, écran principal only) ---------- */
 /* draconiros_1160px.png (1913x1160, passe 1f) remplace l'ancienne source

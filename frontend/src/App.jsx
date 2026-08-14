@@ -1247,11 +1247,15 @@ function GrimoirePage({ onBack, onSelectMonstre, onSelectObjet }) {
   const montrerFiltres = activeTab === "bestiaire"
 
   return (
-    <div style={{ ...mp.page, position:"relative", zIndex:0, overflow:"hidden" }}>
-      {/* Fond de page (2 août 2026) — voir .df-grimoire-bg (tokens.css) pour
-          la recette complète (position absolute, z-index sous le contenu,
-          pointer-events:none, opacity/flou/vignette, masqué sous 900px). */}
-      <div className="df-grimoire-bg" aria-hidden="true" />
+    // Fond partage avec L'Œil/Les Taux/Historique (chantier "meme fond
+    // partout", 14 aout 2026) — remplace l'ancien .df-grimoire-bg (image
+    // floutee propre a cette page, retiree de tokens.css). minHeight:100vh
+    // pour les resultats filtres a peu d'items (voir HistoriquePage.jsx,
+    // meme correctif). .df-fond-nebuleuse utilise background-attachment:fixed,
+    // qui peint le viewport et non la page — aucun risque de repetition ou
+    // de coupure quelle que soit la hauteur du Bestiaire pagine (48/page).
+    <div className="df-fond-nebuleuse" style={{ minHeight: "100vh" }}>
+    <div style={mp.page}>
       <button onClick={onBack} style={mp.backBtn}>← Retour</button>
 
       <div style={{ marginBottom:6 }}>
@@ -1395,6 +1399,7 @@ function GrimoirePage({ onBack, onSelectMonstre, onSelectObjet }) {
           )}
         </div>
       </div>
+    </div>
     </div>
   )
 }

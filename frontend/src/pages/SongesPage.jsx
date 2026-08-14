@@ -90,7 +90,7 @@ function CoinsDores() {
 
 function SongesConnexionRequise({ onBack }) {
   return (
-    <div className="df-songes">
+    <div className="df-fond-nebuleuse">
       <div style={sp.page}>
         <button onClick={onBack} style={sp.backBtn}>← Retour</button>
         <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
@@ -198,7 +198,7 @@ function SongesGestion({ token, personnages, teams, onRafraichir, onTerminer, on
   }
 
   return (
-    <div className="df-songes">
+    <div className="df-fond-nebuleuse">
     <div style={sp.page}>
       {!onboarding && <button onClick={onTerminer} style={sp.backBtn}>← Retour</button>}
       <h1 className="df-section-title" style={{ fontSize: 22, margin: "0 0 4px" }}>
@@ -432,7 +432,7 @@ function SongesAjoutDrop({ itemsTrackables, equipeActive, dropsEnCours, setDrops
   }
 
   return (
-    <div className="df-songes">
+    <div className="df-fond-nebuleuse">
     <div style={sp.page}>
       <button onClick={onAnnuler} style={sp.backBtn}>← Retour</button>
       <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px", display: "flex", alignItems: "center", gap: 8 }}>
@@ -573,7 +573,7 @@ function SongesEcranPrincipal({ config, teams, teamId, changerTeam, onBack,
   const [songeASupprimer, setSongeASupprimer] = useState(null)
 
   return (
-    <div className="df-songes">
+    <div className="df-fond-nebuleuse">
       {/* Bandeau haut (refonte visuelle, chantier 1 passe 1d) : artwork
           Draconiros à taille native (290x180, trop petit pour du plein
           largeur — retour Popo), fond uni de chaque côté, fondu vertical
@@ -919,7 +919,7 @@ function SongesMesDropsPage({ token, personnages, onBack, onSelectObjet }) {
   const totalPages = Math.max(Math.ceil((donnees.total || 0) / 20), 1)
 
   return (
-    <div className="df-songes">
+    <div className="df-fond-nebuleuse">
     <div style={sp.page}>
       <button onClick={onBack} style={sp.backBtn}>← Retour</button>
       <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>🎁 Mes drops</h1>
@@ -1203,7 +1203,7 @@ export default function SongesPage({ token, onSelectObjet, onBack }) {
       <>
         <SongesGestion token={token} personnages={personnages} teams={teams}
           onRafraichir={chargerPersonnagesEtTeams} onTerminer={() => setMode("principal")} />
-        <div className="df-songes">
+        <div className="df-fond-nebuleuse">
         <div style={{ ...sp.page, paddingTop: 0 }}>
           <SongesZoneDangereuse onToutSupprimer={toutSupprimer} />
           <SongesJournalSection journal={journal} page={pageJournal} setPage={setPageJournal} />

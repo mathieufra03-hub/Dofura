@@ -9,7 +9,8 @@ import {
 
 // Annuaire chronologique complet des songes du compte (chantier Historique
 // general, 14 aout 2026) — complement de l'aperçu 5-derniers dans L'Oeil
-// (SongesPage.jsx). Meme fond de page (.df-songes), meme composant de
+// (SongesPage.jsx). Meme fond de page (.df-fond-nebuleuse, tokens.css,
+// partage aussi avec Les Taux et la Bibliotheque), meme composant de
 // ligne (LigneSonge) et meme modale de suppression que L'Oeil : voir
 // components/SongesPartages.jsx, une seule implementation partagee.
 //
@@ -82,7 +83,7 @@ export default function HistoriquePage({ token, onSelectObjet, onBack }) {
 
   if (!token) {
     return (
-      <div className="df-songes" style={{ minHeight: "100vh" }}>
+      <div className="df-fond-nebuleuse" style={{ minHeight: "100vh" }}>
         <div style={sp.page}>
           <button onClick={onBack} style={sp.backBtn}>← Retour</button>
           <div style={{ ...sp.card, textAlign: "center", padding: "3rem 1.5rem" }}>
@@ -97,13 +98,13 @@ export default function HistoriquePage({ token, onSelectObjet, onBack }) {
   }
 
   return (
-    // minHeight:100vh (retour Popo, chantier Historique general) : .df-songes
-    // (pageSonges.css) utilise background-attachment:fixed sans hauteur
-    // minimale — sur une page courte (peu de runs, pas de banniere comme
-    // L'Oeil), le fond s'arretait a la fin du contenu et laissait un vide en
-    // dessous. Fix scope a cette page (pas touche a la regle .df-songes
-    // partagee, utilisee par d'autres ecrans du tracker).
-    <div className="df-songes" style={{ minHeight: "100vh" }}>
+    // minHeight:100vh (retour Popo, chantier Historique general) :
+    // .df-fond-nebuleuse (tokens.css) utilise background-attachment:fixed
+    // sans hauteur minimale — sur une page courte (peu de runs, pas de
+    // banniere comme L'Oeil), le fond s'arretait a la fin du contenu et
+    // laissait un vide en dessous. Fix scope a cette page (pas touche a la
+    // regle .df-fond-nebuleuse partagee, utilisee par d'autres pages).
+    <div className="df-fond-nebuleuse" style={{ minHeight: "100vh" }}>
       <div style={sp.page}>
         <button onClick={onBack} style={sp.backBtn}>← Retour</button>
         <h1 className="df-section-title" style={{ fontSize: 20, margin: "0 0 14px" }}>Historique des songes</h1>

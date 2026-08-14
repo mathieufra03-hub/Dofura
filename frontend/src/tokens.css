@@ -335,30 +335,32 @@
 .df-hover-lift:hover { transform: translateY(-2px) scale(1.03); }
 .df-hover-lift:disabled:hover { transform: none; }
 
-/* Fond de la page Grimoire (retour Popo, 2 août 2026) — image en basse
-   résolution, flou volontaire pour masquer l'agrandissement. Recette
-   demandée explicitement, plus simple que .outils-art de l'accueil (pas de
-   jonction avec une autre image à gérer ici) : un seul calque, vignette en
-   dégradé sur les 4 bords via mask-image radial plutôt que deux dégradés
-   linéaires. Le conteneur (App.jsx, style inline sur GrimoirePage) porte
-   position:relative + z-index:0 pour contenir le z-index:-1 ci-dessous —
-   sans ça, un enfant à z-index négatif peut "sortir" de la pile
-   d'empilement et passer sous tout le site (piège déjà rencontré à
-   l'accueil, voir IDENTITE.md 6e passe). */
-.df-grimoire-bg {
-  position: absolute; inset: 0; z-index: -1;
-  pointer-events: none; opacity: .35;
-  background-image: url('/assets/fond-grimoire.webp');
-  background-size: cover; background-position: center;
-  /* saturate(.6) ajouté (2 août 2026) : l'image tire vers le violet/rose,
-     une tache assez visible à l'écran à côté de la charte cyan du site —
-     comparé avec/sans avant de trancher, voir IDENTITE.md. */
-  filter: blur(3px) saturate(.6);
-  mask-image: radial-gradient(ellipse at center, black 45%, transparent 85%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 45%, transparent 85%);
-}
-@media (max-width: 900px) {
-  .df-grimoire-bg { display: none; }
+/* Fond nébuleuse partagé (chantier "même fond partout", 14 août 2026) —
+   déplacé ici depuis pageSonges.css, où il ne définissait QUE .df-songes
+   (L'Œil de Draconiros) : Les Taux et la Bibliothèque le réutilisent
+   maintenant aussi (GrimoirePage remplace ici son ancien .df-grimoire-bg,
+   fond flouté propre à cette page, retiré). Une seule définition — le jour
+   où Popo la change, elle change sur toutes les pages qui l'utilisent.
+   fond-page-oeil.webp plein cadre, fixe au scroll (immunise le rendu contre
+   la longueur du contenu : le fond peint le viewport, pas la page, donc
+   aucune répétition/coupure possible même sur une liste très longue comme
+   le Bestiaire — seul un contenu plus COURT que l'écran a besoin d'un
+   minHeight:100vh sur ce conteneur, ajouté par page si nécessaire). Voile
+   sombre + assombrissement vers le bas en un seul calque gradient pour que
+   le texte reste lisible par-dessus l'image, quelle que soit la page.
+   À poser sur le conteneur EXTÉRIEUR (pleine largeur, sans max-width) —
+   un contenu centré en max-width doit vivre dans un enfant séparé, sinon
+   le fond ne couvrirait que la colonne centrale. */
+.df-fond-nebuleuse {
+  position: relative;
+  background-image:
+    linear-gradient(to bottom, rgba(4, 18, 26, .55) 0%, rgba(4, 18, 26, .55) 45%, rgba(4, 18, 26, .85) 100%),
+    url('/assets/oeil/fond-page-oeil.webp');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-color: #04121A;
 }
 
 /* Respect du mode "mouvement réduit" (accessibilité) */
