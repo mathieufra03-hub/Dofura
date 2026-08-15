@@ -102,6 +102,7 @@ const cp = {
   chiffrePhareBloc: { textAlign: "center", margin: "18px 0", padding: "20px 16px", background: "rgba(44, 231, 255, 0.06)", border: "1px solid rgba(44, 231, 255, 0.3)", borderRadius: 14 },
   chiffrePhareLabel: { fontSize: 12, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 },
   chiffrePhare: { fontSize: "clamp(34px, 9vw, 52px)", fontWeight: 700, color: "#2CE7FF", textShadow: "0 0 14px rgba(44,231,255,0.5)", lineHeight: 1, marginBottom: 8 },
+  sousTitre: { fontSize: 15, fontWeight: 700, color: "var(--df-gold)", margin: "26px 0 10px", scrollMarginTop: 20 },
 }
 
 function encadreStyle(couleur) {
@@ -553,13 +554,22 @@ export default function ComprendrePage({ onBack }) {
               final — perdre avant ne rapporte rien.
             </p>
             <table style={cp.table}>
-              <thead><tr><th style={cp.th}>Intensité</th><th style={{ ...cp.th, textAlign: "right" }}>Bribes par vague</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style={cp.th}>Intensité</th>
+                  <th style={{ ...cp.th, textAlign: "right" }}>Bribes par vague</th>
+                  <th style={{ ...cp.th, textAlign: "right" }}>Vagues requises</th>
+                  <th style={{ ...cp.th, textAlign: "right" }}>Vagues maximum</th>
+                </tr>
+              </thead>
               <tbody>
                 {Object.entries(config.intensites).map(([cle, info]) =>
                   info.niveaux.map(n => (
                     <tr key={`${cle}_${n}`}>
                       <td style={cp.td}>{config.intensites[cle].libelle} {NOMS_PALIERS_ROMAINS[n] || n}</td>
                       <td style={cp.tdChiffre}>{config.bribes_par_vague[`${cle}_${n}`] ?? "—"}</td>
+                      <td style={{ ...cp.td, textAlign: "right" }}>{config.vagues_requises[cle]}</td>
+                      <td style={{ ...cp.td, textAlign: "right" }}>{config.vagues_max[cle] ?? "illimité"}</td>
                     </tr>
                   ))
                 )}
@@ -567,8 +577,9 @@ export default function ComprendrePage({ onBack }) {
             </table>
             <p style={cp.paragraphe}>
               Pousser les vagues au-delà du seuil minimal augmente les bribes obtenues, mais pas les
-              chances de drop du combat final — qui compte toujours pour un seul combat, quel que
-              soit le nombre de vagues enchaînées.
+              chances de drop du combat final — qui compte toujours pour un seul combat. Depuis la
+              3.5, une fois le seuil franchi, la run est validée même en cas de défaite ensuite :
+              continuer ne met pas en danger les bribes déjà acquises.
             </p>
             <p style={cp.paragraphe}>
               Quand plusieurs joueurs participent à une run, chacun reçoit sa part au prorata du
@@ -593,49 +604,121 @@ export default function ComprendrePage({ onBack }) {
             } />
           </section>
 
-          {/* VII — Les bonus */}
+          {/* VIII — Les bonus (refonte : ce qu'ils FONT, pas seulement où les trouver) */}
           <section id="les-bonus" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VII</span>Les bonus</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VIII</span>Les bonus</h2>
             <p style={cp.paragraphe}>
-              Trois façons de monter en puissance pendant une run : les Fontaines Oniriques, les
-              Faveurs Oniriques, et les bonus mineurs gagnés à l'entrée de chaque salle.
+              Trois familles : bonus mineurs (à l'entrée de chaque salle), bonus passifs (Fontaine
+              uniquement), bonus actifs — les sorts de songe. Compagnons et invocations en
+              profitent aussi.
+            </p>
+
+            <h3 id="le-multiplicateur-de-degats" style={cp.sousTitre}>Le multiplicateur de dégâts</h3>
+            <p style={cp.paragraphe}>
+              Démarre à 100 %, monte avec les bonus "% Dégâts". Tous les autres bonus s'additionnent
+              d'abord entre eux ; le multiplicateur s'applique en <strong>dernier</strong> sur le
+              total — il multiplie donc aussi les dommages finaux d'un passif de monstre ou d'un
+              Dofus. C'est la statistique la plus forte des Songes, au-dessus des dommages finaux.
+            </p>
+            <EncadreARetenir>
+              Le multiplicateur de dégâts s'applique en dernier, sur tout le reste déjà additionné —
+              c'est le bonus le plus rentable à prioriser, et personne ne l'explique en jeu.
+            </EncadreARetenir>
+
+            <h3 id="les-fontaines-oniriques" style={cp.sousTitre}>Les Fontaines Oniriques</h3>
+            <p style={cp.paragraphe}>
+              5 bonus proposés, achetés avec les points de rêve gagnés en combat. Dès qu'un bonus
+              est acheté, un nouveau le remplace immédiatement — la fontaine ne se vide jamais.
+              4 raretés : commun, rare, épique, légendaire. Nettement plus puissants que les bonus
+              de salle.
             </p>
             <p style={cp.paragraphe}>
-              La Fontaine Onirique propose 5 bonus à la fois, achetés avec les points de rêve gagnés
-              en combat. Dès qu'un bonus est acheté, un nouveau le remplace immédiatement — la
-              fontaine ne se vide jamais. Quatre raretés existent : commun, rare, épique, légendaire.
-            </p>
-            <p style={cp.paragraphe}>
-              La Faveur Onirique, elle, ne coûte rien : elle propose 3 bonus au choix (dont toujours
-              une petite bourse de points de rêve), et permet surtout d'avancer d'une salle sans
-              combattre. Elle n'apparaît jamais au palier I.
-            </p>
-            <p style={cp.paragraphe}>
-              En chemin, tu croiseras peut-être des gobelins — des PNJ rares, visibles uniquement par
-              le propriétaire de la run, qui offrent chacun un service : Bog relance les objets d'une
-              fontaine, Gobledore permet de revenir à la salle des portails précédente, Gobséric fait
-              passer une salle sans combattre, et King Gob multiplie les points de rêve gagnés sur la
-              salle. Chacun disparaît après usage — et tu peux toujours refuser.
+              La première fontaine (salle 4) est plus restreinte : bonus à 15 points de rêve maximum,
+              un seul passif possible (Vent Arrière), les sorts à 20 points n'y apparaissent jamais.
             </p>
             <EmplacementImage src="/assets/comprendre/fontaine-onirique.webp" alt="Interface de la Fontaine Onirique, avec ses 5 bonus proposés" />
-            <EncadreARetenir>
-              La Fontaine coûte des points de rêve mais se réapprovisionne à chaque achat ; la Faveur
-              est gratuite mais impose un choix parmi trois options, sans jamais apparaître au
-              palier I.
-            </EncadreARetenir>
+
+            <h3 id="les-faveurs-oniriques" style={cp.sousTitre}>Les Faveurs Oniriques</h3>
+            <p style={cp.paragraphe}>
+              Gratuites : 3 bonus au choix (dont toujours une petite bourse de points de rêve).
+              Choisir en est <strong>obligatoire</strong> pour continuer — une Tempête astrale
+              relance les trois propositions. Intérêt majeur : avancer d'une salle sans combattre.
+              N'apparaît jamais au palier I.
+            </p>
+
+            <h3 id="les-bonus-mineurs" style={cp.sousTitre}>Les bonus mineurs</h3>
+            <p style={cp.paragraphe}>
+              Gagnés à l'entrée de chaque salle, visibles sur la carte avant de choisir son chemin :
+              dégâts, vitalité, portée, PA, PM, points de rêve, Tempête astrale, effets sur les
+              sorts... Six d'entre eux n'apparaissent qu'à partir du palier II. "Sorts : −1 de
+              relance" ne peut être obtenu qu'une seule fois par run.
+            </p>
+
+            <h3 id="les-bonus-passifs" style={cp.sousTitre}>Les bonus passifs</h3>
+            <p style={cp.paragraphe}>
+              Achetables uniquement en Fontaine, entre 15 et 25 points de rêve. Tous de rareté
+              légendaire — les passifs de classe coûtent systématiquement 25 points.
+            </p>
+
+            <h3 id="les-trois-utilitaires" style={cp.sousTitre}>Les trois utilitaires</h3>
+            <p style={cp.paragraphe}>
+              Tempête astrale (change un groupe de monstres ou renouvelle une Fontaine/Faveur),
+              Sable de Draconiros (20 points en Fontaine, retente un combat perdu), Croissance
+              Onirique (+100 niveaux de songeur, 10 points en Fontaine).
+            </p>
+            <p style={cp.paragraphe}>Trois sources de niveaux de songeur, cumulables :</p>
+            <table style={cp.table}>
+              <thead><tr><th style={cp.th}>Source</th><th style={{ ...cp.th, textAlign: "right" }}>Gain</th></tr></thead>
+              <tbody>
+                <tr><td style={cp.td}>Croissance Onirique</td><td style={cp.tdChiffre}>+100</td></tr>
+                <tr><td style={cp.td}>Invocation du Nessil</td><td style={cp.tdChiffre}>+50</td></tr>
+                <tr><td style={cp.td}>Bonus de portail</td><td style={cp.tdChiffre}>+50</td></tr>
+              </tbody>
+            </table>
+            <p style={cp.paragraphe}>
+              Aucune des trois n'augmente le niveau des monstres.
+            </p>
+
+            <EncadreReserve>
+              Les succès "Bribe d'un… économe" et "Bribe d'un… parfait" interdisent tout achat en
+              Fontaine. Les pouvoirs de gobelins, eux, restent autorisés.
+            </EncadreReserve>
+            <p style={cp.paragraphe}>
+              Les bonus actifs — les sorts de songe — ont leur propre section, plus bas.
+            </p>
           </section>
 
-          {/* VIII — Les sorts de songe (masquée tant que SORTS_DE_SONGE est vide) */}
+          {/* IX — Quêtes et succès */}
+          <section id="quetes-et-succes" style={cp.section}>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IX</span>Quêtes et succès</h2>
+            <p style={cp.paragraphe}>
+              5 quêtes sont liées aux Songes : Cauchemar infini, Jusqu'au bout du rêve, Prise de
+              conscience, Les animaux fantastiques, Le poids de son regard.
+            </p>
+            <p style={cp.paragraphe}>
+              6 succès identiques se déclinent pour chacune des 3 catégories d'intensité (vaincre
+              1 000 monstres, 100 boss, obtenir 1 000 bribes, 500 bribes sans Sable, sans achat en
+              Fontaine, ou sans les deux). Ils se cumulent vers le bas — progresser en Cauchemar
+              avance aussi Paradoxe et Rêve — et sont réalisables sur plusieurs runs, à n'importe
+              quelle intensité de la catégorie.
+            </p>
+            <p style={cp.paragraphe}>
+              4 Épreuves de Songe valent chacune un succès à 10 points, sans autre récompense.
+            </p>
+          </section>
+
+          {/* X — Les sorts de songe (masquée tant que SORTS_DE_SONGE est vide) */}
           {SORTS_DE_SONGE.length > 0 && (
             <section id="les-sorts-de-songe" style={cp.section}>
-              <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VIII</span>Les sorts de songe</h2>
-              {/* Contenu à écrire une fois la source scrapée. */}
+              <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>X</span>Les sorts de songe</h2>
+              {/* Contenu à écrire une fois la source scrapée — prévoir un renvoi vers la
+                  Bibliothèque une fois les sorts effectivement trackés là-bas. */}
             </section>
           )}
 
-          {/* IX — Ce qu'on ne sait pas encore */}
+          {/* XI — Ce qu'on ne sait pas encore */}
           <section id="ce-qu-on-ne-sait-pas-encore" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IX</span>Ce qu'on ne sait pas encore</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XI</span>Ce qu'on ne sait pas encore</h2>
             <p style={cp.paragraphe}>
               Cette page ne prétend pas tout savoir. Certains chiffres sont encore en conflit entre
               nos relevés et d'autres sources, et certains mécanismes restent flous — les voici, sans
