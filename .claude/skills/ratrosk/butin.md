@@ -13,6 +13,11 @@ indépendantes** doivent être remplies pour qu'un objet puisse tomber.
 ✅ Conséquence contre-intuitive : un joueur en Cauchemar III mais au palier II
 **ne peut pas** drop de légende. L'intensité maximale ne remplace pas le palier.
 
+✅ Chaque personnage tire son drop **indépendamment** des autres. Dans un
+groupe de 4, ce sont donc 4 jets séparés par combat, pas un jet partagé pour
+le groupe — c'est ce qui justifie de multiplier par le nombre de personnages
+dans le calcul du nombre de runs.
+
 ## Tableau par palier
 
 | Palier | Ce qui peut tomber |
@@ -36,26 +41,40 @@ Runes astrales et légendes : ✅ **Paradoxe et Cauchemar uniquement**, jamais e
   Mécanisme voisin mais distinct de l'incertitude sur le multiplicateur de
   palier des runes (voir `zones-grises.md`).
 
+## Bonus de drop par salle
+
+✅ Le taux affiché en jeu grimpe aussi avec la profondeur et la difficulté de
+la salle choisie, sans jamais redescendre sous le plancher de l'intensité.
+Constaté en jeu, captures à l'appui : en Paradoxe IV (plancher 190 %), au
+palier III, une salle de difficulté 32 affichait un taux de **238 %**.
+
+Dofura **choisit de ne pas modéliser ce bonus** : il varie trop d'une run à
+l'autre selon les salles traversées. Nos chiffres de taux et de nombre de
+runs restent donc un **plancher assumé** — une décision de méthode, pas une
+lacune de données. Voir aussi `intensites.md`.
+
 ## Combats éligibles par objet
 
 📊 Calculé depuis la répartition des paliers (3 / 5 / 5 / 5 / 4 combats).
 
-| Objet | Paliers | Combats éligibles sur 22 |
+| Objet | Paliers | Combats éligibles (au plus 22) |
 |---|---|---|
-| Reflets oniriques | I → V | 22 |
-| Bouclirêve Étoile | I → V | 22 |
+| Reflets oniriques | I → V | jusqu'à 22 |
+| Bouclirêve Étoile | I → V | jusqu'à 22 |
 | Bouclirêve Onirique | I | 3 |
 | Bouclirêve Fantastique | II | 5 |
 | Bouclirêve Imaginaire | III | 5 |
 | Bouclirêve Brumeux | IV | 5 |
 | Bouclirêve Infini | V | 4 |
-| Légendes · légendes animales · Diplôme de Feur | III → V | 14 |
+| Légendes · légendes animales · Diplôme de Feur | III → V | jusqu'à 14 |
 | Rune Mineure · Moyenne | I → II | 8 |
 | Rune Majeure · Épatante | III → IV | 10 |
 | Rune Merveilleuse · Légendaire | IV → V | 9 |
 
-> Le Bouclirêve Onirique a **sept fois moins** d'occasions que l'Étoile dans
-> une même run. C'est le genre de chiffre que personne ne publie.
+> Le Bouclirêve Onirique a **jusqu'à sept fois moins** d'occasions que
+> l'Étoile dans une même run — l'Onirique ne peut pas être réduit (palier I,
+> jamais de Faveur), l'Étoile si. C'est le genre de chiffre que personne ne
+> publie.
 
 ## Les reflets oniriques
 
@@ -68,7 +87,7 @@ Ressource de base, obtenue à la fin de chaque combat.
 - ✅ La prospection **n'influe pas**.
 - ✅ Achetables auprès de Neru Stalar à 2 bribes l'unité.
 
-📊 Estimation par run, au plancher de l'intensité, sur 22 combats :
+📊 Estimation par run, au plancher de l'intensité, sur au plus 22 combats :
 
 | Intensité | Reflets / combat | Reflets / run |
 |---|---|---|
@@ -86,6 +105,10 @@ et la difficulté des salles.
 - ✅ Paradoxe et Cauchemar uniquement. Rareté déterminée par le palier
   (voir tableau ci-dessus).
 - ✅ Le taux évolue selon le palier et la difficulté des combats.
+- ✅ Le palier agit ici **directement** sur le taux, au-delà du simple
+  déblocage de rareté — c'est le seul mécanisme du genre : pour les autres
+  familles d'objets, le palier n'influence le taux qu'**indirectement**, via
+  la difficulté croissante des salles (voir `intensites.md`).
 - ✅ La prospection **n'influe pas**.
 - ✅ 6 raretés : Mineure, Moyenne, Majeure, Épatante, Merveilleuse, Légendaire.
 - ✅ Servent à craft les **runes de transcendance** : 100 % de réussite, mais
@@ -107,6 +130,15 @@ et la difficulté des salles.
 - ✅ La prospection **n'influe pas**.
 - ✅ Les 8 légendes de la 3.3 : Amayiro, Helséphine, Henual, Oto Mustam,
   Menalt, Mériana, Miroir, Thanatena.
+- ✅ Chaque légende tire **indépendamment** des 25 autres : le tableau des
+  butins affiché en jeu à la fin d'un combat liste chaque légende sur sa
+  propre ligne, avec son propre pourcentage. Il n'y a pas de tirage
+  "légende" unique qui se répartirait ensuite.
+
+**Conséquence directe** : un nombre de runs calculé sur le taux d'une seule
+légende ne vaut que pour **cette légende précise**. Pour obtenir n'importe
+laquelle des 26, le nombre de runs nécessaire est environ **26 fois plus
+bas**.
 
 Taux de base :
 
@@ -115,10 +147,15 @@ Taux de base :
 | Légende animale | 0,01 % | 0,01 % | ✅ concordant |
 | Légende | 0,003667 % | 0,0035 % | ⚠️ **conflit** |
 
-⚠️ Sur les légendes classiques, nos relevés donnent 0,0044 % au minimum en
-Paradoxe I, la source externe 0,0042 %. Nous privilégions nos relevés
-(28 mesures en jeu, exactes au millième), mais ce point est à re-vérifier.
-**Ne jamais présenter ce chiffre sans la nuance.**
+✅ Popo confirme **0,003667 %** comme taux de base retenu par Dofura (nos
+relevés donnent 0,0044 % au minimum en Paradoxe I).
+
+⚠️ Le conflit avec la source externe (0,0035 % de base, 0,0042 % au minimum
+Paradoxe I) reste néanmoins ouvert : l'affichage en jeu arrondit à 3
+décimales (0,004 % en Paradoxe I), ce qui ne permet pas de départager les
+deux valeurs à la simple lecture d'une capture d'écran. Nous continuons de
+privilégier nos 28 relevés en jeu. **Ne jamais présenter ce chiffre sans la
+nuance.**
 
 ## Les cosmétiques
 
@@ -128,6 +165,8 @@ Paradoxe I, la source externe 0,0042 %. Nous privilégions nos relevés
   les boucliers**. Elle joue individuellement, par personnage, pas au niveau
   du groupe.
 - ✅ Seul le Bouclirêve Étoile est colorable.
+- ✅ La prospection influe aussi sur les **objets de quête** obtenus en
+  Songe — même mécanique que pour les Bouclirêves.
 - ✅ Les boucliers sont aussi échangeables contre des reflets d'antan ou
   oubliés (anciens Songes) auprès de Gobastrale et Coco Rupe — ces monnaies
   disparaîtront en 3.7.
@@ -145,7 +184,8 @@ Paradoxe I, la source externe 0,0042 %. Nous privilégions nos relevés
   Neru Stalar, 50 bribes l'unité.
 - ✅ **Panoplie d'apparat** (Cape, Coiffe, Bouclier de la Fontaine Onirique) :
   achat uniquement, contre des bribes.
-- ✅ **Compagnons** (Phong Huss, Grouillot) : achat uniquement.
+- ✅ **Compagnons** (Phong Huss, Grouillot) : achat uniquement contre des
+  bribes. Ne tombent plus en drop depuis la mise à jour du 7 octobre.
 - ✅ **Costumes** : récompenses de succès uniquement, un par catégorie de
   difficulté — Costume du rêveur (Rêve), Paradoxal, Cauchemardesque.
 - ✅ **Ornements et titres** hors Diplôme de Feur : succès ou achat.

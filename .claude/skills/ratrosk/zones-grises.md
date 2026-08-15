@@ -5,25 +5,6 @@ affirmé. C'est aussi une section éditoriale à part entière de la page
 "Comprendre les Songes" : dire ce qu'on ignore est un argument de crédibilité,
 pas une faiblesse.
 
-## Tirage indépendant ou mutualisé entre les légendes ❌
-
-On ne sait pas si chacune des 26 légendes (et des 4 légendes animales) a son
-propre tirage indépendant au taux de base, ou si un seul tirage "légende" a
-lieu par combat éligible, sa réussite se répartissant ensuite entre les
-variantes possibles.
-
-Conséquence directe sur nos calculs de "nombre de runs moyen" : tous nos
-chiffres actuels (nombre de runs pour drop **une légende précise**) sont donc
-un **plafond**, pas une estimation du temps pour obtenir n'importe laquelle
-des 26. Si le tirage est mutualisé, le nombre de runs pour obtenir une légende
-au hasard parmi les 26 pourrait être nettement plus bas — jusqu'à un facteur
-proche de 26 dans le cas extrême d'un tirage parfaitement mutualisé entre
-variantes d'un même type.
-
-Test proposé : comparer la fréquence d'apparition du tag "BUTIN LÉGENDAIRE"
-(voir plus bas) à la fréquence cumulée d'obtention d'une légende précise sur
-un même échantillon de runs.
-
 ## Conflits de sources non tranchés
 
 ### Taux de base des légendes classiques ⚠️
@@ -34,7 +15,10 @@ un même échantillon de runs.
 | Source externe | 0,0035 % | 0,0042 % |
 
 Les deux valeurs sont cohérentes en interne — c'est bien le taux affiché en jeu
-qui diffère. Dofura privilégie ses propres relevés. **À re-vérifier en jeu.**
+qui diffère. Dofura privilégie ses propres relevés (0,003667 % confirmé comme
+base par Popo). L'affichage en jeu arrondit à 3 décimales (0,004 % en
+Paradoxe I), ce qui ne permet pas de départager les deux valeurs à la simple
+lecture d'une capture d'écran — c'est ce qui explique que le conflit persiste.
 
 ### Taux de base du Diplôme de Feur ⚠️
 
@@ -75,28 +59,13 @@ résolu.
 
 Nos relevés suggèrent que les runes astrales subissent un multiplicateur lié au
 palier **en plus** du multiplicateur d'intensité — ratios observés ×1,1 (II),
-×1,3 (III), ×1,2 (IV), ×1,4 (V). Non confirmé.
+×1,3 (III), ×1,2 (IV), ×1,4 (V). Non confirmé. **Spécifique aux runes** : pour
+les autres familles d'objets, le palier n'agit qu'indirectement, via la
+difficulté croissante des salles (voir `intensites.md` et `butin.md`).
 
 Conséquence : nos taux de runes sont un **plancher**, pas une estimation
 centrale. Test proposé : comparer un Bouclirêve Étoile obtenu au palier I et au
 palier V dans une même run.
-
-### Rune Légendaire : palier IV seulement ou IV et V ? ⚠️
-
-Notre table interne mentionne la rune légendaire au palier IV. Le tableau de
-drop par palier la donne en IV **et** V. Écart de 5 à 9 combats éligibles.
-À vérifier dans les données du site.
-
-### Nombre de salles sans combat ❌
-
-Une Faveur Onirique remplace un combat, et le gobelin Gobséric permet d'en
-sauter un. Le nombre réel de combats par run est donc ≤ 22, mais on ne connaît
-pas la fréquence d'apparition des Faveurs ni des gobelins. Impossible de
-calculer une moyenne réaliste pour l'instant.
-
-### Tag "BUTIN LÉGENDAIRE" ❌
-
-Signalé en jeu à partir d'un certain palier. Conditions exactes inconnues.
 
 ### Sorts de fontaine ❌
 
@@ -114,7 +83,8 @@ promouvoir en ✅ sans relevé en jeu.
 Pour mémoire, ces points **ne sont plus** des zones grises :
 
 - ✅ **Le boss final compte pour 1 combat**, quel que soit le nombre de vagues.
-  Le total reste 22 occasions de drop par run. Vérifié en jeu par Popo.
+  Le total reste à au plus 22 occasions de drop par run. Vérifié en jeu par
+  Popo.
 - ✅ **Les Souvenirs et le mode Entraînement ne donnent aucune récompense.**
   Ils ne doivent jamais compter dans les statistiques de Dofura.
 - ✅ **Le combat final n'est plus "3 vagues de 4 boss"** — c'était le format
@@ -123,8 +93,19 @@ Pour mémoire, ces points **ne sont plus** des zones grises :
 - ✅ **Les Bouclirêves sont exclusifs à leur palier.** Seul l'Étoile traverse
   toute la run.
 - ✅ **La prospection ne touche que les cosmétiques** (boucliers, Diplôme de
-  Feur), individuellement par personnage. Pas les reflets, ni les runes, ni
-  les légendes.
+  Feur) et les objets de quête, individuellement par personnage. Pas les
+  reflets, ni les runes, ni les légendes.
+- ✅ **Chaque légende tire indépendamment des 25 autres** — confirmé en jeu
+  par Popo (tableau des butins de la salle, une ligne par légende). Le
+  nombre de runs pour n'importe laquelle des 26 est donc environ 26 fois
+  plus bas que pour une légende précise.
+- ✅ **La Rune Légendaire est bien dropable aux paliers IV et V** (9 combats
+  éligibles), pas seulement au palier IV. Tranché par Popo — le tableau
+  `butin.md` était déjà correct.
+- ✅ **Le nombre de combats par run est plafonné à 22, jamais un nombre
+  fixe** — une Faveur Onirique ou le gobelin Gobséric peuvent le réduire.
+  Leur fréquence d'apparition n'étant pas publiée par Ankama, aucun plancher
+  fiable n'est calculable — voir `structure.md`.
 
 ## Comment lever une zone grise
 

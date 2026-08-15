@@ -75,6 +75,8 @@ Lis l'index, ouvre uniquement ce dont tu as besoin.
   boutique, recettes de craft
 - **[bonus.md](bonus.md)** — fontaines, faveurs, bonus mineurs,
   passifs, sorts, utilitaires
+- **[quetes-succes.md](quetes-succes.md)** — les 5 quêtes liées aux Songes,
+  les succès par catégorie de difficulté, les Épreuves de Songe
 - **[zones-grises.md](zones-grises.md)** — ce qu'on ne sait pas
   encore, et les conflits de sources non tranchés
 

@@ -13,8 +13,10 @@
 - ✅ Le propriétaire ne peut pas changer en cours de run. Les accompagnants
   peuvent être remplacés autant de fois que voulu.
 - ✅ Un personnage ne peut avoir qu'**une seule run en cours** à la fois.
-- ✅ Accès par l'onglet Songes Infinis du menu (raccourci T). Aucun prérequis
-  de quête. Conseillé niveau 199-200.
+- ✅ Accès par l'onglet Songes Infinis du menu (raccourci T). **Aucun
+  prérequis** de quête ni de niveau — niveau 199-200 **conseillé**, pas
+  exigé. Un personnage plus bas niveau peut lancer une run : son niveau de
+  songeur sera simplement fixé à 200 au palier I (voir plus bas).
 - ✅ La zone compte 3 maps : le puits, le Marché onirique (à gauche), le
   domaine de Draconiros (en haut).
 
@@ -28,11 +30,19 @@
 | IV | Les Concepts brumeux | 16 → 21 | 5 |
 | V | Les Abstractions chimériques | 22 → 26 | 4 |
 
-- ✅ Total : **22 combats par run** (26 salles − 4 fontaines).
+- ✅ **Au plus 22 combats par run** (26 salles − 4 fontaines) : c'est un
+  plafond, pas un nombre fixe.
 - ✅ Les 3 premières salles sont **toujours** des combats.
-- ✅ Aucune Faveur Onirique au palier I.
-- 📊 22 est un plafond : une Faveur Onirique remplace un combat, et le gobelin
-  Gobséric permet d'en sauter un. Le nombre réel de combats peut être inférieur.
+- ✅ Aucune Faveur Onirique au palier I — les 3 premiers combats sont donc
+  garantis, quel que soit le trajet.
+- ✅ Une Faveur Onirique remplace un combat, et le gobelin Gobséric permet
+  d'en sauter un : le nombre réel de combats est donc **inférieur ou égal**
+  à 22 selon le trajet choisi. Aucun plancher fiable connu — voir "Les
+  gobelins" plus bas.
+
+> **Arbitrage à connaître** : une Faveur Onirique donne un bonus gratuit
+> sans risque de mort, mais coûte une occasion de drop. Un joueur qui farme
+> les légendes a intérêt à les éviter quand c'est possible.
 
 ## Types de salles
 
@@ -107,6 +117,10 @@ Monnaie interne de la run, dépensée dans les Fontaines Oniriques.
 - ⚠️ (annoncé en 3.5, non vérifié en jeu) Le taux d'apparition des gobelins
   serait désormais fixe quelle que soit l'intensité choisie — avant la 3.5,
   ils apparaissaient plus fréquemment en haute difficulté.
+- ✅ Ankama ne communique pas la fréquence d'apparition des gobelins, ni
+  celle des Faveurs Oniriques. Ce n'est pas une donnée en attente de
+  vérification en jeu : elle est structurellement indisponible, ce qui
+  interdit tout calcul fiable d'un nombre moyen de combats par run.
 
 ## Niveau de songeur
 
@@ -145,6 +159,11 @@ Progression du niveau des monstres, par palier :
 
 - ✅ Groupes de 1 à 3 monstres surtout au palier I, 6 à 8 au dernier palier.
 - ✅ Chaque monstre et chaque boss a un score de difficulté propre.
+- ✅ Chaque **salle** a aussi un score de difficulté global, jamais affiché
+  au joueur pendant la run — seulement visible sur l'écran de défaite.
+  Ordres de grandeur relevés : environ 5 en Rêve I au palier I, environ 10
+  en Rêve I au palier V, environ 30 en Cauchemar III au palier I, environ 60
+  en Cauchemar III au palier V.
 - ✅ **Aucun combat à vagues dans les salles classiques.** Le seul combat à
   vagues de la run est le boss final.
 - ✅ Depuis la 3.4, des avis de recherche peuvent faire partie des groupes :
@@ -172,7 +191,8 @@ Progression du niveau des monstres, par palier :
   sont ouvertes, on peut avancer sans combattre, Sables de Draconiros infinis.
   Aucune récompense.
 - ✅ **Épreuves de Songe** : des Souvenirs imposés, avec modificateur et
-  intensité fixés. Chaque épreuve vaut un succès à 10 points.
+  intensité fixés. Chaque épreuve vaut un succès à 10 points — détail des
+  épreuves connues dans `quetes-succes.md`.
 - ✅ Ankama publie des codes de runs modifiées : FONSOCAC, SOFTCORE, DICEROLL,
   COMTOISE, SOUVENIR, REVERSED, SINJSONJ, NILEZAFF.
 

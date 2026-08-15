@@ -82,6 +82,10 @@ probablement les PNJ associés.
 ✅ La panoplie d'apparat complète (cape + coiffe + bouclier) revient donc à
 **20 000 bribes**, et elle est colorable.
 
+✅ Les compagnons (Phong Huss, Grouillot) ne tombent plus en drop depuis la
+mise à jour du 7 octobre — l'achat contre bribes ci-dessus est désormais
+leur seule source.
+
 ## Les crafts
 
 ### Équipements légendaires

@@ -155,10 +155,16 @@ Sorts +1 lancer par cible · 1 Tempête astrale · 5, 15 ou 30 points de rêve �
   (accompagné de 5 points de rêve).
 
 ### Croissance Onirique
-- ✅ +100 niveaux de songeur. 10 points de rêve en fontaine.
-- ✅ Le bonus "Invocation du Nessil" (15 points de rêve) donne +50 niveaux de
-  songeur, 2 invocations et le sort associé.
-- ⚠️ (annoncé en 3.5, non vérifié en jeu) Ce sort associé invoquerait un
-  Nessil incapable de se déplacer ou d'être déplacé, pour un coût de 1 PI.
-- ✅ Depuis la 3.5, un bonus de portail donne également +50 niveaux de songeur.
-- ✅ Rappel : les niveaux gagnés ainsi n'augmentent **pas** ceux des monstres.
+
+✅ Trois sources de niveaux de songeur supplémentaires, cumulables :
+
+| Source | Gain | Où |
+|---|---|---|
+| Croissance Onirique | +100 niveaux | Fontaine, 10 points de rêve |
+| Invocation du Nessil | +50 niveaux (+ 2 invocations + le sort associé) | Fontaine, 15 points de rêve |
+| Bonus de portail | +50 niveaux | Depuis la 3.5, bonus mineur |
+
+- ⚠️ (annoncé en 3.5, non vérifié en jeu) Le sort associé à Invocation du
+  Nessil invoquerait un Nessil incapable de se déplacer ou d'être déplacé,
+  pour un coût de 1 PI.
+- ✅ Aucune des trois ne fait monter le niveau des monstres.

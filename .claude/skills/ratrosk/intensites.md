@@ -34,6 +34,13 @@ Le même multiplicateur s'applique au butin **et** à l'expérience.
 > À écrire systématiquement : nos estimations partent du taux minimal de
 > l'intensité. Le taux réel d'un joueur dépend des salles qu'il choisit.
 
+> **Décision de méthode** : Dofura choisit de ne pas modéliser ce bonus par
+> salle — trop variable d'une run à l'autre. Exemple relevé en jeu : en
+> Paradoxe IV (plancher 190 %), au palier III, une salle de difficulté 32
+> affichait un taux de **238 %**. Nos chiffres de taux et de nombre de runs
+> restent donc un **plancher assumé**, jamais une moyenne. Voir aussi
+> `butin.md`.
+
 ## Ressources de départ
 
 | Catégorie | Points de rêve | Sable de Draconiros | Tempête astrale |
@@ -95,7 +102,7 @@ Niveau des monstres du boss final :
 
 ✅ Le boss final est **une seule instance de combat**. Quel que soit le nombre
 de vagues enchaînées, il compte pour **un combat** dans les occasions de drop.
-Le total reste donc de 22 occasions par run.
+Le total reste donc à **au plus 22** occasions par run.
 
 En revanche, les **bribes** sont comptées **par vague vaincue**. Pousser les
 vagues n'augmente donc pas les chances de drop, mais augmente les bribes.
