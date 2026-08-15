@@ -99,6 +99,9 @@ const cp = {
   caveat: { fontSize: 11.5, color: "var(--df-text-3)", fontStyle: "italic", margin: "0 0 14px" },
   image: { margin: "18px 0", borderRadius: 12, overflow: "hidden", border: "1px solid var(--df-border-gold)" },
   legendeImage: { fontSize: 11.5, color: "var(--df-text-3)", fontStyle: "italic", padding: "6px 10px" },
+  chiffrePhareBloc: { textAlign: "center", margin: "18px 0", padding: "20px 16px", background: "rgba(44, 231, 255, 0.06)", border: "1px solid rgba(44, 231, 255, 0.3)", borderRadius: 14 },
+  chiffrePhareLabel: { fontSize: 12, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 },
+  chiffrePhare: { fontSize: "clamp(34px, 9vw, 52px)", fontWeight: 700, color: "#2CE7FF", textShadow: "0 0 14px rgba(44,231,255,0.5)", lineHeight: 1, marginBottom: 8 },
 }
 
 function encadreStyle(couleur) {
@@ -198,12 +201,17 @@ export default function ComprendrePage({ onBack }) {
     fetch(`${API}/songes/config`).then(r => r.json()).then(setConfig)
   }, [])
 
-  // Section V : 7 intensités où les légendes sont éligibles (Paradoxe I à
-  // Cauchemar IV), dérivées de config.intensites — jamais un [1,2,3,4]
+  // Section VI : 7 intensités où les légendes sont éligibles (Paradoxe I à
+  // Cauchemar III), dérivées de config.intensites — jamais un [1,2,3,4]
   // codé en dur. Un appel /songes/taux par intensité x niveau (même
-  // endpoint que TauxPage.jsx), on ne garde que l'item catégorie
-  // "legende" : toutes les légendes du même type partagent exactement le
-  // même taux (fait ✅ Ratrosk, butin.md), un seul suffit.
+  // endpoint que TauxPage.jsx). Deux lectures calculées par intensité :
+  // "une précise" (calculerSongesItems sur UN item legende — toutes les
+  // légendes du type partagent le même taux, fait ✅ Ratrosk butin.md) et
+  // "n'importe laquelle" (calculerSongesItems sur TOUS les items legende
+  // renvoyés par l'API — la fonction gère déjà nativement le cas "au
+  // moins un de la liste", voir SONGES.md ; le nombre réel de légendes
+  // vient donc de la longueur du tableau retourné, jamais un "26" codé en
+  // dur).
   useEffect(() => {
     if (!config) return
     const combos = ["paradoxe", "cauchemar"].flatMap(cle =>
@@ -214,11 +222,14 @@ export default function ComprendrePage({ onBack }) {
         fetch(`${API}/songes/taux?intensite=${intensite}&niveau=${niveau}`)
           .then(r => r.json())
           .then(d => {
-            const legende = d.items.find(it => it.categorie === "legende")
-            const runs = legende
-              ? calculerSongesItems([legende], config.combats_par_palier, NB_PERSONNAGES_EXEMPLE)
+            const legendes = d.items.filter(it => it.categorie === "legende")
+            const runsUnePrecise = legendes.length > 0
+              ? calculerSongesItems([legendes[0]], config.combats_par_palier, NB_PERSONNAGES_EXEMPLE)
               : null
-            return { intensite, niveau, runs }
+            const runsNimporteLaquelle = legendes.length > 0
+              ? calculerSongesItems(legendes, config.combats_par_palier, NB_PERSONNAGES_EXEMPLE)
+              : null
+            return { intensite, niveau, runsUnePrecise, runsNimporteLaquelle }
           })
       )
     ).then(setLegendesParIntensite)
@@ -463,37 +474,61 @@ export default function ComprendrePage({ onBack }) {
               </tbody>
             </table>
             <p style={cp.paragraphe}>
-              Sur la prospection : elle ne joue un rôle que sur les cosmétiques (les Bouclirêves et
-              le titre Diplôme de Feur), et individuellement par personnage. Elle n'a aucun effet sur
-              les reflets, les runes astrales ou les légendes.
+              Prospection : elle ne joue que sur les cosmétiques et les objets de quête, et
+              individuellement par personnage — jamais sur les reflets, les runes ou les légendes.
+            </p>
+            <p style={cp.paragraphe}>
+              Le palier augmente aussi <strong>directement</strong> le taux des runes astrales.
+              Pour les autres familles, il n'agit qu'<strong>indirectement</strong>, via la
+              difficulté croissante des salles.
             </p>
             <EncadreARetenir>
-              Palier III minimum ET intensité Paradoxe ou Cauchemar : les deux conditions doivent
-              être réunies pour qu'une légende puisse tomber.
+              À partir du palier III en Paradoxe I, tout devient dropable. Les deux conditions
+              doivent être réunies : monter l'intensité sans atteindre le palier III ne sert à rien.
             </EncadreARetenir>
           </section>
 
-          {/* V — Combien de runs pour une légende (section principale) */}
+          {/* VI — Combien de runs pour une légende (section principale) */}
           <section id="combien-de-runs" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V</span>Combien de runs pour une légende</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VI</span>Combien de runs pour une légende</h2>
             <p style={cp.paragraphe}>
-              Les légendes classiques (celles qui donnent des équipements légendaires) ne tombent
-              qu'à partir du palier III, et seulement en Paradoxe ou Cauchemar. Sept intensités
-              remplissent ces deux conditions.
+              Les légendes classiques ne tombent qu'à partir du palier III, et seulement en
+              Paradoxe ou Cauchemar. Chaque légende tire indépendamment des autres — le tableau des
+              butins en jeu le confirme, une ligne par légende.
             </p>
-            <p style={cp.paragraphe}>
-              Voici, pour chacune, le nombre moyen de runs avant d'obtenir <strong>une légende
-              précise</strong> — exemple travaillé à {NB_PERSONNAGES_EXEMPLE} personnages.
-            </p>
+            {(() => {
+              const defaut = config.intensite_defaut
+              const phare = legendesParIntensite?.find(l => l.intensite === defaut.intensite && l.niveau === defaut.niveau)
+              return (
+                <div style={cp.chiffrePhareBloc}>
+                  <div style={cp.chiffrePhareLabel}>
+                    N'importe quelle légende, en {config.intensites[defaut.intensite].libelle} {NOMS_PALIERS_ROMAINS[defaut.niveau]}
+                  </div>
+                  <div style={cp.chiffrePhare}>{phare ? formaterSonges(phare.runsNimporteLaquelle) : "…"}</div>
+                  <div style={cp.caveat}>
+                    Contre {phare ? formaterSonges(phare.runsUnePrecise) : "…"} pour une légende précise —
+                    exemple à {NB_PERSONNAGES_EXEMPLE} personnages.
+                  </div>
+                </div>
+              )
+            })()}
+            <p style={cp.paragraphe}>Le détail par intensité, les deux lectures côte à côte :</p>
             <table style={cp.table}>
-              <thead><tr><th style={cp.th}>Intensité</th><th style={{ ...cp.th, textAlign: "right" }}>Runs en moyenne</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style={cp.th}>Intensité</th>
+                  <th style={{ ...cp.th, textAlign: "right" }}>N'importe laquelle</th>
+                  <th style={{ ...cp.th, textAlign: "right" }}>Une précise</th>
+                </tr>
+              </thead>
               <tbody>
                 {legendesParIntensite == null ? (
-                  <tr><td style={cp.td} colSpan={2}>Chargement...</td></tr>
+                  <tr><td style={cp.td} colSpan={3}>Chargement...</td></tr>
                 ) : legendesParIntensite.map(l => (
                   <tr key={`${l.intensite}_${l.niveau}`}>
                     <td style={cp.td}>{config.intensites[l.intensite].libelle} {NOMS_PALIERS_ROMAINS[l.niveau] || l.niveau}</td>
-                    <td style={cp.tdChiffre}>{formaterSonges(l.runs)}</td>
+                    <td style={cp.tdChiffre}>{formaterSonges(l.runsNimporteLaquelle)}</td>
+                    <td style={{ ...cp.td, textAlign: "right" }}>{formaterSonges(l.runsUnePrecise)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -502,17 +537,6 @@ export default function ComprendrePage({ onBack }) {
               Ce sont des moyennes, pas des garanties : après ce nombre de runs, il reste encore
               environ 37 % de chances de n'avoir toujours rien obtenu.
             </p>
-            <EncadreReserve>
-              Toutes les légendes d'un même type partagent le même taux — mais on ne sait pas encore
-              si chacune des 26 tire indépendamment, ou si un seul tirage se répartit ensuite entre
-              les variantes. Si c'est le cas, le nombre de runs pour obtenir n'importe quelle légende
-              (pas une précise) pourrait être nettement plus bas que ce tableau.
-            </EncadreReserve>
-            <EncadreReserve>
-              Le taux utilisé ici vient de nos propres relevés en jeu. Une source externe indique un
-              chiffre légèrement différent — un écart mineur mais non tranché. Nous privilégions nos
-              relevés, mesurés directement en jeu.
-            </EncadreReserve>
             <EncadreCalculeLeTien lien="/taux" enfant={
               <>Ce tableau porte sur les légendes classiques uniquement. Pour les autres objets
               trackés (légendes animales, runes, cosmétiques...), et pour ajuster le nombre de
@@ -520,9 +544,9 @@ export default function ComprendrePage({ onBack }) {
             } />
           </section>
 
-          {/* VI — Les bribes et l'économie */}
+          {/* VII — Les bribes et l'économie */}
           <section id="bribes-et-economie" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VI</span>Les bribes et l'économie</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VII</span>Les bribes et l'économie</h2>
             <p style={cp.paragraphe}>
               Les bribes de rêve sont la monnaie qu'on ramène d'une run terminée, dépensée ensuite au
               Marché onirique. Elles ne sont obtenues qu'en atteignant le seuil de vagues du combat
