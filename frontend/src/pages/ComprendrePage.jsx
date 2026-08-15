@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 
-// Page "/comprendre" — "Comprendre les Songes" (chantier dédié, 15 août 2026).
-// Contenu éditorial : toute la matière vient de la skill Ratrosk
-// (.claude/skills/ratrosk/, seule source de faits autorisée — statuts
-// ✅ affirmable / 📊 estimation / ⚠️ réserve explicite / ❌ interdit
-// d'écriture). Aucun taux, multiplicateur, nombre de runs ou prix n'est
-// écrit en dur ici : tout vient de GET /songes/config (et /songes/taux
-// pour la section V), même pattern que pages/TauxPage.jsx — y compris la
-// formule calculerSongesItems, dupliquée intentionnellement plutôt
-// qu'importée (convention du projet : chaque page est autonome, voir
-// l'en-tête de TauxPage.jsx). Fichier séparé, App.jsx n'a pas eu besoin
-// d'être touché : l'import et la route existaient déjà.
+// Page "/comprendre" — "Comprendre les Songes" (chantier dédié, 15 août
+// 2026 ; refonte à 11 sections le même mois). Contenu éditorial : toute la
+// matière vient de la skill Ratrosk (.claude/skills/ratrosk/, seule source
+// de faits autorisée — statuts ✅ affirmable / 📊 estimation / ⚠️ réserve
+// explicite / ❌ interdit d'écriture). Aucun taux, multiplicateur, nombre
+// de runs ou prix n'est écrit en dur ici : tout vient de GET /songes/config
+// (et /songes/taux pour la section VI), même pattern que pages/TauxPage.jsx
+// — y compris la formule calculerSongesItems, dupliquée intentionnellement
+// plutôt qu'importée (convention du projet : chaque page est autonome,
+// voir l'en-tête de TauxPage.jsx). Les constantes de mécanique de jeu qui
+// n'alimentent aucun calcul et n'existent dans aucune API (niveaux du boss
+// final, coûts en points de rêve, score de difficulté des salles...)
+// restent en dur : la règle vise les valeurs déjà en base qui pourraient
+// diverger (taux, multiplicateurs, nombres de runs, prix en bribes),
+// précision Popo, chantier refonte. Fichier séparé, App.jsx n'a pas eu
+// besoin d'être touché : l'import et la route existaient déjà.
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const NOMS_PALIERS_ROMAINS = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V" }
@@ -726,13 +731,10 @@ export default function ComprendrePage({ onBack }) {
             </p>
             <table style={cp.table}>
               <tbody>
-                <tr><td style={{ ...cp.td, width: 26 }}>❌</td><td style={cp.td}><strong>Tirage indépendant ou mutualisé entre les légendes</strong> — on ne sait pas si les 26 légendes tirent chacune séparément, ou si un seul tirage se répartit ensuite entre elles.</td></tr>
-                <tr><td style={cp.td}>⚠️</td><td style={cp.td}><strong>Taux de base des légendes classiques</strong> — nos relevés en jeu et une source externe donnent des chiffres proches mais pas identiques.</td></tr>
+                <tr><td style={{ ...cp.td, width: 26 }}>⚠️</td><td style={cp.td}><strong>Taux de base des légendes classiques</strong> — nos relevés (0,003667 %) et une source externe (0,0035 %) sont proches mais ne concordent pas. L'affichage en jeu arrondit à 3 décimales, impossible à départager sur une simple capture d'écran.</td></tr>
                 <tr><td style={cp.td}>⚠️</td><td style={cp.td}><strong>Taux de base du Diplôme de Feur</strong> — nos relevés et une source externe ne s'accordent pas. Non tranché.</td></tr>
-                <tr><td style={cp.td}>⚠️</td><td style={cp.td}><strong>Multiplicateur de palier sur les runes astrales</strong> — nos relevés suggèrent un bonus supplémentaire au palier le plus haut de leur tranche, en plus du multiplicateur d'intensité. Non confirmé.</td></tr>
-                <tr><td style={cp.td}>⚠️</td><td style={cp.td}><strong>Rune Légendaire : palier IV seulement, ou IV et V ?</strong> — nos deux sources internes ne s'accordent pas.</td></tr>
-                <tr><td style={cp.td}>❌</td><td style={cp.td}><strong>Nombre réel de combats par run</strong> — une Faveur Onirique ou le gobelin Gobséric permettent de sauter un combat, mais on ne connaît pas leur fréquence d'apparition.</td></tr>
-                <tr><td style={cp.td}>❌</td><td style={cp.td}><strong>Le tag "Butin légendaire"</strong> — signalé en jeu à partir d'un certain palier, mais ses conditions exactes d'apparition restent inconnues.</td></tr>
+                <tr><td style={cp.td}>⚠️</td><td style={cp.td}><strong>Multiplicateur de palier sur les runes astrales</strong> — nos relevés suggèrent un bonus supplémentaire au palier le plus haut de leur tranche, en plus du multiplicateur d'intensité. Spécifique aux runes, non confirmé.</td></tr>
+                <tr><td style={cp.td}>❌</td><td style={cp.td}><strong>Sorts de fontaine</strong> — la liste complète n'est pas relevée. L'effet annoncé de Vent Arrière (le plus d'Initiative joue en premier) reste à confirmer en jeu.</td></tr>
               </tbody>
             </table>
             <EncadreARetenir>
