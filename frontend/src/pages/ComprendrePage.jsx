@@ -91,6 +91,7 @@ const cp = {
   sectionTitre: { display: "flex", alignItems: "baseline", gap: 10, margin: "0 0 14px", fontSize: 19 },
   numeroRomain: { fontFamily: "var(--df-font-logo)", fontSize: 15, color: "var(--df-text-3)", letterSpacing: "0.06em" },
   paragraphe: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px" },
+  liste: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px", paddingLeft: 20 },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 14 },
   th: { textAlign: "left", padding: "8px 10px", color: "var(--df-text-3)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid rgba(240, 192, 64, 0.25)" },
   td: { padding: "8px 10px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-text)" },
@@ -347,13 +348,57 @@ export default function ComprendrePage({ onBack }) {
             </EncadreARetenir>
           </section>
 
-          {/* III — Les intensités */}
+          {/* III — Le combat final */}
+          <section id="le-combat-final" style={cp.section}>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>III</span>Le combat final</h2>
+            <p style={cp.paragraphe}>
+              La dernière salle, "Fin du rêve", est un combat à vagues aléatoires. Chaque vague suit
+              le même algorithme qu'une salle classique : monstres, boss ou avis de recherche.
+            </p>
+            <p style={cp.paragraphe}>Ce qui change par rapport à un combat normal :</p>
+            <ul style={cp.liste}>
+              <li>Pas de soin entre les vagues — l'érosion est conservée</li>
+              <li>Boosts, invocations, pièges et portails persistent sur le terrain</li>
+              <li>Pas de délai : la vague suivante apparaît dès la précédente éliminée</li>
+              <li>Les mécaniques de la vague précédente disparaissent</li>
+              <li>Les nouveaux arrivants ne sont pas invulnérables — focus possible avant qu'ils jouent</li>
+              <li>Un sort "une fois par combat" ne se recharge pas entre les vagues</li>
+            </ul>
+            <table style={cp.table}>
+              <thead><tr><th style={cp.th}>Catégorie</th><th style={{ ...cp.th, textAlign: "right" }}>Niveau de base</th><th style={{ ...cp.th, textAlign: "right" }}>Par vague</th></tr></thead>
+              <tbody>
+                <tr><td style={cp.td}>Rêve</td><td style={cp.tdChiffre}>250</td><td style={cp.tdChiffre}>+5</td></tr>
+                <tr><td style={cp.td}>Paradoxe</td><td style={cp.tdChiffre}>275</td><td style={cp.tdChiffre}>+10</td></tr>
+                <tr><td style={cp.td}>Cauchemar</td><td style={cp.tdChiffre}>300</td><td style={cp.tdChiffre}>+15</td></tr>
+              </tbody>
+            </table>
+            <p style={cp.paragraphe}>
+              50 tours maximum pour enchaîner le plus de vagues possible. Les seuils de validation
+              et les plafonds de vagues par catégorie sont en section{" "}
+              <a href="#bribes-et-economie" style={{ color: "var(--df-cyan)" }}
+                onClick={(e) => { e.preventDefault(); naviguerVersSection("bribes-et-economie") }}>VII</a>{" "}
+              — ils déterminent tes bribes, pas ton drop.
+            </p>
+            <EmplacementImage src="/assets/comprendre/combat-final.webp" alt="Combat final d'un Songe, vagues successives de monstres" />
+            <EncadreARetenir>
+              Le combat final compte pour un seul combat dans les occasions de drop, quel que soit
+              le nombre de vagues enchaînées — pousser les vagues change tes bribes, jamais tes
+              chances de légende.
+            </EncadreARetenir>
+          </section>
+
+          {/* IV — Les intensités */}
           <section id="les-intensites" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>III</span>Les intensités</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IV</span>Les intensités</h2>
             <p style={cp.paragraphe}>
               Dix intensités existent, réparties en 3 catégories : Rêve, Paradoxe, Cauchemar. Chaque
               intensité applique un multiplicateur, identique pour le butin et l'expérience.
             </p>
+            <ul style={cp.liste}>
+              <li><strong>Rêve</strong> — mode découverte : malus, ni légendes ni runes, filet de sécurité</li>
+              <li><strong>Paradoxe</strong> — mode normal et mode de farm : tout dropable dès Paradoxe I</li>
+              <li><strong>Cauchemar</strong> — joueurs expérimentés : meilleurs taux, mais conçu pour le challenge, pas la rentabilité</li>
+            </ul>
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Catégorie</th><th style={cp.th}>Niveau</th><th style={{ ...cp.th, textAlign: "right" }}>Multiplicateur</th></tr></thead>
               <tbody>
@@ -374,6 +419,19 @@ export default function ComprendrePage({ onBack }) {
               devient accessible ; monter encore l'intensité n'a plus qu'un effet : augmenter les
               taux, pas débloquer de nouvelles familles d'objets.
             </p>
+            <p style={cp.paragraphe}>Ressources de départ, par catégorie :</p>
+            <table style={cp.table}>
+              <thead><tr><th style={cp.th}>Catégorie</th><th style={{ ...cp.th, textAlign: "right" }}>Points de rêve</th><th style={{ ...cp.th, textAlign: "right" }}>Sable de Draconiros</th><th style={{ ...cp.th, textAlign: "right" }}>Tempête astrale</th></tr></thead>
+              <tbody>
+                <tr><td style={cp.td}>Rêve</td><td style={cp.tdChiffre}>10</td><td style={cp.tdChiffre}>1</td><td style={cp.tdChiffre}>1</td></tr>
+                <tr><td style={cp.td}>Paradoxe</td><td style={cp.tdChiffre}>5</td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>1</td></tr>
+                <tr><td style={cp.td}>Cauchemar</td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>1</td></tr>
+              </tbody>
+            </table>
+            <p style={cp.paragraphe}>
+              Le Sable permet de retenter un combat perdu sans finir la run ; la Tempête change un
+              groupe de monstres jugé trop difficile, ou renouvelle une Fontaine ou une Faveur.
+            </p>
             <EmplacementImage src="/assets/comprendre/intensites-tableau.webp" alt="Sélecteur d'intensité en jeu, des 3 niveaux de Rêve aux 3 niveaux de Cauchemar" />
             <EncadreARetenir>
               Le multiplicateur grimpe avec l'intensité, mais en Rêve, ni légendes ni runes astrales
@@ -381,9 +439,9 @@ export default function ComprendrePage({ onBack }) {
             </EncadreARetenir>
           </section>
 
-          {/* IV — Ce qui peut tomber */}
+          {/* V — Ce qui peut tomber */}
           <section id="ce-qui-peut-tomber" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IV</span>Ce qui peut tomber</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V</span>Ce qui peut tomber</h2>
             <p style={cp.paragraphe}>
               Deux conditions indépendantes doivent être remplies pour qu'un objet tombe. L'intensité
               décide quelles familles d'objets sont accessibles : en Rêve, reflets et cosmétiques
