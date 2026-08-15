@@ -471,7 +471,12 @@ export default function TauxPage({ onBack, onSelectObjet }) {
               (tp.avertissement, LigneCategorie), place ici avant la liste
               des categories pour etre lu avant les chiffres. */}
           <div style={{ ...tp.avertissement, marginBottom: 14 }}>
-            ⚠️ Ces estimations sont calculées sur le taux de drop minimal de l'intensité. La difficulté des salles que tu choisis fait varier ton taux réel — le nombre de runs indiqué est une moyenne générale.
+            <p style={{ margin: "0 0 6px" }}>
+              ⚠️ Ces estimations partent du taux plancher de l'intensité. Le taux réel grimpe avec la profondeur et la difficulté des salles — en Paradoxe IV, une salle difficile au palier III peut afficher 238 % au lieu des 190 % de base.
+            </p>
+            <p style={{ margin: 0 }}>
+              Elles supposent aussi que tu prends tous les combats. Une Faveur Onirique en remplace un : selon ton chemin, une run compte jusqu'à 22 combats, parfois moins.
+            </p>
           </div>
 
           {chargement ? (
