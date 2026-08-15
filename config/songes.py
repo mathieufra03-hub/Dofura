@@ -24,10 +24,16 @@ PALIERS = {
     5: {"nom": "Les Abstractions chimériques", "salles": (22, 26)},
 }
 
+# "libelle" est le nom affiché (avec accents), distinct de la cle interne
+# ("reve") qui sert d'identifiant partout ailleurs (DB, query params) et ne
+# doit pas etre touchee. Ajoute le 15 aout 2026 : "reve" affiche sans son
+# accent circonflexe cote frontend (capitaliser(cle) ne fait que mettre en
+# majuscule, il ne restitue pas l'accent) — "paradoxe"/"cauchemar" n'ont pas
+# ce probleme, aucun accent en francais correct sur ces deux mots.
 INTENSITES = {
-    "reve":      {"niveaux": [1, 2, 3],    "bonus": {1: 50,  2: 75,  3: 100}},
-    "paradoxe":  {"niveaux": [1, 2, 3, 4], "bonus": {1: 120, 2: 140, 3: 160, 4: 190}},
-    "cauchemar": {"niveaux": [1, 2, 3],    "bonus": {1: 220, 2: 250, 3: 300}},
+    "reve":      {"niveaux": [1, 2, 3],    "bonus": {1: 50,  2: 75,  3: 100}, "libelle": "Rêve"},
+    "paradoxe":  {"niveaux": [1, 2, 3, 4], "bonus": {1: 120, 2: 140, 3: 160, 4: 190}, "libelle": "Paradoxe"},
+    "cauchemar": {"niveaux": [1, 2, 3],    "bonus": {1: 220, 2: 250, 3: 300}, "libelle": "Cauchemar"},
 }
 
 INTENSITE_DEFAUT = ("paradoxe", 1)

@@ -53,8 +53,6 @@ const nomCourt = (categorie, nom) => {
   return regex ? nom.replace(regex, "") : nom
 }
 
-const capitaliser = (s) => s.charAt(0).toUpperCase() + s.slice(1)
-
 // SONGES.md / consigne Popo (31 juillet 2026, généralisée le 2 août pour
 // s'appliquer à une liste d'items et pas un seul) :
 //   q = 1 ; pour chaque item de la liste, pour chaque palier p où il a un
@@ -421,7 +419,7 @@ export default function TauxPage({ onBack, onSelectObjet }) {
             {Object.entries(config.intensites).map(([cle, info]) =>
               info.niveaux.map(n => (
                 <option key={`${cle}_${n}`} value={`${cle}_${n}`}>
-                  {capitaliser(cle)} {NOMS_PALIERS_ROMAINS[n] || n}
+                  {config.intensites[cle].libelle} {NOMS_PALIERS_ROMAINS[n] || n}
                 </option>
               ))
             )}
@@ -473,7 +471,12 @@ export default function TauxPage({ onBack, onSelectObjet }) {
               (tp.avertissement, LigneCategorie), place ici avant la liste
               des categories pour etre lu avant les chiffres. */}
           <div style={{ ...tp.avertissement, marginBottom: 14 }}>
-            ⚠️ Ces estimations sont calculées sur le taux de drop minimal de l'intensité. La difficulté des salles que tu choisis fait varier ton taux réel — le nombre de runs indiqué est une moyenne générale.
+            <p style={{ margin: "0 0 6px" }}>
+              ⚠️ Ces estimations partent du taux plancher de l'intensité. Le taux réel grimpe avec la profondeur et la difficulté des salles — en Paradoxe IV, une salle difficile au palier III peut afficher 238 % au lieu des 190 % de base.
+            </p>
+            <p style={{ margin: 0 }}>
+              Elles supposent aussi que tu prends tous les combats. Une Faveur Onirique en remplace un : selon ton chemin, une run compte jusqu'à 22 combats, parfois moins.
+            </p>
           </div>
 
           {chargement ? (
@@ -482,7 +485,7 @@ export default function TauxPage({ onBack, onSelectObjet }) {
             <div style={{ ...tp.row, flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12, padding: "28px 16px" }}>
               <div style={{ color: "var(--df-text-2)", fontSize: 13.5, lineHeight: 1.6 }}>
                 Ces taux n'ont pas encore été relevés.<br />
-                Tu joues en {capitaliser(intensiteNiveau.intensite)} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau]} ? Aide-nous à compléter le tableau.
+                Tu joues en {config.intensites[intensiteNiveau.intensite].libelle} {NOMS_PALIERS_ROMAINS[intensiteNiveau.niveau]} ? Aide-nous à compléter le tableau.
               </div>
               <a href={LIEN_DISCORD} target="_blank" rel="noopener noreferrer" style={tp.discordBtn}>Rejoindre le Discord</a>
             </div>
