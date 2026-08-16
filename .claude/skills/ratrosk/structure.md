@@ -175,6 +175,10 @@ Progression du niveau des monstres, par palier :
 - ✅ Les avis de recherche perdent en vitalité et en puissance pour chaque
   monstre allié présent : environ 1 500 PV et 100 de puissance en moins par
   allié, selon leur niveau de base.
+- ✅ Cette adaptation des avis de recherche est elle-même signalée comme une
+  **Aberration** en combat, à part entière : leurs points de vie s'adaptent
+  différemment dans les Songes Infinis (c'est elle qui produit la perte de
+  vitalité ci-dessus).
 - ✅ Une dizaine de gardiens de donjon et familles de monstres ont été adaptés
   aux Songes (cartes spécifiques impossibles, combats à vagues impossibles).
   L'adaptation est signalée en combat par une "Aberration" affichée en haut à

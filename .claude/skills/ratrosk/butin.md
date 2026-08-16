@@ -123,6 +123,9 @@ et la difficulté des salles.
 ## Les légendes
 
 - ✅ Palier III minimum **et** Paradoxe/Cauchemar. Les deux conditions.
+- ✅ Un tag **"BUTIN LÉGENDAIRE"** est affiché à côté du butin sur l'écran de
+  sélection d'intensité, aux intensités qui débloquent le drop des
+  légendes — présent dès Paradoxe I, absent des trois intensités Rêve.
 - ✅ Deux types : les **légendes** (26 au total, dont 8 ajoutées en 3.3) pour
   les équipements légendaires, et les **légendes animales** (4) pour les
   croquettes de familier légendaire.
