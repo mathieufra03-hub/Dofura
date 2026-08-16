@@ -578,15 +578,62 @@ export default function ComprendrePage({ onBack }) {
               toujours pas faire tomber de légende. L'intensité maximale ne remplace pas le palier.
             </p>
             <table style={cp.table}>
-              <thead><tr><th style={cp.th}>Palier</th><th style={cp.th}>Ce qui peut tomber</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style={cp.th}>Palier</th>
+                  <th style={cp.th}>Bouclirêve</th>
+                  <th style={cp.th}>Runes astrales</th>
+                  <th style={cp.th}>Légendes</th>
+                  <th style={cp.th}>Diplôme de Feur</th>
+                </tr>
+              </thead>
               <tbody>
-                <tr><td style={cp.td}>I</td><td style={cp.td}>Reflets · Bouclirêve Onirique · Bouclirêve Étoile · Runes Mineure et Moyenne</td></tr>
-                <tr><td style={cp.td}>II</td><td style={cp.td}>Reflets · Bouclirêve Fantastique · Bouclirêve Étoile · Runes Mineure et Moyenne</td></tr>
-                <tr><td style={cp.td}>III</td><td style={cp.td}>Reflets · Bouclirêve Imaginaire · Bouclirêve Étoile · Runes Majeure et Épatante · Diplôme de Feur · Légendes · Légendes animales</td></tr>
-                <tr><td style={cp.td}>IV</td><td style={cp.td}>Reflets · Bouclirêve Brumeux · Bouclirêve Étoile · Runes Majeure, Épatante, Merveilleuse et Légendaire · Diplôme de Feur · Légendes · Légendes animales</td></tr>
-                <tr><td style={cp.td}>V</td><td style={cp.td}>Reflets · Bouclirêve Infini · Bouclirêve Étoile · Runes Merveilleuse et Légendaire · Diplôme de Feur · Légendes · Légendes animales</td></tr>
+                <tr>
+                  <td style={{ ...cp.td, fontWeight: 700 }}>I</td>
+                  <td style={cp.td}>Onirique</td>
+                  <td style={cp.td}>Mineure · Moyenne</td>
+                  <td style={{ ...cp.td, color: "var(--df-text-3)" }}>—</td>
+                  <td style={{ ...cp.td, color: "var(--df-text-3)" }}>—</td>
+                </tr>
+                <tr>
+                  <td style={{ ...cp.td, fontWeight: 700 }}>II</td>
+                  <td style={cp.td}>Fantastique</td>
+                  <td style={cp.td}>Mineure · Moyenne</td>
+                  <td style={{ ...cp.td, color: "var(--df-text-3)" }}>—</td>
+                  <td style={{ ...cp.td, color: "var(--df-text-3)" }}>—</td>
+                </tr>
+                <tr>
+                  <td style={{ ...cp.td, fontWeight: 700 }}>III</td>
+                  <td style={cp.td}>Imaginaire</td>
+                  <td style={cp.td}>Majeure · Épatante</td>
+                  <td style={{ ...cp.td, color: "var(--df-cyan)" }}>✓</td>
+                  <td style={{ ...cp.td, color: "var(--df-cyan)" }}>✓</td>
+                </tr>
+                <tr>
+                  <td style={{ ...cp.td, fontWeight: 700 }}>IV</td>
+                  <td style={cp.td}>Brumeux</td>
+                  <td style={cp.td}>Majeure → Légendaire</td>
+                  <td style={{ ...cp.td, color: "var(--df-cyan)" }}>✓</td>
+                  <td style={{ ...cp.td, color: "var(--df-cyan)" }}>✓</td>
+                </tr>
+                <tr>
+                  <td style={{ ...cp.td, fontWeight: 700 }}>V</td>
+                  <td style={cp.td}>Infini</td>
+                  <td style={cp.td}>Merveilleuse · Légendaire</td>
+                  <td style={{ ...cp.td, color: "var(--df-cyan)" }}>✓</td>
+                  <td style={{ ...cp.td, color: "var(--df-cyan)" }}>✓</td>
+                </tr>
               </tbody>
             </table>
+            <p style={cp.caveat}>
+              La colonne Légendes couvre les légendes classiques et les légendes animales — mêmes
+              conditions pour les deux.
+            </p>
+            <p style={cp.paragraphe}>
+              Les reflets oniriques tombent à chaque combat, quel que soit le palier. Le Bouclirêve
+              Étoile est le seul cosmétique sans restriction de palier : il peut tomber sur
+              n'importe quel combat de la run.
+            </p>
             <p style={cp.paragraphe}>
               <strong>Prospection</strong> : elle ne joue que sur les cosmétiques et les objets de quête, et
               individuellement par personnage — jamais sur les reflets, les runes ou les légendes.
