@@ -100,10 +100,10 @@ const cp = {
   toggleBtn: { width: "100%", textAlign: "left", marginBottom: 10 },
   sommaireNav: { position: "sticky", top: 20, display: "flex", flexDirection: "column", gap: 2 },
   sommaireLien: { display: "block", padding: "7px 10px", borderRadius: 8, fontSize: 12.5, textDecoration: "none", color: "var(--df-text-2)", borderLeft: "2px solid transparent" },
-  sommaireNumero: { opacity: 0.55, marginRight: 6, fontFamily: "var(--df-font-logo)" },
+  sommaireNumero: { opacity: 0.75, marginRight: 6, fontFamily: "var(--df-font-logo)", fontSize: 15, fontWeight: 700 },
   section: { scrollMarginTop: 20, marginBottom: 46 },
   sectionTitre: { display: "flex", alignItems: "baseline", gap: 10, margin: "0 0 14px", fontSize: 19 },
-  numeroRomain: { fontFamily: "var(--df-font-logo)", fontSize: 15, color: "var(--df-gold)", letterSpacing: "0.06em" },
+  numeroRomain: { fontFamily: "var(--df-font-logo)", fontSize: 30, fontWeight: 700, color: "var(--df-gold)", letterSpacing: "0.02em" },
   paragraphe: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px" },
   liste: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px", paddingLeft: 20 },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 14 },
@@ -181,29 +181,56 @@ function EmplacementImage({ src, alt, legende }) {
   )
 }
 
-// Lien "voir un exemple" ouvrant une capture en overlay (section III,
-// même pattern qu'un aperçu de fiche monstre : clic pour agrandir, clic
-// en dehors pour refermer). Le lien lui-même ne s'affiche que si l'image
-// existe déjà (précharge silencieuse) — pas de lien mort tant que Popo
-// n'a pas fourni le fichier.
-function LienApercu({ src, alt, texte }) {
+// Aperçu d'image en overlay (clic pour agrandir, clic en dehors pour
+// refermer) — un seul comportement de préchargement/dégradation partagé
+// par deux habillages :
+// - LienApercu : un lien autonome ("voir un exemple de palier").
+// - MotCliquable : un mot du texte courant qui devient le déclencheur
+//   (les 4 types de salles, section III). Tant que l'image n'existe pas
+//   (précharge silencieuse), le mot reste du texte normal — pas de
+//   soulignement, pas de couleur, pas de curseur, pas de clic. Même
+//   logique que la section des sorts de songe : rien tant que la source
+//   n'existe pas, jamais de lien mort ni de placeholder.
+function useApercuDisponible(src) {
   const [disponible, setDisponible] = useState(false)
-  const [ouvert, setOuvert] = useState(false)
   useEffect(() => {
     const img = new window.Image()
     img.onload = () => setDisponible(true)
     img.onerror = () => setDisponible(false)
     img.src = src
   }, [src])
+  return disponible
+}
+
+function OverlayImage({ src, alt, ouvert, onFermer }) {
+  if (!ouvert) return null
+  return (
+    <div style={cp.overlayFond} onClick={onFermer}>
+      <img src={src} alt={alt} style={cp.overlayImage} onClick={e => e.stopPropagation()} />
+    </div>
+  )
+}
+
+function LienApercu({ src, alt, texte }) {
+  const disponible = useApercuDisponible(src)
+  const [ouvert, setOuvert] = useState(false)
   if (!disponible) return null
   return (
     <>
       <button onClick={() => setOuvert(true)} style={cp.lienApercu}>{texte}</button>
-      {ouvert && (
-        <div style={cp.overlayFond} onClick={() => setOuvert(false)}>
-          <img src={src} alt={alt} style={cp.overlayImage} onClick={e => e.stopPropagation()} />
-        </div>
-      )}
+      <OverlayImage src={src} alt={alt} ouvert={ouvert} onFermer={() => setOuvert(false)} />
+    </>
+  )
+}
+
+function MotCliquable({ src, alt, children }) {
+  const disponible = useApercuDisponible(src)
+  const [ouvert, setOuvert] = useState(false)
+  if (!disponible) return <>{children}</>
+  return (
+    <>
+      <button onClick={() => setOuvert(true)} style={{ ...cp.lienApercu, fontSize: "inherit", fontWeight: "inherit" }}>{children}</button>
+      <OverlayImage src={src} alt={alt} ouvert={ouvert} onFermer={() => setOuvert(false)} />
     </>
   )
 }
@@ -213,18 +240,34 @@ function LienApercu({ src, alt, texte }) {
 // .df-filters-panel (tokens.css), déjà utilisées ailleurs sur le site
 // pour exactement ce pattern (colonne de filtres desktop / volet
 // repliable mobile), jamais retouchées ici.
+// Survol cyan du sommaire (16 août 2026) : un :hover ne s'exprime pas en
+// style inline — balise <style> locale au composant plutôt que toucher
+// tokens.css ou un fichier CSS partagé. !important nécessaire pour battre
+// la couleur inline de cp.sommaireLien (spécificité CSS : un !important en
+// feuille de style l'emporte sur un style inline sans !important).
+function StyleSommaireHover() {
+  return (
+    <style>{`
+      .cp-sommaire-lien:hover, .cp-sommaire-lien:hover .cp-sommaire-numero {
+        color: #2CE7FF !important;
+      }
+    `}</style>
+  )
+}
+
 function MiseEnPageSommaire({ sections, ouvert, onToggle, onNaviguer, children }) {
   return (
     <div className="df-list-wrap">
+      <StyleSommaireHover />
       <div>
         <button className="df-filters-toggle df-pill" onClick={onToggle} style={cp.toggleBtn}>
-          Sommaire {ouvert ? "▾" : "▸"}
+          Sommaire
         </button>
         <nav className={`df-filters-panel ${ouvert ? "df-filters-open" : ""}`} style={cp.sommaireNav}>
           {sections.map(s => (
-            <a key={s.id} href={`#${s.id}`} style={cp.sommaireLien}
+            <a key={s.id} href={`#${s.id}`} className="cp-sommaire-lien" style={cp.sommaireLien}
               onClick={(e) => { e.preventDefault(); onNaviguer(s.id) }}>
-              <span style={cp.sommaireNumero}>{s.numero}</span>{s.titre}
+              <span className="cp-sommaire-numero" style={cp.sommaireNumero}>{s.numero}.</span>{s.titre}
             </a>
           ))}
         </nav>
@@ -313,14 +356,15 @@ export default function ComprendrePage({ onBack }) {
       <div style={cp.page}>
         <button onClick={onBack} style={cp.backBtn}>← Retour</button>
         {/* Habillage aligné sur le titre "L'Œil de Draconiros" (SongesPage.jsx)
-            — même classe .df-songes-titre-eclat (pageSonges.css, chargée
-            globalement par main.jsx, jamais retouchée ici) et mêmes valeurs
-            de style inline : même taille, même halo, même police. */}
-        <h1 className="df-songes-titre-eclat" style={{ fontFamily: "var(--df-font-logo)", fontWeight: 700, fontSize: "clamp(32px, 6vw, 52px)", color: "var(--df-text)", margin: "0 0 10px", lineHeight: 1.06, textShadow: "0 0 4px rgba(44,231,255,.85), 0 0 14px rgba(44,231,255,.55), 0 0 32px rgba(44,231,255,.32), 0 0 60px rgba(44,231,255,.16)" }}>
+            — mêmes taille/police/couleur en style inline. Sans la classe
+            .df-songes-titre-eclat (retour Popo, 16 août 2026) : c'est elle
+            qui pose les étoiles ::before/::after via pageSonges.css, jamais
+            retouchée ici, juste pas réutilisée. Centré (retour Popo). */}
+        <h1 style={{ fontFamily: "var(--df-font-logo)", fontWeight: 700, fontSize: "clamp(32px, 6vw, 52px)", color: "var(--df-text)", margin: "0 0 10px", lineHeight: 1.06, textAlign: "center", textShadow: "0 0 4px rgba(44,231,255,.85), 0 0 14px rgba(44,231,255,.55), 0 0 32px rgba(44,231,255,.32), 0 0 60px rgba(44,231,255,.16)" }}>
           Comprendre les Songes
         </h1>
         <p style={cp.intro}>
-          Tout ce qu'il y a à savoir sur le puits rêvé de Draconiros.
+          Tout ce qu'il y a à savoir sur les Songes Infinis de Draconiros.
         </p>
 
         <MiseEnPageSommaire sections={sectionsVisibles} ouvert={sommaireOuvert}
@@ -328,7 +372,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* I — C'est quoi les Songes ? */}
           <section id="cest-quoi-les-songes" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>I</span>C'est quoi les Songes ?</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>I.</span>C'est quoi les Songes ?</h2>
             <p style={cp.paragraphe}>
               Le Puits des Songes Infinis est la fonctionnalité de fin de jeu de Dofus 3. Tu y
               lances une run — seul ou jusqu'à 4 joueurs. Seul le chef de groupe peut lancer la
@@ -354,7 +398,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* II — Les intensités */}
           <section id="les-intensites" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>II</span>Les intensités</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>II.</span>Les intensités</h2>
             <p style={cp.paragraphe}>
               Dix intensités existent, réparties en 3 catégories : Rêve, Paradoxe, Cauchemar. Chaque
               intensité applique un multiplicateur, identique pour le butin et l'expérience.
@@ -406,7 +450,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* III — Comment se déroule une run */}
           <section id="comment-se-deroule-une-run" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>III</span>Comment se déroule une run</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>III.</span>Comment se déroule une run</h2>
             <p style={cp.paragraphe}>
               Une run compte {config.nb_salles_par_run} salles réparties en {nbPaliers} paliers, chacun
               plus difficile que le précédent :
@@ -474,7 +518,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* IV — Le combat final */}
           <section id="le-combat-final" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IV</span>Le combat final</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IV.</span>Le combat final</h2>
             <p style={cp.paragraphe}>
               La dernière salle, "Fin du rêve", est un combat à vagues aléatoires. Chaque vague suit
               le même algorithme qu'une salle classique : monstres, boss ou avis de recherche.
@@ -513,7 +557,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* V — Ce qui peut tomber */}
           <section id="ce-qui-peut-tomber" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V</span>Ce qui peut tomber</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V.</span>Ce qui peut tomber</h2>
             <p style={cp.paragraphe}>
               Deux conditions indépendantes doivent être remplies pour qu'un objet tombe. L'intensité
               décide quelles familles d'objets sont accessibles : en Rêve, reflets et cosmétiques
@@ -551,7 +595,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* VI — Combien de runs pour une légende (section principale) */}
           <section id="combien-de-runs" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VI</span>Combien de runs pour une légende</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VI.</span>Combien de runs pour une légende</h2>
             <p style={cp.paragraphe}>
               Les légendes classiques ne tombent qu'à partir du palier III, et seulement en
               Paradoxe ou Cauchemar. Chaque légende tire indépendamment des autres — le tableau des
@@ -611,7 +655,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* VII — Les bribes et l'économie */}
           <section id="bribes-et-economie" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VII</span>Les bribes et l'économie</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VII.</span>Les bribes et l'économie</h2>
             <p style={cp.paragraphe}>
               Les bribes de rêve sont la monnaie qu'on ramène d'une run terminée, à la fin du
               combat final. Elles ne sont obtenues qu'en atteignant le seuil de vagues du combat
@@ -670,7 +714,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* VIII — Le multiplicateur de dégâts (sortie de la section Bonus, 16 août 2026) */}
           <section id="le-multiplicateur-de-degats" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VIII</span>Le multiplicateur de dégâts</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VIII.</span>Le multiplicateur de dégâts</h2>
             <p style={cp.paragraphe}>
               Démarre à 100 %, monte avec les bonus "% Dégâts". Tous les autres bonus s'additionnent
               d'abord entre eux ; le multiplicateur s'applique en <strong>dernier</strong> sur le
@@ -685,7 +729,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* IX — Les bonus */}
           <section id="les-bonus" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IX</span>Les bonus</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IX.</span>Les bonus</h2>
             <p style={cp.paragraphe}>
               Trois familles : bonus mineurs (à l'entrée de chaque salle), bonus passifs (Fontaine
               uniquement), bonus actifs — les sorts de songe. Compagnons et invocations en
@@ -771,7 +815,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* X — Quêtes et succès */}
           <section id="quetes-et-succes" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>X</span>Quêtes et succès</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>X.</span>Quêtes et succès</h2>
             <p style={cp.paragraphe}>
               5 quêtes sont liées aux Songes : Cauchemar infini, Jusqu'au bout du rêve, Prise de
               conscience, Les animaux fantastiques, Le poids de son regard.
@@ -791,7 +835,7 @@ export default function ComprendrePage({ onBack }) {
           {/* XI — Les sorts de songe (masquée tant que SORTS_DE_SONGE est vide) */}
           {SORTS_DE_SONGE.length > 0 && (
             <section id="les-sorts-de-songe" style={cp.section}>
-              <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XI</span>Les sorts de songe</h2>
+              <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XI.</span>Les sorts de songe</h2>
               {/* Contenu à écrire une fois la source scrapée — prévoir un renvoi vers la
                   Bibliothèque une fois les sorts effectivement trackés là-bas. */}
             </section>
@@ -799,7 +843,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* XII — Ce qu'on ne sait pas encore */}
           <section id="ce-qu-on-ne-sait-pas-encore" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XII</span>Ce qu'on ne sait pas encore</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XII.</span>Ce qu'on ne sait pas encore</h2>
             <p style={cp.paragraphe}>
               Cette page ne prétend pas tout savoir. Certains chiffres sont encore en conflit entre
               nos relevés et d'autres sources, et certains mécanismes restent flous — les voici, sans
