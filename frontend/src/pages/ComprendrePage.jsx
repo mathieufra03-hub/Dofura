@@ -96,7 +96,7 @@ const COULEURS = {
 const cp = {
   page: { padding: "1.5rem 1.25rem 4rem", maxWidth: 1180, margin: "0 auto" },
   backBtn: { background: "transparent", border: "1px solid var(--df-border-cyan)", borderRadius: 6, padding: "5px 12px", fontSize: 12, color: "var(--df-cyan)", cursor: "pointer", marginBottom: 18 },
-  intro: { margin: "0 0 26px", fontSize: 14.5, fontWeight: 300, lineHeight: 1.6, color: "var(--df-text-2)", maxWidth: 480 },
+  intro: { margin: "0 auto 26px", fontSize: 14.5, fontWeight: 300, lineHeight: 1.6, color: "var(--df-text-2)", maxWidth: 480, textAlign: "center" },
   toggleBtn: { width: "100%", textAlign: "left", marginBottom: 10 },
   sommaireNav: { position: "sticky", top: 20, display: "flex", flexDirection: "column", gap: 2 },
   sommaireLien: { display: "block", padding: "7px 10px", borderRadius: 8, fontSize: 12.5, textDecoration: "none", color: "var(--df-text-2)", borderLeft: "2px solid transparent" },
