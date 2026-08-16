@@ -695,48 +695,36 @@ export default function ComprendrePage({ onBack }) {
             {(() => {
               const defaut = config.intensite_defaut
               const phare = legendesParIntensite?.find(l => l.intensite === defaut.intensite && l.niveau === defaut.niveau)
+              const niveauHautCauchemar = Math.max(...config.intensites.cauchemar.niveaux)
+              const haut = legendesParIntensite?.find(l => l.intensite === "cauchemar" && l.niveau === niveauHautCauchemar)
               return (
-                <div style={cp.chiffrePhareBloc}>
-                  <div style={cp.chiffrePhareLabel}>
-                    N'importe quelle légende, en {config.intensites[defaut.intensite].libelle} {NOMS_PALIERS_ROMAINS[defaut.niveau]}
+                <>
+                  <div style={cp.chiffrePhareBloc}>
+                    <div style={cp.chiffrePhareLabel}>
+                      N'importe quelle légende, en {config.intensites[defaut.intensite].libelle} {NOMS_PALIERS_ROMAINS[defaut.niveau]}
+                    </div>
+                    <div style={cp.chiffrePhare}>{phare ? formaterSonges(phare.runsNimporteLaquelle) : "…"}</div>
+                    <div style={cp.caveat}>
+                      Contre {phare ? formaterSonges(phare.runsUnePrecise) : "…"} pour une légende précise —
+                      exemple à {NB_PERSONNAGES_EXEMPLE} personnages.
+                    </div>
                   </div>
-                  <div style={cp.chiffrePhare}>{phare ? formaterSonges(phare.runsNimporteLaquelle) : "…"}</div>
-                  <div style={cp.caveat}>
-                    Contre {phare ? formaterSonges(phare.runsUnePrecise) : "…"} pour une légende précise —
-                    exemple à {NB_PERSONNAGES_EXEMPLE} personnages.
-                  </div>
-                </div>
+                  <p style={cp.paragraphe}>
+                    L'intensité change l'ordre de grandeur : en {config.intensites.cauchemar.libelle}{" "}
+                    {NOMS_PALIERS_ROMAINS[niveauHautCauchemar]}, le même résultat tombe à{" "}
+                    {haut ? formaterSonges(haut.runsNimporteLaquelle) : "…"}.
+                  </p>
+                </>
               )
             })()}
-            <p style={cp.paragraphe}>Le détail par intensité, les deux lectures côte à côte :</p>
-            <table style={cp.table}>
-              <thead>
-                <tr>
-                  <th style={cp.th}>Intensité</th>
-                  <th style={{ ...cp.th, textAlign: "right" }}>N'importe laquelle</th>
-                  <th style={{ ...cp.th, textAlign: "right" }}>Une précise</th>
-                </tr>
-              </thead>
-              <tbody>
-                {legendesParIntensite == null ? (
-                  <tr><td style={cp.td} colSpan={3}>Chargement...</td></tr>
-                ) : legendesParIntensite.map(l => (
-                  <tr key={`${l.intensite}_${l.niveau}`}>
-                    <td style={cp.td}>{config.intensites[l.intensite].libelle} {NOMS_PALIERS_ROMAINS[l.niveau] || l.niveau}</td>
-                    <td style={cp.tdChiffre}>{formaterSonges(l.runsNimporteLaquelle)}</td>
-                    <td style={{ ...cp.td, textAlign: "right" }}>{formaterSonges(l.runsUnePrecise)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
             <p style={cp.caveat}>
               Ce sont des moyennes, pas des garanties : après ce nombre de runs, il reste encore
               environ 37 % de chances de n'avoir toujours rien obtenu.
             </p>
             <EncadreCalculeLeTien lien="/taux" enfant={
-              <>Ce tableau porte sur les légendes classiques uniquement. Pour les autres objets
-              trackés (légendes animales, runes, cosmétiques...), et pour ajuster le nombre de
-              personnages, va voir Les Taux.</>
+              <>Le calculateur donne le détail par intensité, pour les autres objets trackés
+              (légendes animales, runes, cosmétiques...), et permet d'ajuster le nombre de
+              personnages.</>
             } />
           </section>
 
