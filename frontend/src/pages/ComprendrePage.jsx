@@ -77,7 +77,7 @@ const SECTIONS = [
   { id: "les-intensites", numero: "II", titre: "Les intensités" },
   { id: "comment-se-deroule-une-run", numero: "III", titre: "Comment se déroule une run" },
   { id: "le-combat-final", numero: "IV", titre: "Le combat final" },
-  { id: "ce-qui-peut-tomber", numero: "V", titre: "Ce qui peut tomber" },
+  { id: "le-drop", numero: "V", titre: "Le Drop" },
   { id: "combien-de-runs", numero: "VI", titre: "Combien de runs pour une légende" },
   { id: "bribes-et-economie", numero: "VII", titre: "Les bribes et l'économie" },
   { id: "le-multiplicateur-de-degats", numero: "VIII", titre: "Le multiplicateur de dégâts" },
@@ -596,16 +596,16 @@ export default function ComprendrePage({ onBack }) {
           </section>
 
           {/* V — Ce qui peut tomber */}
-          <section id="ce-qui-peut-tomber" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V.</span>Ce qui peut tomber</h2>
+          <section id="le-drop" style={cp.section}>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V.</span>Le Drop</h2>
             <p style={cp.paragraphe}>
               Deux conditions indépendantes doivent être remplies pour qu'un objet tombe. L'intensité
-              décide quelles familles d'objets sont accessibles : en Rêve, reflets et cosmétiques
-              seulement ; à partir de Paradoxe I, tout. Et quelle que soit l'intensité, il faut
-              atteindre le palier III minimum pour débloquer le drop des légendes.
+              décide quelles familles d'objets sont accessibles : en <strong style={{ color: "var(--df-reve)" }}>Rêve</strong>, reflets et cosmétiques
+              seulement ; à partir de <strong style={{ color: "var(--df-paradoxe)" }}>Paradoxe</strong> I, tout. Le palier décide ensuite quelle
+              variante de chaque famille peut tomber.
             </p>
             <p style={cp.paragraphe}>
-              Conséquence contre-intuitive : une run en Cauchemar III mais au palier II ne peut
+              Conséquence contre-intuitive : une run en <strong style={{ color: "var(--df-cauchemar)" }}>Cauchemar</strong> III mais au palier II ne peut
               toujours pas faire tomber de légende. L'intensité maximale ne remplace pas le palier.
             </p>
             <table style={cp.table}>
@@ -666,16 +666,16 @@ export default function ComprendrePage({ onBack }) {
               n'importe quel combat de la run.
             </p>
             <p style={cp.paragraphe}>
-              <strong>Prospection</strong> : elle ne joue que sur les cosmétiques et les objets de quête, et
-              individuellement par personnage — jamais sur les reflets, les runes ou les légendes.
-            </p>
-            <p style={cp.paragraphe}>
               Le palier augmente aussi <strong>directement</strong> le taux des runes astrales.
               Pour les autres familles, il n'agit qu'<strong>indirectement</strong>, via la
               difficulté croissante des salles.
             </p>
+            <p style={cp.paragraphe}>
+              <strong>Prospection</strong> : elle ne joue que sur les cosmétiques et les objets de quête, et
+              individuellement par personnage — jamais sur les reflets, les runes ou les légendes.
+            </p>
             <EncadreARetenir>
-              À partir du palier III en Paradoxe I, tout devient dropable. Les deux conditions
+              À partir du palier III en <strong style={{ color: "var(--df-paradoxe)" }}>Paradoxe</strong> I, tout devient dropable. Les deux conditions
               doivent être réunies : monter l'intensité sans atteindre le palier III ne sert à rien.
             </EncadreARetenir>
           </section>
