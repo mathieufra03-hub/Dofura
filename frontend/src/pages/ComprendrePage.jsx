@@ -570,8 +570,8 @@ export default function ComprendrePage({ onBack }) {
             <p style={cp.paragraphe}>
               Deux conditions indépendantes doivent être remplies pour qu'un objet tombe. L'intensité
               décide quelles familles d'objets sont accessibles : en Rêve, reflets et cosmétiques
-              seulement ; à partir de Paradoxe I, tout. Le palier décide quelle variante de chaque
-              famille, et si les légendes sont accessibles — à partir du palier III.
+              seulement ; à partir de Paradoxe I, tout. Et quelle que soit l'intensité, il faut
+              atteindre le palier III minimum pour débloquer le drop des légendes.
             </p>
             <p style={cp.paragraphe}>
               Conséquence contre-intuitive : une run en Cauchemar III mais au palier II ne peut
