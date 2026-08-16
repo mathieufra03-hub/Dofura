@@ -107,7 +107,7 @@ const cp = {
   paragraphe: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px" },
   liste: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px", paddingLeft: 20 },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 14 },
-  th: { textAlign: "left", padding: "8px 10px", color: "var(--df-text-3)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid rgba(240, 192, 64, 0.25)" },
+  th: { textAlign: "left", padding: "8px 10px", color: "var(--df-gold)", fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "2px solid rgba(240, 192, 64, 0.45)" },
   td: { padding: "8px 10px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-text)" },
   tdChiffre: { padding: "8px 10px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-gold)", fontWeight: 700, textAlign: "right" },
   caveat: { fontSize: 11.5, color: "var(--df-text-3)", fontStyle: "italic", margin: "0 0 14px" },
@@ -612,7 +612,7 @@ export default function ComprendrePage({ onBack }) {
                 <tr>
                   <td style={{ ...cp.td, fontWeight: 700 }}>IV</td>
                   <td style={cp.td}>Brumeux</td>
-                  <td style={cp.td}>Majeure → Légendaire</td>
+                  <td style={cp.td}>Majeure · Épatante · Merveilleuse · Légendaire</td>
                   <td style={{ ...cp.td, color: "var(--df-cyan)" }}>✓</td>
                   <td style={{ ...cp.td, color: "var(--df-cyan)" }}>✓</td>
                 </tr>
