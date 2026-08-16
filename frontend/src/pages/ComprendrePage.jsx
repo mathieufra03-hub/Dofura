@@ -496,7 +496,7 @@ export default function ComprendrePage({ onBack }) {
             </ul>
             <p style={cp.paragraphe}>
               Au début de chaque palier, tu vois tous les chemins possibles : de quoi choisir son
-              trajet selon les bonus proposés et maximiser ses points de rêve ({" "}
+              trajet selon les bonus proposés ({" "}
               <LienApercu src="/assets/comprendre/carte-palier.webp" alt="Carte du Songe au palier III en Paradoxe I" texte="voir un exemple de palier" />
               ). Une fois entré dans une salle, aucun retour en arrière n'est possible.
             </p>
@@ -847,8 +847,8 @@ export default function ComprendrePage({ onBack }) {
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Utilitaire</th><th style={cp.th}>Effet</th><th style={{ ...cp.th, textAlign: "right" }}>Prix en Fontaine</th></tr></thead>
               <tbody>
-                <tr><td style={cp.td}>Tempête astrale</td><td style={cp.td}>Change un groupe de monstres, ou relance une Fontaine/Faveur</td><td style={cp.tdChiffre}>10 pts</td></tr>
-                <tr><td style={cp.td}>Sable de Draconiros</td><td style={cp.td}>Retente un combat perdu</td><td style={cp.tdChiffre}>20 pts</td></tr>
+                <tr><td style={cp.td}>Tempête astrale</td><td style={cp.td}>Renouvelle les monstres d'une salle, ou tous les articles d'une Fontaine ou d'une Faveur</td><td style={cp.tdChiffre}>10 pts</td></tr>
+                <tr><td style={cp.td}>Sable de Draconiros</td><td style={cp.td}>Fait revivre le groupe après une défaite</td><td style={cp.tdChiffre}>20 pts</td></tr>
                 <tr><td style={cp.td}>Croissance Onirique</td><td style={cp.td}>+100 niveaux de songeur</td><td style={cp.tdChiffre}>10 pts</td></tr>
               </tbody>
             </table>
