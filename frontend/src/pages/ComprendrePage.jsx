@@ -455,6 +455,8 @@ export default function ComprendrePage({ onBack }) {
           {/* III — Comment se déroule une run */}
           <section id="comment-se-deroule-une-run" style={cp.section}>
             <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>III.</span>Comment se déroule une run</h2>
+
+            <h3 id="la-structure" style={cp.sousTitre}>La structure</h3>
             <p style={cp.paragraphe}>
               Une run compte {config.nb_salles_par_run} salles réparties en {nbPaliers} paliers, chacun
               plus difficile que le précédent :
@@ -474,35 +476,30 @@ export default function ComprendrePage({ onBack }) {
             </table>
             <p style={cp.paragraphe}>
               Sur ces {config.nb_salles_par_run} salles, jusqu'à {totalCombats} peuvent être des
-              combats — une Faveur Onirique en remplace un à chaque fois qu'elle apparaît sur le
-              chemin choisi.
-            </p>
-            <p style={cp.paragraphe}>
-              Les salles 4, 10, 16 et 25 sont des Fontaines Oniriques : on y achète des bonus avec
-              les points de rêve gagnés à chaque combat — détail en section{" "}
+              combats — les Fontaines Oniriques occupent les salles 4, 10, 16 et 25 (détail en
+              section{" "}
               <a href="#les-bonus" style={{ color: "var(--df-cyan)" }}
-                onClick={(e) => { e.preventDefault(); naviguerVersSection("les-bonus") }}>IX</a>.
+                onClick={(e) => { e.preventDefault(); naviguerVersSection("les-bonus") }}>IX</a>),
+              et chaque Faveur croisée en remplace un.
             </p>
+
+            <h3 id="les-salles" style={cp.sousTitre}>Les salles</h3>
+            <ul style={cp.liste}>
+              <li><strong><MotCliquable src="/assets/comprendre/type-combat.webp" alt="Salle de type Combat">Combat</MotCliquable></strong> — un groupe de monstres</li>
+              <li><strong><MotCliquable src="/assets/comprendre/type-fontaine.webp" alt="Salle de type Fontaine Onirique">Fontaine Onirique</MotCliquable></strong> — marchand de bonus (salles 4, 10, 16, 25)</li>
+              <li><strong><MotCliquable src="/assets/comprendre/type-faveur.webp" alt="Salle de type Faveur Onirique">Faveur Onirique</MotCliquable></strong> — un bonus gratuit, et un combat évité</li>
+              <li><strong><MotCliquable src="/assets/comprendre/type-fin-du-reve.webp" alt="Salle Fin du rêve, le combat final">Fin du rêve</MotCliquable></strong> — le combat final, toujours en salle {config.nb_salles_par_run}</li>
+            </ul>
             <p style={cp.paragraphe}>
               Au début de chaque palier, tu vois tous les chemins possibles : de quoi choisir son
-              trajet selon les bonus proposés et maximiser ses points de rêve.{" "}
+              trajet selon les bonus proposés et maximiser ses points de rêve ({" "}
               <LienApercu src="/assets/comprendre/exemple-palier.webp" alt="Exemple de chemins possibles au début d'un palier" texte="voir un exemple de palier" />
+              ). Une fois entré dans une salle, aucun retour en arrière n'est possible.
             </p>
             <p style={cp.paragraphe}>
-              Quatre types de salles existent :{" "}
-              <MotCliquable src="/assets/comprendre/type-combat.webp" alt="Salle de type Combat">Combat</MotCliquable>{" "}
-              (un groupe de monstres),{" "}
-              <MotCliquable src="/assets/comprendre/type-fontaine.webp" alt="Salle de type Fontaine Onirique">Fontaine Onirique</MotCliquable>{" "}
-              (marchand de bonus),{" "}
-              <MotCliquable src="/assets/comprendre/type-faveur.webp" alt="Salle de type Faveur Onirique">Faveur Onirique</MotCliquable>{" "}
-              (un bonus gratuit qui évite un combat), et{" "}
-              <MotCliquable src="/assets/comprendre/type-fin-du-reve.webp" alt="Salle Fin du rêve, le combat final">Fin du rêve</MotCliquable>{" "}
-              — le combat final, toujours en dernière salle.
-            </p>
-            <p style={cp.paragraphe}>
-              Une fois entré dans une salle, aucun retour en arrière n'est possible. Les
-              personnages sont intégralement soignés à la fin de chaque salle, et les combats
-              n'imposent aucun challenge.
+              Chaque salle a un niveau de difficulté variable, visible avant d'y entrer — une salle
+              difficile donne un bonus de taux de drop supplémentaire, propre à cette salle, et
+              rapporte aussi des points de rêve en plus.
             </p>
             <p style={cp.paragraphe}>
               Les salles contiennent des monstres classiques, des boss de donjon ou des avis de
@@ -511,21 +508,20 @@ export default function ComprendrePage({ onBack }) {
               monstres portent une pastille violette "EN SONGE" dans la{" "}
               <button onClick={() => navigate("/bibliotheque")} style={cp.lienApercu}>Bibliothèque</button>.
             </p>
+
+            <h3 id="se-preparer" style={cp.sousTitre}>Se préparer</h3>
             <p style={cp.paragraphe}>
-              Chaque salle a un niveau de difficulté variable, visible avant d'y entrer — une salle
-              difficile donne un bonus de taux de drop supplémentaire, propre à cette salle, et
-              rapporte aussi des points de rêve en plus.
+              Face à la mort définitive, plusieurs filets de sécurité rendent la run gérable : le
+              bestiaire de la salle (Alt+B), consultable avant de lancer le combat, affiche les
+              stats des monstres, la carte et l'ordre de jeu ; 3 minutes de préparation et des
+              tours de 90 secondes pour construire sa stratégie ; un soin intégral à la fin de
+              chaque salle ; et aucun challenge imposé dans les combats.
             </p>
-            <p style={cp.paragraphe}>
-              Pour gérer la mort définitive : le bestiaire de la salle (Alt+B) affiche stats des
-              monstres, carte et ordre de jeu avant de lancer le combat, avec 3 minutes de
-              préparation et des tours de 90 secondes.
-            </p>
+
             <EmplacementImage src="/assets/comprendre/structure-run.webp" alt="Carte à embranchement d'un palier de Songe, avec ses salles de combat, Fontaine et Faveur Onirique" />
             <EncadreARetenir>
-              {config.nb_salles_par_run} salles, {nbPaliers} paliers, jusqu'à {totalCombats} combats
-              selon le chemin — le bestiaire (Alt+B) et les 3 minutes de préparation rendent la
-              mort définitive gérable.
+              Tu ne choisis jamais à l'aveugle — chemin, difficulté, adversaires : tout est visible
+              avant d'agir. Mais chaque salle est un engagement définitif, sans retour en arrière.
             </EncadreARetenir>
           </section>
 
