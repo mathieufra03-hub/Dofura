@@ -375,12 +375,13 @@ export default function ComprendrePage({ onBack }) {
             <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>I.</span>C'est quoi les Songes ?</h2>
             <p style={cp.paragraphe}>
               Le Puits des Songes Infinis est une fonctionnalité de jeu de Dofus 3. Tu y lances une
-              run — seul ou jusqu'à 4 joueurs. Seul le chef de groupe peut lancer la run et les
+              run (un enchaînement de combats par étages) — seul ou jusqu'à 4 joueurs. Seul le chef de groupe peut lancer la run et les
               combats ; il choisit aussi l'intensité au lancement, parmi plusieurs niveaux de
-              difficulté (
+              difficulté. Un joueur peut aussi rejoindre une run déjà commencée — inutile d'être
+              présent au lancement (
               <a href="#comment-se-deroule-une-run" style={{ color: "var(--df-text-3)" }}
                 onClick={(e) => { e.preventDefault(); naviguerVersSection("comment-se-deroule-une-run") }}>
-                le déroulé d'une run est détaillé plus bas
+                → section III
               </a>
               ).
             </p>
@@ -394,8 +395,8 @@ export default function ComprendrePage({ onBack }) {
               Songes : Légendes, runes astrales, cosmétiques, reflets oniriques.
             </p>
             <EncadreARetenir>
-              Plancher de niveau 50, 199-200 fortement conseillé. Jusqu'à 4 joueurs, avec mort
-              définitive : un combat perdu met fin à la run.
+              Un enchaînement de combats, niveaux 199-200 fortement conseillé. Jusqu'à 4 joueurs,
+              avec mort définitive : un combat perdu met fin à la run.
             </EncadreARetenir>
           </section>
 
