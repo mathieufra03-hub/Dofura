@@ -374,10 +374,15 @@ export default function ComprendrePage({ onBack }) {
           <section id="cest-quoi-les-songes" style={cp.section}>
             <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>I.</span>C'est quoi les Songes ?</h2>
             <p style={cp.paragraphe}>
-              Le Puits des Songes Infinis est la fonctionnalité de fin de jeu de Dofus 3. Tu y
-              lances une run — seul ou jusqu'à 4 joueurs. Seul le chef de groupe peut lancer la
-              run et les combats ; il choisit aussi l'intensité au lancement, parmi plusieurs
-              niveaux de difficulté.
+              Le Puits des Songes Infinis est une fonctionnalité de jeu de Dofus 3. Tu y lances une
+              run — seul ou jusqu'à 4 joueurs. Seul le chef de groupe peut lancer la run et les
+              combats ; il choisit aussi l'intensité au lancement, parmi plusieurs niveaux de
+              difficulté (
+              <a href="#comment-se-deroule-une-run" style={{ color: "var(--df-text-3)" }}
+                onClick={(e) => { e.preventDefault(); naviguerVersSection("comment-se-deroule-une-run") }}>
+                le déroulé d'une run est détaillé plus bas
+              </a>
+              ).
             </p>
             <p style={cp.paragraphe}>
               Accessible depuis l'onglet Songes Infinis du menu (raccourci T), sans prérequis de
@@ -385,10 +390,8 @@ export default function ComprendrePage({ onBack }) {
               expérience correcte.
             </p>
             <p style={cp.paragraphe}>
-              Chaque run est une prise de risque : la mort y est définitive, sans challenges
-              imposés dans les combats. Les personnages sont intégralement soignés à la fin de
-              chaque salle. Le butin exclusif aux Songes : Légendes, runes astrales, cosmétiques,
-              reflets oniriques.
+              Chaque run est une prise de risque : la mort y est définitive. Le butin exclusif aux
+              Songes : Légendes, runes astrales, cosmétiques, reflets oniriques.
             </p>
             <EncadreARetenir>
               Plancher de niveau 50, 199-200 fortement conseillé. Jusqu'à 4 joueurs, avec mort
@@ -404,12 +407,12 @@ export default function ComprendrePage({ onBack }) {
               intensité applique un multiplicateur, identique pour le butin et l'expérience.
             </p>
             <ul style={cp.liste}>
-              <li><strong>Rêve</strong> — mode découverte : malus, ni légendes ni runes, filet de sécurité</li>
-              <li><strong>Paradoxe</strong> — mode normal et mode de farm : tout dropable dès Paradoxe I</li>
-              <li><strong>Cauchemar</strong> — joueurs expérimentés : meilleurs taux, mais conçu pour le challenge, pas la rentabilité</li>
+              <li><strong style={{ color: "var(--df-reve)" }}>Rêve</strong> — mode découverte : malus, ni légendes ni runes, filet de sécurité</li>
+              <li><strong style={{ color: "var(--df-paradoxe)" }}>Paradoxe</strong> — mode normal et mode de farm : tout dropable dès Paradoxe I</li>
+              <li><strong style={{ color: "var(--df-cauchemar)" }}>Cauchemar</strong> — joueurs expérimentés : meilleurs taux, mais conçu pour le challenge, pas la rentabilité</li>
             </ul>
             <table style={cp.table}>
-              <thead><tr><th style={cp.th}>Catégorie</th><th style={cp.th}>Niveau</th><th style={{ ...cp.th, textAlign: "right" }}>Multiplicateur de drop</th></tr></thead>
+              <thead><tr><th style={cp.th}>Catégorie</th><th style={cp.th}>Niveau</th><th style={{ ...cp.th, textAlign: "right" }}>Multiplicateur de drop et d'expérience</th></tr></thead>
               <tbody>
                 {Object.entries(config.intensites).map(([cle, info]) =>
                   info.niveaux.map(n => (
@@ -485,12 +488,20 @@ export default function ComprendrePage({ onBack }) {
               <LienApercu src="/assets/comprendre/exemple-palier.webp" alt="Exemple de chemins possibles au début d'un palier" texte="voir un exemple de palier" />
             </p>
             <p style={cp.paragraphe}>
-              Quatre types de salles existent : Combat (un groupe de monstres), Fontaine Onirique
-              (marchand de bonus), Faveur Onirique (un bonus gratuit qui évite un combat), et Fin du
-              rêve — le combat final, toujours en dernière salle.
+              Quatre types de salles existent :{" "}
+              <MotCliquable src="/assets/comprendre/type-combat.webp" alt="Salle de type Combat">Combat</MotCliquable>{" "}
+              (un groupe de monstres),{" "}
+              <MotCliquable src="/assets/comprendre/type-fontaine.webp" alt="Salle de type Fontaine Onirique">Fontaine Onirique</MotCliquable>{" "}
+              (marchand de bonus),{" "}
+              <MotCliquable src="/assets/comprendre/type-faveur.webp" alt="Salle de type Faveur Onirique">Faveur Onirique</MotCliquable>{" "}
+              (un bonus gratuit qui évite un combat), et{" "}
+              <MotCliquable src="/assets/comprendre/type-fin-du-reve.webp" alt="Salle Fin du rêve, le combat final">Fin du rêve</MotCliquable>{" "}
+              — le combat final, toujours en dernière salle.
             </p>
             <p style={cp.paragraphe}>
-              Une fois entré dans une salle, aucun retour en arrière n'est possible.
+              Une fois entré dans une salle, aucun retour en arrière n'est possible. Les
+              personnages sont intégralement soignés à la fin de chaque salle, et les combats
+              n'imposent aucun challenge.
             </p>
             <p style={cp.paragraphe}>
               Les salles contiennent des monstres classiques, des boss de donjon ou des avis de
@@ -501,7 +512,8 @@ export default function ComprendrePage({ onBack }) {
             </p>
             <p style={cp.paragraphe}>
               Chaque salle a un niveau de difficulté variable, visible avant d'y entrer — une salle
-              difficile donne un bonus de taux de drop supplémentaire, propre à cette salle.
+              difficile donne un bonus de taux de drop supplémentaire, propre à cette salle, et
+              rapporte aussi des points de rêve en plus.
             </p>
             <p style={cp.paragraphe}>
               Pour gérer la mort définitive : le bestiaire de la salle (Alt+B) affiche stats des
