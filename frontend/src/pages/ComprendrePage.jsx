@@ -2,30 +2,33 @@ import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 
 // Page "/comprendre" — "Comprendre les Songes" (chantier dédié, 15 août
-// 2026 ; refonte à 11 sections le même mois). Contenu éditorial : toute la
-// matière vient de la skill Ratrosk (.claude/skills/ratrosk/, seule source
-// de faits autorisée — statuts ✅ affirmable / 📊 estimation / ⚠️ réserve
-// explicite / ❌ interdit d'écriture). Aucun taux, multiplicateur, nombre
-// de runs ou prix n'est écrit en dur ici : tout vient de GET /songes/config
-// (et /songes/taux pour la section VI), même pattern que pages/TauxPage.jsx
-// — y compris la formule calculerSongesItems, dupliquée intentionnellement
-// plutôt qu'importée (convention du projet : chaque page est autonome,
-// voir l'en-tête de TauxPage.jsx). Les constantes de mécanique de jeu qui
+// 2026 ; refonte à 11 sections mi-août ; réorganisation à 12 sections et
+// habillage aligné sur "L'Œil de Draconiros", 16 août 2026). Contenu
+// éditorial : toute la matière vient de la skill Ratrosk
+// (.claude/skills/ratrosk/, seule source de faits autorisée — statuts
+// ✅ affirmable / 📊 estimation / ⚠️ réserve explicite / ❌ interdit
+// d'écriture). Aucun taux, multiplicateur, nombre de runs ou prix n'est
+// écrit en dur ici : tout vient de GET /songes/config (et /songes/taux
+// pour la section VI), même pattern que pages/TauxPage.jsx — y compris la
+// formule calculerSongesItems, dupliquée intentionnellement plutôt
+// qu'importée (convention du projet : chaque page est autonome, voir
+// l'en-tête de TauxPage.jsx). Les constantes de mécanique de jeu qui
 // n'alimentent aucun calcul et n'existent dans aucune API (niveaux du boss
-// final, coûts en points de rêve, score de difficulté des salles...)
-// restent en dur : la règle vise les valeurs déjà en base qui pourraient
-// diverger (taux, multiplicateurs, nombres de runs, prix en bribes),
-// précision Popo, chantier refonte. Fichier séparé, App.jsx n'a pas eu
-// besoin d'être touché : l'import et la route existaient déjà.
+// final, coûts en points de rêve...) restent en dur : la règle vise les
+// valeurs déjà en base qui pourraient diverger (taux, multiplicateurs,
+// nombres de runs, prix en bribes), précision Popo. Fichier séparé,
+// App.jsx n'a pas eu besoin d'être touché : l'import et la route
+// existaient déjà.
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const NOMS_PALIERS_ROMAINS = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V" }
 
-// Sorts de Songe (section X) : pas encore scrapés (SKILL.md ratrosk
+// Sorts de Songe (section XI) : pas encore scrapés (SKILL.md ratrosk
 // n'a que des exemples partiels, pas une liste exhaustive fiable). Tant
 // que ce tableau est vide, la section entière est masquée — même logique
 // que "aGuide" pour le guide de boss des donjons (App.jsx,
-// DonjonDetailPage) : pas de placeholder "bientôt disponible", rien.
+// DonjonDetailPage) : pas de placeholder "bientôt disponible", rien. Le
+// renvoi vers elle (fin de section IX) se masque avec elle.
 const SORTS_DE_SONGE = []
 
 // Formule identique a celle de TauxPage.jsx (SONGES.md / regle Popo,
@@ -58,24 +61,30 @@ function formaterSonges(v) {
   return `~${arrondi.toLocaleString("fr-FR")} runs`
 }
 
-// Exemple travaillé de la section V (4 personnages) : valeur illustrative
+// Exemple travaillé de la section VI (4 personnages) : valeur illustrative
 // d'un exemple pédagogique, pas un taux/prix/nombre de runs à synchroniser
-// avec une source — voir étape 0 validée par Popo. Le lecteur qui veut
-// ajuster son nombre de personnages est renvoyé vers /taux.
+// avec une source. Le lecteur qui veut ajuster son nombre de personnages
+// est renvoyé vers /taux.
 const NB_PERSONNAGES_EXEMPLE = 4
 
+// Ordre de la réorganisation du 16 août 2026 : on suit la chronologie
+// réelle d'une run — choisir l'intensité, puis descendre les paliers, puis
+// affronter le boss — plutôt que l'ordre précédent. Le multiplicateur de
+// dégâts sort de la section Bonus pour devenir sa propre section (VIII) :
+// c'est le bonus le plus rentable, il mérite sa propre entrée de sommaire.
 const SECTIONS = [
-  { id: "qu-est-ce-qu-un-songe", numero: "I", titre: "Qu'est-ce qu'un Songe" },
-  { id: "comment-se-deroule-une-run", numero: "II", titre: "Comment se déroule une run" },
-  { id: "le-combat-final", numero: "III", titre: "Le combat final" },
-  { id: "les-intensites", numero: "IV", titre: "Les intensités" },
+  { id: "cest-quoi-les-songes", numero: "I", titre: "C'est quoi les Songes ?" },
+  { id: "les-intensites", numero: "II", titre: "Les intensités" },
+  { id: "comment-se-deroule-une-run", numero: "III", titre: "Comment se déroule une run" },
+  { id: "le-combat-final", numero: "IV", titre: "Le combat final" },
   { id: "ce-qui-peut-tomber", numero: "V", titre: "Ce qui peut tomber" },
   { id: "combien-de-runs", numero: "VI", titre: "Combien de runs pour une légende" },
   { id: "bribes-et-economie", numero: "VII", titre: "Les bribes et l'économie" },
-  { id: "les-bonus", numero: "VIII", titre: "Les bonus" },
-  { id: "quetes-et-succes", numero: "IX", titre: "Quêtes et succès" },
-  { id: "les-sorts-de-songe", numero: "X", titre: "Les sorts de songe" },
-  { id: "ce-qu-on-ne-sait-pas-encore", numero: "XI", titre: "Ce qu'on ne sait pas encore" },
+  { id: "le-multiplicateur-de-degats", numero: "VIII", titre: "Le multiplicateur de dégâts" },
+  { id: "les-bonus", numero: "IX", titre: "Les bonus" },
+  { id: "quetes-et-succes", numero: "X", titre: "Quêtes et succès" },
+  { id: "les-sorts-de-songe", numero: "XI", titre: "Les sorts de songe" },
+  { id: "ce-qu-on-ne-sait-pas-encore", numero: "XII", titre: "Ce qu'on ne sait pas encore" },
 ]
 
 const COULEURS = {
@@ -87,14 +96,14 @@ const COULEURS = {
 const cp = {
   page: { padding: "1.5rem 1.25rem 4rem", maxWidth: 1180, margin: "0 auto" },
   backBtn: { background: "transparent", border: "1px solid var(--df-border-cyan)", borderRadius: 6, padding: "5px 12px", fontSize: 12, color: "var(--df-cyan)", cursor: "pointer", marginBottom: 18 },
-  intro: { margin: "0 0 26px", fontSize: 13.5, lineHeight: 1.6, color: "var(--df-text-2)", maxWidth: 640 },
+  intro: { margin: "0 0 26px", fontSize: 14.5, fontWeight: 300, lineHeight: 1.6, color: "var(--df-text-2)", maxWidth: 480 },
   toggleBtn: { width: "100%", textAlign: "left", marginBottom: 10 },
   sommaireNav: { position: "sticky", top: 20, display: "flex", flexDirection: "column", gap: 2 },
   sommaireLien: { display: "block", padding: "7px 10px", borderRadius: 8, fontSize: 12.5, textDecoration: "none", color: "var(--df-text-2)", borderLeft: "2px solid transparent" },
   sommaireNumero: { opacity: 0.55, marginRight: 6, fontFamily: "var(--df-font-logo)" },
   section: { scrollMarginTop: 20, marginBottom: 46 },
   sectionTitre: { display: "flex", alignItems: "baseline", gap: 10, margin: "0 0 14px", fontSize: 19 },
-  numeroRomain: { fontFamily: "var(--df-font-logo)", fontSize: 15, color: "var(--df-text-3)", letterSpacing: "0.06em" },
+  numeroRomain: { fontFamily: "var(--df-font-logo)", fontSize: 15, color: "var(--df-gold)", letterSpacing: "0.06em" },
   paragraphe: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px" },
   liste: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px", paddingLeft: 20 },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 14 },
@@ -108,6 +117,9 @@ const cp = {
   chiffrePhareLabel: { fontSize: 12, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 },
   chiffrePhare: { fontSize: "clamp(34px, 9vw, 52px)", fontWeight: 700, color: "#2CE7FF", textShadow: "0 0 14px rgba(44,231,255,0.5)", lineHeight: 1, marginBottom: 8 },
   sousTitre: { fontSize: 15, fontWeight: 700, color: "var(--df-gold)", margin: "26px 0 10px", scrollMarginTop: 20 },
+  lienApercu: { background: "transparent", border: "none", padding: 0, color: "var(--df-cyan)", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" },
+  overlayFond: { position: "fixed", inset: 0, background: "rgba(3, 12, 17, 0.85)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "3rem 1.5rem", cursor: "pointer" },
+  overlayImage: { maxWidth: "100%", maxHeight: "100%", borderRadius: 12, border: "1px solid var(--df-border-gold)", cursor: "default" },
 }
 
 function encadreStyle(couleur) {
@@ -152,7 +164,7 @@ function EncadreCalculeLeTien({ lien, enfant }) {
   )
 }
 
-// Emplacement de capture d'écran (sections II, III, IV, VIII) — src/alt
+// Emplacement de capture d'écran (sections III, IV, II, IX) — src/alt
 // obligatoires, légende optionnelle, chargement paresseux. Si le fichier
 // est absent (pas encore fourni par Popo dans
 // frontend/public/assets/comprendre/), l'emplacement ne s'affiche pas du
@@ -166,6 +178,33 @@ function EmplacementImage({ src, alt, legende }) {
         style={{ width: "100%", display: "block" }} />
       {legende && <figcaption style={cp.legendeImage}>{legende}</figcaption>}
     </figure>
+  )
+}
+
+// Lien "voir un exemple" ouvrant une capture en overlay (section III,
+// même pattern qu'un aperçu de fiche monstre : clic pour agrandir, clic
+// en dehors pour refermer). Le lien lui-même ne s'affiche que si l'image
+// existe déjà (précharge silencieuse) — pas de lien mort tant que Popo
+// n'a pas fourni le fichier.
+function LienApercu({ src, alt, texte }) {
+  const [disponible, setDisponible] = useState(false)
+  const [ouvert, setOuvert] = useState(false)
+  useEffect(() => {
+    const img = new window.Image()
+    img.onload = () => setDisponible(true)
+    img.onerror = () => setDisponible(false)
+    img.src = src
+  }, [src])
+  if (!disponible) return null
+  return (
+    <>
+      <button onClick={() => setOuvert(true)} style={cp.lienApercu}>{texte}</button>
+      {ouvert && (
+        <div style={cp.overlayFond} onClick={() => setOuvert(false)}>
+          <img src={src} alt={alt} style={cp.overlayImage} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+    </>
   )
 }
 
@@ -273,140 +312,49 @@ export default function ComprendrePage({ onBack }) {
     <div className="df-fond-nebuleuse" style={{ minHeight: "100vh" }}>
       <div style={cp.page}>
         <button onClick={onBack} style={cp.backBtn}>← Retour</button>
-        <h1 className="df-section-title" style={{ fontSize: 24, margin: "0 0 8px" }}>Comprendre les Songes</h1>
+        {/* Habillage aligné sur le titre "L'Œil de Draconiros" (SongesPage.jsx)
+            — même classe .df-songes-titre-eclat (pageSonges.css, chargée
+            globalement par main.jsx, jamais retouchée ici) et mêmes valeurs
+            de style inline : même taille, même halo, même police. */}
+        <h1 className="df-songes-titre-eclat" style={{ fontFamily: "var(--df-font-logo)", fontWeight: 700, fontSize: "clamp(32px, 6vw, 52px)", color: "var(--df-text)", margin: "0 0 10px", lineHeight: 1.06, textShadow: "0 0 4px rgba(44,231,255,.85), 0 0 14px rgba(44,231,255,.55), 0 0 32px rgba(44,231,255,.32), 0 0 60px rgba(44,231,255,.16)" }}>
+          Comprendre les Songes
+        </h1>
         <p style={cp.intro}>
-          Le fonctionnement du Puits des Songes Infinis, du taux de drop à l'économie des bribes —
-          à jour de la 3.5. Ce qu'on affirme vient de relevés en jeu ; ce qu'on ne sait pas encore
-          est dit comme tel, jamais habillé.
+          Tout ce qu'il y a à savoir sur le puits rêvé de Draconiros.
         </p>
 
         <MiseEnPageSommaire sections={sectionsVisibles} ouvert={sommaireOuvert}
           onToggle={() => setSommaireOuvert(o => !o)} onNaviguer={naviguerVersSection}>
 
-          {/* I — Qu'est-ce qu'un Songe */}
-          <section id="qu-est-ce-qu-un-songe" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>I</span>Qu'est-ce qu'un Songe</h2>
+          {/* I — C'est quoi les Songes ? */}
+          <section id="cest-quoi-les-songes" style={cp.section}>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>I</span>C'est quoi les Songes ?</h2>
             <p style={cp.paragraphe}>
-              Le Puits des Songes Infinis est la fonctionnalité de fin de jeu de Dofus 3. Tu y lances
-              une run — seul ou jusqu'à 4 joueurs — avec le personnage qui la possède obligatoirement
-              en tête de groupe.
+              Le Puits des Songes Infinis est la fonctionnalité de fin de jeu de Dofus 3. Tu y
+              lances une run — seul ou jusqu'à 4 joueurs. Seul le chef de groupe peut lancer la
+              run et les combats ; il choisit aussi l'intensité au lancement, parmi plusieurs
+              niveaux de difficulté.
             </p>
             <p style={cp.paragraphe}>
               Accessible depuis l'onglet Songes Infinis du menu (raccourci T), sans prérequis de
-              quête, conseillé à partir du niveau 199-200.
+              quête. Plancher de niveau 50 ; le 199-200 reste fortement conseillé pour une
+              expérience correcte.
             </p>
             <p style={cp.paragraphe}>
-              Chaque run est une prise de risque : la mort y est définitive. Un combat perdu met fin
-              à la run, sauf si tu possèdes un Sable de Draconiros pour retenter le combat. C'est ce
-              risque qui rend le butin qu'on y trouve — objets légendaires, runes astrales,
-              cosmétiques exclusifs — introuvable ailleurs dans le jeu.
+              Chaque run est une prise de risque : la mort y est définitive, sans challenges
+              imposés dans les combats. Les personnages sont intégralement soignés à la fin de
+              chaque salle. Le butin exclusif aux Songes : Légendes, runes astrales, cosmétiques,
+              reflets oniriques.
             </p>
             <EncadreARetenir>
-              Aucun prérequis de niveau — le 199-200 est conseillé, pas exigé. Jusqu'à 4 joueurs,
-              avec mort définitive : un combat perdu met fin à la run (sauf Sable de Draconiros).
+              Plancher de niveau 50, 199-200 fortement conseillé. Jusqu'à 4 joueurs, avec mort
+              définitive : un combat perdu met fin à la run.
             </EncadreARetenir>
           </section>
 
-          {/* II — Comment se déroule une run */}
-          <section id="comment-se-deroule-une-run" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>II</span>Comment se déroule une run</h2>
-            <p style={cp.paragraphe}>
-              Une run compte {config.nb_salles_par_run} salles réparties en {nbPaliers} paliers, chacun
-              plus difficile que le précédent :
-            </p>
-            <table style={cp.table}>
-              <thead><tr><th style={cp.th}>Palier</th><th style={cp.th}>Nom</th><th style={cp.th}>Salles</th><th style={cp.th}>Combats</th></tr></thead>
-              <tbody>
-                {Object.entries(config.paliers).map(([n, p]) => (
-                  <tr key={n}>
-                    <td style={cp.td}>{NOMS_PALIERS_ROMAINS[n] || n}</td>
-                    <td style={cp.td}>{p.nom}</td>
-                    <td style={cp.td}>{p.salles[0]} → {p.salles[1]}</td>
-                    <td style={cp.td}>{config.combats_par_palier[n]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p style={cp.paragraphe}>
-              Sur ces {config.nb_salles_par_run} salles, jusqu'à {totalCombats} sont des combats —
-              une Faveur Onirique en remplace un à chaque fois qu'elle apparaît sur le chemin
-              choisi. Le reste, ce sont des Fontaines Oniriques (salles 4, 10, 16 et 25) : chaque
-              palier — sauf le premier — en commence une, et la dernière apparaît juste avant le
-              combat final.
-            </p>
-            <p style={cp.paragraphe}>
-              Quatre types de salles existent : Combat (un groupe de monstres), Fontaine Onirique
-              (marchand de bonus), Faveur Onirique (un bonus gratuit, qui permet d'avancer sans
-              combattre), et Fin du rêve — le combat final, toujours en dernière salle.
-            </p>
-            <p style={cp.paragraphe}>
-              Une fois entré dans une salle, aucun retour en arrière n'est possible — sauf via le
-              gobelin Gobledore, qui renvoie exceptionnellement à la salle des portails précédente.
-            </p>
-            <p style={cp.paragraphe}>
-              <strong>Arbitrage :</strong> une Faveur donne un bonus gratuit sans risque de mort,
-              mais coûte une occasion de drop — à éviter si tu farmes les légendes.
-            </p>
-            <p style={cp.paragraphe}>
-              Chaque salle a aussi un score de difficulté, caché pendant la run — visible seulement
-              à l'écran de défaite. Ordres de grandeur : environ 5 en Rêve I au palier I, 10 en
-              Rêve I au palier V, 30 en Cauchemar III au palier I, 60 en Cauchemar III au palier V.
-            </p>
-            <p style={cp.paragraphe}>
-              Pour gérer la mort définitive : le bestiaire de la salle (Alt+B) affiche stats des
-              monstres, carte et ordre de jeu avant de lancer le combat, avec 3 minutes de
-              préparation et des tours de 90 secondes.
-            </p>
-            <EmplacementImage src="/assets/comprendre/structure-run.webp" alt="Carte à embranchement d'un palier de Songe, avec ses salles de combat, Fontaine et Faveur Onirique" />
-            <EncadreARetenir>
-              {config.nb_salles_par_run} salles, {nbPaliers} paliers, jusqu'à {totalCombats} combats
-              selon le chemin — le bestiaire (Alt+B) et les 3 minutes de préparation rendent la
-              mort définitive gérable.
-            </EncadreARetenir>
-          </section>
-
-          {/* III — Le combat final */}
-          <section id="le-combat-final" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>III</span>Le combat final</h2>
-            <p style={cp.paragraphe}>
-              La dernière salle, "Fin du rêve", est un combat à vagues aléatoires. Chaque vague suit
-              le même algorithme qu'une salle classique : monstres, boss ou avis de recherche.
-            </p>
-            <p style={cp.paragraphe}>Ce qui change par rapport à un combat normal :</p>
-            <ul style={cp.liste}>
-              <li>Pas de soin entre les vagues — l'érosion est conservée</li>
-              <li>Boosts, invocations, pièges et portails persistent sur le terrain</li>
-              <li>Pas de délai : la vague suivante apparaît dès la précédente éliminée</li>
-              <li>Les mécaniques de la vague précédente disparaissent</li>
-              <li>Les nouveaux arrivants ne sont pas invulnérables — focus possible avant qu'ils jouent</li>
-              <li>Un sort "une fois par combat" ne se recharge pas entre les vagues</li>
-            </ul>
-            <table style={cp.table}>
-              <thead><tr><th style={cp.th}>Catégorie</th><th style={{ ...cp.th, textAlign: "right" }}>Niveau de base</th><th style={{ ...cp.th, textAlign: "right" }}>Par vague</th></tr></thead>
-              <tbody>
-                <tr><td style={cp.td}>Rêve</td><td style={cp.tdChiffre}>250</td><td style={cp.tdChiffre}>+5</td></tr>
-                <tr><td style={cp.td}>Paradoxe</td><td style={cp.tdChiffre}>275</td><td style={cp.tdChiffre}>+10</td></tr>
-                <tr><td style={cp.td}>Cauchemar</td><td style={cp.tdChiffre}>300</td><td style={cp.tdChiffre}>+15</td></tr>
-              </tbody>
-            </table>
-            <p style={cp.paragraphe}>
-              50 tours maximum pour enchaîner le plus de vagues possible. Les seuils de validation
-              et les plafonds de vagues par catégorie sont en section{" "}
-              <a href="#bribes-et-economie" style={{ color: "var(--df-cyan)" }}
-                onClick={(e) => { e.preventDefault(); naviguerVersSection("bribes-et-economie") }}>VII</a>{" "}
-              — ils déterminent tes bribes, pas ton drop.
-            </p>
-            <EmplacementImage src="/assets/comprendre/combat-final.webp" alt="Combat final d'un Songe, vagues successives de monstres" />
-            <EncadreARetenir>
-              Le combat final compte pour un seul combat dans les occasions de drop, quel que soit
-              le nombre de vagues enchaînées — pousser les vagues change tes bribes, jamais tes
-              chances de légende.
-            </EncadreARetenir>
-          </section>
-
-          {/* IV — Les intensités */}
+          {/* II — Les intensités */}
           <section id="les-intensites" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IV</span>Les intensités</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>II</span>Les intensités</h2>
             <p style={cp.paragraphe}>
               Dix intensités existent, réparties en 3 catégories : Rêve, Paradoxe, Cauchemar. Chaque
               intensité applique un multiplicateur, identique pour le butin et l'expérience.
@@ -417,7 +365,7 @@ export default function ComprendrePage({ onBack }) {
               <li><strong>Cauchemar</strong> — joueurs expérimentés : meilleurs taux, mais conçu pour le challenge, pas la rentabilité</li>
             </ul>
             <table style={cp.table}>
-              <thead><tr><th style={cp.th}>Catégorie</th><th style={cp.th}>Niveau</th><th style={{ ...cp.th, textAlign: "right" }}>Multiplicateur</th></tr></thead>
+              <thead><tr><th style={cp.th}>Catégorie</th><th style={cp.th}>Niveau</th><th style={{ ...cp.th, textAlign: "right" }}>Multiplicateur de drop</th></tr></thead>
               <tbody>
                 {Object.entries(config.intensites).map(([cle, info]) =>
                   info.niveaux.map(n => (
@@ -456,6 +404,113 @@ export default function ComprendrePage({ onBack }) {
             </EncadreARetenir>
           </section>
 
+          {/* III — Comment se déroule une run */}
+          <section id="comment-se-deroule-une-run" style={cp.section}>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>III</span>Comment se déroule une run</h2>
+            <p style={cp.paragraphe}>
+              Une run compte {config.nb_salles_par_run} salles réparties en {nbPaliers} paliers, chacun
+              plus difficile que le précédent :
+            </p>
+            <table style={cp.table}>
+              <thead><tr><th style={cp.th}>Palier</th><th style={cp.th}>Nom</th><th style={cp.th}>Salles</th><th style={cp.th}>Combats</th></tr></thead>
+              <tbody>
+                {Object.entries(config.paliers).map(([n, p]) => (
+                  <tr key={n}>
+                    <td style={cp.td}>{NOMS_PALIERS_ROMAINS[n] || n}</td>
+                    <td style={cp.td}>{p.nom}</td>
+                    <td style={cp.td}>{p.salles[0]} → {p.salles[1]}</td>
+                    <td style={cp.td}>{config.combats_par_palier[n]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p style={cp.paragraphe}>
+              Sur ces {config.nb_salles_par_run} salles, jusqu'à {totalCombats} peuvent être des
+              combats — une Faveur Onirique en remplace un à chaque fois qu'elle apparaît sur le
+              chemin choisi.
+            </p>
+            <p style={cp.paragraphe}>
+              Les salles 4, 10, 16 et 25 sont des Fontaines Oniriques : on y achète des bonus avec
+              les points de rêve gagnés à chaque combat — détail en section{" "}
+              <a href="#les-bonus" style={{ color: "var(--df-cyan)" }}
+                onClick={(e) => { e.preventDefault(); naviguerVersSection("les-bonus") }}>IX</a>.
+            </p>
+            <p style={cp.paragraphe}>
+              Au début de chaque palier, tu vois tous les chemins possibles : de quoi choisir son
+              trajet selon les bonus proposés et maximiser ses points de rêve.{" "}
+              <LienApercu src="/assets/comprendre/exemple-palier.webp" alt="Exemple de chemins possibles au début d'un palier" texte="voir un exemple de palier" />
+            </p>
+            <p style={cp.paragraphe}>
+              Quatre types de salles existent : Combat (un groupe de monstres), Fontaine Onirique
+              (marchand de bonus), Faveur Onirique (un bonus gratuit qui évite un combat), et Fin du
+              rêve — le combat final, toujours en dernière salle.
+            </p>
+            <p style={cp.paragraphe}>
+              Une fois entré dans une salle, aucun retour en arrière n'est possible.
+            </p>
+            <p style={cp.paragraphe}>
+              Les salles contiennent des monstres classiques, des boss de donjon ou des avis de
+              recherche (24 accessibles en Songe). Certains subissent de légères adaptations pour
+              être jouables en Songe, signalées en combat sous le nom d'"Aberration" — ces
+              monstres portent une pastille violette "EN SONGE" dans la{" "}
+              <button onClick={() => navigate("/bibliotheque")} style={cp.lienApercu}>Bibliothèque</button>.
+            </p>
+            <p style={cp.paragraphe}>
+              Chaque salle a un niveau de difficulté variable, visible avant d'y entrer — une salle
+              difficile donne un bonus de taux de drop supplémentaire, propre à cette salle.
+            </p>
+            <p style={cp.paragraphe}>
+              Pour gérer la mort définitive : le bestiaire de la salle (Alt+B) affiche stats des
+              monstres, carte et ordre de jeu avant de lancer le combat, avec 3 minutes de
+              préparation et des tours de 90 secondes.
+            </p>
+            <EmplacementImage src="/assets/comprendre/structure-run.webp" alt="Carte à embranchement d'un palier de Songe, avec ses salles de combat, Fontaine et Faveur Onirique" />
+            <EncadreARetenir>
+              {config.nb_salles_par_run} salles, {nbPaliers} paliers, jusqu'à {totalCombats} combats
+              selon le chemin — le bestiaire (Alt+B) et les 3 minutes de préparation rendent la
+              mort définitive gérable.
+            </EncadreARetenir>
+          </section>
+
+          {/* IV — Le combat final */}
+          <section id="le-combat-final" style={cp.section}>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IV</span>Le combat final</h2>
+            <p style={cp.paragraphe}>
+              La dernière salle, "Fin du rêve", est un combat à vagues aléatoires. Chaque vague suit
+              le même algorithme qu'une salle classique : monstres, boss ou avis de recherche.
+            </p>
+            <p style={cp.paragraphe}>Ce qui change par rapport à un combat normal :</p>
+            <ul style={cp.liste}>
+              <li>Pas de soin entre les vagues — l'érosion est conservée</li>
+              <li>Boosts, invocations, pièges et portails persistent sur le terrain</li>
+              <li>Pas de délai : la vague suivante apparaît dès la précédente éliminée</li>
+              <li>Les mécaniques de la vague précédente disparaissent</li>
+              <li>Les nouveaux arrivants ne sont pas invulnérables — focus possible avant qu'ils jouent</li>
+              <li>Un sort "une fois par combat" ne se recharge pas entre les vagues</li>
+            </ul>
+            <table style={cp.table}>
+              <thead><tr><th style={cp.th}>Catégorie</th><th style={{ ...cp.th, textAlign: "right" }}>Niveau de base</th><th style={{ ...cp.th, textAlign: "right" }}>Par vague</th></tr></thead>
+              <tbody>
+                <tr><td style={cp.td}>Rêve</td><td style={cp.tdChiffre}>250</td><td style={cp.tdChiffre}>+5</td></tr>
+                <tr><td style={cp.td}>Paradoxe</td><td style={cp.tdChiffre}>275</td><td style={cp.tdChiffre}>+10</td></tr>
+                <tr><td style={cp.td}>Cauchemar</td><td style={cp.tdChiffre}>300</td><td style={cp.tdChiffre}>+15</td></tr>
+              </tbody>
+            </table>
+            <p style={cp.paragraphe}>
+              Vagues à valider pour terminer la run : {config.vagues_requises.reve} en Rêve,{" "}
+              {config.vagues_requises.paradoxe} en Paradoxe, {config.vagues_requises.cauchemar} en
+              Cauchemar. Plafonds : {config.vagues_max.reve} en Rêve, {config.vagues_max.paradoxe}{" "}
+              en Paradoxe, {config.vagues_max.cauchemar ?? "illimité"} en Cauchemar. 50 tours
+              maximum pour les enchaîner.
+            </p>
+            <EmplacementImage src="/assets/comprendre/combat-final.webp" alt="Combat final d'un Songe, vagues successives de monstres" />
+            <EncadreARetenir>
+              Le combat final compte pour un seul combat dans les occasions de drop, quel que soit
+              le nombre de vagues enchaînées. Les vagues vaincues déterminent tes bribes — détail
+              en section VII, pas tes chances de légende.
+            </EncadreARetenir>
+          </section>
+
           {/* V — Ce qui peut tomber */}
           <section id="ce-qui-peut-tomber" style={cp.section}>
             <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V</span>Ce qui peut tomber</h2>
@@ -463,7 +518,7 @@ export default function ComprendrePage({ onBack }) {
               Deux conditions indépendantes doivent être remplies pour qu'un objet tombe. L'intensité
               décide quelles familles d'objets sont accessibles : en Rêve, reflets et cosmétiques
               seulement ; à partir de Paradoxe I, tout. Le palier décide quelle variante de chaque
-              famille, et si les légendes sont accessibles.
+              famille, et si les légendes sont accessibles — à partir du palier III.
             </p>
             <p style={cp.paragraphe}>
               Conséquence contre-intuitive : une run en Cauchemar III mais au palier II ne peut
@@ -501,6 +556,10 @@ export default function ComprendrePage({ onBack }) {
               Les légendes classiques ne tombent qu'à partir du palier III, et seulement en
               Paradoxe ou Cauchemar. Chaque légende tire indépendamment des autres — le tableau des
               butins en jeu le confirme, une ligne par légende.
+            </p>
+            <p style={cp.paragraphe}>
+              Chaque personnage a aussi sa propre chance de drop, indépendante des autres. Jouer en
+              multicompte multiplie donc les occasions sur une même run.
             </p>
             {(() => {
               const defaut = config.intensite_defaut
@@ -554,8 +613,8 @@ export default function ComprendrePage({ onBack }) {
           <section id="bribes-et-economie" style={cp.section}>
             <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VII</span>Les bribes et l'économie</h2>
             <p style={cp.paragraphe}>
-              Les bribes de rêve sont la monnaie qu'on ramène d'une run terminée, dépensée ensuite au
-              Marché onirique. Elles ne sont obtenues qu'en atteignant le seuil de vagues du combat
+              Les bribes de rêve sont la monnaie qu'on ramène d'une run terminée, à la fin du
+              combat final. Elles ne sont obtenues qu'en atteignant le seuil de vagues du combat
               final — perdre avant ne rapporte rien.
             </p>
             <table style={cp.table}>
@@ -609,16 +668,9 @@ export default function ComprendrePage({ onBack }) {
             } />
           </section>
 
-          {/* VIII — Les bonus (refonte : ce qu'ils FONT, pas seulement où les trouver) */}
-          <section id="les-bonus" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VIII</span>Les bonus</h2>
-            <p style={cp.paragraphe}>
-              Trois familles : bonus mineurs (à l'entrée de chaque salle), bonus passifs (Fontaine
-              uniquement), bonus actifs — les sorts de songe. Compagnons et invocations en
-              profitent aussi.
-            </p>
-
-            <h3 id="le-multiplicateur-de-degats" style={cp.sousTitre}>Le multiplicateur de dégâts</h3>
+          {/* VIII — Le multiplicateur de dégâts (sortie de la section Bonus, 16 août 2026) */}
+          <section id="le-multiplicateur-de-degats" style={cp.section}>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VIII</span>Le multiplicateur de dégâts</h2>
             <p style={cp.paragraphe}>
               Démarre à 100 %, monte avec les bonus "% Dégâts". Tous les autres bonus s'additionnent
               d'abord entre eux ; le multiplicateur s'applique en <strong>dernier</strong> sur le
@@ -629,6 +681,25 @@ export default function ComprendrePage({ onBack }) {
               Le multiplicateur de dégâts s'applique en dernier, sur tout le reste déjà additionné —
               c'est le bonus le plus rentable à prioriser, et personne ne l'explique en jeu.
             </EncadreARetenir>
+          </section>
+
+          {/* IX — Les bonus */}
+          <section id="les-bonus" style={cp.section}>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IX</span>Les bonus</h2>
+            <p style={cp.paragraphe}>
+              Trois familles : bonus mineurs (à l'entrée de chaque salle), bonus passifs (Fontaine
+              uniquement), bonus actifs — les sorts de songe. Compagnons et invocations en
+              profitent aussi. Le multiplicateur de dégâts, le bonus le plus rentable, a sa propre
+              section (VIII).
+            </p>
+            <table style={cp.table}>
+              <thead><tr><th style={cp.th}>Famille</th><th style={cp.th}>Où l'obtenir</th><th style={cp.th}>Coût</th></tr></thead>
+              <tbody>
+                <tr><td style={cp.td}>Bonus mineurs</td><td style={cp.td}>Entrée de chaque salle</td><td style={cp.td}>Gratuit</td></tr>
+                <tr><td style={cp.td}>Bonus passifs</td><td style={cp.td}>Fontaine Onirique</td><td style={cp.td}>15 à 25 points de rêve</td></tr>
+                <tr><td style={cp.td}>Bonus actifs (sorts)</td><td style={cp.td}>Fontaine ou Faveur</td><td style={cp.td}>10 à 20 points, ou gratuit</td></tr>
+              </tbody>
+            </table>
 
             <h3 id="les-fontaines-oniriques" style={cp.sousTitre}>Les Fontaines Oniriques</h3>
             <p style={cp.paragraphe}>
@@ -666,11 +737,14 @@ export default function ComprendrePage({ onBack }) {
             </p>
 
             <h3 id="les-trois-utilitaires" style={cp.sousTitre}>Les trois utilitaires</h3>
-            <p style={cp.paragraphe}>
-              Tempête astrale (change un groupe de monstres ou renouvelle une Fontaine/Faveur),
-              Sable de Draconiros (20 points en Fontaine, retente un combat perdu), Croissance
-              Onirique (+100 niveaux de songeur, 10 points en Fontaine).
-            </p>
+            <table style={cp.table}>
+              <thead><tr><th style={cp.th}>Utilitaire</th><th style={cp.th}>Effet</th><th style={{ ...cp.th, textAlign: "right" }}>Prix en Fontaine</th></tr></thead>
+              <tbody>
+                <tr><td style={cp.td}>Tempête astrale</td><td style={cp.td}>Change un groupe de monstres, ou relance une Fontaine/Faveur</td><td style={cp.tdChiffre}>10 pts</td></tr>
+                <tr><td style={cp.td}>Sable de Draconiros</td><td style={cp.td}>Retente un combat perdu</td><td style={cp.tdChiffre}>20 pts</td></tr>
+                <tr><td style={cp.td}>Croissance Onirique</td><td style={cp.td}>+100 niveaux de songeur</td><td style={cp.tdChiffre}>10 pts</td></tr>
+              </tbody>
+            </table>
             <p style={cp.paragraphe}>Trois sources de niveaux de songeur, cumulables :</p>
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Source</th><th style={{ ...cp.th, textAlign: "right" }}>Gain</th></tr></thead>
@@ -688,14 +762,16 @@ export default function ComprendrePage({ onBack }) {
               Les succès "Bribe d'un… économe" et "Bribe d'un… parfait" interdisent tout achat en
               Fontaine. Les pouvoirs de gobelins, eux, restent autorisés.
             </EncadreReserve>
-            <p style={cp.paragraphe}>
-              Les bonus actifs — les sorts de songe — ont leur propre section, plus bas.
-            </p>
+            {SORTS_DE_SONGE.length > 0 && (
+              <p style={cp.paragraphe}>
+                Les bonus actifs — les sorts de songe — ont leur propre section, plus bas.
+              </p>
+            )}
           </section>
 
-          {/* IX — Quêtes et succès */}
+          {/* X — Quêtes et succès */}
           <section id="quetes-et-succes" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IX</span>Quêtes et succès</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>X</span>Quêtes et succès</h2>
             <p style={cp.paragraphe}>
               5 quêtes sont liées aux Songes : Cauchemar infini, Jusqu'au bout du rêve, Prise de
               conscience, Les animaux fantastiques, Le poids de son regard.
@@ -712,18 +788,18 @@ export default function ComprendrePage({ onBack }) {
             </p>
           </section>
 
-          {/* X — Les sorts de songe (masquée tant que SORTS_DE_SONGE est vide) */}
+          {/* XI — Les sorts de songe (masquée tant que SORTS_DE_SONGE est vide) */}
           {SORTS_DE_SONGE.length > 0 && (
             <section id="les-sorts-de-songe" style={cp.section}>
-              <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>X</span>Les sorts de songe</h2>
+              <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XI</span>Les sorts de songe</h2>
               {/* Contenu à écrire une fois la source scrapée — prévoir un renvoi vers la
                   Bibliothèque une fois les sorts effectivement trackés là-bas. */}
             </section>
           )}
 
-          {/* XI — Ce qu'on ne sait pas encore */}
+          {/* XII — Ce qu'on ne sait pas encore */}
           <section id="ce-qu-on-ne-sait-pas-encore" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XI</span>Ce qu'on ne sait pas encore</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XII</span>Ce qu'on ne sait pas encore</h2>
             <p style={cp.paragraphe}>
               Cette page ne prétend pas tout savoir. Certains chiffres sont encore en conflit entre
               nos relevés et d'autres sources, et certains mécanismes restent flous — les voici, sans
