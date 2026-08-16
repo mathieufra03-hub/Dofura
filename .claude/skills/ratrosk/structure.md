@@ -14,9 +14,12 @@
   peuvent être remplacés autant de fois que voulu.
 - ✅ Un personnage ne peut avoir qu'**une seule run en cours** à la fois.
 - ✅ Accès par l'onglet Songes Infinis du menu (raccourci T). **Aucun
-  prérequis** de quête ni de niveau — niveau 199-200 **conseillé**, pas
-  exigé. Un personnage plus bas niveau peut lancer une run : son niveau de
-  songeur sera simplement fixé à 200 au palier I (voir plus bas).
+  prérequis de quête**, mais **plancher de niveau 50** — vérifié en jeu par
+  Popo, contredit les sources externes qui annoncent aucun prérequis de
+  niveau du tout. Le niveau 199-200 reste **fortement conseillé** pour une
+  expérience correcte, mais n'est qu'une recommandation, pas une exigence.
+  Un personnage de plus bas niveau (dès 50) peut lancer une run : son
+  niveau de songeur sera simplement fixé à 200 au palier I (voir plus bas).
 - ✅ La zone compte 3 maps : le puits, le Marché onirique (à gauche), le
   domaine de Draconiros (en haut).
 
@@ -159,11 +162,11 @@ Progression du niveau des monstres, par palier :
 
 - ✅ Groupes de 1 à 3 monstres surtout au palier I, 6 à 8 au dernier palier.
 - ✅ Chaque monstre et chaque boss a un score de difficulté propre.
-- ✅ Chaque **salle** a aussi un score de difficulté global, jamais affiché
-  au joueur pendant la run — seulement visible sur l'écran de défaite.
-  Ordres de grandeur relevés : environ 5 en Rêve I au palier I, environ 10
-  en Rêve I au palier V, environ 30 en Cauchemar III au palier I, environ 60
-  en Cauchemar III au palier V.
+- ✅ Chaque **salle** a aussi un niveau de difficulté global, variable d'une
+  salle à l'autre — **visible avant d'y entrer** (voir "Navigation"
+  ci-dessus), pas caché. Une salle difficile donne un bonus de taux de drop
+  supplémentaire, propre à cette salle (voir `intensites.md`/`butin.md`,
+  "Bonus de drop par salle").
 - ✅ **Aucun combat à vagues dans les salles classiques.** Le seul combat à
   vagues de la run est le boss final.
 - ✅ Depuis la 3.4, des avis de recherche peuvent faire partie des groupes :
