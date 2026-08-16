@@ -588,7 +588,7 @@ export default function ComprendrePage({ onBack }) {
               </tbody>
             </table>
             <p style={cp.paragraphe}>
-              Prospection : elle ne joue que sur les cosmétiques et les objets de quête, et
+              <strong>Prospection</strong> : elle ne joue que sur les cosmétiques et les objets de quête, et
               individuellement par personnage — jamais sur les reflets, les runes ou les légendes.
             </p>
             <p style={cp.paragraphe}>
