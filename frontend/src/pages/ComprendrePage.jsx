@@ -93,6 +93,16 @@ const COULEURS = {
   violet: { hex: "#C478FF", rgb: "196, 120, 255" },
 }
 
+// Couleur des 3 catégories d'intensité, cohérente dans toute la page —
+// une seule source pour ce mapping (retour Popo, 18 août 2026 : la
+// coloration doit être harmonisée partout, y compris les tableaux
+// dynamiques et les libellés en dur). N'entoure que le mot qui désigne la
+// catégorie, jamais un numéro de niveau attaché.
+const COULEUR_INTENSITE = { reve: "var(--df-reve)", paradoxe: "var(--df-paradoxe)", cauchemar: "var(--df-cauchemar)" }
+function NomIntensite({ cle, children }) {
+  return <strong style={{ color: COULEUR_INTENSITE[cle] }}>{children}</strong>
+}
+
 const cp = {
   page: { padding: "1.5rem 1.25rem 4rem", maxWidth: 1180, margin: "0 auto" },
   backBtn: { background: "transparent", border: "1px solid var(--df-border-cyan)", borderRadius: 6, padding: "5px 12px", fontSize: 12, color: "var(--df-cyan)", cursor: "pointer", marginBottom: 18 },
@@ -419,13 +429,14 @@ export default function ComprendrePage({ onBack }) {
           <section id="les-intensites" style={cp.section}>
             <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>II.</span>Les intensités</h2>
             <p style={cp.paragraphe}>
-              Dix intensités existent, réparties en 3 catégories : Rêve, Paradoxe, Cauchemar. Chaque
+              Dix intensités existent, réparties en 3 catégories : <NomIntensite cle="reve">Rêve</NomIntensite>,{" "}
+              <NomIntensite cle="paradoxe">Paradoxe</NomIntensite>, <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>. Chaque
               intensité applique un multiplicateur, identique pour le butin et l'expérience.
             </p>
             <ul style={cp.liste}>
-              <li><strong style={{ color: "var(--df-reve)" }}>Rêve</strong> — mode découverte : malus, ni légendes ni runes, filet de sécurité</li>
-              <li><strong style={{ color: "var(--df-paradoxe)" }}>Paradoxe</strong> — mode normal et mode de farm : tout dropable dès Paradoxe I</li>
-              <li><strong style={{ color: "var(--df-cauchemar)" }}>Cauchemar</strong> — joueurs expérimentés : meilleurs taux, mais conçu pour le challenge, pas la rentabilité</li>
+              <li><NomIntensite cle="reve">Rêve</NomIntensite> — mode découverte : malus, ni légendes ni runes, filet de sécurité</li>
+              <li><NomIntensite cle="paradoxe">Paradoxe</NomIntensite> — mode normal et mode de farm : tout dropable dès <NomIntensite cle="paradoxe">Paradoxe</NomIntensite> I</li>
+              <li><NomIntensite cle="cauchemar">Cauchemar</NomIntensite> — joueurs expérimentés : meilleurs taux, mais conçu pour le challenge, pas la rentabilité</li>
             </ul>
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Catégorie</th><th style={cp.th}>Niveau</th><th style={{ ...cp.th, textAlign: "right" }}>Multiplicateur de drop et d'expérience</th></tr></thead>
@@ -433,7 +444,7 @@ export default function ComprendrePage({ onBack }) {
                 {Object.entries(config.intensites).map(([cle, info]) =>
                   info.niveaux.map(n => (
                     <tr key={`${cle}_${n}`}>
-                      <td style={cp.td}>{config.intensites[cle].libelle}</td>
+                      <td style={cp.td}><NomIntensite cle={cle}>{config.intensites[cle].libelle}</NomIntensite></td>
                       <td style={cp.td}>{NOMS_PALIERS_ROMAINS[n] || n}</td>
                       <td style={cp.tdChiffre}>{info.bonus[n]} %</td>
                     </tr>
@@ -442,8 +453,8 @@ export default function ComprendrePage({ onBack }) {
               </tbody>
             </table>
             <p style={cp.paragraphe}>
-              En Rêve, aucune légende, légende animale ni rune astrale ne peut tomber — seuls les
-              reflets oniriques et les cosmétiques sont accessibles. À partir de Paradoxe I, tout
+              En <NomIntensite cle="reve">Rêve</NomIntensite>, aucune légende, légende animale ni rune astrale ne peut tomber — seuls les
+              reflets oniriques et les cosmétiques sont accessibles. À partir de <NomIntensite cle="paradoxe">Paradoxe</NomIntensite> I, tout
               devient accessible ; monter encore l'intensité n'a plus qu'un effet : augmenter les
               taux, pas débloquer de nouvelles familles d'objets.
             </p>
@@ -451,9 +462,9 @@ export default function ComprendrePage({ onBack }) {
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Catégorie</th><th style={{ ...cp.th, textAlign: "right" }}>Points de rêve</th><th style={{ ...cp.th, textAlign: "right" }}>Sable de Draconiros</th><th style={{ ...cp.th, textAlign: "right" }}>Tempête astrale</th></tr></thead>
               <tbody>
-                <tr><td style={cp.td}>Rêve</td><td style={cp.tdChiffre}>10</td><td style={cp.tdChiffre}>1</td><td style={cp.tdChiffre}>1</td></tr>
-                <tr><td style={cp.td}>Paradoxe</td><td style={cp.tdChiffre}>5</td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>1</td></tr>
-                <tr><td style={cp.td}>Cauchemar</td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>1</td></tr>
+                <tr><td style={cp.td}><NomIntensite cle="reve">Rêve</NomIntensite></td><td style={cp.tdChiffre}>10</td><td style={cp.tdChiffre}>1</td><td style={cp.tdChiffre}>1</td></tr>
+                <tr><td style={cp.td}><NomIntensite cle="paradoxe">Paradoxe</NomIntensite></td><td style={cp.tdChiffre}>5</td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>1</td></tr>
+                <tr><td style={cp.td}><NomIntensite cle="cauchemar">Cauchemar</NomIntensite></td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>—</td><td style={cp.tdChiffre}>1</td></tr>
               </tbody>
             </table>
             <p style={cp.paragraphe}>
@@ -466,8 +477,8 @@ export default function ComprendrePage({ onBack }) {
               </MotCliquable>
             </p>
             <EncadreARetenir>
-              Le multiplicateur grimpe avec l'intensité, mais en Rêve, ni légendes ni runes astrales
-              ne tombent — il faut au moins Paradoxe I pour tout débloquer.
+              Le multiplicateur grimpe avec l'intensité, mais en <NomIntensite cle="reve">Rêve</NomIntensite>, ni légendes ni runes astrales
+              ne tombent — il faut au moins <NomIntensite cle="paradoxe">Paradoxe</NomIntensite> I pour tout débloquer.
             </EncadreARetenir>
           </section>
 
@@ -575,16 +586,16 @@ export default function ComprendrePage({ onBack }) {
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Catégorie</th><th style={{ ...cp.th, textAlign: "right" }}>Niveau de base</th><th style={{ ...cp.th, textAlign: "right" }}>Par vague</th></tr></thead>
               <tbody>
-                <tr><td style={cp.td}>Rêve</td><td style={cp.tdChiffre}>250</td><td style={cp.tdChiffre}>+5</td></tr>
-                <tr><td style={cp.td}>Paradoxe</td><td style={cp.tdChiffre}>275</td><td style={cp.tdChiffre}>+10</td></tr>
-                <tr><td style={cp.td}>Cauchemar</td><td style={cp.tdChiffre}>300</td><td style={cp.tdChiffre}>+15</td></tr>
+                <tr><td style={cp.td}><NomIntensite cle="reve">Rêve</NomIntensite></td><td style={cp.tdChiffre}>250</td><td style={cp.tdChiffre}>+5</td></tr>
+                <tr><td style={cp.td}><NomIntensite cle="paradoxe">Paradoxe</NomIntensite></td><td style={cp.tdChiffre}>275</td><td style={cp.tdChiffre}>+10</td></tr>
+                <tr><td style={cp.td}><NomIntensite cle="cauchemar">Cauchemar</NomIntensite></td><td style={cp.tdChiffre}>300</td><td style={cp.tdChiffre}>+15</td></tr>
               </tbody>
             </table>
             <p style={cp.paragraphe}>
-              Vagues à valider pour terminer la run : {config.vagues_requises.reve} en Rêve,{" "}
-              {config.vagues_requises.paradoxe} en Paradoxe, {config.vagues_requises.cauchemar} en
-              Cauchemar. Plafonds : {config.vagues_max.reve} en Rêve, {config.vagues_max.paradoxe}{" "}
-              en Paradoxe, {config.vagues_max.cauchemar ?? "illimité"} en Cauchemar. 50 tours
+              Vagues à valider pour terminer la run : {config.vagues_requises.reve} en <NomIntensite cle="reve">Rêve</NomIntensite>,{" "}
+              {config.vagues_requises.paradoxe} en <NomIntensite cle="paradoxe">Paradoxe</NomIntensite>, {config.vagues_requises.cauchemar} en{" "}
+              <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>. Plafonds : {config.vagues_max.reve} en <NomIntensite cle="reve">Rêve</NomIntensite>, {config.vagues_max.paradoxe}{" "}
+              en <NomIntensite cle="paradoxe">Paradoxe</NomIntensite>, {config.vagues_max.cauchemar ?? "illimité"} en <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>. 50 tours
               maximum pour les enchaîner.
             </p>
             <ImageEnFlux src="/assets/comprendre/combat-final.webp" alt="Interface du combat final : vagues, tours et bribes" />
@@ -600,12 +611,12 @@ export default function ComprendrePage({ onBack }) {
             <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V.</span>Le Drop</h2>
             <p style={cp.paragraphe}>
               Deux conditions indépendantes doivent être remplies pour qu'un objet tombe. L'intensité
-              décide quelles familles d'objets sont accessibles : en <strong style={{ color: "var(--df-reve)" }}>Rêve</strong>, reflets et cosmétiques
-              seulement ; à partir de <strong style={{ color: "var(--df-paradoxe)" }}>Paradoxe</strong> I, tout. Le palier décide ensuite quelle
+              décide quelles familles d'objets sont accessibles : en <NomIntensite cle="reve">Rêve</NomIntensite>, reflets et cosmétiques
+              seulement ; à partir de <NomIntensite cle="paradoxe">Paradoxe</NomIntensite> I, tout. Le palier décide ensuite quelle
               variante de chaque famille peut tomber.
             </p>
             <p style={cp.paragraphe}>
-              Conséquence contre-intuitive : une run en <strong style={{ color: "var(--df-cauchemar)" }}>Cauchemar</strong> III mais au palier II ne peut
+              Conséquence contre-intuitive : une run en <NomIntensite cle="cauchemar">Cauchemar</NomIntensite> III mais au palier II ne peut
               toujours pas faire tomber de légende. L'intensité maximale ne remplace pas le palier.
             </p>
             <table style={cp.table}>
@@ -675,7 +686,7 @@ export default function ComprendrePage({ onBack }) {
               individuellement par personnage — jamais sur les reflets, les runes ou les légendes.
             </p>
             <EncadreARetenir>
-              À partir du palier III en <strong style={{ color: "var(--df-paradoxe)" }}>Paradoxe</strong> I, tout devient dropable. Les deux conditions
+              À partir du palier III en <NomIntensite cle="paradoxe">Paradoxe</NomIntensite> I, tout devient dropable. Les deux conditions
               doivent être réunies : monter l'intensité sans atteindre le palier III ne sert à rien.
             </EncadreARetenir>
           </section>
@@ -685,7 +696,7 @@ export default function ComprendrePage({ onBack }) {
             <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VI.</span>Combien de runs pour une légende</h2>
             <p style={cp.paragraphe}>
               Les légendes classiques ne tombent qu'à partir du palier III, et seulement en
-              Paradoxe ou Cauchemar. Chaque légende tire indépendamment des autres — le tableau des
+              <NomIntensite cle="paradoxe"> Paradoxe</NomIntensite> ou <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>. Chaque légende tire indépendamment des autres — le tableau des
               butins en jeu le confirme, une ligne par légende.
             </p>
             <p style={cp.paragraphe}>
@@ -701,7 +712,7 @@ export default function ComprendrePage({ onBack }) {
                 <>
                   <div style={cp.chiffrePhareBloc}>
                     <div style={cp.chiffrePhareLabel}>
-                      N'importe quelle légende, en {config.intensites[defaut.intensite].libelle} {NOMS_PALIERS_ROMAINS[defaut.niveau]}
+                      N'importe quelle légende, en <NomIntensite cle={defaut.intensite}>{config.intensites[defaut.intensite].libelle}</NomIntensite> {NOMS_PALIERS_ROMAINS[defaut.niveau]}
                     </div>
                     <div style={cp.chiffrePhare}>{phare ? formaterSonges(phare.runsNimporteLaquelle) : "…"}</div>
                     <div style={cp.caveat}>
@@ -710,7 +721,7 @@ export default function ComprendrePage({ onBack }) {
                     </div>
                   </div>
                   <p style={cp.paragraphe}>
-                    L'intensité change l'ordre de grandeur : en {config.intensites.cauchemar.libelle}{" "}
+                    L'intensité change l'ordre de grandeur : en <NomIntensite cle="cauchemar">{config.intensites.cauchemar.libelle}</NomIntensite>{" "}
                     {NOMS_PALIERS_ROMAINS[niveauHautCauchemar]}, le même résultat tombe à{" "}
                     {haut ? formaterSonges(haut.runsNimporteLaquelle) : "…"}.
                   </p>
@@ -749,7 +760,7 @@ export default function ComprendrePage({ onBack }) {
                 {Object.entries(config.intensites).map(([cle, info]) =>
                   info.niveaux.map(n => (
                     <tr key={`${cle}_${n}`}>
-                      <td style={cp.td}>{config.intensites[cle].libelle} {NOMS_PALIERS_ROMAINS[n] || n}</td>
+                      <td style={cp.td}><NomIntensite cle={cle}>{config.intensites[cle].libelle}</NomIntensite> {NOMS_PALIERS_ROMAINS[n] || n}</td>
                       <td style={cp.tdChiffre}>{config.bribes_par_vague[`${cle}_${n}`] ?? "—"}</td>
                       <td style={{ ...cp.td, textAlign: "right" }}>{config.vagues_requises[cle]}</td>
                       <td style={{ ...cp.td, textAlign: "right" }}>{config.vagues_max[cle] ?? "illimité"}</td>
@@ -920,8 +931,8 @@ export default function ComprendrePage({ onBack }) {
             <p style={cp.paragraphe}>
               6 succès identiques se déclinent pour chacune des 3 catégories d'intensité (vaincre
               1 000 monstres, 100 boss, obtenir 1 000 bribes, 500 bribes sans Sable, sans achat en
-              Fontaine, ou sans les deux). Ils se cumulent vers le bas — progresser en Cauchemar
-              avance aussi Paradoxe et Rêve — et sont réalisables sur plusieurs runs, à n'importe
+              Fontaine, ou sans les deux). Ils se cumulent vers le bas — progresser en <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>
+              avance aussi <NomIntensite cle="paradoxe">Paradoxe</NomIntensite> et <NomIntensite cle="reve">Rêve</NomIntensite> — et sont réalisables sur plusieurs runs, à n'importe
               quelle intensité de la catégorie.
             </p>
             <p style={cp.paragraphe}>
