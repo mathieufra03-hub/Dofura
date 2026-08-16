@@ -235,6 +235,21 @@ function MotCliquable({ src, srcs, alt, alts, children, style }) {
   )
 }
 
+// Exception à la règle "aucune image dans le flux" (section IV, retour
+// Popo 18 août 2026) : image affichée directement, à sa taille naturelle,
+// centrée — pas d'overlay ici. Dégradation identique au reste de la
+// page : rien tant que le fichier n'existe pas, jamais de cadre vide.
+function ImageEnFlux({ src, alt }) {
+  const [enErreur, setEnErreur] = useState(false)
+  if (enErreur) return null
+  return (
+    <p style={{ textAlign: "center", margin: "0 0 14px" }}>
+      <img src={src} alt={alt} loading="lazy" onError={() => setEnErreur(true)}
+        style={{ maxWidth: "100%", display: "inline-block" }} />
+    </p>
+  )
+}
+
 // Colonne sommaire (sticky en desktop, repliable en haut sur mobile) +
 // colonne de contenu — reprend .df-list-wrap/.df-filters-toggle/
 // .df-filters-panel (tokens.css), déjà utilisées ailleurs sur le site
@@ -572,11 +587,7 @@ export default function ComprendrePage({ onBack }) {
               en Paradoxe, {config.vagues_max.cauchemar ?? "illimité"} en Cauchemar. 50 tours
               maximum pour les enchaîner.
             </p>
-            <p style={cp.paragraphe}>
-              <MotCliquable src="/assets/comprendre/combat-final.webp" alt="Interface du combat final : vagues, tours et bribes">
-                voir l'interface en jeu
-              </MotCliquable>
-            </p>
+            <ImageEnFlux src="/assets/comprendre/combat-final.webp" alt="Interface du combat final : vagues, tours et bribes" />
             <EncadreARetenir>
               Le combat final compte pour un seul combat dans les occasions de drop, quel que soit
               le nombre de vagues enchaînées. Les vagues vaincues déterminent tes bribes — détail
