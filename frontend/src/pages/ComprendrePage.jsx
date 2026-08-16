@@ -111,15 +111,15 @@ const cp = {
   td: { padding: "8px 10px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-text)" },
   tdChiffre: { padding: "8px 10px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-gold)", fontWeight: 700, textAlign: "right" },
   caveat: { fontSize: 11.5, color: "var(--df-text-3)", fontStyle: "italic", margin: "0 0 14px" },
-  image: { margin: "18px 0", borderRadius: 12, overflow: "hidden", border: "1px solid var(--df-border-gold)" },
-  legendeImage: { fontSize: 11.5, color: "var(--df-text-3)", fontStyle: "italic", padding: "6px 10px" },
   chiffrePhareBloc: { textAlign: "center", margin: "18px 0", padding: "20px 16px", background: "rgba(44, 231, 255, 0.06)", border: "1px solid rgba(44, 231, 255, 0.3)", borderRadius: 14 },
   chiffrePhareLabel: { fontSize: 12, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 },
   chiffrePhare: { fontSize: "clamp(34px, 9vw, 52px)", fontWeight: 700, color: "#2CE7FF", textShadow: "0 0 14px rgba(44,231,255,0.5)", lineHeight: 1, marginBottom: 8 },
   sousTitre: { fontSize: 15, fontWeight: 700, color: "var(--df-gold)", margin: "26px 0 10px", scrollMarginTop: 20 },
   lienApercu: { background: "transparent", border: "none", padding: 0, color: "var(--df-cyan)", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" },
   overlayFond: { position: "fixed", inset: 0, background: "rgba(3, 12, 17, 0.85)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "3rem 1.5rem", cursor: "pointer" },
-  overlayImage: { maxWidth: "100%", maxHeight: "100%", borderRadius: 12, border: "1px solid var(--df-border-gold)", cursor: "default" },
+  overlayContenu: { display: "flex", flexDirection: "column", gap: 14, alignItems: "center", maxHeight: "85vh", overflowY: "auto", cursor: "default" },
+  overlayImage: { display: "block", maxWidth: "100%", maxHeight: "80vh", borderRadius: 12, border: "1px solid var(--df-border-gold)", cursor: "default" },
+  overlayFermer: { position: "fixed", top: 20, right: 24, width: 36, height: 36, background: "rgba(3,12,17,0.7)", border: "1px solid var(--df-border-gold)", borderRadius: "50%", color: "var(--df-text)", fontSize: 20, lineHeight: 1, cursor: "pointer", zIndex: 201 },
 }
 
 function encadreStyle(couleur) {
@@ -164,77 +164,73 @@ function EncadreCalculeLeTien({ lien, enfant }) {
   )
 }
 
-// Emplacement de capture d'écran (sections II, III, IV, IX) — src/alt
-// obligatoires, légende optionnelle, chargement paresseux. Si le fichier
-// est absent (pas encore fourni par Popo dans
-// frontend/public/assets/comprendre/), l'emplacement ne s'affiche pas du
-// tout : pas de cadre vide, pas de texte de remplacement. tailleReelle
-// (18 août 2026) : pour les petits éléments d'interface (badges
-// d'Aberration, infobulles) qui ne doivent pas être étirés en pleine
-// largeur — image affichée à sa taille native, plafonnée par sécurité à
-// 100% du conteneur sur mobile.
-function EmplacementImage({ src, alt, legende, tailleReelle }) {
-  const [enErreur, setEnErreur] = useState(false)
-  if (enErreur) return null
-  return (
-    <figure style={{ ...cp.image, margin: "18px 0", display: tailleReelle ? "inline-block" : "block" }}>
-      <img src={src} alt={alt} loading="lazy" onError={() => setEnErreur(true)}
-        style={tailleReelle ? { maxWidth: "100%", display: "block" } : { width: "100%", display: "block" }} />
-      {legende && <figcaption style={cp.legendeImage}>{legende}</figcaption>}
-    </figure>
-  )
-}
-
-// Aperçu d'image en overlay (clic pour agrandir, clic en dehors pour
-// refermer) — un seul comportement de préchargement/dégradation partagé
-// par deux habillages :
-// - LienApercu : un lien autonome ("voir un exemple de palier").
-// - MotCliquable : un mot du texte courant qui devient le déclencheur
-//   (les 4 types de salles, section III). Tant que l'image n'existe pas
-//   (précharge silencieuse), le mot reste du texte normal — pas de
-//   soulignement, pas de couleur, pas de curseur, pas de clic. Même
-//   logique que la section des sorts de songe : rien tant que la source
-//   n'existe pas, jamais de lien mort ni de placeholder.
-function useApercuDisponible(src) {
-  const [disponible, setDisponible] = useState(false)
+// Aucune image ne s'affiche dans le flux de la page (retour Popo,
+// 18 août 2026 — le bestiaire à 400px de haut et les badges d'Aberration
+// en bloc coupaient la lecture). Un seul système overlay pour toute la
+// page : MotCliquable (le déclencheur, un mot ou un lien du texte) +
+// OverlayImages (le panneau, une ou plusieurs images empilées). Précharge
+// silencieuse par image (chacune indépendamment, pour le cas multi-images
+// où une seule des deux existerait) : tant qu'aucune des images d'un
+// déclencheur n'existe (fichier absent de
+// frontend/public/assets/comprendre/), le texte reste normal — pas de
+// couleur, pas de soulignement, pas de curseur, pas de clic. Même logique
+// que la section des sorts de songe : rien tant que la source n'existe
+// pas, jamais de lien mort ni de placeholder.
+function useApercusDisponibles(srcs) {
+  const cle = srcs.join("|")
+  const [dispo, setDispo] = useState(() => srcs.map(() => false))
   useEffect(() => {
-    const img = new window.Image()
-    img.onload = () => setDisponible(true)
-    img.onerror = () => setDisponible(false)
-    img.src = src
-  }, [src])
-  return disponible
+    srcs.forEach((src, i) => {
+      const img = new window.Image()
+      img.onload = () => setDispo(d => { const n = [...d]; n[i] = true; return n })
+      img.onerror = () => setDispo(d => { const n = [...d]; n[i] = false; return n })
+      img.src = src
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cle])
+  return dispo
 }
 
-function OverlayImage({ src, alt, ouvert, onFermer }) {
+// Panneau overlay : fond assombri, images à taille naturelle (jamais
+// agrandies au-delà — aucun width forcé, seuls maxWidth/maxHeight
+// contraignent vers le bas si besoin), fermeture au clic extérieur, sur
+// la croix, ou touche Échap. Plusieurs images se placent l'une sous
+// l'autre (cas des deux badges d'Aberration : deux exemples du même
+// concept, un seul overlay).
+function OverlayImages({ items, ouvert, onFermer }) {
+  useEffect(() => {
+    if (!ouvert) return
+    const onKey = (e) => { if (e.key === "Escape") onFermer() }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [ouvert, onFermer])
   if (!ouvert) return null
   return (
     <div style={cp.overlayFond} onClick={onFermer}>
-      <img src={src} alt={alt} style={cp.overlayImage} onClick={e => e.stopPropagation()} />
+      <button onClick={onFermer} style={cp.overlayFermer} aria-label="Fermer">×</button>
+      <div style={cp.overlayContenu} onClick={e => e.stopPropagation()}>
+        {items.map((it, i) => <img key={i} src={it.src} alt={it.alt} style={cp.overlayImage} />)}
+      </div>
     </div>
   )
 }
 
-function LienApercu({ src, alt, texte }) {
-  const disponible = useApercuDisponible(src)
+// Déclencheur unique pour toute la page : un mot ou un lien du texte
+// courant. src/alt (une image) ou srcs/alts (plusieurs, même overlay) —
+// style par défaut cp.lienApercu, surchargeable (ex. garder "Aberration"
+// en violet/gras plutôt que cyan/souligné).
+function MotCliquable({ src, srcs, alt, alts, children, style }) {
+  const listeSrcs = srcs || [src]
+  const listeAlts = alts || [alt]
+  const dispos = useApercusDisponibles(listeSrcs)
+  const auMoinsUneDisponible = dispos.some(Boolean)
   const [ouvert, setOuvert] = useState(false)
-  if (!disponible) return null
+  if (!auMoinsUneDisponible) return <>{children}</>
+  const items = listeSrcs.map((s, i) => ({ src: s, alt: listeAlts[i] })).filter((_, i) => dispos[i])
   return (
     <>
-      <button onClick={() => setOuvert(true)} style={cp.lienApercu}>{texte}</button>
-      <OverlayImage src={src} alt={alt} ouvert={ouvert} onFermer={() => setOuvert(false)} />
-    </>
-  )
-}
-
-function MotCliquable({ src, alt, children }) {
-  const disponible = useApercuDisponible(src)
-  const [ouvert, setOuvert] = useState(false)
-  if (!disponible) return <>{children}</>
-  return (
-    <>
-      <button onClick={() => setOuvert(true)} style={{ ...cp.lienApercu, fontSize: "inherit", fontWeight: "inherit" }}>{children}</button>
-      <OverlayImage src={src} alt={alt} ouvert={ouvert} onFermer={() => setOuvert(false)} />
+      <button onClick={() => setOuvert(true)} style={style || cp.lienApercu}>{children}</button>
+      <OverlayImages items={items} ouvert={ouvert} onFermer={() => setOuvert(false)} />
     </>
   )
 }
@@ -449,7 +445,11 @@ export default function ComprendrePage({ onBack }) {
               Le Sable permet de retenter un combat perdu sans finir la run ; la Tempête change un
               groupe de monstres jugé trop difficile, ou renouvelle une Fontaine ou une Faveur.
             </p>
-            <EmplacementImage src="/assets/comprendre/selection-intensites.webp" alt="Écran de sélection de l'intensité dans les Songes Infinis" />
+            <p style={cp.paragraphe}>
+              <MotCliquable src="/assets/comprendre/selection-intensites.webp" alt="Écran de sélection de l'intensité dans les Songes Infinis">
+                voir l'écran de sélection en jeu
+              </MotCliquable>
+            </p>
             <EncadreARetenir>
               Le multiplicateur grimpe avec l'intensité, mais en Rêve, ni légendes ni runes astrales
               ne tombent — il faut au moins Paradoxe I pour tout débloquer.
@@ -497,7 +497,9 @@ export default function ComprendrePage({ onBack }) {
             <p style={cp.paragraphe}>
               Au début de chaque palier, tu vois tous les chemins possibles : de quoi choisir son
               trajet selon les bonus proposés ({" "}
-              <LienApercu src="/assets/comprendre/carte-palier.webp" alt="Carte du Songe au palier III en Paradoxe I" texte="voir un exemple de palier" />
+              <MotCliquable src="/assets/comprendre/carte-palier.webp" alt="Carte du Songe au palier III en Paradoxe I">
+                voir un exemple de palier
+              </MotCliquable>
               ). Une fois entré dans une salle, aucun retour en arrière n'est possible.
             </p>
             <p style={cp.paragraphe}>
@@ -508,24 +510,31 @@ export default function ComprendrePage({ onBack }) {
             <p style={cp.paragraphe}>
               Les salles contiennent des monstres classiques, des boss de donjon ou des avis de
               recherche (24 accessibles en Songe). Certains subissent de légères adaptations pour
-              être jouables en Songe, signalées en combat sous le nom d'"<strong style={{ color: "var(--df-violet)" }}>Aberration</strong>" — ces
+              être jouables en Songe, signalées en combat sous le nom d'"
+              <strong style={{ color: "var(--df-violet)" }}>
+                <MotCliquable
+                  srcs={["/assets/comprendre/aberration-osavora.webp", "/assets/comprendre/aberration-avis-recherche.webp"]}
+                  alts={["Badge Aberration d'Osavora en combat", "Badge Aberration des avis de recherche en combat"]}
+                  style={{ background: "transparent", border: "none", padding: 0, font: "inherit", color: "inherit", cursor: "pointer" }}>
+                  Aberration
+                </MotCliquable>
+              </strong>" — ces
               monstres portent une pastille violette "EN SONGE" dans la{" "}
               <button onClick={() => navigate("/bibliotheque")} style={cp.lienApercu}>Bibliothèque</button>.
             </p>
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 14 }}>
-              <EmplacementImage tailleReelle src="/assets/comprendre/aberration-osavora.webp" alt="Badge Aberration d'Osavora en combat" />
-              <EmplacementImage tailleReelle src="/assets/comprendre/aberration-avis-recherche.webp" alt="Badge Aberration des avis de recherche en combat" />
-            </div>
 
             <h3 id="se-preparer" style={cp.sousTitre}>Se préparer</h3>
             <p style={cp.paragraphe}>
-              Face à la mort définitive, plusieurs filets de sécurité rendent la run gérable : le
-              bestiaire de la salle (Alt+B), consultable avant de lancer le combat, affiche les
+              Face à la mort définitive, plusieurs filets de sécurité rendent la run gérable : le{" "}
+              <MotCliquable src="/assets/comprendre/bestiaire-salle.webp" alt="Bestiaire de la salle du Songe (Alt+B) avec les statistiques des monstres"
+                style={{ ...cp.lienApercu, fontSize: "inherit", fontWeight: "inherit" }}>
+                bestiaire de la salle (Alt+B)
+              </MotCliquable>
+              , consultable avant de lancer le combat, affiche les
               stats des monstres, la carte et l'ordre de jeu ; 3 minutes de préparation et des
               tours de 90 secondes pour construire sa stratégie ; un soin intégral à la fin de
               chaque salle ; et aucun challenge imposé dans les combats.
             </p>
-            <EmplacementImage src="/assets/comprendre/bestiaire-salle.webp" alt="Bestiaire de la salle du Songe (Alt+B) avec les statistiques des monstres" />
             <EncadreARetenir>
               Tu ne choisis jamais à l'aveugle — chemin, difficulté, adversaires : tout est visible
               avant d'agir. Mais chaque salle est un engagement définitif, sans retour en arrière.
@@ -563,7 +572,11 @@ export default function ComprendrePage({ onBack }) {
               en Paradoxe, {config.vagues_max.cauchemar ?? "illimité"} en Cauchemar. 50 tours
               maximum pour les enchaîner.
             </p>
-            <EmplacementImage src="/assets/comprendre/combat-final.webp" alt="Interface du combat final : vagues, tours et bribes" />
+            <p style={cp.paragraphe}>
+              <MotCliquable src="/assets/comprendre/combat-final.webp" alt="Interface du combat final : vagues, tours et bribes">
+                voir l'interface en jeu
+              </MotCliquable>
+            </p>
             <EncadreARetenir>
               Le combat final compte pour un seul combat dans les occasions de drop, quel que soit
               le nombre de vagues enchaînées. Les vagues vaincues déterminent tes bribes — détail
@@ -819,7 +832,11 @@ export default function ComprendrePage({ onBack }) {
               La première fontaine (salle 4) est plus restreinte : bonus à 15 points de rêve maximum,
               un seul passif possible (Vent Arrière), les sorts à 20 points n'y apparaissent jamais.
             </p>
-            <EmplacementImage src="/assets/comprendre/fontaine-onirique.webp" alt="Interface de la Fontaine Onirique, avec ses 5 bonus proposés" />
+            <p style={cp.paragraphe}>
+              <MotCliquable src="/assets/comprendre/fontaine-onirique.webp" alt="Interface de la Fontaine Onirique, avec ses 5 bonus proposés">
+                voir la Fontaine en jeu
+              </MotCliquable>
+            </p>
 
             <h3 id="les-faveurs-oniriques" style={cp.sousTitre}>Les Faveurs Oniriques</h3>
             <p style={cp.paragraphe}>
@@ -847,15 +864,29 @@ export default function ComprendrePage({ onBack }) {
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Utilitaire</th><th style={cp.th}>Effet</th><th style={{ ...cp.th, textAlign: "right" }}>Prix en Fontaine</th></tr></thead>
               <tbody>
-                <tr><td style={cp.td}>Tempête astrale</td><td style={cp.td}>Renouvelle les monstres d'une salle, ou tous les articles d'une Fontaine ou d'une Faveur</td><td style={cp.tdChiffre}>10 pts</td></tr>
-                <tr><td style={cp.td}>Sable de Draconiros</td><td style={cp.td}>Fait revivre le groupe après une défaite</td><td style={cp.tdChiffre}>20 pts</td></tr>
+                <tr>
+                  <td style={cp.td}>
+                    <MotCliquable src="/assets/comprendre/tempete-astrale.webp" alt="Infobulle de la Tempête astrale"
+                      style={{ ...cp.lienApercu, fontSize: "inherit", fontWeight: "inherit" }}>
+                      Tempête astrale
+                    </MotCliquable>
+                  </td>
+                  <td style={cp.td}>Renouvelle les monstres d'une salle, ou tous les articles d'une Fontaine ou d'une Faveur</td>
+                  <td style={cp.tdChiffre}>10 pts</td>
+                </tr>
+                <tr>
+                  <td style={cp.td}>
+                    <MotCliquable src="/assets/comprendre/sable-draconiros.webp" alt="Infobulle du Sable de Draconiros"
+                      style={{ ...cp.lienApercu, fontSize: "inherit", fontWeight: "inherit" }}>
+                      Sable de Draconiros
+                    </MotCliquable>
+                  </td>
+                  <td style={cp.td}>Fait revivre le groupe après une défaite</td>
+                  <td style={cp.tdChiffre}>20 pts</td>
+                </tr>
                 <tr><td style={cp.td}>Croissance Onirique</td><td style={cp.td}>+100 niveaux de songeur</td><td style={cp.tdChiffre}>10 pts</td></tr>
               </tbody>
             </table>
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 14 }}>
-              <EmplacementImage tailleReelle src="/assets/comprendre/tempete-astrale.webp" alt="Infobulle de la Tempête astrale" />
-              <EmplacementImage tailleReelle src="/assets/comprendre/sable-draconiros.webp" alt="Infobulle du Sable de Draconiros" />
-            </div>
             <p style={cp.paragraphe}>Trois sources de niveaux de songeur, cumulables :</p>
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Source</th><th style={{ ...cp.th, textAlign: "right" }}>Gain</th></tr></thead>
