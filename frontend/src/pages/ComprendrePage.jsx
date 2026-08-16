@@ -164,18 +164,22 @@ function EncadreCalculeLeTien({ lien, enfant }) {
   )
 }
 
-// Emplacement de capture d'écran (sections III, IV, II, IX) — src/alt
+// Emplacement de capture d'écran (sections II, III, IV, IX) — src/alt
 // obligatoires, légende optionnelle, chargement paresseux. Si le fichier
 // est absent (pas encore fourni par Popo dans
 // frontend/public/assets/comprendre/), l'emplacement ne s'affiche pas du
-// tout : pas de cadre vide, pas de texte de remplacement.
-function EmplacementImage({ src, alt, legende }) {
+// tout : pas de cadre vide, pas de texte de remplacement. tailleReelle
+// (18 août 2026) : pour les petits éléments d'interface (badges
+// d'Aberration, infobulles) qui ne doivent pas être étirés en pleine
+// largeur — image affichée à sa taille native, plafonnée par sécurité à
+// 100% du conteneur sur mobile.
+function EmplacementImage({ src, alt, legende, tailleReelle }) {
   const [enErreur, setEnErreur] = useState(false)
   if (enErreur) return null
   return (
-    <figure style={{ ...cp.image, margin: "18px 0" }}>
+    <figure style={{ ...cp.image, margin: "18px 0", display: tailleReelle ? "inline-block" : "block" }}>
       <img src={src} alt={alt} loading="lazy" onError={() => setEnErreur(true)}
-        style={{ width: "100%", display: "block" }} />
+        style={tailleReelle ? { maxWidth: "100%", display: "block" } : { width: "100%", display: "block" }} />
       {legende && <figcaption style={cp.legendeImage}>{legende}</figcaption>}
     </figure>
   )
@@ -445,7 +449,7 @@ export default function ComprendrePage({ onBack }) {
               Le Sable permet de retenter un combat perdu sans finir la run ; la Tempête change un
               groupe de monstres jugé trop difficile, ou renouvelle une Fontaine ou une Faveur.
             </p>
-            <EmplacementImage src="/assets/comprendre/intensites-tableau.webp" alt="Sélecteur d'intensité en jeu, des 3 niveaux de Rêve aux 3 niveaux de Cauchemar" />
+            <EmplacementImage src="/assets/comprendre/selection-intensites.webp" alt="Écran de sélection de l'intensité dans les Songes Infinis" />
             <EncadreARetenir>
               Le multiplicateur grimpe avec l'intensité, mais en Rêve, ni légendes ni runes astrales
               ne tombent — il faut au moins Paradoxe I pour tout débloquer.
@@ -485,15 +489,15 @@ export default function ComprendrePage({ onBack }) {
 
             <h3 id="les-salles" style={cp.sousTitre}>Les salles</h3>
             <ul style={cp.liste}>
-              <li><strong><MotCliquable src="/assets/comprendre/type-combat.webp" alt="Salle de type Combat">Combat</MotCliquable></strong> — un groupe de monstres</li>
-              <li><strong><MotCliquable src="/assets/comprendre/type-fontaine.webp" alt="Salle de type Fontaine Onirique">Fontaine Onirique</MotCliquable></strong> — marchand de bonus (salles 4, 10, 16, 25)</li>
-              <li><strong><MotCliquable src="/assets/comprendre/type-faveur.webp" alt="Salle de type Faveur Onirique">Faveur Onirique</MotCliquable></strong> — un bonus gratuit, et un combat évité</li>
+              <li><strong><MotCliquable src="/assets/comprendre/salle-combat.webp" alt="Groupe de monstres dans une salle de Songe">Combat</MotCliquable></strong> — un groupe de monstres</li>
+              <li><strong><MotCliquable src="/assets/comprendre/fontaine-onirique.webp" alt="Salle Fontaine Onirique">Fontaine Onirique</MotCliquable></strong> — marchand de bonus (salles 4, 10, 16, 25)</li>
+              <li><strong><MotCliquable src="/assets/comprendre/faveur-onirique.webp" alt="Le Dispensateur de faveurs dans une salle Faveur Onirique">Faveur Onirique</MotCliquable></strong> — un bonus gratuit, et un combat évité</li>
               <li><strong><MotCliquable src="/assets/comprendre/type-fin-du-reve.webp" alt="Salle Fin du rêve, le combat final">Fin du rêve</MotCliquable></strong> — le combat final, toujours en salle {config.nb_salles_par_run}</li>
             </ul>
             <p style={cp.paragraphe}>
               Au début de chaque palier, tu vois tous les chemins possibles : de quoi choisir son
               trajet selon les bonus proposés et maximiser ses points de rêve ({" "}
-              <LienApercu src="/assets/comprendre/exemple-palier.webp" alt="Exemple de chemins possibles au début d'un palier" texte="voir un exemple de palier" />
+              <LienApercu src="/assets/comprendre/carte-palier.webp" alt="Carte du Songe au palier III en Paradoxe I" texte="voir un exemple de palier" />
               ). Une fois entré dans une salle, aucun retour en arrière n'est possible.
             </p>
             <p style={cp.paragraphe}>
@@ -508,6 +512,10 @@ export default function ComprendrePage({ onBack }) {
               monstres portent une pastille violette "EN SONGE" dans la{" "}
               <button onClick={() => navigate("/bibliotheque")} style={cp.lienApercu}>Bibliothèque</button>.
             </p>
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 14 }}>
+              <EmplacementImage tailleReelle src="/assets/comprendre/aberration-osavora.webp" alt="Badge Aberration d'Osavora en combat" />
+              <EmplacementImage tailleReelle src="/assets/comprendre/aberration-avis-recherche.webp" alt="Badge Aberration des avis de recherche en combat" />
+            </div>
 
             <h3 id="se-preparer" style={cp.sousTitre}>Se préparer</h3>
             <p style={cp.paragraphe}>
@@ -517,8 +525,7 @@ export default function ComprendrePage({ onBack }) {
               tours de 90 secondes pour construire sa stratégie ; un soin intégral à la fin de
               chaque salle ; et aucun challenge imposé dans les combats.
             </p>
-
-            <EmplacementImage src="/assets/comprendre/structure-run.webp" alt="Carte à embranchement d'un palier de Songe, avec ses salles de combat, Fontaine et Faveur Onirique" />
+            <EmplacementImage src="/assets/comprendre/bestiaire-salle.webp" alt="Bestiaire de la salle du Songe (Alt+B) avec les statistiques des monstres" />
             <EncadreARetenir>
               Tu ne choisis jamais à l'aveugle — chemin, difficulté, adversaires : tout est visible
               avant d'agir. Mais chaque salle est un engagement définitif, sans retour en arrière.
@@ -556,7 +563,7 @@ export default function ComprendrePage({ onBack }) {
               en Paradoxe, {config.vagues_max.cauchemar ?? "illimité"} en Cauchemar. 50 tours
               maximum pour les enchaîner.
             </p>
-            <EmplacementImage src="/assets/comprendre/combat-final.webp" alt="Combat final d'un Songe, vagues successives de monstres" />
+            <EmplacementImage src="/assets/comprendre/combat-final.webp" alt="Interface du combat final : vagues, tours et bribes" />
             <EncadreARetenir>
               Le combat final compte pour un seul combat dans les occasions de drop, quel que soit
               le nombre de vagues enchaînées. Les vagues vaincues déterminent tes bribes — détail
@@ -845,6 +852,10 @@ export default function ComprendrePage({ onBack }) {
                 <tr><td style={cp.td}>Croissance Onirique</td><td style={cp.td}>+100 niveaux de songeur</td><td style={cp.tdChiffre}>10 pts</td></tr>
               </tbody>
             </table>
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 14 }}>
+              <EmplacementImage tailleReelle src="/assets/comprendre/tempete-astrale.webp" alt="Infobulle de la Tempête astrale" />
+              <EmplacementImage tailleReelle src="/assets/comprendre/sable-draconiros.webp" alt="Infobulle du Sable de Draconiros" />
+            </div>
             <p style={cp.paragraphe}>Trois sources de niveaux de songeur, cumulables :</p>
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Source</th><th style={{ ...cp.th, textAlign: "right" }}>Gain</th></tr></thead>
