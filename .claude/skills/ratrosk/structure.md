@@ -12,6 +12,13 @@
   combattre.
 - ✅ Le propriétaire ne peut pas changer en cours de run. Les accompagnants
   peuvent être remplacés autant de fois que voulu.
+- ✅ Un joueur peut **rejoindre une run déjà commencée** — inutile d'être
+  présent au lancement. Distinct du point précédent : il ne s'agit pas de
+  remplacer un accompagnant entre deux salles, mais bien d'intégrer une run
+  en cours de déroulement. Cohérent avec le partage des bribes au prorata
+  des salles de combat effectuées (voir `economie.md`, "Le partage entre
+  joueurs") : arriver en cours de run réduit mécaniquement la part reçue,
+  sans qu'aucune règle spéciale soit nécessaire pour ce cas.
 - ✅ Un personnage ne peut avoir qu'**une seule run en cours** à la fois.
 - ✅ Accès par l'onglet Songes Infinis du menu (raccourci T). **Aucun
   prérequis** de quête ni de niveau — niveau 199-200 **conseillé**, pas

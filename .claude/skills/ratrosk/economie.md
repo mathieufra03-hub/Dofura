@@ -35,6 +35,10 @@ Monnaie principale, dépensée au Marché onirique.
   alors une notification.
 - ✅ Exemple : 13 salles faites sur une run Paradoxe III, soit la moitié →
   la moitié des bribes.
+- ✅ Ce calcul couvre aussi le cas d'un joueur qui **rejoint une run déjà
+  commencée** (voir `structure.md`, "Le format général") : il n'effectue
+  qu'une partie des salles de combat, et ne touche donc qu'une part
+  proportionnelle des bribes — pas de règle distincte à retenir.
 
 ## Les marchands du Marché onirique
 
