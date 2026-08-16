@@ -504,7 +504,7 @@ export default function ComprendrePage({ onBack }) {
             <p style={cp.paragraphe}>
               Les salles contiennent des monstres classiques, des boss de donjon ou des avis de
               recherche (24 accessibles en Songe). Certains subissent de légères adaptations pour
-              être jouables en Songe, signalées en combat sous le nom d'"Aberration" — ces
+              être jouables en Songe, signalées en combat sous le nom d'"<strong style={{ color: "var(--df-violet)" }}>Aberration</strong>" — ces
               monstres portent une pastille violette "EN SONGE" dans la{" "}
               <button onClick={() => navigate("/bibliotheque")} style={cp.lienApercu}>Bibliothèque</button>.
             </p>
