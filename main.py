@@ -2457,6 +2457,9 @@ def songes_recuperer_config():
         "vagues_max": songes_config.VAGUES_MAX,
         "bribes_par_vague": {e["id"]: e["bribes_par_vague"] for e in taux_v2["intensites"]},
         "vagues_requises": songes_config.VAGUES_REQUISES,
+        "prix_sac_bribes": songes_config.PRIX_SAC_BRIBES,
+        "prix_neru_stalar": songes_config.PRIX_NERU_STALAR,
+        "prix_gobribe_sacs": songes_config.PRIX_GOBRIBE_SACS,
     }
 
 @app.get("/songes/items-trackables")

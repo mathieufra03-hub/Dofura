@@ -47,3 +47,38 @@ VAGUES_REQUISES = {"reve": 1, "paradoxe": 3, "cauchemar": 3}
 # None = illimite. Rêve/Paradoxe bornes (nombre de vagues realistement
 # atteignables, retour Popo) ; Cauchemar laisse libre.
 VAGUES_MAX = {"reve": 5, "paradoxe": 15, "cauchemar": None}
+
+# Prix du Marche onirique (page "Comprendre les Songes" §VII, chantier
+# 17-18 aout 2026) — source unique : skill Ratrosk (.claude/skills/ratrosk/
+# economie.md), relevee en jeu. 1 Sac de Bribes de reve = 1000 bribes ; le
+# Sac est un article comme un autre chez Neru Stalar, pas une "conversion"
+# a part (correction Popo, 18 aout 2026).
+PRIX_SAC_BRIBES = 1000
+
+# Prix en BRIBES (les objets courants, achetes directement sans passer par
+# les Sacs).
+PRIX_NERU_STALAR = {
+    "reflet_onirique": 2,
+    "fragment_prysmaradite": 50,
+    "rune_astrale_mineure": 30,
+    "rune_astrale_moyenne": 60,
+    "rune_astrale_majeure": 120,
+    "rune_astrale_epatante": 240,
+    "rune_astrale_merveilleuse": 480,
+    "rune_astrale_legendaire": 960,
+}
+
+# Prix en SACS (pas en bribes : c'est ainsi que la boutique de Gobribe les
+# affiche en jeu — Gobribe n'accepte que des Sacs, jamais des bribes
+# directement, correction Popo 18 aout 2026).
+PRIX_GOBRIBE_SACS = {
+    "cape_fontaine_onirique": 5,
+    "coiffe_fontaine_onirique": 7,
+    "bouclier_fontaine_onirique": 8,
+    "narkasseth_infinie": 9,
+    "titre_songeur_fontaine": 10,
+    "compagnon_phong_huss": 10,
+    "compagnon_grouillot": 10,
+    "narkoffret_infini": 20,
+    "ornement_fontaine_onirique": 40,
+}
