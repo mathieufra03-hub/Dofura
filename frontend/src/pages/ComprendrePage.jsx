@@ -23,12 +23,12 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const NOMS_PALIERS_ROMAINS = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V" }
 
-// Sorts de Songe (section XI) : pas encore scrapés (SKILL.md ratrosk
+// Sorts de Songe (section X) : pas encore scrapés (SKILL.md ratrosk
 // n'a que des exemples partiels, pas une liste exhaustive fiable). Tant
 // que ce tableau est vide, la section entière est masquée — même logique
 // que "aGuide" pour le guide de boss des donjons (App.jsx,
 // DonjonDetailPage) : pas de placeholder "bientôt disponible", rien. Le
-// renvoi vers elle (fin de section IX) se masque avec elle.
+// renvoi vers elle (fin de section VIII) se masque avec elle.
 const SORTS_DE_SONGE = []
 
 // Formule identique a celle de TauxPage.jsx (SONGES.md / regle Popo,
@@ -69,23 +69,29 @@ const NB_PERSONNAGES_EXEMPLE = 4
 
 // Ordre de la réorganisation du 16 août 2026 : on suit la chronologie
 // réelle d'une run — choisir l'intensité, puis descendre les paliers, puis
-// affronter le boss — plutôt que l'ordre précédent. Le multiplicateur de
-// dégâts sort de la section Bonus pour devenir sa propre section (VIII) :
-// c'est le bonus le plus rentable, il mérite sa propre entrée de sommaire.
+// affronter le boss — plutôt que l'ordre précédent.
+// Harmonisation du 17 août 2026 : le multiplicateur de dégâts (qui avait sa
+// propre section VIII depuis le 16 août) réintègre la section Bonus — une
+// seule phrase suffit, les joueurs savent calculer leurs dégâts. La section
+// "Ce qu'on ne sait pas encore" est retirée. Les numéros romains ne sont
+// plus écrits en dur nulle part dans le fichier (ni ici, ni dans les <h2>,
+// ni dans les renvois internes) : ils sont recalculés à partir de l'ordre
+// et de la visibilité réelle de SECTIONS via ROMAINS/numeroDe ci-dessous,
+// pour ne plus jamais rouvrir le bug du sommaire qui saute de X à XII
+// (piège #retour Popo, 17 août 2026).
 const SECTIONS = [
-  { id: "cest-quoi-les-songes", numero: "I", titre: "C'est quoi les Songes ?" },
-  { id: "les-intensites", numero: "II", titre: "Les intensités" },
-  { id: "comment-se-deroule-une-run", numero: "III", titre: "Comment se déroule une run" },
-  { id: "le-combat-final", numero: "IV", titre: "Le combat final" },
-  { id: "le-drop", numero: "V", titre: "Le Drop" },
-  { id: "combien-de-runs", numero: "VI", titre: "Combien de runs pour une légende" },
-  { id: "bribes-et-economie", numero: "VII", titre: "Les bribes et l'économie" },
-  { id: "le-multiplicateur-de-degats", numero: "VIII", titre: "Le multiplicateur de dégâts" },
-  { id: "les-bonus", numero: "IX", titre: "Les bonus" },
-  { id: "quetes-et-succes", numero: "X", titre: "Quêtes et succès" },
-  { id: "les-sorts-de-songe", numero: "XI", titre: "Les sorts de songe" },
-  { id: "ce-qu-on-ne-sait-pas-encore", numero: "XII", titre: "Ce qu'on ne sait pas encore" },
+  { id: "cest-quoi-les-songes", titre: "C'est quoi les Songes ?" },
+  { id: "les-intensites", titre: "Les intensités" },
+  { id: "comment-se-deroule-une-run", titre: "Comment se déroule une run" },
+  { id: "le-combat-final", titre: "Le combat final" },
+  { id: "le-drop", titre: "Le Drop" },
+  { id: "combien-de-runs", titre: "Combien de runs pour une légende" },
+  { id: "bribes-et-economie", titre: "Les bribes" },
+  { id: "les-bonus", titre: "Les bonus" },
+  { id: "quetes-et-succes", titre: "Quêtes et succès" },
+  { id: "les-sorts-de-songe", titre: "Les sorts de songe" },
 ]
+const ROMAINS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"]
 
 const COULEURS = {
   cyan: { hex: "#2CE7FF", rgb: "44, 231, 255" },
@@ -108,23 +114,23 @@ const cp = {
   backBtn: { background: "transparent", border: "1px solid var(--df-border-cyan)", borderRadius: 6, padding: "5px 12px", fontSize: 12, color: "var(--df-cyan)", cursor: "pointer", marginBottom: 18 },
   intro: { margin: "0 auto 26px", fontSize: 14.5, fontWeight: 300, lineHeight: 1.6, color: "var(--df-text-2)", maxWidth: 480, textAlign: "center" },
   toggleBtn: { width: "100%", textAlign: "left", marginBottom: 10 },
-  sommaireNav: { position: "sticky", top: 20, display: "flex", flexDirection: "column", gap: 2 },
+  sommaireNav: { display: "flex", flexDirection: "column", gap: 2 },
   sommaireLien: { display: "block", padding: "7px 10px", borderRadius: 8, fontSize: 12.5, textDecoration: "none", color: "var(--df-text-2)", borderLeft: "2px solid transparent" },
   sommaireNumero: { opacity: 0.75, marginRight: 6, fontFamily: "var(--df-font-logo)", fontSize: 15, fontWeight: 700 },
   section: { scrollMarginTop: 20, marginBottom: 46 },
-  sectionTitre: { display: "flex", alignItems: "baseline", gap: 10, margin: "0 0 14px", fontSize: 19 },
-  numeroRomain: { fontFamily: "var(--df-font-logo)", fontSize: 30, fontWeight: 700, color: "var(--df-gold)", letterSpacing: "0.02em" },
-  paragraphe: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px" },
-  liste: { fontSize: 14, lineHeight: 1.7, color: "var(--df-text)", margin: "0 0 14px", paddingLeft: 20 },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 14 },
-  th: { textAlign: "left", padding: "8px 10px", color: "var(--df-gold)", fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "2px solid rgba(240, 192, 64, 0.45)" },
-  td: { padding: "8px 10px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-text)" },
-  tdChiffre: { padding: "8px 10px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-gold)", fontWeight: 700, textAlign: "right" },
+  sectionTitre: { display: "flex", alignItems: "baseline", gap: 10, margin: "0 0 14px", fontSize: 23 },
+  numeroRomain: { fontFamily: "var(--df-font-logo)", fontSize: 22, fontWeight: 700, color: "var(--df-gold)", letterSpacing: "0.02em" },
+  paragraphe: { fontSize: 17, lineHeight: 1.85, color: "var(--df-text)", margin: "0 0 14px" },
+  liste: { fontSize: 17, lineHeight: 1.85, color: "var(--df-text)", margin: "0 0 14px", paddingLeft: 20 },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 14.5, marginBottom: 14 },
+  th: { textAlign: "left", padding: "9px 12px", color: "var(--df-gold)", fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "2px solid rgba(240, 192, 64, 0.45)" },
+  td: { padding: "9px 12px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-text)" },
+  tdChiffre: { padding: "9px 12px", borderBottom: "1px solid rgba(240, 192, 64, 0.1)", color: "var(--df-gold)", fontWeight: 700, textAlign: "right" },
   caveat: { fontSize: 11.5, color: "var(--df-text-3)", fontStyle: "italic", margin: "0 0 14px" },
   chiffrePhareBloc: { textAlign: "center", margin: "18px 0", padding: "20px 16px", background: "rgba(44, 231, 255, 0.06)", border: "1px solid rgba(44, 231, 255, 0.3)", borderRadius: 14 },
   chiffrePhareLabel: { fontSize: 12, color: "var(--df-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 },
   chiffrePhare: { fontSize: "clamp(34px, 9vw, 52px)", fontWeight: 700, color: "#2CE7FF", textShadow: "0 0 14px rgba(44,231,255,0.5)", lineHeight: 1, marginBottom: 8 },
-  sousTitre: { fontSize: 15, fontWeight: 700, color: "var(--df-gold)", margin: "26px 0 10px", scrollMarginTop: 20 },
+  sousTitre: { fontSize: 18, fontWeight: 700, color: "var(--df-gold)", margin: "26px 0 10px", scrollMarginTop: 20 },
   lienApercu: { background: "transparent", border: "none", padding: 0, color: "var(--df-cyan)", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" },
   overlayFond: { position: "fixed", inset: 0, background: "rgba(3, 12, 17, 0.85)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "3rem 1.5rem", cursor: "pointer" },
   overlayContenu: { display: "flex", flexDirection: "column", gap: 14, alignItems: "center", maxHeight: "85vh", overflowY: "auto", cursor: "default" },
@@ -260,21 +266,117 @@ function ImageEnFlux({ src, alt }) {
   )
 }
 
-// Colonne sommaire (sticky en desktop, repliable en haut sur mobile) +
-// colonne de contenu — reprend .df-list-wrap/.df-filters-toggle/
-// .df-filters-panel (tokens.css), déjà utilisées ailleurs sur le site
-// pour exactement ce pattern (colonne de filtres desktop / volet
-// repliable mobile), jamais retouchées ici.
+// Bloc "portrait de PNJ + texte" (section VII, chantier 18 août 2026) :
+// même dégradation que ImageEnFlux — si le fichier est absent, seul le
+// <img> disparaît, le texte reste seul, jamais de cadre vide à sa place.
+// Image à gauche/texte à droite en desktop, empilés (image au-dessus) sous
+// 480px — .cp-marchand-img n'a pas de largeur fixe en JS, tout vit dans
+// StyleMarchand ci-dessous pour garder le point de bascule à un seul
+// endroit.
+// Portrait cliquable (retour Popo, 18 août 2026) : même système d'overlay
+// que MotCliquable (useApercusDisponibles + OverlayImages), pas la
+// dégradation onError d'ImageEnFlux — ici l'image doit rester cliquable
+// avec curseur pointeur, pas juste apparaître/disparaître silencieusement.
+function BlocMarchand({ src, alt, children }) {
+  const dispos = useApercusDisponibles([src])
+  const disponible = dispos[0]
+  const [ouvert, setOuvert] = useState(false)
+  return (
+    <div className="cp-marchand">
+      {disponible && (
+        <img src={src} alt={alt} loading="lazy" onClick={() => setOuvert(true)} className="cp-marchand-img" />
+      )}
+      <div>{children}</div>
+      {disponible && (
+        <OverlayImages items={[{ src, alt }]} ouvert={ouvert} onFermer={() => setOuvert(false)} />
+      )}
+    </div>
+  )
+}
+
+function StyleMarchand() {
+  return (
+    <style>{`
+      .cp-marchand { display: flex; gap: 16px; align-items: flex-start; margin: 0 0 16px; }
+      .cp-marchand-img { width: 72px; height: 72px; object-fit: contain; border-radius: 10px;
+        border: 1px solid var(--df-border-gold); flex-shrink: 0; background: rgba(240, 192, 64, 0.06);
+        cursor: pointer; }
+      @media (max-width: 480px) {
+        .cp-marchand { flex-direction: column; gap: 10px; }
+      }
+    `}</style>
+  )
+}
+
+// Mise en page "satellite" (retour Popo, 17 août 2026) : le sommaire ne
+// doit plus être une colonne du flux (l'ancien .df-list-wrap 260px/1fr de
+// tokens.css poussait tout le contenu vers la droite, car le contenu
+// occupait tout l'espace RESTANT après le sommaire au lieu d'être centré
+// sur la fenêtre). Le contenu se centre seul (max-width 720px, margin
+// auto) — il ne sait même plus que le sommaire existe. Le sommaire vit
+// dans la marge gauche via position:fixed et un calc() dérivé de cette
+// même largeur (720/2 + son propre gap 24px + sa propre largeur 180px =
+// 564), donc jamais désynchronisé si l'une des trois valeurs change. Le
+// point de bascule (1180px, exactement le maxWidth de cp.page) n'est pas
+// arbitraire : c'est le plus petit viewport où calc(50vw - 564px) reste
+// positif avec une marge confortable (~26px) — en dessous, le sommaire
+// fixe sortirait purement et simplement de l'écran par la gauche (chevauché
+// par rien, mais invisible), pas seulement risquer un chevauchement avec le
+// contenu. Sous 1180px : bascule nette en display:block, sommaire
+// repliable en haut (motif .df-filters-*/tokens.css, mais en classes
+// locales — cette page ne réutilise plus .df-list-wrap, inchangée pour
+// les autres pages).
+// position:fixed plutôt que sticky (découverte du 17 août 2026) : un
+// wrapper overflow:hidden existe à la racine de l'appli (autour du décor
+// .df-nebula/.df-star, pour empêcher le débordement horizontal du fond
+// étoilé) et casse position:sticky pour TOUTE la page — la Navbar
+// elle-même, pourtant en sticky top:0, défile au lieu de rester fixée.
+// Bug site-wide préexistant, hors périmètre de ce chantier (racine
+// partagée par toutes les pages) ; position:fixed s'en affranchit
+// nativement (aucun ancêtre ici ne pose transform/filter/contain, seuls
+// coupables possibles pour position:fixed) et donne le comportement
+// "toujours visible en scrollant" demandé. Signalé à Popo, pas corrigé.
 // Survol cyan du sommaire (16 août 2026) : un :hover ne s'exprime pas en
 // style inline — balise <style> locale au composant plutôt que toucher
 // tokens.css ou un fichier CSS partagé. !important nécessaire pour battre
 // la couleur inline de cp.sommaireLien (spécificité CSS : un !important en
 // feuille de style l'emporte sur un style inline sans !important).
-function StyleSommaireHover() {
+function StyleSommaire() {
   return (
     <style>{`
       .cp-sommaire-lien:hover, .cp-sommaire-lien:hover .cp-sommaire-numero {
         color: #2CE7FF !important;
+      }
+      .cp-contenu { max-width: 720px; margin: 0 auto; }
+      .cp-sommaire-toggle { display: none; }
+      .cp-sommaire-col {
+        position: fixed;
+        top: 140px;
+        left: calc(50vw - 564px);
+        width: 180px;
+        max-height: calc(100vh - 160px);
+        overflow-y: auto;
+      }
+      .cp-sommaire-panel {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      @media (max-width: 1180px) {
+        .cp-contenu { max-width: none; }
+        .cp-sommaire-col {
+          position: static;
+          width: 100%;
+          left: auto;
+          top: auto;
+          max-height: none;
+          overflow-y: visible;
+          margin-bottom: 18px;
+        }
+        .cp-sommaire-toggle { display: inline-block; }
+        .cp-sommaire-panel { display: none; }
+        .cp-sommaire-panel.cp-sommaire-open { display: flex; }
       }
     `}</style>
   )
@@ -282,13 +384,13 @@ function StyleSommaireHover() {
 
 function MiseEnPageSommaire({ sections, ouvert, onToggle, onNaviguer, children }) {
   return (
-    <div className="df-list-wrap">
-      <StyleSommaireHover />
-      <div>
-        <button className="df-filters-toggle df-pill" onClick={onToggle} style={cp.toggleBtn}>
+    <div>
+      <StyleSommaire />
+      <div className="cp-sommaire-col">
+        <button className="cp-sommaire-toggle df-pill" onClick={onToggle} style={cp.toggleBtn}>
           Sommaire
         </button>
-        <nav className={`df-filters-panel ${ouvert ? "df-filters-open" : ""}`} style={cp.sommaireNav}>
+        <nav className={`cp-sommaire-panel ${ouvert ? "cp-sommaire-open" : ""}`} style={cp.sommaireNav}>
           {sections.map(s => (
             <a key={s.id} href={`#${s.id}`} className="cp-sommaire-lien" style={cp.sommaireLien}
               onClick={(e) => { e.preventDefault(); onNaviguer(s.id) }}>
@@ -297,7 +399,7 @@ function MiseEnPageSommaire({ sections, ouvert, onToggle, onNaviguer, children }
           ))}
         </nav>
       </div>
-      <div>{children}</div>
+      <div className="cp-contenu">{children}</div>
     </div>
   )
 }
@@ -374,7 +476,15 @@ export default function ComprendrePage({ onBack }) {
 
   const totalCombats = Object.values(config.combats_par_palier).reduce((a, b) => a + b, 0)
   const nbPaliers = Object.keys(config.paliers).length
-  const sectionsVisibles = SECTIONS.filter(s => s.id !== "les-sorts-de-songe" || SORTS_DE_SONGE.length > 0)
+  // Numérotation recalculée sur les sections VISIBLES uniquement (bug
+  // corrigé le 17 août 2026 : le sommaire sautait de X à XII parce que
+  // "les sorts de songe" restait masquée mais gardait son numéro XI en dur,
+  // décalant tout ce qui suivait). numeroDe() est la seule source de
+  // vérité pour un numéro de section dans toute la page, sommaire compris.
+  const sectionsVisibles = SECTIONS
+    .filter(s => s.id !== "les-sorts-de-songe" || SORTS_DE_SONGE.length > 0)
+    .map((s, i) => ({ ...s, numero: ROMAINS[i] }))
+  const numeroDe = (id) => sectionsVisibles.find(s => s.id === id)?.numero ?? "?"
 
   return (
     <div className="df-fond-nebuleuse" style={{ minHeight: "100vh" }}>
@@ -397,7 +507,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* I — C'est quoi les Songes ? */}
           <section id="cest-quoi-les-songes" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>I.</span>C'est quoi les Songes ?</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("cest-quoi-les-songes")}.</span>C'est quoi les Songes ?</h2>
             <p style={cp.paragraphe}>
               Le Puits des Songes Infinis est une fonctionnalité de jeu de Dofus 3. Tu y lances une
               run (un enchaînement de combats par étages) — seul ou jusqu'à 4 joueurs. Seul le chef de groupe peut lancer la run et les
@@ -406,7 +516,7 @@ export default function ComprendrePage({ onBack }) {
               présent au lancement (
               <a href="#comment-se-deroule-une-run" style={{ color: "var(--df-text-3)" }}
                 onClick={(e) => { e.preventDefault(); naviguerVersSection("comment-se-deroule-une-run") }}>
-                → section III
+                → section {numeroDe("comment-se-deroule-une-run")}
               </a>
               ).
             </p>
@@ -427,7 +537,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* II — Les intensités */}
           <section id="les-intensites" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>II.</span>Les intensités</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("les-intensites")}.</span>Les intensités</h2>
             <p style={cp.paragraphe}>
               Dix intensités existent, réparties en 3 catégories : <NomIntensite cle="reve">Rêve</NomIntensite>,{" "}
               <NomIntensite cle="paradoxe">Paradoxe</NomIntensite>, <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>. Chaque
@@ -484,7 +594,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* III — Comment se déroule une run */}
           <section id="comment-se-deroule-une-run" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>III.</span>Comment se déroule une run</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("comment-se-deroule-une-run")}.</span>Comment se déroule une run</h2>
 
             <h3 id="la-structure" style={cp.sousTitre}>La structure</h3>
             <p style={cp.paragraphe}>
@@ -509,7 +619,7 @@ export default function ComprendrePage({ onBack }) {
               combats — les Fontaines Oniriques occupent les salles 4, 10, 16 et 25 (détail en
               section{" "}
               <a href="#les-bonus" style={{ color: "var(--df-cyan)" }}
-                onClick={(e) => { e.preventDefault(); naviguerVersSection("les-bonus") }}>IX</a>),
+                onClick={(e) => { e.preventDefault(); naviguerVersSection("les-bonus") }}>{numeroDe("les-bonus")}</a>),
               et chaque Faveur croisée en remplace un.
             </p>
 
@@ -569,7 +679,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* IV — Le combat final */}
           <section id="le-combat-final" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IV.</span>Le combat final</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("le-combat-final")}.</span>Le combat final</h2>
             <p style={cp.paragraphe}>
               La dernière salle, "Fin du rêve", est un combat à vagues aléatoires. Chaque vague suit
               le même algorithme qu'une salle classique : monstres, boss ou avis de recherche.
@@ -602,13 +712,13 @@ export default function ComprendrePage({ onBack }) {
             <EncadreARetenir>
               Le combat final compte pour un seul combat dans les occasions de drop, quel que soit
               le nombre de vagues enchaînées. Les vagues vaincues déterminent tes bribes — détail
-              en section VII, pas tes chances de légende.
+              en section {numeroDe("bribes-et-economie")}, pas tes chances de légende.
             </EncadreARetenir>
           </section>
 
           {/* V — Ce qui peut tomber */}
           <section id="le-drop" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>V.</span>Le Drop</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("le-drop")}.</span>Le Drop</h2>
             <p style={cp.paragraphe}>
               Deux conditions indépendantes doivent être remplies pour qu'un objet tombe. L'intensité
               décide quelles familles d'objets sont accessibles : en <NomIntensite cle="reve">Rêve</NomIntensite>, reflets et cosmétiques
@@ -682,7 +792,7 @@ export default function ComprendrePage({ onBack }) {
               difficulté croissante des salles.
             </p>
             <p style={cp.paragraphe}>
-              <strong>Prospection</strong> : elle ne joue que sur les cosmétiques et les objets de quête, et
+              <strong style={{ color: "#2CE7FF" }}>Prospection</strong> : elle ne joue que sur les cosmétiques et les objets de quête, et
               individuellement par personnage — jamais sur les reflets, les runes ou les légendes.
             </p>
             <EncadreARetenir>
@@ -693,7 +803,7 @@ export default function ComprendrePage({ onBack }) {
 
           {/* VI — Combien de runs pour une légende (section principale) */}
           <section id="combien-de-runs" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VI.</span>Combien de runs pour une légende</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("combien-de-runs")}.</span>Combien de runs pour une légende</h2>
             <p style={cp.paragraphe}>
               Les légendes classiques ne tombent qu'à partir du palier III, et seulement en
               <NomIntensite cle="paradoxe"> Paradoxe</NomIntensite> ou <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>. Chaque légende tire indépendamment des autres — le tableau des
@@ -739,9 +849,9 @@ export default function ComprendrePage({ onBack }) {
             } />
           </section>
 
-          {/* VII — Les bribes et l'économie */}
+          {/* VII — Les bribes */}
           <section id="bribes-et-economie" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VII.</span>Les bribes et l'économie</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("bribes-et-economie")}.</span>Les bribes</h2>
             <p style={cp.paragraphe}>
               Les bribes de rêve sont la monnaie qu'on ramène d'une run terminée, à la fin du
               combat final. Elles ne sont obtenues qu'en atteignant le seuil de vagues du combat
@@ -771,56 +881,69 @@ export default function ComprendrePage({ onBack }) {
             </table>
             <p style={cp.paragraphe}>
               Pousser les vagues au-delà du seuil minimal augmente les bribes obtenues, mais pas les
-              chances de drop du combat final — qui compte toujours pour un seul combat. Depuis la
-              3.5, une fois le seuil franchi, la run est validée même en cas de défaite ensuite :
-              continuer ne met pas en danger les bribes déjà acquises.
+              chances de drop du combat final — qui compte toujours pour un seul combat. Il faut
+              valider le nombre minimum de vagues requises pour obtenir les premières bribes ;
+              chaque vague supplémentaire au-delà en rapporte davantage.
             </p>
             <p style={cp.paragraphe}>
-              Quand plusieurs joueurs participent à une run, chacun reçoit sa part au prorata du
-              nombre de salles de combat effectuées — les fontaines et les faveurs ne comptent pas
-              dans ce calcul.
-            </p>
-            <p style={cp.paragraphe}>
-              Cinq marchands attendent au Marché onirique : Neru Stalar échange les bribes contre des
-              reflets, des fragments de prysmaradite et des runes astrales ; Gobribe échange contre
-              les récompenses les plus chères (panoplie d'apparat, ornements, compagnons...). Trois
-              autres — Gobastrale, Coco Rupe, Infinu — ne concernent que les anciennes monnaies de
-              Songes (reflets d'antan, oubliés, infinis), vouées à disparaître avec la mise à jour
-              3.7.
+              Tous les participants présents au combat final reçoivent les mêmes bribes,
+              indépendamment des autres.
             </p>
             <EncadreARetenir>
-              Les bribes ne tombent qu'à la fin d'une run réussie, au prorata des salles de combat
-              faites par chaque joueur.
+              Les bribes dépendent uniquement du nombre de vagues vaincues au combat final, jamais
+              du nombre de salles faites dans la run. Il faut valider le minimum de vagues requises
+              pour en obtenir ; chaque vague supplémentaire en rapporte davantage.
             </EncadreARetenir>
+
+            <h3 id="depenser-ses-bribes" style={cp.sousTitre}>Dépenser ses bribes</h3>
+            <StyleMarchand />
+            <BlocMarchand src="/assets/comprendre/neru-stalar.webp" alt="Neru Stalar, marchand du Marché onirique">
+              <p style={cp.paragraphe}>
+                Il vend les ressources de base contre des bribes : reflets oniriques
+                ({config.prix_neru_stalar.reflet_onirique} l'unité), fragments de prysmaradite
+                ({config.prix_neru_stalar.fragment_prysmaradite}), et les six raretés de runes
+                astrales, de {config.prix_neru_stalar.rune_astrale_mineure} bribes pour une mineure
+                à {config.prix_neru_stalar.rune_astrale_legendaire} pour une légendaire. C'est aussi
+                chez lui que s'achète le Sac de Bribes de rêve
+                ({config.prix_sac_bribes.toLocaleString("fr-FR")} bribes l'unité).
+              </p>
+            </BlocMarchand>
+            <BlocMarchand src="/assets/comprendre/gobribe.webp" alt="Gobribe, marchand du Marché onirique">
+              <p style={cp.paragraphe}>
+                Il vend les récompenses les plus chères, payables uniquement en Sacs, jamais
+                directement en bribes :
+              </p>
+              <ul style={cp.liste}>
+                <li><strong>Cosmétiques</strong> — panoplie d'apparat : Cape ({config.prix_gobribe_sacs.cape_fontaine_onirique} Sacs), Coiffe ({config.prix_gobribe_sacs.coiffe_fontaine_onirique}), Bouclier de la Fontaine Onirique ({config.prix_gobribe_sacs.bouclier_fontaine_onirique}), soit {config.prix_gobribe_sacs.cape_fontaine_onirique + config.prix_gobribe_sacs.coiffe_fontaine_onirique + config.prix_gobribe_sacs.bouclier_fontaine_onirique} Sacs l'ensemble</li>
+                <li><strong>Coffrets à légendes</strong> — Narkasseth Infinie ({config.prix_gobribe_sacs.narkasseth_infinie} Sacs, une légende animale au hasard) et Narkoffret Infini ({config.prix_gobribe_sacs.narkoffret_infini} Sacs, une légende classique au hasard, le seul moyen d'en obtenir une sans la drop)</li>
+                <li><strong>Compagnons</strong> — Phong Huss et Grouillot, {config.prix_gobribe_sacs.compagnon_phong_huss} Sacs chacun</li>
+                <li><strong>Titre et ornement</strong> — Songeur de la Fontaine ({config.prix_gobribe_sacs.titre_songeur_fontaine} Sacs), Ornement de la Fontaine Onirique ({config.prix_gobribe_sacs.ornement_fontaine_onirique} Sacs)</li>
+              </ul>
+            </BlocMarchand>
+            <EncadreARetenir>
+              On achète les Sacs de Bribes de rêve avec ses bribes chez Neru Stalar, puis on les
+              dépense chez Gobribe.
+            </EncadreARetenir>
+            <p style={cp.caveat}>
+              Trois autres marchands — Gobastrale, Coco Rupe, Infinu — n'échangent que les anciennes
+              monnaies des Songes (reflets d'antan, oubliés, infinis), vouées à disparaître avec la
+              mise à jour 3.7.
+            </p>
+
             <EncadreCalculeLeTien lien="/taux?onglet=bribes" enfant={
               <>Simule le nombre de runs qu'il te faut pour atteindre un objectif en bribes
               (panoplie d'apparat, ornement...), à ton intensité et ton nombre de vagues.</>
             } />
           </section>
 
-          {/* VIII — Le multiplicateur de dégâts (sortie de la section Bonus, 16 août 2026) */}
-          <section id="le-multiplicateur-de-degats" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>VIII.</span>Le multiplicateur de dégâts</h2>
-            <p style={cp.paragraphe}>
-              Démarre à 100 %, monte avec les bonus "% Dégâts". Tous les autres bonus s'additionnent
-              d'abord entre eux ; le multiplicateur s'applique en <strong>dernier</strong> sur le
-              total — il multiplie donc aussi les dommages finaux d'un passif de monstre ou d'un
-              Dofus. C'est la statistique la plus forte des Songes, au-dessus des dommages finaux.
-            </p>
-            <EncadreARetenir>
-              Le multiplicateur de dégâts s'applique en dernier, sur tout le reste déjà additionné —
-              c'est le bonus le plus rentable à prioriser, et personne ne l'explique en jeu.
-            </EncadreARetenir>
-          </section>
-
-          {/* IX — Les bonus */}
+          {/* VIII — Les bonus */}
           <section id="les-bonus" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>IX.</span>Les bonus</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("les-bonus")}.</span>Les bonus</h2>
             <p style={cp.paragraphe}>
               Trois familles : bonus mineurs (à l'entrée de chaque salle), bonus passifs (Fontaine
               uniquement), bonus actifs — les sorts de songe. Compagnons et invocations en
-              profitent aussi. Le multiplicateur de dégâts, le bonus le plus rentable, a sa propre
-              section (VIII).
+              profitent aussi. Le multiplicateur de dégâts s'applique en dernier, après addition de
+              tous les autres bonus.
             </p>
             <table style={cp.table}>
               <thead><tr><th style={cp.th}>Famille</th><th style={cp.th}>Où l'obtenir</th><th style={cp.th}>Coût</th></tr></thead>
@@ -921,9 +1044,9 @@ export default function ComprendrePage({ onBack }) {
             )}
           </section>
 
-          {/* X — Quêtes et succès */}
+          {/* IX — Quêtes et succès */}
           <section id="quetes-et-succes" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>X.</span>Quêtes et succès</h2>
+            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("quetes-et-succes")}.</span>Quêtes et succès</h2>
             <p style={cp.paragraphe}>
               5 quêtes sont liées aux Songes : Cauchemar infini, Jusqu'au bout du rêve, Prise de
               conscience, Les animaux fantastiques, Le poids de son regard.
@@ -931,7 +1054,7 @@ export default function ComprendrePage({ onBack }) {
             <p style={cp.paragraphe}>
               6 succès identiques se déclinent pour chacune des 3 catégories d'intensité (vaincre
               1 000 monstres, 100 boss, obtenir 1 000 bribes, 500 bribes sans Sable, sans achat en
-              Fontaine, ou sans les deux). Ils se cumulent vers le bas — progresser en <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>
+              Fontaine, ou sans les deux). Ils se cumulent vers le bas — progresser en <NomIntensite cle="cauchemar">Cauchemar</NomIntensite>{" "}
               avance aussi <NomIntensite cle="paradoxe">Paradoxe</NomIntensite> et <NomIntensite cle="reve">Rêve</NomIntensite> — et sont réalisables sur plusieurs runs, à n'importe
               quelle intensité de la catégorie.
             </p>
@@ -940,36 +1063,14 @@ export default function ComprendrePage({ onBack }) {
             </p>
           </section>
 
-          {/* XI — Les sorts de songe (masquée tant que SORTS_DE_SONGE est vide) */}
+          {/* X — Les sorts de songe (masquée tant que SORTS_DE_SONGE est vide) */}
           {SORTS_DE_SONGE.length > 0 && (
             <section id="les-sorts-de-songe" style={cp.section}>
-              <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XI.</span>Les sorts de songe</h2>
+              <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>{numeroDe("les-sorts-de-songe")}.</span>Les sorts de songe</h2>
               {/* Contenu à écrire une fois la source scrapée — prévoir un renvoi vers la
                   Bibliothèque une fois les sorts effectivement trackés là-bas. */}
             </section>
           )}
-
-          {/* XII — Ce qu'on ne sait pas encore */}
-          <section id="ce-qu-on-ne-sait-pas-encore" style={cp.section}>
-            <h2 className="df-section-title" style={cp.sectionTitre}><span style={cp.numeroRomain}>XII.</span>Ce qu'on ne sait pas encore</h2>
-            <p style={cp.paragraphe}>
-              Cette page ne prétend pas tout savoir. Certains chiffres sont encore en conflit entre
-              nos relevés et d'autres sources, et certains mécanismes restent flous — les voici, sans
-              les habiller. Dire ce qu'on ignore est un argument de crédibilité, pas une faiblesse.
-            </p>
-            <table style={cp.table}>
-              <tbody>
-                <tr><td style={{ ...cp.td, width: 26 }}>⚠️</td><td style={cp.td}><strong>Taux de base des légendes classiques</strong> — nos relevés (0,003667 %) et une source externe (0,0035 %) sont proches mais ne concordent pas. L'affichage en jeu arrondit à 3 décimales, impossible à départager sur une simple capture d'écran.</td></tr>
-                <tr><td style={cp.td}>⚠️</td><td style={cp.td}><strong>Taux de base du Diplôme de Feur</strong> — nos relevés et une source externe ne s'accordent pas. Non tranché.</td></tr>
-                <tr><td style={cp.td}>⚠️</td><td style={cp.td}><strong>Multiplicateur de palier sur les runes astrales</strong> — nos relevés suggèrent un bonus supplémentaire au palier le plus haut de leur tranche, en plus du multiplicateur d'intensité. Spécifique aux runes, non confirmé.</td></tr>
-                <tr><td style={cp.td}>❌</td><td style={cp.td}><strong>Sorts de fontaine</strong> — la liste complète n'est pas relevée. L'effet annoncé de Vent Arrière (le plus d'Initiative joue en premier) reste à confirmer en jeu.</td></tr>
-              </tbody>
-            </table>
-            <EncadreARetenir>
-              Dofura choisit toujours ses propres relevés en jeu quand une source diverge, mais te le
-              dit à chaque fois que ça arrive.
-            </EncadreARetenir>
-          </section>
 
         </MiseEnPageSommaire>
       </div>
