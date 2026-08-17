@@ -106,6 +106,10 @@ Pour mémoire, ces points **ne sont plus** des zones grises :
   fixe** — une Faveur Onirique ou le gobelin Gobséric peuvent le réduire.
   Leur fréquence d'apparition n'étant pas publiée par Ankama, aucun plancher
   fiable n'est calculable — voir `structure.md`.
+- ✅ **Les bribes dépendent uniquement du nombre de vagues vaincues au
+  combat final**, pas du nombre de salles faites dans la run — infirme
+  l'hypothèse d'un prorata par salles de combat avancée par une source
+  externe. Vérifié en jeu par Popo. Voir `economie.md`.
 
 ## Comment lever une zone grise
 

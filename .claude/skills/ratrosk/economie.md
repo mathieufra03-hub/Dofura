@@ -27,14 +27,17 @@ Monnaie principale, dépensée au Marché onirique.
 
 ### Le partage entre joueurs
 
-- ✅ Tous les participants reçoivent des bribes, **au prorata du nombre de
-  salles de combat effectuées** dans cette run.
-- ✅ Les fontaines et les faveurs ne comptent pas dans le calcul du prorata.
+- ✅ Les bribes dépendent **uniquement du nombre de vagues vaincues au
+  combat final** — le nombre de salles faites dans le reste de la run n'a
+  aucune influence. Tous les participants présents au combat final
+  reçoivent les mêmes bribes, qu'ils aient fait 1 salle ou 25 avant.
+  Vérifié en jeu par Popo (un joueur ayant rejoint en salle 26 reçoit
+  exactement les mêmes bribes que celui ayant fait toute la run) — infirme
+  l'hypothèse d'un prorata par salles de combat évoquée par une source
+  externe.
 - ✅ Le versement a lieu quand le propriétaire termine sa run — même si le
   joueur a quitté le groupe entre-temps, même s'il est déconnecté. Il reçoit
   alors une notification.
-- ✅ Exemple : 13 salles faites sur une run Paradoxe III, soit la moitié →
-  la moitié des bribes.
 
 ## Les marchands du Marché onirique
 
