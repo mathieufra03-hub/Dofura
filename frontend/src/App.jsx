@@ -5,6 +5,7 @@ import HistoriquePage from "./pages/HistoriquePage"
 import AccueilPage from "./pages/AccueilPage"
 import TauxPage from "./pages/TauxPage"
 import ComprendrePage from "./pages/ComprendrePage"
+import Navbar from "./components/Navbar"
 import { normaliserTexte } from "./texte"
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000"
@@ -38,305 +39,16 @@ const C = {
   green: "#5fbe6e", red:   "#e05555",
 }
 
-// Structure de nav (retour Popo, 1er août 2026) : le tracker Songes
-// (cible "songes" inchangée) est rebrandé "L'Œil de Draconiros" partout,
-// mais la nav affiche juste "L'Œil" (raccourci volontaire pour ne pas
-// alourdir le menu — voir IDENTITE.md). "Les Taux" remis dans la barre
-// (en était sorti le 31 juillet, une passe précédente) — sa page existe
-// réellement (TauxPage.jsx, cible "taux"). Donjons, Quêtes, et tout ce que
-// fusionnait déjà le Grimoire (chantier Grimoire, 29 juillet 2026 :
-// Équipements/Ressources/Bestiaire/Panoplies) restent hors nav — SANS
-// supprimer leur code/routes, le Grimoire s'appuie dessus et ils restent
-// atteignables par les liens croisés entre fiches.
-const navLinks = ["L'Œil", "Les Taux", "La Bibliothèque"]
-const NAV_LABEL_VERS_CIBLE = { "L'Œil":"songes", "Les Taux":"taux", "La Bibliothèque":"grimoire" }
-
-// Panneau de connexion (formulaire pseudo/mdp + raccourci compte de test),
-// ouvert depuis le bouton Connexion de la navbar. Pas d'inscription publique
-// ici (endpoint /auth/register pret cote backend, formulaire a construire
-// plus tard) — le compte de test suffit pour explorer favoris/progression
-// avant que l'inscription publique n'existe.
-function LoginPanel({ onLogin, onClose }) {
-  const [identifiant, setIdentifiant] = useState("")
-  const [password, setPassword] = useState("")
-  const [erreur, setErreur] = useState("")
-  const [loading, setLoading] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    function handler(e) { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [onClose])
-
-  const connecter = () => {
-    if (!identifiant || !password) return
-    setLoading(true); setErreur("")
-    fetch(`${API}/auth/login`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ identifiant, password }) })
-      .then(async r => {
-        if (!r.ok) { const d = await r.json().catch(()=>({})); throw new Error(d.detail || "Erreur de connexion") }
-        return r.json()
-      })
-      .then(d => onLogin(d.token))
-      .catch(e => { setErreur(e.message); setLoading(false) })
-  }
-
-  const connexionTest = () => {
-    setLoading(true); setErreur("")
-    fetch(`${API}/auth/dev-login`, { method:"POST" })
-      .then(r => r.json())
-      .then(d => onLogin(d.token))
-      .catch(() => { setErreur("Compte de test indisponible"); setLoading(false) })
-  }
-
-  const champStyle = { width:"100%", boxSizing:"border-box", background:"rgba(20,26,46,0.9)", border:"1px solid rgba(77,216,230,0.3)", borderRadius:8, padding:"9px 12px", fontSize:13, color:"var(--df-text)", outline:"none", marginBottom:8 }
-
-  return (
-    <div ref={ref} style={{ position:"absolute", top:"calc(100% + 8px)", right:0, width:280, background:"var(--df-panel-bg)", border:"1px solid rgba(255,198,61,0.3)", borderRadius:12, boxShadow:"0 14px 34px rgba(0,0,0,0.6)", padding:18, zIndex:200, textAlign:"left" }}>
-      <div style={{ fontSize:11, fontWeight:700, letterSpacing:1, color:"var(--df-gold)", textTransform:"uppercase", marginBottom:12 }}>Connexion</div>
-      <input value={identifiant} onChange={e=>setIdentifiant(e.target.value)} placeholder="Pseudo ou email" style={champStyle} />
-      <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="Mot de passe"
-        onKeyDown={e=>{ if (e.key==="Enter") connecter() }} style={{ ...champStyle, marginBottom:10 }} />
-      {erreur && <div style={{ color:"var(--df-red)", fontSize:12, marginBottom:8 }}>{erreur}</div>}
-      <button disabled={loading || !identifiant || !password} onClick={connecter}
-        style={{ width:"100%", background:"rgba(255,198,61,0.08)", color:"var(--df-gold)", border:"1px solid rgba(255,198,61,0.7)", borderRadius:8, padding:"9px", fontSize:13, fontWeight:600, cursor:loading?"default":"pointer", marginBottom:10, opacity:loading?0.6:1 }}>
-        Se connecter
-      </button>
-      <div style={{ display:"flex", alignItems:"center", gap:8, margin:"4px 0 10px" }}>
-        <div style={{ flex:1, height:1, background:"rgba(255,198,61,0.15)" }} />
-        <span style={{ fontSize:10, color:"var(--df-text-3)" }}>ou</span>
-        <div style={{ flex:1, height:1, background:"rgba(255,198,61,0.15)" }} />
-      </div>
-      <button disabled={loading} onClick={connexionTest}
-        style={{ width:"100%", background:"rgba(77,216,230,0.07)", color:"var(--df-cyan)", border:"1px solid rgba(77,216,230,0.6)", borderRadius:8, padding:"9px", fontSize:12.5, fontWeight:600, cursor:loading?"default":"pointer" }}>
-        Connexion rapide (compte de test)
-      </button>
-    </div>
-  )
-}
-
-// Icônes de nav — trait fin, pas d'emoji (refonte visuelle, phase 2 nav).
-// Œil/Taux/Grimoire reprennent exactement les tracés déjà utilisés sur les
-// 3 cartes de l'accueil (AccueilPage.jsx) : même symbole aux deux endroits,
-// cohérence délibérée plutôt que 2 jeux d'icônes différents pour la même
-// idée.
-function IconeOeil(props) {
-  return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><path d="M12 3c0 4-4 5-4 9a4 4 0 0 0 8 0c0-4-4-5-4-9z" /><path d="M8 21h8" /></svg>
-}
-function IconeTaux(props) {
-  return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><path d="M19 5 5 19" /><circle cx="7.5" cy="7.5" r="2.5" /><circle cx="16.5" cy="16.5" r="2.5" /></svg>
-}
-function IconeGrimoireNav(props) {
-  return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><path d="M4 5v14a2 2 0 0 1 2-2h14V3H6a2 2 0 0 0-2 2z" /><path d="M9 8h7" /></svg>
-}
+// Navbar (logo, 3 sections en dropdown, recherche, compte) extraite dans
+// components/Navbar.jsx le 18 août 2026 — voir ce fichier pour la structure
+// de nav, LoginPanel, MonComptePanel, NavSearch, DiscordLink et les icônes
+// qui n'existent plus qu'à cet endroit.
 // Registre (historique), même famille de tracé simple qu'un cadran —
 // nouveau (1er août 2026), remplace l'icône % de l'ancienne carte "Les
 // Taux" à cet emplacement de la grille de l'accueil.
 function IconeHistorique(props) {
   return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
 }
-function IconeCompte(props) {
-  return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}><circle cx="12" cy="8" r="3.4" /><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" /></svg>
-}
-// Marque Discord simplifiée (tracé simple-icons, licence MIT) — seule icône
-// en aplat plutôt qu'en trait fin : un logo de marque tracé en contour fin
-// ne se reconnaît plus comme "Discord", exception assumée à la règle des
-// icônes de nav.
-function IconeDiscord(props) {
-  return (
-    <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" {...props}>
-      <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.07.07 0 0 0-.079.037c-.211.375-.445.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.6 12.6 0 0 0-.618-1.25.07.07 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.319 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.1 14.1 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .079.01c.12.099.246.198.373.292a.077.077 0 0 1-.007.127 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.107c.36.698.772 1.363 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03ZM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.419 0 1.334-.955 2.419-2.157 2.419Zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.419 0 1.334-.946 2.419-2.157 2.419Z" />
-    </svg>
-  )
-}
-
-const NAV_ICONS = { "L'Œil": IconeOeil, "Les Taux": IconeTaux, "La Bibliothèque": IconeGrimoireNav }
-
-// Recherche discrète de la nav (refonte visuelle, phase 2) — réutilise le
-// state query/results/loading déjà câblé dans App() pour l'ancien Hero (mort
-// depuis la refonte de l'accueil, jamais supprimé) : même endpoint
-// /monstres?search=, donc recherche monstres uniquement pour l'instant (pas
-// le Grimoire complet équipements/ressources/panoplies) — voir IDENTITE.md.
-function NavSearch({ query, setQuery, results, loading, onSelectMonstre }) {
-  const ref = useRef(null)
-  useEffect(() => {
-    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setQuery("") }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [setQuery])
-
-  return (
-    <div ref={ref} style={{ position:"relative", width:"min(190px, 22vw)" }}>
-      <div style={{
-        display:"flex", alignItems:"center", gap:8, background:"rgba(var(--df-card-bg),0.6)",
-        border:"1px solid var(--df-border-cyan-soft)", borderRadius:999, padding:"6px 12px", transition:"border-color .35s",
-      }}>
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ flexShrink:0 }}>
-          <circle cx="7" cy="7" r="5.4" stroke="var(--df-text-3)" strokeWidth="1.6" />
-          <line x1="11" y1="11" x2="15" y2="15" stroke="var(--df-text-3)" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-        <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Rechercher..."
-          style={{ flex:1, minWidth:0, background:"transparent", border:"none", outline:"none", color:"var(--df-text)", fontSize:12.5, caretColor:"var(--df-cyan)" }} />
-        {loading && <span style={{ fontSize:10, color:"var(--df-text-3)" }}>…</span>}
-      </div>
-      {results.length > 0 && (
-        <div style={{ position:"absolute", top:"calc(100% + 8px)", left:0, width:280, background:"var(--df-panel-bg)", border:"1px solid var(--df-border-cyan)", borderRadius:14, overflow:"hidden", zIndex:200, textAlign:"left" }}>
-          {results.map(m => (
-            <div key={m.id} onClick={()=>onSelectMonstre(m.id)}
-              style={{ display:"flex", alignItems:"center", gap:12, padding:"9px 14px", cursor:"pointer", borderBottom:"1px solid var(--df-border-cyan-soft)" }}
-              onMouseEnter={e=>e.currentTarget.style.background="rgba(var(--df-cyan-rgb),0.06)"}
-              onMouseLeave={e=>e.currentTarget.style.background="transparent"}
-            >
-              {m.image_url
-                ? <img src={m.image_url} alt={m.nom} style={{ width:32, height:32, objectFit:"contain", borderRadius:6, background:"var(--df-bg)" }} />
-                : <div style={{ width:32, height:32, background:"var(--df-bg)", borderRadius:6 }} />
-              }
-              <div>
-                <div style={{ fontSize:12.5, fontWeight:500, color:"var(--df-text)" }}>{m.nom}</div>
-                <div style={{ fontSize:10.5, color:"var(--df-text-3)" }}>{m.famille || m.race || ""}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Icône + infobulle custom au survol (état local, cohérent avec le reste de
-// la navbar qui gère déjà ses hovers en JS plutôt qu'en CSS :hover).
-function DiscordLink({ href }) {
-  const [survol, setSurvol] = useState(false)
-  return (
-    <div style={{ position:"relative" }} onMouseEnter={()=>setSurvol(true)} onMouseLeave={()=>setSurvol(false)}>
-      <a href={href} target="_blank" rel="noopener noreferrer" style={{
-        display:"flex", alignItems:"center", justifyContent:"center", width:34, height:34, borderRadius:999,
-        color: survol ? "var(--df-cyan)" : "var(--df-text-2)", background: survol ? "rgba(var(--df-cyan-rgb),0.1)" : "transparent",
-        transition:"color .35s, background .35s",
-      }}>
-        <IconeDiscord />
-      </a>
-      {survol && (
-        <div style={{
-          position:"absolute", top:"calc(100% + 8px)", right:0, whiteSpace:"nowrap", zIndex:200,
-          background:"var(--df-panel-bg)", border:"1px solid var(--df-border-cyan)", borderRadius:8,
-          padding:"6px 12px", fontSize:11.5, color:"var(--df-text-2)",
-        }}>
-          Discord — contact &amp; signalement de bug
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Panneau "Mon compte" (données très limitées pour l'instant : /auth/me ne
-// renvoie que id/pseudo, la vraie gestion de compte est la Phase 4 de la
-// roadmap CLAUDE.md, pas encore commencée — ce panneau est un accès minimal
-// honnête, pas une anticipation de fonctionnalités qui n'existent pas).
-function MonComptePanel({ user, onClose }) {
-  const ref = useRef(null)
-  useEffect(() => {
-    function handler(e) { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [onClose])
-  return (
-    <div ref={ref} style={{ position:"absolute", top:"calc(100% + 8px)", right:0, width:220, background:"var(--df-panel-bg)", border:"1px solid var(--df-border-cyan)", borderRadius:12, boxShadow:"0 14px 34px rgba(0,0,0,0.6)", padding:16, zIndex:200, textAlign:"left" }}>
-      <div style={{ fontSize:10.5, fontWeight:700, letterSpacing:1, color:"var(--df-text-3)", textTransform:"uppercase", marginBottom:6 }}>Mon compte</div>
-      <div style={{ fontSize:14.5, color:"var(--df-text)", fontWeight:600 }}>{user.pseudo}</div>
-    </div>
-  )
-}
-
-// Reprend nav/.brand/.links/.ghost de la maquette (refonte visuelle) — sticky,
-// translucide + flou, dégradé or→cyan→violet sur le logo comme le mot
-// "légende" de l'accueil, lien actif souligné cyan. Pas de nouvelle classe
-// globale pour le dégradé du logo : traitement unique à ce composant, à la
-// différence de .df-title-gold (partagé par les titres de fiches, hors
-// périmètre de cette refonte) — voir IDENTITE.md.
-// Disposition en grille 3 colonnes (logo / menu+recherche / compte-Discord)
-// plutôt que flex+space-between : le menu central reste VRAIMENT centré même
-// si les zones gauche/droite n'ont pas la même largeur.
-function Navbar({ onHome, onNav, browsing, user, onLogin, onLogout, query, setQuery, results, loading, onSelectMonstre }) {
-  const [showLogin, setShowLogin] = useState(false)
-  const [showCompte, setShowCompte] = useState(false)
-  return (
-    <nav style={{
-      position:"sticky", top:0, zIndex:100, display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center",
-      padding:"0 clamp(18px,5vw,68px)", height:78,
-      background:"rgba(3,12,17,0.7)", backdropFilter:"blur(20px) saturate(1.4)", WebkitBackdropFilter:"blur(20px) saturate(1.4)",
-      borderBottom:"1px solid var(--df-border-cyan-soft)",
-    }}>
-      <span onClick={onHome} style={{
-        justifySelf:"start", fontFamily:"var(--df-font-logo)", fontWeight:900, fontSize:27, letterSpacing:"0.24em", cursor:"pointer",
-        background:"linear-gradient(100deg, var(--df-gold) 6%, var(--df-cyan) 52%, var(--df-violet) 96%)",
-        WebkitBackgroundClip:"text", backgroundClip:"text", color:"transparent",
-      }}>DOFURA</span>
-
-      <div style={{ justifySelf:"center", display:"flex", gap:"clamp(20px,3vw,44px)", alignItems:"center" }}>
-        {navLinks.map(n => {
-          const cible = NAV_LABEL_VERS_CIBLE[n]
-          const actif = cible && browsing === cible
-          const onClick = cible ? () => onNav(cible) : undefined
-          const Icone = NAV_ICONS[n]
-          return (
-            <span key={n} onClick={onClick}
-              style={{
-                display:"inline-flex", alignItems:"center", gap:7,
-                fontSize:15.5, fontWeight:500, color:actif?"var(--df-cyan)":"var(--df-text-2)",
-                padding:"8px 0", cursor:onClick?"pointer":"default", whiteSpace:"nowrap",
-                borderBottom: actif ? "1px solid var(--df-cyan)" : "1px solid transparent", transition:"color .35s",
-              }}
-              onMouseEnter={e=>{ if(!actif) e.currentTarget.style.color="var(--df-text)" }}
-              onMouseLeave={e=>{ e.currentTarget.style.color = actif?"var(--df-cyan)":"var(--df-text-2)" }}
-            ><Icone />{n}</span>
-          )
-        })}
-        <NavSearch query={query} setQuery={setQuery} results={results} loading={loading} onSelectMonstre={onSelectMonstre} />
-      </div>
-
-      <div style={{ justifySelf:"end", display:"flex", gap:16, alignItems:"center" }}>
-        {user ? (
-          <>
-            <div style={{ position:"relative" }}>
-              <span onClick={()=>setShowCompte(s=>!s)} style={{
-                display:"flex", alignItems:"center", gap:6, fontSize:13, color: showCompte ? "var(--df-cyan)" : "var(--df-text-2)",
-                cursor:"pointer", transition:"color .35s",
-              }}
-                onMouseEnter={e=>{ if(!showCompte) e.currentTarget.style.color="var(--df-text)" }}
-                onMouseLeave={e=>{ e.currentTarget.style.color = showCompte ? "var(--df-cyan)" : "var(--df-text-2)" }}
-              ><IconeCompte />Mon compte</span>
-              {showCompte && <MonComptePanel user={user} onClose={()=>setShowCompte(false)} />}
-            </div>
-            <span onClick={onLogout} style={{
-              border:"1px solid var(--df-border-cyan)", borderRadius:999, padding:"7px 18px",
-              background:"transparent", color:"var(--df-text)", fontSize:12.5, cursor:"pointer", transition:".35s",
-            }}
-              onMouseEnter={e=>{ e.currentTarget.style.borderColor="var(--df-cyan)"; e.currentTarget.style.background="rgba(44,231,255,0.07)" }}
-              onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--df-border-cyan)"; e.currentTarget.style.background="transparent" }}
-            >Déconnexion</span>
-          </>
-        ) : (
-          <div style={{ position:"relative" }}>
-            <span onClick={()=>setShowLogin(s=>!s)} style={{
-              border:"1px solid var(--df-border-cyan)", borderRadius:999, padding:"7px 18px",
-              background:"transparent", color:"var(--df-text)", fontSize:12.5, cursor:"pointer", transition:".35s",
-            }}
-              onMouseEnter={e=>{ e.currentTarget.style.borderColor="var(--df-cyan)"; e.currentTarget.style.background="rgba(44,231,255,0.07)" }}
-              onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--df-border-cyan)"; e.currentTarget.style.background="transparent" }}
-            >Se connecter</span>
-            {showLogin && <LoginPanel onLogin={(token)=>{ onLogin(token); setShowLogin(false) }} onClose={()=>setShowLogin(false)} />}
-          </div>
-        )}
-        {/* URL Discord : placeholder en attendant le vrai lien d'invitation
-            de Popo (jamais deviné, voir CLAUDE.md règle 13 + consigne système
-            anti-invention d'URL) — signalé dans le rapport de cette passe. */}
-        <DiscordLink href="https://discord.gg/TODO-lien-a-fournir" />
-      </div>
-    </nav>
-  )
-}
-
 function SearchIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -2224,13 +1936,9 @@ function AppInterne() {
   const handleHomeDead       = () => { resetNavDead() }
 
   const cibleDead = selectedDonjon || selectedPanoplie || selectedQuete || selectedSucces
-
-  // Lien nav actif : dérivé de l'écran de FOND (celui qui reste visible même
-  // si une fiche est ouverte par-dessus), pas de l'URL réelle — identique au
-  // comportement d'avant (browsing ne changeait pas quand le panneau
-  // s'ouvrait par-dessus la Bibliothèque).
-  const cheminActif = (backgroundLocation || location).pathname
-  const browsingActif = cheminActif === "/songes" ? "songes" : cheminActif === "/taux" ? "taux" : cheminActif === "/bibliotheque" ? "grimoire" : null
+  // Lien nav actif : Navbar.jsx calcule désormais lui-même son propre
+  // "chemin actif" via useLocation() (même logique backgroundLocation),
+  // plus besoin de le calculer ici pour une prop "browsing".
 
   return (
     <div translate="no" style={{ position:"relative", minHeight:"100vh", overflow:"hidden", background:"var(--df-bg)", display:"flex", flexDirection:"column" }}>
@@ -2243,7 +1951,7 @@ function AppInterne() {
       <div style={{ position:"absolute", inset:0, background:"rgba(12,15,29,0.22)", pointerEvents:"none" }} />
 
       <div style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", flex:1 }}>
-        <Navbar onHome={handleHome} onNav={handleNav} browsing={browsingActif} user={user} onLogin={handleLogin} onLogout={handleLogout}
+        <Navbar user={user} onLogin={handleLogin} onLogout={handleLogout}
           query={query} setQuery={setQuery} results={results} loading={loading} onSelectMonstre={onSelectMonstreDepuisNavbar} />
         <div style={{ flex:1 }}>
           {cibleDead ? (
